@@ -4,3 +4,7 @@ body, html, #root {
   height: 100%;
   width: 100%;
 }
+
+body, .app-container, .pagina-pasaporte {
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
