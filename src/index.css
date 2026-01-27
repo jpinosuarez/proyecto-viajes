@@ -8,3 +8,28 @@ body, html, #root {
 body, .app-container, .pagina-pasaporte {
   font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
 }
+
+/* Personalización para Chrome, Safari y Edge */
+::-webkit-scrollbar {
+  width: 6px; /* Muy finita para que no moleste */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* Fondo invisible para que se vea el color Linen */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2C3E50; /* Tu color Charcoal Blue */
+  border-radius: 10px;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF6B35; /* Cambia a Atomic Tangerine al pasar el mouse */
+}
+
+/* Soporte para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2C3E50 transparent;
+}
