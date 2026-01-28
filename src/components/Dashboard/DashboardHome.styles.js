@@ -23,12 +23,13 @@ export const styles = {
     margin: 0,
     letterSpacing: '-1px',
   },
-  welcomeSubtitle: {
+welcomeSubtitle: {
     fontSize: '1.1rem',
     color: COLORS.charcoalBlue,
-    opacity: 0.7,
+    opacity: 0.8,
     marginTop: '8px',
     maxWidth: '500px',
+    lineHeight: '1.5', // Importante para que los spans no se vean raros
   },
   quickActionsGrid: {
     display: 'flex',

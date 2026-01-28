@@ -3,48 +3,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Sidebar';
 import Header from './components/Header/Header';
-// Importamos los nuevos componentes de Stats especializados
 import StatsMapa from './components/Dashboard/StatsMapa'; 
 import MapaViajes from './components/Mapa/MapaView';
 import BuscadorModal from './components/Buscador/BuscadorModal';
 import BentoGrid from './components/Bento/BentoGrid';
 import DashboardHome from './components/Dashboard/DashboardHome'; 
+import EdicionModal from './components/Modals/EdicionModal'; // Importamos el modal global
 
 import { useViajes } from './hooks/useViajes';
 import { styles } from './App.styles'; 
 
 function App() {
   const { 
-    paisesVisitados, 
-    bitacora, 
-    bitacoraData, 
-    listaPaises, 
-    agregarViaje, 
-    actualizarDetallesViaje, 
-    manejarCambioPaises, 
-    eliminarViaje 
+    paisesVisitados, bitacora, bitacoraData, listaPaises, 
+    agregarViaje, actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
   } = useViajes();
   
   const [vistaActiva, setVistaActiva] = useState('home'); 
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
+  
+  // Estado global para editar viaje
+  const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
+
+  // Abrir editor (pasado a hijos)
+  const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
 
   const seleccionarPais = useCallback((pais) => {
-    agregarViaje(pais);
-    setDestino({ 
-      longitude: pais.latlng[1], 
-      latitude: pais.latlng[0], 
-      zoom: 4,
-      essential: true 
-    });
+    // Agregamos y capturamos el ID para abrir el editor
+    const nuevoId = agregarViaje(pais);
+    setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
     setVistaActiva('mapa'); 
-    cerrarBuscador();
-  }, [agregarViaje]);
-
-  const cerrarBuscador = () => {
     setMostrarBuscador(false);
     setFiltro('');
+    // Abrimos el modal de edición inmediatamente
+    setTimeout(() => abrirEditor(nuevoId), 300); // Pequeño delay para la transición
+  }, [agregarViaje]);
+
+  const onMapaPaisToggle = (nuevosCodes) => {
+    // Si se agrega un país, manejarCambioPaises retorna el ID
+    const nuevoId = manejarCambioPaises(nuevosCodes);
+    if (nuevoId) {
+      abrirEditor(nuevoId);
+    }
   };
 
   const getTituloHeader = () => {
@@ -56,17 +58,15 @@ function App() {
     }
   };
 
+  // Buscamos el objeto viaje completo para el modal
+  const viajeParaEditar = bitacora.find(v => v.id === viajeEnEdicionId);
+
   return (
     <div style={styles.appWrapper}>
       <Sidebar vistaActiva={vistaActiva} setVistaActiva={setVistaActiva} />
 
       <main style={styles.mainContent}>
-        <Header 
-          titulo={getTituloHeader()} 
-          onAddClick={() => setMostrarBuscador(true)} 
-        />
-
-        {/* Eliminamos la barra de Stats global de aquí para que no se duplique */}
+        <Header titulo={getTituloHeader()} onAddClick={() => setMostrarBuscador(true)} />
 
         <section style={styles.sectionWrapper}>
           <AnimatePresence mode="wait">
@@ -79,9 +79,8 @@ function App() {
 
             {vistaActiva === 'mapa' && (
               <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle}>
-                {/* Aquí inyectamos los Stats exclusivos del Mapa */}
                 <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
-                <MapaViajes paises={paisesVisitados} setPaises={manejarCambioPaises} destino={destino} />
+                <MapaViajes paises={paisesVisitados} setPaises={onMapaPaisToggle} destino={destino} />
               </motion.div>
             )}
 
@@ -91,8 +90,8 @@ function App() {
                 <BentoGrid 
                   viajes={bitacora} 
                   bitacoraData={bitacoraData} 
-                  actualizarDetallesViaje={actualizarDetallesViaje} 
                   manejarEliminar={eliminarViaje}
+                  abrirEditor={abrirEditor} // Pasamos la función global
                 />
               </motion.div>
             )}
@@ -101,8 +100,17 @@ function App() {
       </main>
 
       <BuscadorModal 
-        isOpen={mostrarBuscador} onClose={cerrarBuscador} filtro={filtro} setFiltro={setFiltro} 
-        listaPaises={listaPaises || []} seleccionarPais={seleccionarPais} paisesVisitados={paisesVisitados} 
+        isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} 
+        filtro={filtro} setFiltro={setFiltro} listaPaises={listaPaises} 
+        seleccionarPais={seleccionarPais} paisesVisitados={paisesVisitados} 
+      />
+
+      {/* MODAL GLOBAL DE EDICIÓN */}
+      <EdicionModal 
+        viaje={viajeParaEditar} 
+        bitacoraData={bitacoraData} 
+        onClose={() => setViajeEnEdicionId(null)} 
+        onSave={actualizarDetallesViaje} 
       />
     </div>
   );
