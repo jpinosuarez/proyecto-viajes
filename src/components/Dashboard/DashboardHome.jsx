@@ -11,7 +11,7 @@ const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva }) 
     <div style={styles.dashboardContainer}>
       <section style={styles.heroSection}>
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 style={styles.welcomeTitle}>¡Hola, Julian!</h1>
+          <h1 style={styles.welcomeTitle}>¡Hola, Joaquin!</h1>
           <p style={{ ...styles.welcomeSubtitle, display: 'flex', gap: '6px', alignItems: 'center' }}>
             Has capturado momentos en 
             <span style={{ fontWeight: '800', color: COLORS.atomicTangerine }}>{paisesVisitados.length} países</span> 

@@ -69,7 +69,6 @@ const BentoGrid = ({ viajes = [], bitacoraData = {}, manejarEliminar, abrirEdito
                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', opacity: 0.9 }}>
                    <Calendar size={14} color={data.foto ? 'white' : COLORS.charcoalBlue} />
                    <span className="mono-data" style={{ color: data.foto ? 'white' : COLORS.charcoalBlue }}>
-                     {/* Se muestra el rango de fechas en la tarjeta */}
                      {data.fechaInicio || viaje.fecha} — {data.fechaFin || 'Activo'}
                    </span>
                  </div>
@@ -87,11 +86,24 @@ const BentoGrid = ({ viajes = [], bitacoraData = {}, manejarEliminar, abrirEdito
             
             return (
               <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }} style={styles.expandedOverlay}>
-                <div style={styles.expandedHeader(formTemp.foto)}>
+                {/* CORRECCIÓN UX: Usamos Flex Column para separar botones del contenido y evitar solapamientos */}
+                <div style={{
+                    ...styles.expandedHeader(formTemp.foto),
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    alignItems: 'stretch' // Ocupar todo el ancho
+                  }}>
                   <div style={styles.fotoOverlay} />
                   
-                  {/* Navegación superior con botones de edición integrados */}
-                  <div style={{ position: 'absolute', top: '30px', left: '30px', right: '30px', display: 'flex', justifyContent: 'space-between', zIndex: 100 }}>
+                  {/* BARRA SUPERIOR (Botones) - Ahora es relativa al flujo, no absoluta */}
+                  <div style={{ 
+                      padding: '30px', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      zIndex: 100,
+                      position: 'relative' // Para asegurar el z-index
+                    }}>
                     <button onClick={() => { setViajeExpandido(null); setModoEdicion(false); }} style={styles.backBtn}><ArrowLeft size={24} /></button>
                     
                     {!modoEdicion ? (
@@ -104,6 +116,7 @@ const BentoGrid = ({ viajes = [], bitacoraData = {}, manejarEliminar, abrirEdito
                     )}
                   </div>
 
+                  {/* CONTENIDO INFERIOR (Bandera y Títulos) */}
                   <div style={{ position: 'relative', zIndex: 10, color: 'white', width: '100%', padding: '0 60px 40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                       <div style={{ flex: 1 }}>
