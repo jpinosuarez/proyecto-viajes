@@ -1,5 +1,6 @@
 import React from 'react';
 import { Globe, Compass, Clock, Map } from 'lucide-react';
+import { COLORS } from '../../theme'; // Importación añadida
 
 const StatsMapa = ({ bitacora = [], paisesVisitados = [] }) => {
   const totalPaisesMundo = 195;
@@ -24,21 +25,30 @@ const StatsMapa = ({ bitacora = [], paisesVisitados = [] }) => {
     return Object.keys(conteo).reduce((a, b) => conteo[a] > conteo[b] ? a : b);
   };
 
-  const statsGeo = [
-    { label: 'Países visitados', value: `${countPaises} / ${totalPaisesMundo}`, icon: <Globe size={20} />, color: '#3b82f6' },
-    { label: 'Continentes tocados', value: `${continentesUnicos} de 7`, icon: <Compass size={20} />, color: '#10b981' },
-    { label: 'Última aventura', value: obtenerUltimaAventura(), icon: <Clock size={20} />, color: '#f59e0b' },
-    { label: 'Región más visitada', value: obtenerRegionPredominante(), icon: <Map size={20} />, color: '#8b5cf6' }
+const statsGeo = [
+    { label: 'Países visitados', value: `${countPaises} / ${totalPaisesMundo}`, icon: <Globe size={20} />, color: COLORS.mutedTeal }, // Usando theme
+    { label: 'Continentes', value: `${continentesUnicos} de 7`, icon: <Compass size={20} />, color: COLORS.atomicTangerine }, // Usando theme
+    { label: 'Última aventura', value: obtenerUltimaAventura(), icon: <Clock size={20} />, color: COLORS.charcoalBlue },
+    { label: 'Región principal', value: obtenerRegionPredominante(), icon: <Map size={20} />, color: COLORS.atomicTangerine }
   ];
 
   return (
     <section style={{ padding: '25px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
       {statsGeo.map((stat, index) => (
-        <div key={index} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+        <div key={index} style={{ 
+          backgroundColor: 'white', 
+          padding: '20px', 
+          borderRadius: '24px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '15px', 
+          border: `1px solid ${COLORS.border}`, // Consistencia de bordes
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)' 
+        }}>
           <div style={{ backgroundColor: `${stat.color}15`, padding: '12px', borderRadius: '14px', color: stat.color }}>{stat.icon}</div>
           <div>
             <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>{stat.label}</p>
-            <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: '900', color: '#1e293b' }}>{stat.value}</p>
+            <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: '900', color: COLORS.charcoalBlue }}>{stat.value}</p>
           </div>
         </div>
       ))}
