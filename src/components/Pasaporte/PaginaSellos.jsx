@@ -2,44 +2,110 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 
-const PaginaSellos = ({ region, paises, MAPA_SELLOS, manejarEliminar }) => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-    <h3 style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', color: '#1e293b', fontFamily: 'serif' }}>
-      {region.toUpperCase()}
-    </h3>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '20px', marginTop: '20px' }}>
-      {paises.map((p) => {
-        const tieneSello = MAPA_SELLOS[p.code];
-        const randomRotate = (p.code.charCodeAt(0) % 10) - 5;
-        return (
-          <motion.div 
-            key={p.code}
-            initial={{ scale: 0 }} animate={{ scale: 1, rotate: randomRotate }}
-            whileHover={{ scale: 1.1, rotate: 0, zIndex: 10 }}
-            style={{ 
-              position: 'relative', display: 'flex', flexDirection: 'column', 
-              alignItems: 'center', padding: '10px', borderRadius: '4px',
-              border: tieneSello ? 'none' : '2px dashed #cbd5e1'
-            }}
-          >
-            {tieneSello ? (
-              <img src={tieneSello} alt={p.nombreEspanol} style={{ mixBlendMode: 'multiply', width: '100%' }} />
-            ) : (
-              <div style={{ opacity: 0.5, textAlign: 'center' }}>
-                <span style={{ fontSize: '2rem' }}>{p.flag}</span>
-                <div style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{p.nombreEspanol}</div>
-              </div>
-            )}
-            <Trash2 
-              size={12} 
-              style={{ position: 'absolute', top: 2, right: 2, color: '#ef4444', cursor: 'pointer', opacity: 0.3 }} 
-              onClick={() => manejarEliminar(p.code)} 
-            />
-          </motion.div>
-        );
-      })}
-    </div>
-  </motion.div>
-);
+const PaginaSellos = ({ region, paises, MAPA_SELLOS, manejarEliminar }) => {
+  
+  // Colores de tinta según la región (Efecto de diseño oficial)
+  const obtenerColorTinta = (reg) => {
+    const colores = {
+      'Americas': '#1e40af', // Azul tinta
+      'Europe': '#991b1b',   // Rojo oscuro
+      'Asia': '#065f46',     // Verde bosque
+      'Africa': '#854d0e',   // Ocre
+      'Oceania': '#3730a3'   // Violeta
+    };
+    return colores[reg] || '#475569';
+  };
+
+  const colorTinta = obtenerColorTinta(region);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <h3 className="titulo-region">
+        {region.toUpperCase()}
+      </h3>
+      
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+        gap: '40px', 
+        marginTop: '20px' 
+      }}>
+        {paises.map((p) => {
+          const tieneSello = MAPA_SELLOS[p.code];
+          // Rotación aleatoria persistente basada en el código del país
+          const randomRotate = (p.code.charCodeAt(0) % 12) - 6;
+
+          return (
+            <motion.div 
+              key={p.code}
+              initial={{ scale: 0 }} 
+              animate={{ scale: 1, rotate: randomRotate }}
+              whileHover={{ scale: 1.05, rotate: 0, zIndex: 10 }}
+              className="contenedor-sello"
+              style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
+            >
+              {tieneSello ? (
+                /* SELLO PERSONALIZADO PNG */
+                <div className="sello-postal" style={{ width: '100%' }}>
+                  <img src={tieneSello} alt={p.nombreEspanol} />
+                </div>
+              ) : (
+                /* SELLO GENÉRICO TIPO CAUCHO */
+                <div style={{
+                  width: '110px',
+                  height: '110px',
+                  border: `3px solid ${colorTinta}`,
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px',
+                  color: colorTinta,
+                  opacity: 0.8,
+                  maskImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")',
+                  fontFamily: '"Courier New", Courier, monospace',
+                  textTransform: 'uppercase',
+                  borderStyle: 'double',
+                  borderWidth: '4px'
+                }}>
+                  <span style={{ fontSize: '1.8rem', filter: 'grayscale(1) contrast(1.5)', marginBottom: '4px' }}>
+                    {p.flag}
+                  </span>
+                  <div style={{ fontSize: '0.6rem', fontWeight: 'bold', textAlign: 'center', lineHeight: 1 }}>
+                    {p.nombreEspanol}
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.5rem', 
+                    borderTop: `1px solid ${colorTinta}`, 
+                    marginTop: '5px', 
+                    paddingTop: '3px',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}>
+                    ADMITTED 2026
+                  </div>
+                </div>
+              )}
+
+              <Trash2 
+                size={14} 
+                style={{ 
+                  position: 'absolute', 
+                  top: -5, 
+                  right: -5, 
+                  color: '#ef4444', 
+                  cursor: 'pointer', 
+                  opacity: 0.3 
+                }} 
+                onClick={() => manejarEliminar(p.code)} 
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
 
 export default PaginaSellos;
