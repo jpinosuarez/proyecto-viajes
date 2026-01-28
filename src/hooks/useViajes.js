@@ -1,118 +1,102 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MAPA_SELLOS } from '../assets/sellos';
+import { db } from '../firebase';
+import { useAuth } from '../context/AuthContext';
+import { 
+  collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy 
+} from 'firebase/firestore';
 
 export const useViajes = () => {
-  const [bitacora, setBitacora] = useState(() => {
-    const saved = localStorage.getItem('bitacora');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [bitacoraData, setBitacoraData] = useState(() => {
-    const saved = localStorage.getItem('bitacoraData');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const { usuario } = useAuth();
+  const [bitacora, setBitacora] = useState([]);
+  const [bitacoraData, setBitacoraData] = useState({});
 
   useEffect(() => {
-    localStorage.setItem('bitacora', JSON.stringify(bitacora));
-  }, [bitacora]);
+    if (!usuario) {
+      setBitacora([]);
+      setBitacoraData({});
+      return;
+    }
 
-  useEffect(() => {
-    localStorage.setItem('bitacoraData', JSON.stringify(bitacoraData));
-  }, [bitacoraData]);
+    const viajesRef = collection(db, `usuarios/${usuario.uid}/viajes`);
+    const q = query(viajesRef, orderBy("fechaInicio", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setBitacora(docs);
+      const dataMap = docs.reduce((acc, viaje) => {
+        acc[viaje.id] = { ...viaje };
+        return acc;
+      }, {});
+      setBitacoraData(dataMap);
+    });
+
+    return () => unsubscribe();
+  }, [usuario]);
 
   const paisesVisitados = useMemo(() => {
     return [...new Set(bitacora.map(v => v.code))];
   }, [bitacora]);
 
-  // --- ACCIONES ---
-
-  const agregarViaje = (pais) => {
-    const id = Date.now();
+  const agregarViaje = async (pais) => {
+    if (!usuario) return null;
     const fechaISO = new Date().toISOString().split('T')[0];
     
     const nuevoViaje = {
-      id: id,
       code: pais.code,
       nombreEspanol: pais.nombreEspanol,
       flag: pais.flag,
-      fecha: fechaISO,
       continente: pais.continente,
-      latlng: pais.latlng
+      latlng: pais.latlng,
+      fecha: fechaISO,
+      fechaInicio: fechaISO,
+      fechaFin: fechaISO,
+      texto: "",
+      rating: 5,
+      foto: null,
+      ciudades: "",
+      monumentos: "",
+      clima: "",
+      gastronomia: "",
+      companero: ""
     };
 
-    setBitacora(prev => [nuevoViaje, ...prev]);
-    
-    setBitacoraData(prev => ({
-      ...prev,
-      [id]: { 
-        texto: "", 
-        fechaInicio: fechaISO, 
-        fechaFin: fechaISO, 
-        rating: 5, 
-        foto: null,
-        ciudades: "",
-        monumentos: "",
-        clima: "",
-        gastronomia: ""
-      }
-    }));
-
-    return id; // RETORNAMOS EL ID PARA ABRIR EL EDITOR
+    const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
+    return docRef.id;
   };
 
-  const actualizarDetallesViaje = (id, data) => {
-    setBitacoraData(prev => ({ ...prev, [id]: data }));
+  const actualizarDetallesViaje = async (id, data) => {
+    if (!usuario) return;
+    const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, id);
+    await updateDoc(viajeRef, data);
   };
 
-  const eliminarViaje = (id) => {
-    setBitacora(prev => prev.filter(v => v.id !== id));
-    setBitacoraData(prev => {
-      const nuevaData = { ...prev };
-      delete nuevaData[id];
-      return nuevaData;
-    });
+  const eliminarViaje = async (id) => {
+    if (!usuario) return;
+    await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
   };
 
   const manejarCambioPaises = (nuevosCodes) => {
-    let viajeAgregadoId = null;
-
+    if (!usuario) return null;
     if (nuevosCodes.length > paisesVisitados.length) {
       const codeAdded = nuevosCodes.find(c => !paisesVisitados.includes(c));
-      // Buscamos en nuestra base de datos, si no existe, creamos un objeto básico para que no rompa
-      const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded) || {
-        code: codeAdded,
-        nombreEspanol: codeAdded, // Fallback nombre
-        flag: "🌍",
-        continente: "Desconocido",
-        latlng: [0, 0]
-      };
-      
-      if (paisInfo) {
-        viajeAgregadoId = agregarViaje(paisInfo);
-      }
+      const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded);
+      if (paisInfo) return agregarViaje(paisInfo);
     } else {
       const codeRemoved = paisesVisitados.find(c => !nuevosCodes.includes(c));
-      const viajesAEliminar = bitacora.filter(v => v.code === codeRemoved);
-      
-      setBitacora(prev => prev.filter(v => v.code !== codeRemoved));
-      setBitacoraData(prev => {
-        const nuevaData = { ...prev };
-        viajesAEliminar.forEach(v => delete nuevaData[v.id]);
-        return nuevaData;
-      });
+      const viajeAEliminar = bitacora.find(v => v.code === codeRemoved);
+      if (viajeAEliminar) eliminarViaje(viajeAEliminar.id);
     }
-    
-    return viajeAgregadoId; // RETORNAMOS EL ID SI SE AGREGÓ
+    return null;
   };
 
   return {
-    paisesVisitados,
-    bitacora,
-    bitacoraData,
-    listaPaises: Array.isArray(MAPA_SELLOS) ? MAPA_SELLOS : [], 
-    agregarViaje,
-    actualizarDetallesViaje,
-    eliminarViaje,
-    manejarCambioPaises 
+    paisesVisitados, bitacora, bitacoraData,
+    listaPaises: MAPA_SELLOS,
+    agregarViaje, actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
   };
 };
