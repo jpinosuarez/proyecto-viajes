@@ -8,7 +8,7 @@ import MapaViajes from './components/Mapa/MapaView';
 import BuscadorModal from './components/Buscador/BuscadorModal';
 import BentoGrid from './components/Bento/BentoGrid';
 import DashboardHome from './components/Dashboard/DashboardHome'; 
-import EdicionModal from './components/Modals/EdicionModal'; // Importamos el modal global
+import EdicionModal from './components/Modals/EdicionModal';
 
 import { useViajes } from './hooks/useViajes';
 import { styles } from './App.styles'; 
@@ -24,25 +24,20 @@ function App() {
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
   
-  // Estado global para editar viaje
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
 
-  // Abrir editor (pasado a hijos)
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
 
   const seleccionarPais = useCallback((pais) => {
-    // Agregamos y capturamos el ID para abrir el editor
     const nuevoId = agregarViaje(pais);
     setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
     setVistaActiva('mapa'); 
     setMostrarBuscador(false);
     setFiltro('');
-    // Abrimos el modal de edición inmediatamente
-    setTimeout(() => abrirEditor(nuevoId), 300); // Pequeño delay para la transición
+    setTimeout(() => abrirEditor(nuevoId), 300);
   }, [agregarViaje]);
 
   const onMapaPaisToggle = (nuevosCodes) => {
-    // Si se agrega un país, manejarCambioPaises retorna el ID
     const nuevoId = manejarCambioPaises(nuevosCodes);
     if (nuevoId) {
       abrirEditor(nuevoId);
@@ -58,7 +53,6 @@ function App() {
     }
   };
 
-  // Buscamos el objeto viaje completo para el modal
   const viajeParaEditar = bitacora.find(v => v.id === viajeEnEdicionId);
 
   return (
@@ -87,11 +81,13 @@ function App() {
             {vistaActiva === 'bitacora' && (
               <motion.div key="bitacora" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
                 style={styles.scrollableContent} className="custom-scroll">
+                {/* AQUÍ ESTABA EL ERROR: Faltaba pasar la función actualizarDetallesViaje */}
                 <BentoGrid 
                   viajes={bitacora} 
                   bitacoraData={bitacoraData} 
                   manejarEliminar={eliminarViaje}
-                  abrirEditor={abrirEditor} // Pasamos la función global
+                  abrirEditor={abrirEditor}
+                  actualizarDetallesViaje={actualizarDetallesViaje} 
                 />
               </motion.div>
             )}
@@ -105,7 +101,6 @@ function App() {
         seleccionarPais={seleccionarPais} paisesVisitados={paisesVisitados} 
       />
 
-      {/* MODAL GLOBAL DE EDICIÓN */}
       <EdicionModal 
         viaje={viajeParaEditar} 
         bitacoraData={bitacoraData} 
