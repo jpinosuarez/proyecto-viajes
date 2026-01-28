@@ -1,3 +1,11 @@
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Color+Emoji&family=Plus+Jakarta+Sans:wght@700;800&family=JetBrains+Mono:wght@500&display=swap');
+
+:root {
+  /* Noto Color Emoji como prioridad para asegurar banderas en Windows */
+  --font-emoji: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
+
 body, html, #root {
   margin: 0;
   padding: 0;
@@ -5,31 +13,40 @@ body, html, #root {
   width: 100%;
 }
 
-body, .app-container, .pagina-pasaporte {
-  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+body {
+  /* Inter para texto, Noto para banderas */
+  font-family: 'Inter', var(--font-emoji);
+  background-color: #F4EDE4; /* COLORS.linen */
+  color: #2C3E50; /* COLORS.charcoalBlue */
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Personalización para Chrome, Safari y Edge */
+h1, h2, h3, h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Clase para forzar el renderizado de banderas */
+.emoji-span {
+  font-family: var(--font-emoji) !important;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.mono-data {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+}
+
 ::-webkit-scrollbar {
-  width: 6px; /* Muy finita para que no moleste */
+  width: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent; /* Fondo invisible para que se vea el color Linen */
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #2C3E50; /* Tu color Charcoal Blue */
+  background: #2C3E50;
   border-radius: 10px;
-  opacity: 0.5;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #FF6B35; /* Cambia a Atomic Tangerine al pasar el mouse */
-}
-
-/* Soporte para Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #2C3E50 transparent;
 }

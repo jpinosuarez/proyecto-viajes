@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS } from '../../theme';
@@ -8,45 +8,48 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk
 function MapaViajes({ paises, setPaises, destino }) {
   const [hoverInfo, setHoverInfo] = useState(null);
   const [modalInfo, setModalInfo] = useState(null);
+  const [viewState, setViewState] = useState({
+    longitude: 13.40,
+    latitude: 52.52,
+    zoom: 2
+  });
 
-  const onHover = (event) => {
-    const { features, point: { x, y } } = event;
-    const hoveredFeature = features && features[0];
-    setHoverInfo(hoveredFeature ? { name: hoveredFeature.properties.name, x, y } : null);
-  };
+  // Efecto para reaccionar a nuevos destinos (Buscador/Agregar)
+  useEffect(() => {
+    if (destino) {
+      setViewState({
+        longitude: destino.longitude,
+        latitude: destino.latitude,
+        zoom: destino.zoom,
+        transitionDuration: 2000
+      });
+    }
+  }, [destino]);
 
   const onMapClick = (event) => {
     const feature = event.features && event.features[0];
     if (feature) {
       const code = feature.properties.iso_3166_1_alpha_3;
-      const yaVisitado = paises.includes(code);
-      setModalInfo({ name: feature.properties.name, code: code, yaVisitado: yaVisitado });
+      setModalInfo({
+        name: feature.properties.name,
+        code: code,
+        yaVisitado: paises.includes(code)
+      });
     }
-  };
-
-  const confirmarAccion = () => {
-    // Crear el nuevo array de paises
-    let nuevosPaises;
-    if (modalInfo.yaVisitado) {
-      nuevosPaises = paises.filter(c => c !== modalInfo.code);
-    } else {
-      nuevosPaises = [...paises, modalInfo.code];
-    }
-    
-    // Llamar a la función del padre (App.jsx) que maneja la lógica y el editor
-    setPaises(nuevosPaises);
-    setModalInfo(null);
   };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: '24px', overflow: 'hidden' }}>
       <Map
-        initialViewState={{ longitude: 13.40, latitude: 52.52, zoom: 2 }}
-        {...(destino || {})} // Si hay un destino (flyTo), lo usamos
+        {...viewState}
+        onMove={evt => setViewState(evt.viewState)}
         projection="mercator"
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
-        onMouseMove={onHover}
+        onMouseMove={e => {
+          const feature = e.features && e.features[0];
+          setHoverInfo(feature ? { name: feature.properties.name, x: e.point.x, y: e.point.y } : null);
+        }}
         onClick={onMapClick}
         interactiveLayerIds={['country-fills-data']}
       >
@@ -61,11 +64,17 @@ function MapaViajes({ paises, setPaises, destino }) {
             }}
           />
         </Source>
+
         <FullscreenControl position="top-right" />
         <NavigationControl position="top-right" style={{ marginTop: '40px' }} />
 
         {hoverInfo && (
-          <div style={{ position: 'absolute', left: hoverInfo.x + 15, top: hoverInfo.y + 15, backgroundColor: COLORS.charcoalBlue, color: COLORS.linen, padding: '6px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', pointerEvents: 'none', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+          <div style={{ 
+            position: 'absolute', left: hoverInfo.x + 15, top: hoverInfo.y + 15,
+            backgroundColor: COLORS.charcoalBlue, color: COLORS.linen,
+            padding: '6px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '600',
+            pointerEvents: 'none', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
             {hoverInfo.name}
           </div>
         )}
@@ -73,15 +82,22 @@ function MapaViajes({ paises, setPaises, destino }) {
         {modalInfo && (
           <div style={modalOverlayStyle}>
             <div style={{...modalContentStyle, backgroundColor: COLORS.linen}}>
-              <h3 style={{ color: COLORS.charcoalBlue, marginTop: 0, fontWeight: '800' }}>
+              <h3 style={{ color: COLORS.charcoalBlue, marginTop: 0, fontWeight: '800', fontFamily: 'Playfair Display' }}>
                 {modalInfo.yaVisitado ? 'Quitar país' : '¿Nuevo destino?'}
               </h3>
-              <p style={{ color: COLORS.charcoalBlue, opacity: 0.8, fontSize: '0.95rem' }}>
-                {modalInfo.yaVisitado ? `¿Eliminar ${modalInfo.name} de tu bitácora?` : `¿Marcar ${modalInfo.name} como visitado?`}
+              <p style={{ color: COLORS.charcoalBlue, opacity: 0.8, fontSize: '0.9rem' }}>
+                {modalInfo.yaVisitado ? `¿Eliminar ${modalInfo.name}?` : `¿Confirmar viaje a ${modalInfo.name}?`}
               </p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
                 <button onClick={() => setModalInfo(null)} style={btnSecundario}>Cancelar</button>
-                <button onClick={confirmarAccion} style={{ ...btnPrincipal, backgroundColor: modalInfo.yaVisitado ? '#e54b4b' : COLORS.atomicTangerine }}>
+                <button 
+                  onClick={() => {
+                    const nuevos = modalInfo.yaVisitado ? paises.filter(c => c !== modalInfo.code) : [...paises, modalInfo.code];
+                    setPaises(nuevos);
+                    setModalInfo(null);
+                  }} 
+                  style={{ ...btnPrincipal, backgroundColor: modalInfo.yaVisitado ? '#e54b4b' : COLORS.atomicTangerine }}
+                >
                   {modalInfo.yaVisitado ? 'Eliminar' : 'Confirmar'}
                 </button>
               </div>
@@ -94,8 +110,8 @@ function MapaViajes({ paises, setPaises, destino }) {
 }
 
 const modalOverlayStyle = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(44, 62, 80, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 };
-const modalContentStyle = { padding: '32px', borderRadius: '24px', width: '320px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)' };
-const btnPrincipal = { color: 'white', border: 'none', padding: '10px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', transition: 'transform 0.1s ease' };
+const modalContentStyle = { padding: '32px', borderRadius: '24px', width: '300px', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' };
+const btnPrincipal = { color: 'white', border: 'none', padding: '10px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800' };
 const btnSecundario = { backgroundColor: '#e2e8f0', color: '#475569', border: 'none', padding: '10px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' };
 
 export default MapaViajes;
