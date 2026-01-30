@@ -20,8 +20,8 @@ function App() {
   const { usuario, cargando } = useAuth();
   
   const { 
-    paisesVisitados, bitacora, bitacoraData, listaPaises, 
-    agregarViaje, agregarParada, // Nueva función importada
+    paisesVisitados, bitacora, bitacoraData, listaPaises, todasLasParadas, // <--- NUEVO
+    agregarViaje, agregarParada, 
     actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
   } = useViajes();
   
@@ -36,49 +36,34 @@ function App() {
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
 
-  // Manejador Inteligente: Decide si es país o ciudad
   const onLugarSeleccionado = useCallback(async (lugar) => {
     let viajeId = null;
 
     if (lugar.esPais) {
-      // Caso 1: Usuario seleccionó un país (ej: "Japón")
-      // Buscamos el objeto completo en nuestro catálogo local para tener datos extra (bandera, continente)
       const paisCatalogo = listaPaises.find(p => p.code === lugar.code) 
                         || listaPaises.find(p => p.name.includes(lugar.nombre));
-      
-      if (paisCatalogo) {
-        viajeId = await agregarViaje(paisCatalogo);
-      }
+      if (paisCatalogo) viajeId = await agregarViaje(paisCatalogo);
     } else {
-      // Caso 2: Usuario seleccionó una ciudad/lugar (ej: "Tokio")
-      // agregarParada se encarga de crear el país si no existe
       viajeId = await agregarParada(lugar);
     }
 
-    // UX: Feedback y Navegación
     if (viajeId) {
       setDestino({ 
         longitude: lugar.coordenadas[0], 
         latitude: lugar.coordenadas[1], 
-        zoom: lugar.esPais ? 4 : 10, // Zoom más cerca si es ciudad
+        zoom: lugar.esPais ? 4 : 11, // Zoom profundo para ciudad
         essential: true 
       });
       setVistaActiva('mapa'); 
       setMostrarBuscador(false);
       setFiltro('');
-      
-      // Si fue un país nuevo, abrimos el editor. Si fue ciudad, quizás solo el mapa.
-      if (lugar.esPais) {
-        setTimeout(() => abrirEditor(viajeId), 500);
-      }
+      if (lugar.esPais) setTimeout(() => abrirEditor(viajeId), 500);
     }
   }, [agregarViaje, agregarParada, listaPaises]);
 
   const onMapaPaisToggle = async (nuevosCodes) => {
     const nuevoId = await manejarCambioPaises(nuevosCodes);
-    if (nuevoId) {
-      abrirEditor(nuevoId);
-    }
+    if (nuevoId) abrirEditor(nuevoId);
   };
 
   const getTituloHeader = () => {
@@ -90,9 +75,7 @@ function App() {
     }
   };
 
-  if (!cargando && !usuario) {
-    return <LandingPage />;
-  }
+  if (!cargando && !usuario) return <LandingPage />;
 
   const viajeParaEditar = bitacora.find(v => v.id === viajeEnEdicionId);
 
@@ -120,7 +103,13 @@ function App() {
             {vistaActiva === 'mapa' && (
               <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle}>
                 <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
-                <MapaViajes paises={paisesVisitados} setPaises={onMapaPaisToggle} destino={destino} />
+                {/* Pasamos todas las paradas al mapa */}
+                <MapaViajes 
+                   paises={paisesVisitados} 
+                   setPaises={onMapaPaisToggle} 
+                   destino={destino} 
+                   paradas={todasLasParadas} 
+                />
               </motion.div>
             )}
 
@@ -143,7 +132,7 @@ function App() {
       <BuscadorModal 
         isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} 
         filtro={filtro} setFiltro={setFiltro} listaPaises={listaPaises} 
-        seleccionarLugar={onLugarSeleccionado} // Nombre actualizado
+        seleccionarLugar={onLugarSeleccionado} 
         paisesVisitados={paisesVisitados} 
       />
 

@@ -3,32 +3,33 @@ import { MAPA_SELLOS } from '../assets/sellos';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { 
-  collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc 
+  collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs 
 } from 'firebase/firestore';
 import { 
   ref, uploadString, getDownloadURL, deleteObject 
 } from 'firebase/storage';
 
-// CLAVE API UNSPLASH (Access Key)
 const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg';
 
 export const useViajes = () => {
   const { usuario } = useAuth();
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraData, setBitacoraData] = useState({});
+  const [todasLasParadas, setTodasLasParadas] = useState([]); // Nuevo: Para el mapa global
 
-  // 1. ESCUCHAR CAMBIOS EN TIEMPO REAL
+  // 1. ESCUCHAR VIAJES
   useEffect(() => {
     if (!usuario) {
       setBitacora([]);
       setBitacoraData({});
+      setTodasLasParadas([]);
       return;
     }
 
     const viajesRef = collection(db, `usuarios/${usuario.uid}/viajes`);
     const q = query(viajesRef, orderBy("fechaInicio", "desc"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -41,6 +42,22 @@ export const useViajes = () => {
         return acc;
       }, {});
       setBitacoraData(dataMap);
+
+      // Cargar sub-colecciones de paradas para el mapa (Lazy loading básico)
+      // Nota: En una app masiva esto se optimizaría, para un MVP está bien.
+      const paradasPromises = docs.map(async (viaje) => {
+        const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
+        const paradasSnap = await getDocs(paradasRef);
+        return paradasSnap.docs.map(p => ({ 
+          id: p.id, 
+          viajeId: viaje.id, 
+          paisCodigo: viaje.code,
+          ...p.data() 
+        }));
+      });
+      
+      const paradasArrays = await Promise.all(paradasPromises);
+      setTodasLasParadas(paradasArrays.flat());
     });
 
     return () => unsubscribe();
@@ -52,77 +69,68 @@ export const useViajes = () => {
 
   // --- UTILIDADES ---
   
-  // Función para matchear el resultado de Mapbox con nuestro catálogo de sellos
   const buscarPaisEnCatalogo = (nombreMapbox, codigoMapbox) => {
     const busqueda = nombreMapbox.toLowerCase();
     return MAPA_SELLOS.find(p => 
-      p.code === codigoMapbox || // Coincidencia exacta por código (Ideal)
+      p.code === codigoMapbox || 
       p.name.toLowerCase() === busqueda || 
       p.nombreEspanol.toLowerCase() === busqueda
     );
   };
 
-  // --- LÓGICA DE FOTOS (STORAGE & CACHÉ HÍBRIDO) ---
-
-  const subirFotoStorage = async (viajeId, fotoBase64) => {
-    if (!fotoBase64 || !fotoBase64.startsWith('data:image')) return fotoBase64;
+  const obtenerClimaHistorico = async (lat, lng, fecha) => {
     try {
-      const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
-      await uploadString(storageRef, fotoBase64, 'data_url');
-      return await getDownloadURL(storageRef);
-    } catch (error) {
-      console.error("Error subiendo imagen:", error);
+      // Open-Meteo API (Gratis, Historical Weather)
+      const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${fecha}&end_date=${fecha}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
+      const data = await res.json();
+      
+      if (data.daily && data.daily.weathercode) {
+        // Mapeo simple de códigos WMO a texto/emoji
+        const code = data.daily.weathercode[0];
+        const max = data.daily.temperature_2m_max[0];
+        let desc = "Despejado ☀️";
+        if (code > 3) desc = "Nublado ☁️";
+        if (code > 50) desc = "Lluvioso 🌧️";
+        if (code > 70) desc = "Nieve ❄️";
+        
+        return { desc, max };
+      }
+      return null;
+    } catch (e) {
+      console.warn("No se pudo obtener clima:", e);
       return null;
     }
   };
 
+  // --- FOTOS --- (Igual que antes, optimizado)
   const obtenerFotoConCache = async (pais) => {
     try {
       const docRef = doc(db, 'paises_info', pais.code);
       const docSnap = await getDoc(docRef);
-
       if (docSnap.exists()) return docSnap.data();
 
       const nombreBusqueda = pais.name || pais.nombreEspanol;
-      const queryBusqueda = `${nombreBusqueda} famous landmark travel architecture`;
-      
       const response = await fetch(
-        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(queryBusqueda)}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(nombreBusqueda + ' landmark')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`
       );
-
-      if (!response.ok) throw new Error('Error en Unsplash API');
-
       const data = await response.json();
-      
       const rawUrl = data.urls.raw;
-      const separador = rawUrl.includes('?') ? '&' : '?';
-      const urlOptimizada = `${rawUrl}${separador}w=1920&q=80&auto=format&fit=crop`;
+      // Optimizamos para cover completo
+      const urlOptimizada = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=1600&q=80&auto=format&fit=crop`;
 
       const nuevaFotoInfo = {
         url: urlOptimizada,
-        credito: {
-          nombre: data.user.name,
-          username: data.user.username,
-          link: data.user.links.html
-        }
+        credito: { nombre: data.user.name, username: data.user.username, link: data.user.links.html }
       };
-
       await setDoc(docRef, nuevaFotoInfo);
       return nuevaFotoInfo;
-
-    } catch (error) {
-      console.warn("⚠️ Fallback: No se pudo obtener foto automática.", error);
-      return null;
-    }
+    } catch { return null; }
   };
 
-  // --- ACCIONES FIRESTORE ---
+  // --- ACCIONES ---
 
-  // Agregar Viaje (Nivel País)
-  const agregarViaje = async (pais) => {
+  const agregarViaje = async (pais, tituloPersonalizado = null) => {
     if (!usuario) return null;
-    
-    // Verificar si ya existe el viaje para no duplicarlo
     const viajeExistente = bitacora.find(v => v.code === pais.code);
     if (viajeExistente) return viajeExistente.id;
 
@@ -132,77 +140,60 @@ export const useViajes = () => {
     const nuevoViaje = {
       code: pais.code,
       nombreEspanol: pais.nombreEspanol,
+      titulo: tituloPersonalizado || `Viaje a ${pais.nombreEspanol}`, // NUEVO: Título editable
       flag: pais.flag,
       continente: pais.continente,
       latlng: pais.latlng,
-      fecha: fechaISO,
-      fechaInicio: fechaISO,
-      fechaFin: fechaISO,
-      texto: "",
-      rating: 5,
+      fecha: fechaISO, fechaInicio: fechaISO, fechaFin: fechaISO,
+      texto: "", rating: 5,
       foto: fotoInfo?.url || null,
       fotoCredito: fotoInfo?.credito || null,
-      ciudades: "", 
-      monumentos: "",
-      clima: "",
-      gastronomia: "",
-      companero: ""
+      ciudades: "", monumentos: "", clima: "", gastronomia: "", companero: ""
     };
 
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
       return docRef.id;
-    } catch (e) {
-      console.error("Error al agregar viaje:", e);
-      return null;
-    }
+    } catch (e) { return null; }
   };
 
-  // NUEVO: Agregar Parada (Nivel Ciudad/Lugar)
   const agregarParada = async (lugarInfo) => {
     if (!usuario) return null;
-
-    // 1. Identificar el país padre
     const paisCatalogo = buscarPaisEnCatalogo(lugarInfo.paisNombre, lugarInfo.paisCodigo);
-    
-    if (!paisCatalogo) {
-      alert("Lo siento, aún no soportamos registros en este país o territorio.");
-      return null;
+    if (!paisCatalogo) return null;
+
+    // Si el viaje no existe, lo creamos con un título bonito
+    let viajeId = bitacora.find(v => v.code === paisCatalogo.code)?.id;
+    if (!viajeId) {
+      viajeId = await agregarViaje(paisCatalogo, `Aventura en ${lugarInfo.nombre}`);
     }
 
-    // 2. Asegurar que existe el "Contenedor del Viaje" (El País)
-    // Si no existe, lo creamos automáticamente (Cascada Inversa)
-    const viajeId = await agregarViaje(paisCatalogo);
-    if (!viajeId) return null;
+    // Clima Retroactivo
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaHoy);
 
-    // 3. Crear el documento de la parada en la sub-colección
     const nuevaParada = {
       nombre: lugarInfo.nombre,
       tipo: lugarInfo.tipo || 'place',
-      coordenadas: lugarInfo.coordenadas, // [lng, lat]
-      fecha: new Date().toISOString().split('T')[0],
+      coordenadas: lugarInfo.coordenadas, 
+      fecha: fechaHoy,
+      clima: climaInfo, // Guardamos el dato histórico
       relato: "",
-      foto: null // Pendiente: Implementar foto específica de ciudad
+      foto: null 
     };
 
     try {
-      const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
-      await addDoc(paradasRef, nuevaParada);
+      await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), nuevaParada);
       
-      // Opcional: Actualizar el campo 'ciudades' del viaje padre como resumen texto
+      // Actualizar texto resumen en viaje padre
       const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, viajeId);
       const viajeActual = bitacoraData[viajeId];
       const ciudadesPrevias = viajeActual?.ciudades ? viajeActual.ciudades.split(', ') : [];
       if (!ciudadesPrevias.includes(lugarInfo.nombre)) {
-        const nuevasCiudades = [...ciudadesPrevias, lugarInfo.nombre].join(', ');
-        await updateDoc(viajeRef, { ciudades: nuevasCiudades });
+        await updateDoc(viajeRef, { ciudades: [...ciudadesPrevias, lugarInfo.nombre].join(', ') });
       }
-
-      return viajeId; // Devolvemos el ID del viaje padre para abrir el visor/mapa
-    } catch (e) {
-      console.error("Error al agregar parada:", e);
-      return null;
-    }
+      return viajeId;
+    } catch (e) { return null; }
   };
 
   const actualizarDetallesViaje = async (id, data) => {
@@ -210,19 +201,16 @@ export const useViajes = () => {
     try {
       let fotoUrl = data.foto;
       if (data.foto && data.foto.startsWith('data:image')) {
-        fotoUrl = await subirFotoStorage(id, data.foto);
+        const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${id}/portada.jpg`);
+        await uploadString(storageRef, data.foto, 'data_url');
+        fotoUrl = await getDownloadURL(storageRef);
       }
       
       const datosLimpios = { ...data, foto: fotoUrl };
-      if (data.foto && data.foto.startsWith('data:image')) {
-         datosLimpios.fotoCredito = null; 
-      }
+      if (data.foto && data.foto.startsWith('data:image')) datosLimpios.fotoCredito = null;
 
-      const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, id);
-      await updateDoc(viajeRef, datosLimpios);
-    } catch (e) {
-      console.error("Error actualizando viaje:", e);
-    }
+      await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), datosLimpios);
+    } catch (e) { console.error(e); }
   };
 
   const eliminarViaje = async (id) => {
@@ -231,14 +219,11 @@ export const useViajes = () => {
       await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
       const fotoRef = ref(storage, `usuarios/${usuario.uid}/viajes/${id}/portada.jpg`);
       await deleteObject(fotoRef).catch(() => {}); 
-    } catch (e) {
-      console.error("Error eliminando:", e);
-    }
+    } catch (e) { console.error(e); }
   };
 
   const manejarCambioPaises = async (nuevosCodes) => {
     if (!usuario) return null;
-    
     if (nuevosCodes.length > paisesVisitados.length) {
       const codeAdded = nuevosCodes.find(c => !paisesVisitados.includes(c));
       const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded);
@@ -252,9 +237,8 @@ export const useViajes = () => {
   };
 
   return {
-    paisesVisitados, bitacora, bitacoraData,
+    paisesVisitados, bitacora, bitacoraData, todasLasParadas,
     listaPaises: MAPA_SELLOS,
-    agregarViaje, agregarParada, // Exportamos la nueva función
-    actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
+    agregarViaje, agregarParada, actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
   };
 };
