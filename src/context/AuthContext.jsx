@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged,
+  updateProfile 
+} from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
 const AuthContext = createContext();
@@ -10,8 +15,32 @@ export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  const login = () => signInWithPopup(auth, googleProvider);
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Error al autenticar:", error);
+    }
+  };
+
   const logout = () => signOut(auth);
+
+  // NUEVO: Función para actualizar perfil
+  const actualizarPerfilUsuario = async (nombre, fotoURL) => {
+    if (!auth.currentUser) return;
+    try {
+      await updateProfile(auth.currentUser, {
+        displayName: nombre,
+        photoURL: fotoURL
+      });
+      // Forzamos actualización del estado local
+      setUsuario({ ...auth.currentUser });
+      return true;
+    } catch (error) {
+      console.error("Error actualizando perfil:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -21,8 +50,10 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const value = { usuario, login, logout, actualizarPerfilUsuario, cargando };
+
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, cargando }}>
+    <AuthContext.Provider value={value}>
       {!cargando && children}
     </AuthContext.Provider>
   );

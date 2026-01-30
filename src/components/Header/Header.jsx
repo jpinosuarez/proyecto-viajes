@@ -3,7 +3,7 @@ import { Search, Plus, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { styles } from './Header.styles';
 
-const Header = ({ titulo, onAddClick }) => {
+const Header = ({ titulo, onAddClick, onProfileClick }) => {
   const { usuario, login, logout } = useAuth();
 
   return (
@@ -26,14 +26,28 @@ const Header = ({ titulo, onAddClick }) => {
 
         {usuario ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={styles.avatar}>
+            {/* Avatar Clickeable para Editar Perfil */}
+            <div 
+              style={{ ...styles.avatar, cursor: 'pointer' }} 
+              onClick={onProfileClick}
+              title="Editar Perfil"
+            >
               {usuario.photoURL ? (
-                <img src={usuario.photoURL} alt="User" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                <img 
+                  src={usuario.photoURL} 
+                  alt="User" 
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                />
               ) : (
                 <span>{usuario.displayName?.[0] || 'U'}</span>
               )}
             </div>
-            <button onClick={logout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+            
+            <button 
+              onClick={logout} 
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+              title="Cerrar Sesión"
+            >
               <LogOut size={18} />
             </button>
           </div>

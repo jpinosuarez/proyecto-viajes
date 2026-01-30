@@ -2,25 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Edit3, Calendar, MapPin, Check, X, Camera, Thermometer, Cloud 
+  ArrowLeft, Edit3, Calendar, Check, X, Camera, Thermometer, Cloud, Plus, MapPin 
 } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore'; 
 import { useAuth } from '../../context/AuthContext';
-import { IMAGENES_SELLOS } from '../../assets/sellos';
 import { COLORS } from '../../theme';
 import { styles } from './VisorViaje.styles';
 
-const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onSave }) => {
+const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onSave, onAddParada }) => {
   const { usuario } = useAuth();
   const viajeBase = bitacoraLista.find(v => v.id === viajeId);
   const data = bitacoraData[viajeId] || {};
   
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formTemp, setFormTemp] = useState({});
-  const [paradas, setParadas] = useState([]); // Paradas reales
+  const [paradas, setParadas] = useState([]);
 
-  // Cargar paradas al abrir
   useEffect(() => {
     if (viajeId && usuario) {
       const fetchParadas = async () => {
@@ -48,23 +46,31 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
     <AnimatePresence>
       <motion.div 
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} 
-        transition={{ type: 'spring', damping: 20 }} 
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }} 
         style={styles.expandedOverlay}
       >
-        {/* HEADER INMERSIVO */}
         <div style={styles.expandedHeader(modoEdicion ? formTemp.foto : data.foto)}>
           <div style={styles.fotoOverlay} />
           
           <div style={styles.navBar}>
-            <button onClick={onClose} style={styles.backBtn}><ArrowLeft size={24} /></button>
-            {!modoEdicion ? (
-              <button onClick={iniciarEdicion} style={styles.editBtnInmersive}><Edit3 size={18} /> Editar</button>
-            ) : (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => setModoEdicion(false)} style={styles.cancelBtn}><X size={18} /></button>
-                <button onClick={guardarCambios} style={styles.saveBtn}><Check size={18} /> Guardar</button>
-              </div>
-            )}
+            <button onClick={onClose} style={styles.iconBtn}><ArrowLeft size={24} /></button>
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {!modoEdicion ? (
+                <button onClick={iniciarEdicion} style={styles.primaryBtn(false)}>
+                  <Edit3 size={16} /> Editar Viaje
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => setModoEdicion(false)} style={styles.secondaryBtn}>
+                    <X size={16} /> Cancelar
+                  </button>
+                  <button onClick={guardarCambios} style={styles.primaryBtn(true)}>
+                    <Check size={16} /> Guardar
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div style={styles.headerContent}>
@@ -83,60 +89,55 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
              </div>
           </div>
           
-          {/* Crédito Foto Discreto */}
           {!modoEdicion && data.fotoCredito && (
-             <div style={styles.creditBox}>
-               <Camera size={12} /> Foto: {data.fotoCredito.nombre}
-             </div>
+             <div style={styles.creditBox}><Camera size={12} /> {data.fotoCredito.nombre}</div>
           )}
         </div>
 
-        {/* CONTENIDO */}
         <div style={styles.bodyContent}>
-          
-          {/* SECCIÓN 1: RELATO */}
           <div style={styles.mainColumn}>
-            <h3 style={styles.sectionTitle}>Bitácora de Viaje</h3>
+            <h3 style={styles.sectionTitle}>Bitácora</h3>
             {modoEdicion ? (
               <textarea 
                 style={styles.textArea} 
                 value={formTemp.texto} 
                 onChange={e => setFormTemp({...formTemp, texto: e.target.value})} 
-                placeholder="Escribe aquí tu relato..."
+                placeholder="¿Qué hizo especial a este viaje?"
               />
             ) : (
-              <p style={styles.readText}>{data.texto || "Aún no has escrito el relato de esta aventura."}</p>
+              <p style={styles.readText}>{data.texto || "Sin relato aún..."}</p>
             )}
           </div>
 
-          {/* SECCIÓN 2: RUTA Y PARADAS (SIDEBAR) */}
           <div style={styles.sideColumn}>
-            <h3 style={styles.sectionTitle}>Hoja de Ruta</h3>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
+              <h3 style={{...styles.sectionTitle, marginBottom:0}}>Hoja de Ruta</h3>
+              {/* Botón para abrir el buscador y agregar ciudad a este viaje */}
+              <button onClick={() => onAddParada(viajeId)} style={styles.addStopBtn} title="Agregar parada">
+                <Plus size={16} />
+              </button>
+            </div>
             
-            {paradas.length === 0 ? (
-               <div style={styles.emptyState}>No hay paradas registradas.</div>
-            ) : (
-               <div style={styles.timeline}>
-                 {paradas.map((parada, idx) => (
-                   <div key={idx} style={styles.timelineItem}>
-                     <div style={styles.timelineDot} />
-                     <div style={styles.stopCard}>
-                       <strong style={{ fontSize: '1rem', color: COLORS.charcoalBlue }}>{parada.nombre}</strong>
-                       
-                       {/* Clima Histórico */}
-                       {parada.clima && (
-                         <div style={styles.weatherTag}>
-                           {parada.clima.desc.includes('Sol') ? <Thermometer size={12}/> : <Cloud size={12}/>}
-                           {parada.clima.desc} • {parada.clima.max}°C
-                         </div>
-                       )}
-                       
-                       {parada.relato && <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '4px 0' }}>"{parada.relato.substring(0,50)}..."</p>}
+            <div style={styles.timeline}>
+               {paradas.map((parada, idx) => (
+                 <div key={idx} style={styles.timelineItem}>
+                   <div style={styles.timelineDot} />
+                   <div style={styles.stopCard}>
+                     <div style={{display:'flex', justifyContent:'space-between'}}>
+                       <strong style={{color: COLORS.charcoalBlue}}>{parada.nombre}</strong>
+                       <span style={{fontSize:'0.7rem', opacity:0.6}}>{parada.fecha}</span>
                      </div>
+                     {parada.clima && (
+                       <div style={styles.weatherTag}>
+                         {parada.clima.desc.includes('Sol') ? <Thermometer size={12}/> : <Cloud size={12}/>}
+                         {parada.clima.desc} • {parada.clima.max}°C
+                       </div>
+                     )}
                    </div>
-                 ))}
-               </div>
-            )}
+                 </div>
+               ))}
+               {paradas.length === 0 && <div style={styles.emptyState}>Agrega ciudades o lugares con el botón +</div>}
+            </div>
           </div>
         </div>
       </motion.div>
