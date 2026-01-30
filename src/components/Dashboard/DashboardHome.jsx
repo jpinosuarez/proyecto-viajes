@@ -1,17 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Compass, Map as MapIcon, BookOpen, ArrowRight, PlaneTakeoff } from 'lucide-react';
+import { Compass, Map as MapIcon, BookOpen, ArrowRight } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './DashboardHome.styles';
 
-const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva }) => {
+const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva, abrirVisor }) => {
   const ultimosViajes = bitacora.slice(0, 3);
 
   return (
     <div style={styles.dashboardContainer}>
+      {/* ... Hero Section igual ... */}
       <section style={styles.heroSection}>
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 style={styles.welcomeTitle}>¡Hola, Joaquin!</h1>
+          <h1 style={styles.welcomeTitle}>¡Hola!</h1>
           <p style={{ ...styles.welcomeSubtitle, display: 'flex', gap: '6px', alignItems: 'center' }}>
             Has capturado momentos en 
             <span style={{ fontWeight: '800', color: COLORS.atomicTangerine }}>{paisesVisitados.length} países</span> 
@@ -32,6 +33,7 @@ const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva }) 
         </div>
       </section>
 
+      {/* ... Map Banner igual ... */}
       <motion.div whileHover={{ scale: 1.005 }} style={styles.mapBanner} onClick={() => setVistaActiva('mapa')}>
         <div style={styles.mapBannerContent}>
           <Compass size={44} color={COLORS.linen} />
@@ -50,7 +52,14 @@ const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva }) 
         </div>
         <div style={styles.recentGrid}>
           {ultimosViajes.map((viaje, index) => (
-            <motion.div key={viaje.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={styles.miniCard}>
+            <motion.div 
+              key={viaje.id} 
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              whileHover={{ y: -5, boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }} // Hover effect
+              style={styles.miniCard}
+              onClick={() => abrirVisor(viaje.id)} // Click action
+            >
               <span className="emoji-span" style={{ fontSize: '2rem' }}>{viaje.flag}</span>
               <div style={styles.miniCardInfo}>
                 <strong style={{ color: COLORS.charcoalBlue }}>{viaje.nombreEspanol}</strong>

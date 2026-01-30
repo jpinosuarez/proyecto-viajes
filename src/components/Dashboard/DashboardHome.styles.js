@@ -1,6 +1,20 @@
 import { COLORS } from '../../theme';
 
 export const styles = {
+  // ... resto igual ...
+  miniCard: {
+    backgroundColor: 'white',
+    padding: '24px',
+    borderRadius: '24px',
+    border: '1px solid rgba(44, 62, 80, 0.05)',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    cursor: 'pointer', // CLICKABLE
+    transition: 'all 0.2s ease'
+  },
+  // ... resto igual ...
   dashboardContainer: {
     display: 'flex',
     flexDirection: 'column',
@@ -23,13 +37,13 @@ export const styles = {
     margin: 0,
     letterSpacing: '-1px',
   },
-welcomeSubtitle: {
+  welcomeSubtitle: {
     fontSize: '1.1rem',
     color: COLORS.charcoalBlue,
     opacity: 0.8,
     marginTop: '8px',
     maxWidth: '500px',
-    lineHeight: '1.5', // Importante para que los spans no se vean raros
+    lineHeight: '1.5',
   },
   quickActionsGrid: {
     display: 'flex',
@@ -121,16 +135,6 @@ welcomeSubtitle: {
     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
     gap: '20px',
   },
-  miniCard: {
-    backgroundColor: 'white',
-    padding: '24px',
-    borderRadius: '24px',
-    border: '1px solid rgba(44, 62, 80, 0.05)',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
   miniCardInfo: {
     display: 'flex',
     flexDirection: 'column',
@@ -145,15 +149,5 @@ welcomeSubtitle: {
     fontWeight: '800',
     alignSelf: 'flex-start',
     marginTop: '4px'
-  },
-  emptyState: {
-    gridColumn: '1 / -1',
-    padding: '60px',
-    textAlign: 'center',
-    backgroundColor: 'rgba(44, 62, 80, 0.02)',
-    borderRadius: '24px',
-    border: '1px dashed #cbd5e1',
-    color: COLORS.charcoalBlue,
-    opacity: 0.5,
   }
 };

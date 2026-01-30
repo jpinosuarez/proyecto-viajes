@@ -9,11 +9,16 @@ import BuscadorModal from './components/Buscador/BuscadorModal';
 import BentoGrid from './components/Bento/BentoGrid';
 import DashboardHome from './components/Dashboard/DashboardHome'; 
 import EdicionModal from './components/Modals/EdicionModal';
+import LandingPage from './components/Landing/LandingPage'; // NUEVO
+import VisorViaje from './components/VisorViaje/VisorViaje'; // NUEVO
 
 import { useViajes } from './hooks/useViajes';
+import { useAuth } from './context/AuthContext'; // Importar Auth
 import { styles } from './App.styles'; 
 
 function App() {
+  const { usuario, cargando } = useAuth(); // Estado de autenticación
+  
   const { 
     paisesVisitados, bitacora, bitacoraData, listaPaises, 
     agregarViaje, actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
@@ -24,14 +29,17 @@ function App() {
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
   
+  // Estado para el Editor (Modal pequeño)
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
+  // Estado para el Visor (Pantalla completa - Shared State)
+  const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
 
+  // Helpers
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
+  const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
 
-  // ASYNC: Esperamos a que Firestore nos devuelva el ID
   const seleccionarPais = useCallback(async (pais) => {
     const nuevoId = await agregarViaje(pais);
-    
     if (nuevoId) {
       setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
       setVistaActiva('mapa'); 
@@ -41,7 +49,6 @@ function App() {
     }
   }, [agregarViaje]);
 
-  // ASYNC: Esperamos la respuesta del toggle
   const onMapaPaisToggle = async (nuevosCodes) => {
     const nuevoId = await manejarCambioPaises(nuevosCodes);
     if (nuevoId) {
@@ -58,6 +65,11 @@ function App() {
     }
   };
 
+  // 1. Si no hay usuario, mostrar Landing Page
+  if (!cargando && !usuario) {
+    return <LandingPage />;
+  }
+
   const viajeParaEditar = bitacora.find(v => v.id === viajeEnEdicionId);
 
   return (
@@ -72,7 +84,12 @@ function App() {
             {vistaActiva === 'home' && (
               <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 style={styles.scrollableContent} className="custom-scroll">
-                <DashboardHome paisesVisitados={paisesVisitados} bitacora={bitacora} setVistaActiva={setVistaActiva} />
+                <DashboardHome 
+                  paisesVisitados={paisesVisitados} 
+                  bitacora={bitacora} 
+                  setVistaActiva={setVistaActiva}
+                  abrirVisor={abrirVisor} // Pasamos la función para abrir el detalle
+                />
               </motion.div>
             )}
 
@@ -91,7 +108,7 @@ function App() {
                   bitacoraData={bitacoraData} 
                   manejarEliminar={eliminarViaje}
                   abrirEditor={abrirEditor}
-                  actualizarDetallesViaje={actualizarDetallesViaje} 
+                  abrirVisor={abrirVisor} // Ahora usa el estado global
                 />
               </motion.div>
             )}
@@ -105,11 +122,22 @@ function App() {
         seleccionarPais={seleccionarPais} paisesVisitados={paisesVisitados} 
       />
 
+      {/* Editor Modal (Datos rápidos) */}
       <EdicionModal 
         viaje={viajeParaEditar} 
         bitacoraData={bitacoraData} 
         onClose={() => setViajeEnEdicionId(null)} 
         onSave={actualizarDetallesViaje} 
+      />
+
+      {/* Visor Inmersivo (Pantalla Completa) */}
+      <VisorViaje 
+        viajeId={viajeExpandidoId}
+        bitacoraLista={bitacora}
+        bitacoraData={bitacoraData}
+        onClose={() => setViajeExpandidoId(null)}
+        onEdit={abrirEditor}
+        onSave={actualizarDetallesViaje}
       />
     </div>
   );
