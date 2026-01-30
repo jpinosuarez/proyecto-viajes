@@ -9,19 +9,20 @@ import BuscadorModal from './components/Buscador/BuscadorModal';
 import BentoGrid from './components/Bento/BentoGrid';
 import DashboardHome from './components/Dashboard/DashboardHome'; 
 import EdicionModal from './components/Modals/EdicionModal';
-import LandingPage from './components/Landing/LandingPage'; // NUEVO
-import VisorViaje from './components/VisorViaje/VisorViaje'; // NUEVO
+import LandingPage from './components/Landing/LandingPage';
+import VisorViaje from './components/VisorViaje/VisorViaje';
 
 import { useViajes } from './hooks/useViajes';
-import { useAuth } from './context/AuthContext'; // Importar Auth
+import { useAuth } from './context/AuthContext';
 import { styles } from './App.styles'; 
 
 function App() {
-  const { usuario, cargando } = useAuth(); // Estado de autenticación
+  const { usuario, cargando } = useAuth();
   
   const { 
     paisesVisitados, bitacora, bitacoraData, listaPaises, 
-    agregarViaje, actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
+    agregarViaje, agregarParada, // Nueva función importada
+    actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
   } = useViajes();
   
   const [vistaActiva, setVistaActiva] = useState('home'); 
@@ -29,25 +30,49 @@ function App() {
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
   
-  // Estado para el Editor (Modal pequeño)
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
-  // Estado para el Visor (Pantalla completa - Shared State)
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
 
-  // Helpers
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
 
-  const seleccionarPais = useCallback(async (pais) => {
-    const nuevoId = await agregarViaje(pais);
-    if (nuevoId) {
-      setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
+  // Manejador Inteligente: Decide si es país o ciudad
+  const onLugarSeleccionado = useCallback(async (lugar) => {
+    let viajeId = null;
+
+    if (lugar.esPais) {
+      // Caso 1: Usuario seleccionó un país (ej: "Japón")
+      // Buscamos el objeto completo en nuestro catálogo local para tener datos extra (bandera, continente)
+      const paisCatalogo = listaPaises.find(p => p.code === lugar.code) 
+                        || listaPaises.find(p => p.name.includes(lugar.nombre));
+      
+      if (paisCatalogo) {
+        viajeId = await agregarViaje(paisCatalogo);
+      }
+    } else {
+      // Caso 2: Usuario seleccionó una ciudad/lugar (ej: "Tokio")
+      // agregarParada se encarga de crear el país si no existe
+      viajeId = await agregarParada(lugar);
+    }
+
+    // UX: Feedback y Navegación
+    if (viajeId) {
+      setDestino({ 
+        longitude: lugar.coordenadas[0], 
+        latitude: lugar.coordenadas[1], 
+        zoom: lugar.esPais ? 4 : 10, // Zoom más cerca si es ciudad
+        essential: true 
+      });
       setVistaActiva('mapa'); 
       setMostrarBuscador(false);
       setFiltro('');
-      setTimeout(() => abrirEditor(nuevoId), 300);
+      
+      // Si fue un país nuevo, abrimos el editor. Si fue ciudad, quizás solo el mapa.
+      if (lugar.esPais) {
+        setTimeout(() => abrirEditor(viajeId), 500);
+      }
     }
-  }, [agregarViaje]);
+  }, [agregarViaje, agregarParada, listaPaises]);
 
   const onMapaPaisToggle = async (nuevosCodes) => {
     const nuevoId = await manejarCambioPaises(nuevosCodes);
@@ -65,7 +90,6 @@ function App() {
     }
   };
 
-  // 1. Si no hay usuario, mostrar Landing Page
   if (!cargando && !usuario) {
     return <LandingPage />;
   }
@@ -88,7 +112,7 @@ function App() {
                   paisesVisitados={paisesVisitados} 
                   bitacora={bitacora} 
                   setVistaActiva={setVistaActiva}
-                  abrirVisor={abrirVisor} // Pasamos la función para abrir el detalle
+                  abrirVisor={abrirVisor} 
                 />
               </motion.div>
             )}
@@ -108,7 +132,7 @@ function App() {
                   bitacoraData={bitacoraData} 
                   manejarEliminar={eliminarViaje}
                   abrirEditor={abrirEditor}
-                  abrirVisor={abrirVisor} // Ahora usa el estado global
+                  abrirVisor={abrirVisor} 
                 />
               </motion.div>
             )}
@@ -119,10 +143,10 @@ function App() {
       <BuscadorModal 
         isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} 
         filtro={filtro} setFiltro={setFiltro} listaPaises={listaPaises} 
-        seleccionarPais={seleccionarPais} paisesVisitados={paisesVisitados} 
+        seleccionarLugar={onLugarSeleccionado} // Nombre actualizado
+        paisesVisitados={paisesVisitados} 
       />
 
-      {/* Editor Modal (Datos rápidos) */}
       <EdicionModal 
         viaje={viajeParaEditar} 
         bitacoraData={bitacoraData} 
@@ -130,7 +154,6 @@ function App() {
         onSave={actualizarDetallesViaje} 
       />
 
-      {/* Visor Inmersivo (Pantalla Completa) */}
       <VisorViaje 
         viajeId={viajeExpandidoId}
         bitacoraLista={bitacora}

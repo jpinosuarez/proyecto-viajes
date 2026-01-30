@@ -1,26 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Check, Plus } from 'lucide-react';
+import { Search, X, Check, MapPin, Globe } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BuscadorModal.styles';
 
-const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, listaPaises = [], seleccionarPais, paisesVisitados }) => {
-  const [hoveredCode, setHoveredCode] = useState(null);
+// Token de Mapbox (Idealmente mover a .env)
+const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
-  // VALIDACIÓN CRÍTICA: Nos aseguramos de que listaPaises sea un array antes de filtrar
-  const resultadosFiltrados = Array.isArray(listaPaises) 
-    ? listaPaises.filter(pais => {
-        if (!filtro) return true;
-        const busqueda = filtro.toLowerCase();
+const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar, paisesVisitados }) => {
+  const [resultados, setResultados] = useState([]);
+  const [cargando, setCargando] = useState(false);
+  const debounceRef = useRef(null);
+
+  // Efecto de búsqueda con debounce para no saturar la API
+  useEffect(() => {
+    if (!filtro || filtro.length < 3) {
+      setResultados([]);
+      return;
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      setCargando(true);
+      try {
+        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(filtro)}.json?types=country,place,locality,poi&language=es&access_token=${MAPBOX_TOKEN}`;
+        const res = await fetch(endpoint);
+        const data = await res.json();
         
-        // Uso de Optional Chaining para evitar errores si las propiedades no existen
-        const nombreEs = pais?.nombreEspanol?.toLowerCase() || '';
-        const nombreEn = pais?.name?.toLowerCase() || '';
-        const nombreAlt = pais?.nombre?.toLowerCase() || '';
+        // Procesar resultados de Mapbox para adaptarlos a nuestra UI
+        const procesados = data.features.map(feat => {
+          // Identificar país padre (contexto)
+          const contextoPais = feat.context?.find(c => c.id.startsWith('country')) || (feat.place_type.includes('country') ? feat : null);
+          const codigoPais = contextoPais?.properties?.short_code?.toUpperCase(); // Ej: AR, FR
+          
+          // Mapear Mapbox Alpha-2 a nuestro Alpha-3 (Aprox) o pasar el Alpha-2 para que useViajes lo resuelva
+          // Nota: Mapbox usa ISO 3166-1 alpha-2 (FR), nosotros alpha-3 (FRA). 
+          // useViajes.js tiene una función 'buscarPaisEnCatalogo' que intentará matchear.
+          
+          return {
+            id: feat.id,
+            nombre: feat.text, // Ej: París
+            nombreCompleto: feat.place_name, // Ej: París, Francia
+            tipo: feat.place_type[0], // country, place, poi
+            coordenadas: feat.center, // [lng, lat]
+            paisCodigo: codigoPais, // FR
+            paisNombre: contextoPais?.text || feat.text // Francia
+          };
+        });
 
-        return nombreEs.includes(busqueda) || nombreEn.includes(busqueda) || nombreAlt.includes(busqueda);
-      }).slice(0, 50)
-    : []; // Si no es un array, devolvemos una lista vacía para que no se rompa
+        setResultados(procesados);
+      } catch (error) {
+        console.error("Error buscando en Mapbox:", error);
+      } finally {
+        setCargando(false);
+      }
+    }, 400); // 400ms de espera al escribir
+
+  }, [filtro]);
+
+  const manejarSeleccion = (item) => {
+    // Normalizamos la selección para enviarla a App.jsx
+    seleccionarLugar({
+      esPais: item.tipo === 'country',
+      nombre: item.nombre,
+      coordenadas: item.coordenadas,
+      // Datos para crear el viaje padre si es necesario
+      paisNombre: item.paisNombre,
+      paisCodigo: item.paisCodigo, // Alpha-2 (ej: AR)
+      // Datos para catálogo
+      code: item.paisCodigo // Fallback
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -41,7 +92,7 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, listaPaises = [], s
           onClick={(e) => e.stopPropagation()}
         >
           <div style={styles.header}>
-            <h3 style={styles.titulo}>Registrar Nueva Aventura</h3>
+            <h3 style={styles.titulo}>Explora el Mundo</h3>
             <div onClick={onClose} style={{ cursor: 'pointer', padding: '5px' }}>
               <X size={20} color={COLORS.charcoalBlue} />
             </div>
@@ -51,7 +102,7 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, listaPaises = [], s
             <Search size={20} color={COLORS.atomicTangerine} />
             <input 
               autoFocus 
-              placeholder="¿Cuál es tu próximo destino?" 
+              placeholder="Busca países, ciudades o monumentos..." 
               style={styles.inputStyle} 
               value={filtro} 
               onChange={(e) => setFiltro(e.target.value)} 
@@ -59,52 +110,43 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, listaPaises = [], s
           </div>
 
           <div style={styles.listaContainer} className="custom-scroll">
-            {resultadosFiltrados.map(pais => {
-              const isVisited = paisesVisitados.includes(pais.code);
-              const isHovered = hoveredCode === pais.code;
-
-              return (
-                <motion.div 
-                  key={pais.code} 
-                  style={{
-                    ...styles.paisItem(false),
-                    borderColor: isHovered ? COLORS.atomicTangerine : 'rgba(44, 62, 80, 0.05)',
-                    transform: isHovered ? 'translateX(8px)' : 'none',
-                    backgroundColor: isHovered ? '#FFFFFF' : 'white',
-                    cursor: 'pointer'
-                  }} 
-                  onMouseEnter={() => setHoveredCode(pais.code)}
-                  onMouseLeave={() => setHoveredCode(null)}
-                  onClick={() => seleccionarPais(pais)}
-                >
-                  <div style={styles.paisInfo}>
-                    <span style={{ fontSize: '1.4rem' }}>{pais.flag}</span>
-                    <span style={styles.nombrePais}>{pais.nombreEspanol}</span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {isVisited && (
-                      <span style={styles.badgeVisitado}>
-                        <Check size={12} style={{ marginRight: '4px' }} strokeWidth={3} />
-                        YA CONOCIDO
-                      </span>
-                    )}
-                    
-                    {isHovered && (
-                      <span style={{ color: COLORS.atomicTangerine, fontWeight: 'bold', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Plus size={14} /> Registrar
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
+            {cargando && <div style={{textAlign:'center', padding:'20px', color:'#94a3b8'}}>Explorando el mapa... 🗺️</div>}
             
-            {resultadosFiltrados.length === 0 && (
+            {!cargando && resultados.length === 0 && filtro.length > 2 && (
               <div style={{ textAlign: 'center', padding: '40px', color: COLORS.charcoalBlue, opacity: 0.5 }}>
                 <p>No encontramos ese destino... todavía. 🌍</p>
               </div>
             )}
+
+            {resultados.map(item => (
+              <motion.div 
+                key={item.id} 
+                whileHover={{ backgroundColor: '#f8fafc', translateX: 5 }}
+                style={{
+                  ...styles.paisItem(false),
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #f1f5f9'
+                }} 
+                onClick={() => manejarSeleccion(item)}
+              >
+                <div style={styles.paisInfo}>
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '8px', 
+                    backgroundColor: item.tipo === 'country' ? `${COLORS.atomicTangerine}20` : `${COLORS.mutedTeal}20`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: item.tipo === 'country' ? COLORS.atomicTangerine : COLORS.mutedTeal
+                  }}>
+                    {item.tipo === 'country' ? <Globe size={18} /> : <MapPin size={18} />}
+                  </div>
+                  <div>
+                    <span style={styles.nombrePais}>{item.nombre}</span>
+                    <span style={{ display:'block', fontSize:'0.75rem', color:'#94a3b8' }}>
+                        {item.tipo === 'country' ? 'País' : `${item.paisNombre || 'Lugar'}`}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </motion.div>
