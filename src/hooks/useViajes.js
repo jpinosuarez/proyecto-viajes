@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MAPA_SELLOS } from '../assets/sellos';
-import { db, storage } from '../firebase'; // Importamos storage
+import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { 
   collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy 
@@ -33,7 +33,6 @@ export const useViajes = () => {
 
       setBitacora(docs);
 
-      // Mapear data para compatibilidad con BentoGrid
       const dataMap = docs.reduce((acc, viaje) => {
         acc[viaje.id] = { ...viaje };
         return acc;
@@ -49,27 +48,20 @@ export const useViajes = () => {
   }, [bitacora]);
 
   // --- FUNCIONES AUXILIARES DE STORAGE ---
-  
   const subirFotoStorage = async (viajeId, fotoBase64) => {
-    if (!fotoBase64 || !fotoBase64.startsWith('data:image')) return fotoBase64; // Si ya es URL o null, devolver tal cual
+    if (!fotoBase64 || !fotoBase64.startsWith('data:image')) return fotoBase64;
     
     try {
-      // Crear referencia: usuarios/[uid]/viajes/[viajeId]/portada.jpg
       const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
-      
-      // Subir la cadena Base64
       await uploadString(storageRef, fotoBase64, 'data_url');
-      
-      // Obtener la URL pública
-      const downloadURL = await getDownloadURL(storageRef);
-      return downloadURL;
+      return await getDownloadURL(storageRef);
     } catch (error) {
       console.error("Error subiendo imagen:", error);
       return null;
     }
   };
 
-  // --- ACCIONES FIRESTORE ---
+  // --- ACCIONES FIRESTORE (ASYNC) ---
 
   const agregarViaje = async (pais) => {
     if (!usuario) return null;
@@ -96,7 +88,7 @@ export const useViajes = () => {
 
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
-      return docRef.id;
+      return docRef.id; // Retorna el ID generado por Firestore
     } catch (e) {
       console.error("Error al agregar viaje:", e);
       return null;
@@ -105,18 +97,13 @@ export const useViajes = () => {
 
   const actualizarDetallesViaje = async (id, data) => {
     if (!usuario) return;
-    
     try {
-      // 1. Verificar si hay una foto nueva para subir
       let fotoUrl = data.foto;
       if (data.foto && data.foto.startsWith('data:image')) {
         fotoUrl = await subirFotoStorage(id, data.foto);
       }
-
-      // 2. Guardar en Firestore con la URL (no el Base64)
       const datosLimpios = { ...data, foto: fotoUrl };
       const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, id);
-      
       await updateDoc(viajeRef, datosLimpios);
     } catch (e) {
       console.error("Error actualizando viaje:", e);
@@ -126,24 +113,22 @@ export const useViajes = () => {
   const eliminarViaje = async (id) => {
     if (!usuario) return;
     try {
-      // 1. Eliminar documento
       await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
-      
-      // 2. Intentar eliminar foto asociada (limpieza)
       const fotoRef = ref(storage, `usuarios/${usuario.uid}/viajes/${id}/portada.jpg`);
-      await deleteObject(fotoRef).catch(() => {}); // Ignoramos error si no existía foto
+      await deleteObject(fotoRef).catch(() => {}); 
     } catch (e) {
       console.error("Error eliminando:", e);
     }
   };
 
-  const manejarCambioPaises = (nuevosCodes) => {
+  // Ahora es async para poder esperar a agregarViaje
+  const manejarCambioPaises = async (nuevosCodes) => {
     if (!usuario) return null;
     
     if (nuevosCodes.length > paisesVisitados.length) {
       const codeAdded = nuevosCodes.find(c => !paisesVisitados.includes(c));
       const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded);
-      if (paisInfo) return agregarViaje(paisInfo);
+      if (paisInfo) return await agregarViaje(paisInfo); // Esperamos el ID
     } else {
       const codeRemoved = paisesVisitados.find(c => !nuevosCodes.includes(c));
       const viajeAEliminar = bitacora.find(v => v.code === codeRemoved);

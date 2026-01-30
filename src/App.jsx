@@ -28,17 +28,22 @@ function App() {
 
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
 
-  const seleccionarPais = useCallback((pais) => {
-    const nuevoId = agregarViaje(pais);
-    setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
-    setVistaActiva('mapa'); 
-    setMostrarBuscador(false);
-    setFiltro('');
-    setTimeout(() => abrirEditor(nuevoId), 300);
+  // ASYNC: Esperamos a que Firestore nos devuelva el ID
+  const seleccionarPais = useCallback(async (pais) => {
+    const nuevoId = await agregarViaje(pais);
+    
+    if (nuevoId) {
+      setDestino({ longitude: pais.latlng[1], latitude: pais.latlng[0], zoom: 4, essential: true });
+      setVistaActiva('mapa'); 
+      setMostrarBuscador(false);
+      setFiltro('');
+      setTimeout(() => abrirEditor(nuevoId), 300);
+    }
   }, [agregarViaje]);
 
-  const onMapaPaisToggle = (nuevosCodes) => {
-    const nuevoId = manejarCambioPaises(nuevosCodes);
+  // ASYNC: Esperamos la respuesta del toggle
+  const onMapaPaisToggle = async (nuevosCodes) => {
+    const nuevoId = await manejarCambioPaises(nuevosCodes);
     if (nuevoId) {
       abrirEditor(nuevoId);
     }
@@ -81,7 +86,6 @@ function App() {
             {vistaActiva === 'bitacora' && (
               <motion.div key="bitacora" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
                 style={styles.scrollableContent} className="custom-scroll">
-                {/* AQUÍ ESTABA EL ERROR: Faltaba pasar la función actualizarDetallesViaje */}
                 <BentoGrid 
                   viajes={bitacora} 
                   bitacoraData={bitacoraData} 
