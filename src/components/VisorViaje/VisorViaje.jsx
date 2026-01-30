@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Edit3, Calendar, MapPin, Sparkles, Star, BookOpen, Map, Check, X, Camera 
+  ArrowLeft, Edit3, Calendar, MapPin, Sparkles, Star, BookOpen, Map, Check, X, Camera
 } from 'lucide-react';
 import { IMAGENES_SELLOS } from '../../assets/sellos';
 import { COLORS } from '../../theme';
@@ -62,9 +62,9 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
                 <span style={{ 
                     color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', 
                     background: 'rgba(0,0,0,0.3)', padding: '4px 8px', borderRadius: '4px',
-                    backdropFilter: 'blur(4px)'
+                    backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '4px'
                 }}>
-                  <Camera size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-top' }}/>
+                  <Camera size={12} />
                   Foto por <a href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`} target="_blank" rel="noopener noreferrer" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}>{data.fotoCredito.nombre}</a> en Unsplash
                 </span>
             </div>
@@ -102,7 +102,6 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             <span style={styles.infoLabel}>PERÍODO</span>
           </div>
           
-          {/* ... resto de info items ... */}
           <div style={styles.infoItem}>
             <MapPin size={20} color={COLORS.mutedTeal} />
             {modoEdicion ? (

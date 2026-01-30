@@ -2,13 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Regla para datos de usuario (Privado)
+    // 1. ZONA PRIVADA: Datos del usuario (Bitácora personal)
+    // Solo el dueño puede ver y editar sus viajes.
     match /usuarios/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Regla para Caché Global de Fotos (Público para usuarios logueados)
-    // Permite leer las fotos existentes y crear nuevas si no existen
+    // 2. ZONA COMPARTIDA: Caché Global de Fotos (paises_info)
+    // Cualquier usuario logueado puede consultar el catálogo de fotos o aportar una nueva si no existe.
+    // Esto es clave para la eficiencia: "Uno busca, todos se benefician".
     match /paises_info/{paisCode} {
       allow read, write: if request.auth != null;
     }

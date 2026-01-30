@@ -9,6 +9,7 @@ import {
   ref, uploadString, getDownloadURL, deleteObject 
 } from 'firebase/storage';
 
+// CLAVE API UNSPLASH (Access Key)
 const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg';
 
 export const useViajes = () => {
@@ -16,6 +17,7 @@ export const useViajes = () => {
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraData, setBitacoraData] = useState({});
 
+  // 1. ESCUCHAR CAMBIOS EN TIEMPO REAL
   useEffect(() => {
     if (!usuario) {
       setBitacora([]);
@@ -51,6 +53,7 @@ export const useViajes = () => {
   // --- LÓGICA DE FOTOS (STORAGE & CACHÉ HÍBRIDO) ---
 
   const subirFotoStorage = async (viajeId, fotoBase64) => {
+    // Si no es base64 (es null o una URL ya existente), devolvemos tal cual
     if (!fotoBase64 || !fotoBase64.startsWith('data:image')) return fotoBase64;
     
     try {
@@ -65,21 +68,20 @@ export const useViajes = () => {
 
   const obtenerFotoConCache = async (pais) => {
     try {
-      // 1. CACHÉ GLOBAL: Verificar si ya existe en Firestore
+      // A. ESTRATEGIA DE CACHÉ: Verificar si ya tenemos foto para este país en Firestore
       const docRef = doc(db, 'paises_info', pais.code);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        console.log(`⚡ Caché hit: ${pais.nombreEspanol}`);
+        console.log(`⚡ Usando caché global para ${pais.nombreEspanol}`);
         return docSnap.data();
       }
 
-      // 2. API UNSPLASH: Buscar foto icónica
-      // Usamos el nombre en inglés (si existe) para mejores resultados + keywords clave
+      // B. FALLBACK: Si no existe, llamar a Unsplash API
+      console.log(`🌍 Buscando en Unsplash para ${pais.nombreEspanol}...`);
+      // Usamos palabras clave para asegurar calidad temática (travel, landmark, architecture)
       const nombreBusqueda = pais.name || pais.nombreEspanol;
-      const queryBusqueda = `${nombreBusqueda} famous landmark travel`;
-      
-      console.log(`🌍 Unsplash API: Buscando "${queryBusqueda}"...`);
+      const queryBusqueda = `${nombreBusqueda} famous landmark travel architecture`;
       
       const response = await fetch(
         `https://api.unsplash.com/photos/random?query=${encodeURIComponent(queryBusqueda)}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`
@@ -89,8 +91,17 @@ export const useViajes = () => {
 
       const data = await response.json();
       
+      // OPTIMIZACIÓN DE IMAGEN (Quality & Size Control)
+      // Usamos la URL 'raw' y le inyectamos parámetros de procesamiento para asegurar nitidez.
+      // w=1920: Ancho Full HD para que se vea nítida en el Visor.
+      // q=80: Compresión inteligente.
+      // auto=format: Usa WebP/AVIF si es posible (carga más rápida).
+      const rawUrl = data.urls.raw;
+      const separador = rawUrl.includes('?') ? '&' : '?';
+      const urlOptimizada = `${rawUrl}${separador}w=1920&q=80&auto=format&fit=crop`;
+
       const nuevaFotoInfo = {
-        url: data.urls.regular,
+        url: urlOptimizada, 
         credito: {
           nombre: data.user.name,
           username: data.user.username,
@@ -98,14 +109,14 @@ export const useViajes = () => {
         }
       };
 
-      // 3. GUARDAR EN CACHÉ: Para el futuro
+      // C. ACTUALIZAR CACHÉ: Guardamos la foto optimizada para todos
       await setDoc(docRef, nuevaFotoInfo);
       
       return nuevaFotoInfo;
 
     } catch (error) {
       console.warn("⚠️ Fallback: No se pudo obtener foto automática.", error);
-      return null; // Retorna null para que se use el color por defecto (Prioridad 3)
+      return null;
     }
   };
 
@@ -115,7 +126,7 @@ export const useViajes = () => {
     if (!usuario) return null;
     const fechaISO = new Date().toISOString().split('T')[0];
     
-    // Prioridad 2: Intentamos obtener foto de API/Caché
+    // Obtenemos la foto (del caché o de la API)
     const fotoInfo = await obtenerFotoConCache(pais);
 
     const nuevoViaje = {
@@ -129,9 +140,8 @@ export const useViajes = () => {
       fechaFin: fechaISO,
       texto: "",
       rating: 5,
-      // Si fotoInfo es null, se guarda null (activando Prioridad 3: Color)
-      foto: fotoInfo?.url || null, 
-      fotoCredito: fotoInfo?.credito || null,
+      foto: fotoInfo?.url || null, // Guardamos la URL optimizada
+      fotoCredito: fotoInfo?.credito || null, 
       ciudades: "",
       monumentos: "",
       clima: "",
@@ -156,14 +166,11 @@ export const useViajes = () => {
       // Prioridad 1: Si el usuario sube una foto nueva (Base64), la procesamos
       if (data.foto && data.foto.startsWith('data:image')) {
         fotoUrl = await subirFotoStorage(id, data.foto);
-        // Al subir foto propia, podríamos querer borrar el crédito de Unsplash,
-        // pero dejarlo no hace daño (simplemente dejará de coincidir, podrías limpiarlo si quisieras)
       }
       
-      // Si fotoUrl cambia a una url de Storage, sobrescribe la de Unsplash
       const datosLimpios = { ...data, foto: fotoUrl };
       
-      // Si el usuario subió foto propia, limpiamos el crédito para que no salga el de Unsplash
+      // Si el usuario subió foto propia, limpiamos el crédito de Unsplash para evitar confusión
       if (data.foto && data.foto.startsWith('data:image')) {
          datosLimpios.fotoCredito = null; 
       }
@@ -179,7 +186,7 @@ export const useViajes = () => {
     if (!usuario) return;
     try {
       await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
-      // Intentar borrar de Storage por si era una foto propia (Prioridad 1)
+      // Intentar borrar de Storage por si era una foto propia
       const fotoRef = ref(storage, `usuarios/${usuario.uid}/viajes/${id}/portada.jpg`);
       await deleteObject(fotoRef).catch(() => {}); 
     } catch (e) {
