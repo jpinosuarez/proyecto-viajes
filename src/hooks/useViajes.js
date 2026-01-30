@@ -3,18 +3,19 @@ import { MAPA_SELLOS } from '../assets/sellos';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { 
-  collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy 
+  collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc 
 } from 'firebase/firestore';
 import { 
   ref, uploadString, getDownloadURL, deleteObject 
 } from 'firebase/storage';
+
+const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg';
 
 export const useViajes = () => {
   const { usuario } = useAuth();
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraData, setBitacoraData] = useState({});
 
-  // 1. ESCUCHAR CAMBIOS EN TIEMPO REAL
   useEffect(() => {
     if (!usuario) {
       setBitacora([]);
@@ -47,7 +48,8 @@ export const useViajes = () => {
     return [...new Set(bitacora.map(v => v.code))];
   }, [bitacora]);
 
-  // --- FUNCIONES AUXILIARES DE STORAGE ---
+  // --- LÓGICA DE FOTOS (STORAGE & CACHÉ HÍBRIDO) ---
+
   const subirFotoStorage = async (viajeId, fotoBase64) => {
     if (!fotoBase64 || !fotoBase64.startsWith('data:image')) return fotoBase64;
     
@@ -61,12 +63,61 @@ export const useViajes = () => {
     }
   };
 
-  // --- ACCIONES FIRESTORE (ASYNC) ---
+  const obtenerFotoConCache = async (pais) => {
+    try {
+      // 1. CACHÉ GLOBAL: Verificar si ya existe en Firestore
+      const docRef = doc(db, 'paises_info', pais.code);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        console.log(`⚡ Caché hit: ${pais.nombreEspanol}`);
+        return docSnap.data();
+      }
+
+      // 2. API UNSPLASH: Buscar foto icónica
+      // Usamos el nombre en inglés (si existe) para mejores resultados + keywords clave
+      const nombreBusqueda = pais.name || pais.nombreEspanol;
+      const queryBusqueda = `${nombreBusqueda} famous landmark travel`;
+      
+      console.log(`🌍 Unsplash API: Buscando "${queryBusqueda}"...`);
+      
+      const response = await fetch(
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(queryBusqueda)}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`
+      );
+
+      if (!response.ok) throw new Error('Error en Unsplash API');
+
+      const data = await response.json();
+      
+      const nuevaFotoInfo = {
+        url: data.urls.regular,
+        credito: {
+          nombre: data.user.name,
+          username: data.user.username,
+          link: data.user.links.html
+        }
+      };
+
+      // 3. GUARDAR EN CACHÉ: Para el futuro
+      await setDoc(docRef, nuevaFotoInfo);
+      
+      return nuevaFotoInfo;
+
+    } catch (error) {
+      console.warn("⚠️ Fallback: No se pudo obtener foto automática.", error);
+      return null; // Retorna null para que se use el color por defecto (Prioridad 3)
+    }
+  };
+
+  // --- ACCIONES FIRESTORE ---
 
   const agregarViaje = async (pais) => {
     if (!usuario) return null;
     const fechaISO = new Date().toISOString().split('T')[0];
     
+    // Prioridad 2: Intentamos obtener foto de API/Caché
+    const fotoInfo = await obtenerFotoConCache(pais);
+
     const nuevoViaje = {
       code: pais.code,
       nombreEspanol: pais.nombreEspanol,
@@ -78,7 +129,9 @@ export const useViajes = () => {
       fechaFin: fechaISO,
       texto: "",
       rating: 5,
-      foto: null,
+      // Si fotoInfo es null, se guarda null (activando Prioridad 3: Color)
+      foto: fotoInfo?.url || null, 
+      fotoCredito: fotoInfo?.credito || null,
       ciudades: "",
       monumentos: "",
       clima: "",
@@ -88,7 +141,7 @@ export const useViajes = () => {
 
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
-      return docRef.id; // Retorna el ID generado por Firestore
+      return docRef.id;
     } catch (e) {
       console.error("Error al agregar viaje:", e);
       return null;
@@ -99,10 +152,22 @@ export const useViajes = () => {
     if (!usuario) return;
     try {
       let fotoUrl = data.foto;
+      
+      // Prioridad 1: Si el usuario sube una foto nueva (Base64), la procesamos
       if (data.foto && data.foto.startsWith('data:image')) {
         fotoUrl = await subirFotoStorage(id, data.foto);
+        // Al subir foto propia, podríamos querer borrar el crédito de Unsplash,
+        // pero dejarlo no hace daño (simplemente dejará de coincidir, podrías limpiarlo si quisieras)
       }
+      
+      // Si fotoUrl cambia a una url de Storage, sobrescribe la de Unsplash
       const datosLimpios = { ...data, foto: fotoUrl };
+      
+      // Si el usuario subió foto propia, limpiamos el crédito para que no salga el de Unsplash
+      if (data.foto && data.foto.startsWith('data:image')) {
+         datosLimpios.fotoCredito = null; 
+      }
+
       const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, id);
       await updateDoc(viajeRef, datosLimpios);
     } catch (e) {
@@ -114,6 +179,7 @@ export const useViajes = () => {
     if (!usuario) return;
     try {
       await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
+      // Intentar borrar de Storage por si era una foto propia (Prioridad 1)
       const fotoRef = ref(storage, `usuarios/${usuario.uid}/viajes/${id}/portada.jpg`);
       await deleteObject(fotoRef).catch(() => {}); 
     } catch (e) {
@@ -121,14 +187,13 @@ export const useViajes = () => {
     }
   };
 
-  // Ahora es async para poder esperar a agregarViaje
   const manejarCambioPaises = async (nuevosCodes) => {
     if (!usuario) return null;
     
     if (nuevosCodes.length > paisesVisitados.length) {
       const codeAdded = nuevosCodes.find(c => !paisesVisitados.includes(c));
       const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded);
-      if (paisInfo) return await agregarViaje(paisInfo); // Esperamos el ID
+      if (paisInfo) return await agregarViaje(paisInfo);
     } else {
       const codeRemoved = paisesVisitados.find(c => !nuevosCodes.includes(c));
       const viajeAEliminar = bitacora.find(v => v.code === codeRemoved);

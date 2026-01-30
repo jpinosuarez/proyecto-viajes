@@ -9,11 +9,9 @@ import { COLORS } from '../../theme';
 import { styles } from './VisorViaje.styles';
 
 const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onSave }) => {
-  // Buscamos el objeto viaje base y sus datos extendidos
   const viajeBase = bitacoraLista.find(v => v.id === viajeId);
   const data = bitacoraData[viajeId] || {};
   
-  // Estado local para el modo edición dentro del visor (opcional, si queremos mantener la edición inmersiva)
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formTemp, setFormTemp] = useState({});
 
@@ -55,6 +53,23 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             )}
           </div>
 
+          {/* CRÉDITO DEL FOTÓGRAFO (Solo si existe y no estamos editando) */}
+          {!modoEdicion && data.fotoCredito && (
+            <div style={{
+                position: 'absolute', bottom: '180px', right: '40px', zIndex: 90,
+                display: 'flex', alignItems: 'center', gap: '6px'
+            }}>
+                <span style={{ 
+                    color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', 
+                    background: 'rgba(0,0,0,0.3)', padding: '4px 8px', borderRadius: '4px',
+                    backdropFilter: 'blur(4px)'
+                }}>
+                  <Camera size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'text-top' }}/>
+                  Foto por <a href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`} target="_blank" rel="noopener noreferrer" style={{ color: 'white', fontWeight: 'bold', textDecoration: 'none' }}>{data.fotoCredito.nombre}</a> en Unsplash
+                </span>
+            </div>
+          )}
+
           {/* CONTENIDO INFERIOR */}
           <div style={styles.fullWidthGlass}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
@@ -86,7 +101,18 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             )}
             <span style={styles.infoLabel}>PERÍODO</span>
           </div>
-          {/* ... resto de items igual que antes, usando data o formTemp ... */}
+          
+          {/* ... resto de info items ... */}
+          <div style={styles.infoItem}>
+            <MapPin size={20} color={COLORS.mutedTeal} />
+            {modoEdicion ? (
+              <input type="text" placeholder="¿Qué ciudades?" style={styles.miniInput} value={formTemp.ciudades} onChange={e => setFormTemp({...formTemp, ciudades: e.target.value})} />
+            ) : (
+              <span style={{ fontWeight: '700' }}>{data.ciudades || '---'}</span>
+            )}
+            <span style={styles.infoLabel}>LOCALIZACIÓN</span>
+          </div>
+
           <div style={styles.infoItem}>
              <Star size={20} color={COLORS.atomicTangerine} />
              {modoEdicion ? <input type="number" max="5" min="1" value={formTemp.rating} onChange={e=>setFormTemp({...formTemp, rating: Number(e.target.value)})} style={{width:'50px'}}/> : <span style={styles.monoData}>{data.rating}/5</span>}
@@ -109,7 +135,14 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
               <span style={styles.infoLabel}>Sabores</span>
               {modoEdicion ? <input type="text" value={formTemp.gastronomia} onChange={e=>setFormTemp({...formTemp, gastronomia:e.target.value})}/> : <p style={{ fontWeight: '600', margin: '5px 0' }}>{data.gastronomia || '---'}</p>}
             </div>
-            {/* ... resto de cards ... */}
+            <div style={styles.highlightCard}>
+              <span style={styles.infoLabel}>Compañeros</span>
+              {modoEdicion ? <input type="text" value={formTemp.companero} onChange={e=>setFormTemp({...formTemp, companero:e.target.value})}/> : <p style={{ fontWeight: '600', margin: '5px 0' }}>{data.companero || 'Solo'}</p>}
+            </div>
+            <div style={styles.highlightCard}>
+              <span style={styles.infoLabel}>Hitos</span>
+              {modoEdicion ? <input type="text" value={formTemp.monumentos} onChange={e=>setFormTemp({...formTemp, monumentos:e.target.value})}/> : <p style={{ fontWeight: '600', margin: '5px 0' }}>{data.monumentos || '---'}</p>}
+            </div>
           </div>
         </div>
       </motion.div>
