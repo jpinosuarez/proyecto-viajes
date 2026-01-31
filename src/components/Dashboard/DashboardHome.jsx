@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Map, Plus } from 'lucide-react';
+import { Compass, Map } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import StatsMapa from './StatsMapa';
 import { COLORS } from '../../theme';
@@ -7,105 +7,66 @@ import { styles } from './DashboardHome.styles';
 
 const DashboardHome = ({ paisesVisitados, bitacora, setVistaActiva, abrirVisor }) => {
   const { usuario } = useAuth();
-  
-  // Obtener primer nombre
   const nombreUsuario = usuario?.displayName ? usuario.displayName.split(' ')[0] : 'Viajero';
 
-  // Obtener aventuras recientes
+  // Recientes
   const recientes = [...bitacora]
     .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio))
-    .slice(0, 4);
+    .slice(0, 3); // Solo mostrar 3 para balance visual
 
   return (
     <div style={styles.dashboardContainer}>
-      {/* Hero Section */}
-      <div style={styles.heroSection}>
+      
+      {/* 1. Header de Bienvenida */}
+      <header style={styles.header}>
         <div>
-          <h1 style={styles.welcomeTitle}>¡Hola, {nombreUsuario}! 👋</h1>
-          <p style={styles.welcomeSubtitle}>
-            Tu pasaporte digital tiene <strong style={{color: COLORS.atomicTangerine}}>{paisesVisitados.length} sellos</strong>. 
-            ¿Cuál es la próxima historia?
-          </p>
+          <h1 style={styles.title}>Hola, {nombreUsuario} 👋</h1>
+          <p style={styles.subtitle}>Tu mundo se expande con cada viaje.</p>
         </div>
+      </header>
+
+      {/* 2. Grid Principal */}
+      <div style={styles.mainGrid}>
         
-        <div style={styles.quickActionsGrid}>
-          <button style={styles.statBox} onClick={() => setVistaActiva('mapa')}>
-            <div style={styles.iconCircle(COLORS.atomicTangerine)}>
-              <Map size={20} />
-            </div>
-            <div>
-              <span style={styles.statLabel}>Mapa Global</span>
-              <span style={styles.statValue}>Explorar</span>
-            </div>
-          </button>
+        {/* Columna Izquierda: Estadísticas y Mapa */}
+        <div style={styles.leftColumn}>
+          <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
           
-          <button style={styles.statBox} onClick={() => setVistaActiva('bitacora')}>
-            <div style={styles.iconCircle(COLORS.charcoalBlue)}>
-              <Compass size={20} />
+          <div style={styles.mapTeaser} onClick={() => setVistaActiva('mapa')}>
+            <div style={styles.mapOverlay} />
+            <div style={styles.mapContent}>
+              <Map size={32} color={COLORS.atomicTangerine} />
+              <h3>Mapa Interactivo</h3>
+              <p>Visualiza tus {paisesVisitados.length} países conquistados</p>
             </div>
-            <div>
-              <span style={styles.statLabel}>Bitácora</span>
-              <span style={styles.statValue}>Ver Todo</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Grid Principal */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        
-        {/* Columna Izquierda: Banner Mapa + Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-           <div style={styles.mapBanner} onClick={() => setVistaActiva('mapa')}>
-              <div style={styles.mapBannerOverlay} />
-              <div style={styles.mapBannerContent}>
-                <h3 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Mapa Interactivo</h3>
-                <p style={{ opacity: 0.9, marginTop: '8px' }}>Visualiza tus rutas y completa el mundo.</p>
-              </div>
-           </div>
-           
-           <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
+          </div>
         </div>
 
-        {/* Columna Derecha: Recientes */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Columna Derecha: Actividad Reciente */}
+        <div style={styles.rightColumn}>
           <div style={styles.sectionHeader}>
-            <h3 style={styles.sectionTitle}>Aventuras Recientes</h3>
-            <button style={styles.viewAllBtn} onClick={() => setVistaActiva('bitacora')}>
-              Ver Bitácora
-            </button>
+            <h3>Aventuras Recientes</h3>
+            <button onClick={() => setVistaActiva('bitacora')}>Ver todo</button>
           </div>
 
-          <div style={styles.recentGrid}>
+          <div style={styles.cardsContainer}>
             {recientes.length > 0 ? recientes.map(viaje => (
-              <div key={viaje.id} style={styles.miniCard} onClick={() => abrirVisor(viaje.id)}>
-                <div style={{
-                  width: '60px', height: '60px', borderRadius: '12px',
-                  backgroundColor: COLORS.charcoalBlue,
-                  backgroundImage: viaje.foto ? `url(${viaje.foto})` : 'none',
-                  backgroundSize: 'cover', backgroundPosition: 'center',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.5rem', color: 'white', flexShrink: 0
-                }}>
-                  {!viaje.foto && viaje.flag}
+              <div key={viaje.id} style={styles.card} onClick={() => abrirVisor(viaje.id)}>
+                <div style={styles.cardImage(viaje.foto)}>
+                  {!viaje.foto && <span style={{fontSize:'2rem'}}>{viaje.flag}</span>}
                 </div>
-                <div style={styles.miniCardInfo}>
-                  <span style={{fontWeight: '800', color: COLORS.charcoalBlue, fontSize: '1rem'}}>
-                    {viaje.titulo || viaje.nombreEspanol}
-                  </span>
-                  <span style={{fontSize: '0.8rem', color: '#64748b'}}>
-                    {viaje.fechaInicio}
-                  </span>
-                  {viaje.ciudades && <span style={styles.badge}>{viaje.ciudades.split(',')[0]}</span>}
+                <div style={styles.cardContent}>
+                  <h4>{viaje.titulo || viaje.nombreEspanol}</h4>
+                  <span>{viaje.fechaInicio}</span>
+                  {viaje.ciudades && <div style={styles.tag}>{viaje.ciudades.split(',').length} paradas</div>}
                 </div>
               </div>
             )) : (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: '20px' }}>
-                <p>Aún no hay viajes registrados.</p>
-              </div>
+              <div style={styles.emptyState}>No hay viajes recientes.</div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

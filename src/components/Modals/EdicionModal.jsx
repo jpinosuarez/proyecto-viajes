@@ -1,111 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Calendar, MapPin, Trash2, Plus } from 'lucide-react';
+import { X, Save, Camera, Calendar } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
-import { db } from '../../firebase'; 
-import { collection, getDocs } from 'firebase/firestore'; 
 import { useAuth } from '../../context/AuthContext';
-import { useViajes } from '../../hooks/useViajes';
+import CityManager from '../Shared/CityManager'; // Reutilizamos
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
-
-const EdicionModal = ({ viaje, bitacoraData, onClose, onSave, esBorrador, ciudadInicial }) => {
-  const { usuario } = useAuth();
-  const { agregarParada, eliminarParada } = useViajes();
-  
+const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => {
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
-  const [newCityInput, setNewCityInput] = useState('');
-  const [searchingCity, setSearchingCity] = useState(false);
 
-  // Inicializar Formulario
   useEffect(() => {
     if (viaje) {
-      if (esBorrador) {
-        // Modo Creación: Usar datos del borrador directos
-        setFormData({
-            ...viaje,
-            titulo: viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
-            fechaInicio: viaje.fechaInicio,
-            fechaFin: viaje.fechaFin,
-            texto: "",
-            foto: null
-        });
-        // Si hay ciudad inicial en borrador, mostrarla visualmente
-        setParadas(ciudadInicial ? [{ id: 'temp', nombre: ciudadInicial.nombre, fecha: ciudadInicial.fecha }] : []);
-      } else {
-        // Modo Edición: Cargar de DB
-        const data = bitacoraData[viaje.id] || {};
-        setFormData({
-          ...viaje,
-          ...data,
-          titulo: data.titulo || viaje.nombreEspanol,
-          // Asegurar fechas
-          fechaInicio: data.fechaInicio || viaje.fecha,
-          fechaFin: data.fechaFin || viaje.fecha
-        });
-
-        // Cargar paradas reales
-        const fetchParadas = async () => {
-          if(usuario) {
-              const ref = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
-              const snap = await getDocs(ref);
-              setParadas(snap.docs.map(d => ({id: d.id, ...d.data()})));
-          }
-        };
-        fetchParadas();
+      setFormData({
+        ...viaje,
+        titulo: viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
+        fechaInicio: viaje.fechaInicio,
+        fechaFin: viaje.fechaFin,
+        foto: viaje.foto,
+        texto: viaje.texto || ""
+      });
+      // Inicializar paradas si es borrador y hay ciudad inicial
+      if (esBorrador && ciudadInicial) {
+        setParadas([{ id: 'init', nombre: ciudadInicial.nombre, fecha: viaje.fechaInicio }]);
       }
     }
-  }, [viaje, bitacoraData, usuario, esBorrador, ciudadInicial]);
+  }, [viaje, esBorrador, ciudadInicial]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleSave = () => {
+    // Al guardar, pasamos los datos del form + las paradas gestionadas
+    onSave(viaje.id, { ...formData, paradasNuevas: paradas }); 
+    onClose();
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, foto: reader.result });
+      reader.onloadend = () => setFormData(prev => ({ ...prev, foto: reader.result }));
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleAddCity = async () => {
-    if(!newCityInput.trim()) return;
-    setSearchingCity(true);
-    try {
-        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(newCityInput)}.json?types=place&language=es&access_token=${MAPBOX_TOKEN}`;
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        
-        if (data.features?.length > 0) {
-            const place = data.features[0];
-            
-            // Si es borrador, solo agregamos a la lista visual (se guardará al final o requerirá lógica extra)
-            // Nota: En borrador complejo, paradas multiples requeririan guardar el viaje primero.
-            // Para simplificar UX Borrador: Permitimos ver solo la ciudad inicial. 
-            if (esBorrador) {
-                alert("Guarda el viaje primero para agregar más paradas.");
-            } else {
-                const lugarInfo = {
-                    nombre: place.text,
-                    coordenadas: place.center,
-                    paisCodigo: viaje.code,
-                    fecha: formData.fechaInicio // Usamos fecha inicio por defecto
-                };
-                await agregarParada(lugarInfo, viaje.id);
-                setParadas([...paradas, { id: 'temp-'+Date.now(), nombre: place.text, fecha: formData.fechaInicio }]);
-            }
-            setNewCityInput('');
-        }
-    } catch (e) { console.error(e); } 
-    finally { setSearchingCity(false); }
-  };
-
-  const handleDeleteParada = async (paradaId) => {
-      if (!esBorrador) await eliminarParada(viaje.id, paradaId);
-      setParadas(paradas.filter(p => p.id !== paradaId));
   };
 
   if (!viaje) return null;
@@ -124,7 +57,12 @@ const EdicionModal = ({ viaje, bitacoraData, onClose, onSave, esBorrador, ciudad
             <div style={styles.headerOverlay} />
             <div style={styles.headerContent}>
                 <span style={styles.flag}>{viaje.flag}</span>
-                <input name="titulo" value={formData.titulo || ''} onChange={handleChange} style={styles.titleInput} placeholder="Título del viaje" />
+                <input 
+                    value={formData.titulo || ''} 
+                    onChange={e => setFormData({...formData, titulo: e.target.value})} 
+                    style={styles.titleInput} 
+                    placeholder="Título del viaje" 
+                />
             </div>
             <label style={styles.cameraBtn}>
               <Camera size={18} />
@@ -134,41 +72,23 @@ const EdicionModal = ({ viaje, bitacoraData, onClose, onSave, esBorrador, ciudad
 
           <div style={styles.body} className="custom-scroll">
             <div style={styles.section}>
-                <label style={styles.label}><Calendar size={14}/> Fechas del Viaje</label>
+                <label style={styles.label}><Calendar size={14}/> Fechas</label>
                 <div style={styles.row}>
-                    <input type="date" name="fechaInicio" value={formData.fechaInicio || ''} onChange={handleChange} style={styles.dateInput} />
+                    <input type="date" value={formData.fechaInicio || ''} onChange={e => setFormData({...formData, fechaInicio: e.target.value})} style={styles.dateInput} />
                     <span style={{color:'#94a3b8'}}>hasta</span>
-                    <input type="date" name="fechaFin" value={formData.fechaFin || ''} onChange={handleChange} style={styles.dateInput} />
+                    <input type="date" value={formData.fechaFin || ''} onChange={e => setFormData({...formData, fechaFin: e.target.value})} style={styles.dateInput} />
                 </div>
             </div>
 
             <div style={styles.section}>
-                <label style={styles.label}><MapPin size={14}/> Ciudades</label>
-                <div style={styles.cityList}>
-                    {paradas.map(p => (
-                        <div key={p.id} style={styles.cityTag}>
-                            <span>{p.nombre}</span>
-                            <button onClick={() => handleDeleteParada(p.id)} style={styles.deleteCityBtn}><X size={12}/></button>
-                        </div>
-                    ))}
-                </div>
-                {!esBorrador && (
-                    <div style={styles.addCityRow}>
-                        <input value={newCityInput} onChange={e => setNewCityInput(e.target.value)} placeholder="Agregar otra ciudad..." style={styles.cityInput} onKeyDown={e => e.key === 'Enter' && handleAddCity()} />
-                        <button onClick={handleAddCity} disabled={searchingCity} style={styles.addBtn}>{searchingCity ? '...' : <Plus size={18}/>}</button>
-                    </div>
-                )}
-            </div>
-
-            <div style={styles.section}>
-                <label style={styles.label}>Reseña</label>
-                <textarea name="texto" value={formData.texto || ''} onChange={handleChange} style={styles.textarea} placeholder="Escribe un breve resumen..." />
+                <label style={styles.label}>Ciudades</label>
+                <CityManager paradas={paradas} setParadas={setParadas} />
             </div>
 
             <div style={styles.footer}>
                 <button onClick={onClose} style={styles.cancelBtn}>Cancelar</button>
-                <button onClick={() => { onSave(viaje.id, formData); onClose(); }} style={styles.saveBtn}>
-                    <Save size={18} /> {esBorrador ? 'Confirmar Viaje' : 'Guardar Cambios'}
+                <button onClick={handleSave} style={styles.saveBtn}>
+                    <Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar'}
                 </button>
             </div>
           </div>
