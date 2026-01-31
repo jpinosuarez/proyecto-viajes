@@ -1,28 +1,55 @@
 import { COLORS } from '../../theme';
 
 export const styles = {
-  modalOverlay: { 
-    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', 
-    backgroundColor: 'rgba(15, 23, 42, 0.7)', zIndex: 9999, 
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', padding: '20px'
+  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
+  modal: { backgroundColor: '#fff', width: '500px', maxWidth: '90%', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '85vh' },
+  
+  header: (img) => ({
+    height: '180px', position: 'relative',
+    backgroundImage: img ? `url(${img})` : 'none',
+    backgroundColor: COLORS.charcoalBlue,
+    backgroundSize: 'cover', backgroundPosition: 'center',
+    display: 'flex', alignItems: 'flex-end', padding: '20px'
+  }),
+  headerOverlay: { position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' },
+  headerContent: { position: 'relative', zIndex: 10, width: '100%' },
+  flag: { fontSize: '2rem', display: 'block', marginBottom: '5px' },
+  titleInput: { 
+    fontSize: '1.8rem', fontWeight: '800', color: 'white', 
+    background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)',
+    width: '100%', outline: 'none', paddingBottom: '5px'
   },
-  modalContent: { 
-    backgroundColor: COLORS.linen, width: '100%', maxWidth: '800px', maxHeight: '90vh', 
-    borderRadius: '32px', display: 'flex', flexDirection: 'column',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', border: '1px solid rgba(255, 255, 255, 0.5)',
-    overflow: 'hidden' // Importante para que el header no se vaya con el scroll
+  
+  cameraBtn: {
+    position: 'absolute', top: 15, right: 15, zIndex: 20,
+    background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '50%',
+    color: 'white', cursor: 'pointer', backdropFilter: 'blur(4px)'
   },
-  modalHeader: { padding: '30px 40px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0,0,0,0.05)' },
-  scrollArea: { padding: '30px 40px', overflowY: 'auto' },
-  footer: { padding: '20px 40px 30px', display: 'flex', justifyContent: 'flex-end', gap: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' },
-  closeBtn: { background: 'rgba(44, 62, 80, 0.1)', border: 'none', borderRadius: '50%', padding: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  formSection: { marginBottom: '30px', padding: '20px', backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '20px' },
-  formRow: { display: 'flex', gap: '25px', alignItems: 'flex-start' },
-  inputGroup: { flex: 1, display: 'flex', flexDirection: 'column' },
-  label: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '800', color: COLORS.charcoalBlue, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.8 },
-  input: { width: '100%', border: '1px solid rgba(44, 62, 80, 0.1)', borderRadius: '14px', padding: '12px 16px', fontSize: '0.95rem', outline: 'none', backgroundColor: '#fff', color: COLORS.charcoalBlue, boxSizing: 'border-box' },
-  uploadLabel: (foto) => ({ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', height: '200px', backgroundColor: foto ? 'transparent' : '#fff', backgroundImage: foto ? `url(${foto})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', border: foto ? 'none' : `2px dashed ${COLORS.atomicTangerine}40`, borderRadius: '24px', cursor: 'pointer', overflow: 'hidden', position: 'relative', transition: 'all 0.3s ease' }),
-  textarea: { width: '100%', minHeight: '150px', border: '1px solid rgba(44, 62, 80, 0.1)', borderRadius: '18px', padding: '20px', fontSize: '1.1rem', resize: 'none', outline: 'none', backgroundColor: '#fff', color: COLORS.charcoalBlue, lineHeight: '1.6', fontFamily: '"Georgia", serif', boxSizing: 'border-box' },
-  saveBtn: { backgroundColor: COLORS.atomicTangerine, color: '#fff', border: 'none', padding: '14px 28px', borderRadius: '16px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1rem' },
+
+  body: { padding: '30px', overflowY: 'auto' },
+  section: { marginBottom: '25px' },
+  label: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '700', color: COLORS.mutedTeal, textTransform: 'uppercase', marginBottom: '10px' },
+  
+  // Custom Date Input Style via CSS
+  dateInput: {
+    padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0',
+    fontFamily: 'inherit', fontSize: '0.95rem', color: COLORS.charcoalBlue,
+    outline: 'none', background: '#f8fafc',
+    cursor: 'pointer'
+  },
+  row: { display: 'flex', alignItems: 'center', gap: '15px' },
+
+  // Cities Styles
+  cityList: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' },
+  cityTag: { background: '#f1f5f9', padding: '6px 12px', borderRadius: '20px', fontSize: '0.9rem', color: COLORS.charcoalBlue, display: 'flex', alignItems: 'center', gap: '6px' },
+  deleteCityBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex' },
+  addCityRow: { display: 'flex', gap: '10px' },
+  cityInput: { flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' },
+  addBtn: { background: COLORS.atomicTangerine, color: 'white', border: 'none', borderRadius: '10px', width: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+
+  textarea: { width: '100%', minHeight: '100px', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', fontFamily: 'inherit', resize: 'vertical' },
+
+  footer: { display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '20px' },
+  cancelBtn: { padding: '12px 20px', borderRadius: '12px', border: 'none', background: '#f1f5f9', color: '#64748b', fontWeight: '700', cursor: 'pointer' },
+  saveBtn: { padding: '12px 24px', borderRadius: '12px', border: 'none', background: COLORS.charcoalBlue, color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }
 };

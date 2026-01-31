@@ -40,7 +40,16 @@ export const styles = {
   headerContent: {
     position: 'relative', zIndex: 10, padding: '0 40px 20px', maxWidth: '1000px', margin: '0 auto', width: '100%'
   },
-  titleDisplay: { color: COLORS.charcoalBlue, fontSize: '3rem', fontWeight: '900', margin: '10px 0', lineHeight: 1, textShadow: '0 2px 10px rgba(255,255,255,0.5)' },
+
+  titleDisplay: { 
+  color: 'white', 
+  fontSize: '3.5rem', 
+  fontWeight: '900', 
+  margin: '10px 0', 
+  lineHeight: 1,
+  textShadow: '0 4px 20px rgba(0,0,0,0.5)' // Sombra fuerte para legibilidad
+},
+
   titleInput: { fontSize: '2.5rem', fontWeight: '900', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius:'10px', padding:'10px', color: COLORS.charcoalBlue, width: '100%', outline: 'none' },
   metaBadge: { display: 'inline-flex', alignItems: 'center', gap: '6px', background: COLORS.charcoalBlue, padding: '6px 12px', borderRadius: '8px', color: 'white', fontSize: '0.8rem', fontWeight:'600' },
   creditBox: { position: 'absolute', bottom: 10, right: 10, color: 'rgba(0,0,0,0.5)', fontSize: '0.7rem', zIndex: 10, display:'flex', gap:'5px', alignItems:'center' },
@@ -59,5 +68,11 @@ export const styles = {
   timelineDot: { position: 'absolute', left: '-25px', top: '6px', width: '8px', height: '8px', borderRadius: '50%', background: COLORS.atomicTangerine, border: '2px solid white' },
   stopCard: { background: 'white', padding: '15px', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' },
   weatherTag: { fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', background: '#f8fafc', padding: '4px 8px', borderRadius: '6px', width: 'fit-content' },
-  emptyState: { color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' }
+  emptyState: { color: '#94a3b8', fontStyle: 'italic', fontSize: '0.9rem' },
+  
+  flagIcon: {
+  fontSize: '3rem', // Bandera más grande
+  display: 'block',
+  filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))'
+}
 };

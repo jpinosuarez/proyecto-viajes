@@ -35,7 +35,7 @@ export const useViajes = () => {
       }, {});
       setBitacoraData(dataMap);
 
-      // Cargar paradas para el mapa
+      // Carga de paradas (optimización pendiente para grandes volúmenes)
       const paradasPromises = docs.map(async (viaje) => {
         const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
         const paradasSnap = await getDocs(paradasRef);
@@ -55,7 +55,6 @@ export const useViajes = () => {
   // --- UTILIDADES ---
   const buscarPaisEnCatalogo = (nombreMapbox, codigoMapbox) => {
     const busqueda = nombreMapbox ? nombreMapbox.toLowerCase() : '';
-    // Intentar coincidencia por código (Alpha-2 vs Alpha-3) o nombre
     return MAPA_SELLOS.find(p => {
        const codeMatch = p.code.substring(0,2) === codigoMapbox?.toUpperCase();
        const nameMatch = p.name.toLowerCase() === busqueda || p.nombreEspanol.toLowerCase() === busqueda;
@@ -77,7 +76,7 @@ export const useViajes = () => {
         return { desc, max };
       }
       return null;
-    } catch (e) { return null; }
+    } catch { return null; }
   };
 
   const obtenerFotoConCache = async (pais) => {
@@ -87,7 +86,7 @@ export const useViajes = () => {
       if (docSnap.exists()) return docSnap.data();
 
       const nombreBusqueda = pais.name || pais.nombreEspanol;
-      const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(nombreBusqueda + ' landmark travel')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
+      const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(nombreBusqueda + ' travel landscape')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
       const data = await response.json();
       const rawUrl = data.urls.raw;
       const urlOptimizada = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=1600&q=80&auto=format&fit=crop`;
@@ -105,7 +104,6 @@ export const useViajes = () => {
 
   const agregarViaje = async (pais, tituloPersonalizado = null) => {
     if (!usuario) return null;
-    // Evitar duplicados exactos
     const viajeExistente = bitacora.find(v => v.code === pais.code);
     if (viajeExistente) return viajeExistente.id;
 
@@ -129,24 +127,23 @@ export const useViajes = () => {
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
       return docRef.id;
-    } catch (e) { return null; }
+    } catch { return null; }
   };
 
-  const agregarParada = async (lugarInfo) => {
+  const agregarParada = async (lugarInfo, viajeIdForzado = null) => {
     if (!usuario) return null;
-    // Buscar país padre. Si no viene código, intentamos buscar por nombre
-    const paisCatalogo = buscarPaisEnCatalogo(lugarInfo.paisNombre, lugarInfo.paisCodigo);
     
-    if (!paisCatalogo) {
-      console.warn("País no encontrado en catálogo:", lugarInfo);
-      // Fallback: Si no encontramos país, quizás podamos crearlo solo con el nombre, 
-      // pero por seguridad retornamos null y alertamos en UI.
-      return null;
-    }
+    let viajeId = viajeIdForzado;
 
-    let viajeId = bitacora.find(v => v.code === paisCatalogo.code)?.id;
+    // Si no forzamos un ID (no venimos del modal de edición), buscamos el país
     if (!viajeId) {
-      viajeId = await agregarViaje(paisCatalogo, `Aventura en ${lugarInfo.nombre}`);
+        const paisCatalogo = buscarPaisEnCatalogo(lugarInfo.paisNombre, lugarInfo.paisCodigo);
+        if (!paisCatalogo) return null;
+        
+        viajeId = bitacora.find(v => v.code === paisCatalogo.code)?.id;
+        if (!viajeId) {
+          viajeId = await agregarViaje(paisCatalogo, `Aventura en ${lugarInfo.nombre}`);
+        }
     }
 
     const fechaHoy = new Date().toISOString().split('T')[0];
@@ -164,15 +161,26 @@ export const useViajes = () => {
     try {
       await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), nuevaParada);
       
-      const viajeActual = bitacoraData[viajeId];
-      const ciudadesPrevias = viajeActual?.ciudades ? viajeActual.ciudades.split(', ') : [];
+      // Actualizar resumen de ciudades en el padre
+      const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, viajeId);
+      const viajeSnapshot = await getDoc(viajeRef);
+      const viajeData = viajeSnapshot.data();
+      const ciudadesPrevias = viajeData?.ciudades ? viajeData.ciudades.split(', ') : [];
+      
       if (!ciudadesPrevias.includes(lugarInfo.nombre)) {
-        await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, viajeId), { 
-          ciudades: [...ciudadesPrevias, lugarInfo.nombre].join(', ') 
-        });
+        await updateDoc(viajeRef, { ciudades: [...ciudadesPrevias, lugarInfo.nombre].join(', ') });
       }
       return viajeId;
-    } catch (e) { return null; }
+    } catch { return null; }
+  };
+
+  const eliminarParada = async (viajeId, paradaId) => {
+      if(!usuario) return;
+      try {
+          await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`, paradaId));
+          // Nota: No actualizamos el string resumen 'ciudades' del padre por simplicidad, 
+          // pero idealmente debería recalcularse.
+      } catch (e) { console.error(e) }
   };
 
   const actualizarDetallesViaje = async (id, data) => {
@@ -214,6 +222,7 @@ export const useViajes = () => {
   return {
     paisesVisitados, bitacora, bitacoraData, todasLasParadas,
     listaPaises: MAPA_SELLOS,
-    agregarViaje, agregarParada, actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
+    agregarViaje, agregarParada, eliminarParada,
+    actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
   };
 };

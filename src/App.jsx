@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import Sidebar from './components/Sidebar';
+import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Header/Header';
 import StatsMapa from './components/Dashboard/StatsMapa'; 
 import MapaViajes from './components/Mapa/MapaView';
@@ -11,7 +11,7 @@ import DashboardHome from './components/Dashboard/DashboardHome';
 import EdicionModal from './components/Modals/EdicionModal';
 import LandingPage from './components/Landing/LandingPage';
 import VisorViaje from './components/VisorViaje/VisorViaje';
-import PerfilModal from './components/Modals/PerfilModal'; // NUEVO
+import SettingsPage from './pages/Configuracion/SettingsPage';
 
 import { useViajes } from './hooks/useViajes';
 import { useAuth } from './context/AuthContext';
@@ -28,60 +28,43 @@ function App() {
   
   const [vistaActiva, setVistaActiva] = useState('home'); 
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
-  const [mostrarPerfil, setMostrarPerfil] = useState(false); // NUEVO
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
+  
+  // ESTADO NUEVO: Control del Sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
 
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
+  const irAPerfil = () => setVistaActiva('config');
 
-  // LÓGICA CORE: Selección de Lugar
   const onLugarSeleccionado = useCallback(async (lugar) => {
     let viajeId = null;
-
     if (lugar.esPais) {
-      // 1. Es País: Buscamos en catálogo o creamos
       const paisCatalogo = listaPaises.find(p => p.code === lugar.code) 
                         || listaPaises.find(p => p.name.toLowerCase().includes(lugar.nombre.toLowerCase()));
       if (paisCatalogo) viajeId = await agregarViaje(paisCatalogo);
     } else {
-      // 2. Es Ciudad: Agregamos parada
       viajeId = await agregarParada(lugar);
     }
 
     if (viajeId) {
       setDestino({ 
-        longitude: lugar.coordenadas[0], 
-        latitude: lugar.coordenadas[1], 
-        zoom: lugar.esPais ? 4 : 11,
-        essential: true 
+        longitude: lugar.coordenadas[0], latitude: lugar.coordenadas[1], 
+        zoom: lugar.esPais ? 4 : 11, essential: true 
       });
       setVistaActiva('mapa'); 
       setMostrarBuscador(false);
       setFiltro('');
-      
-      // UX MEJORADA: Si es ciudad, abrimos el Visor inmediatamente para ver el contexto
-      // Si es país nuevo, abrimos el Editor de título/fecha
       setTimeout(() => {
-        if (!lugar.esPais) {
-          abrirVisor(viajeId);
-        } else {
-          abrirEditor(viajeId);
-        }
+        if (!lugar.esPais) abrirVisor(viajeId);
+        else abrirEditor(viajeId);
       }, 800);
     }
   }, [agregarViaje, agregarParada, listaPaises]);
-
-  // Handler para agregar parada desde el Visor
-  const handleAddParadaDesdeVisor = (viajeId) => {
-    // Cerramos visor y abrimos buscador, pero podríamos pasarle el contexto del país
-    // Por simplicidad, abrimos buscador general
-    setViajeExpandidoId(null);
-    setMostrarBuscador(true);
-  };
 
   const onMapaPaisToggle = async (nuevosCodes) => {
     const nuevoId = await manejarCambioPaises(nuevosCodes);
@@ -93,6 +76,7 @@ function App() {
       case 'home': return 'Panel de Inicio';
       case 'mapa': return 'Exploración Global';
       case 'bitacora': return 'Mi Bitácora';
+      case 'config': return 'Ajustes';
       default: return 'Keeptrip';
     }
   };
@@ -103,14 +87,27 @@ function App() {
 
   return (
     <div style={styles.appWrapper}>
-      <Sidebar vistaActiva={vistaActiva} setVistaActiva={setVistaActiva} />
+      
+      {/* Sidebar con Estado Controlado */}
+      <Sidebar 
+        vistaActiva={vistaActiva} 
+        setVistaActiva={setVistaActiva} 
+        collapsed={sidebarCollapsed}
+        toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-      <main style={styles.mainContent}>
-        {/* Pasamos onProfileClick para abrir el modal */}
+      {/* Contenido Principal Dinámico */}
+      <motion.main 
+        layout 
+        style={{
+          ...styles.mainContent,
+          marginLeft: sidebarCollapsed ? '80px' : '260px', // AQUÍ ESTÁ LA MAGIA PARA EVITAR SOLAPAMIENTO
+        }}
+      >
         <Header 
           titulo={getTituloHeader()} 
           onAddClick={() => setMostrarBuscador(true)} 
-          onProfileClick={() => setMostrarPerfil(true)} 
+          onProfileClick={irAPerfil} 
         />
 
         <section style={styles.sectionWrapper}>
@@ -151,9 +148,16 @@ function App() {
                 />
               </motion.div>
             )}
+
+            {vistaActiva === 'config' && (
+              <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                style={styles.scrollableContent} className="custom-scroll">
+                <SettingsPage />
+              </motion.div>
+            )}
           </AnimatePresence>
         </section>
-      </main>
+      </motion.main>
 
       <BuscadorModal 
         isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} 
@@ -176,12 +180,10 @@ function App() {
         onClose={() => setViajeExpandidoId(null)}
         onEdit={abrirEditor}
         onSave={actualizarDetallesViaje}
-        onAddParada={handleAddParadaDesdeVisor} // Nuevo botón + en visor
-      />
-
-      <PerfilModal 
-        isOpen={mostrarPerfil} 
-        onClose={() => setMostrarPerfil(false)} 
+        onAddParada={() => {
+            setViajeExpandidoId(null);
+            setMostrarBuscador(true);
+        }}
       />
     </div>
   );

@@ -5,30 +5,53 @@ import { COLORS } from '../../theme';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
+// Función para crear curvas de Bézier entre dos puntos (Efecto Vuelo)
+function getCurvedRoute(start, end) {
+    const numPoints = 100;
+    const coordinates = [];
+    const generator = (i) => {
+        const t = i / numPoints;
+        // Interpolación lineal simple para lat/lng
+        const lat = start[1] + (end[1] - start[1]) * t;
+        // Para longitud, manejamos el cruce de meridiano 180 si fuera necesario, 
+        // pero para visualización simple:
+        const lng = start[0] + (end[0] - start[0]) * t;
+        
+        // Añadir "altura" visual curvando la latitud un poco hacia el norte/sur simulando arco
+        // Esto es un hack visual 2D para simular la curvatura 3D
+        const arcHeight = Math.sin(t * Math.PI) * 5; // 5 grados de arco
+        
+        return [lng, lat + arcHeight];
+    };
+
+    for (let i = 0; i <= numPoints; i++) {
+        coordinates.push(generator(i));
+    }
+    return coordinates;
+}
+
 function MapaViajes({ paises, setPaises, destino, paradas = [] }) {
   const mapRef = useRef(null);
   const [hoverInfo, setHoverInfo] = useState(null);
-  // AJUSTE: Zoom inicial más lejano y centro en el Atlántico para ver América y Europa/África
+  
+  // Centrado inicial mejorado para pantallas desktop y mobile
   const [viewState, setViewState] = useState({
-    longitude: -20, 
-    latitude: 20, 
-    zoom: 1.2, 
-    pitch: 0, 
-    bearing: 0
+    longitude: 15, latitude: 30, zoom: 1.5, pitch: 0, bearing: 0
   });
 
   useEffect(() => {
     if (destino && mapRef.current) {
       mapRef.current.flyTo({
         center: [destino.longitude, destino.latitude],
-        zoom: destino.zoom || 5,
-        duration: 3500,
+        zoom: destino.zoom || 4,
+        duration: 3000,
         essential: true,
-        pitch: 45,
+        pitch: 30,
       });
     }
   }, [destino]);
 
+  // GeoJSON para Paradas (Puntos)
   const paradasGeoJSON = {
     type: 'FeatureCollection',
     features: paradas.map(p => ({
@@ -38,67 +61,91 @@ function MapaViajes({ paises, setPaises, destino, paradas = [] }) {
     }))
   };
 
-  // Rutas (Líneas)
+  // GeoJSON para Rutas Curvas
   const rutasGeoJSON = { type: 'FeatureCollection', features: [] };
+  
+  // Agrupar por viaje
   const paradasPorViaje = paradas.reduce((acc, p) => {
     if (!acc[p.viajeId]) acc[p.viajeId] = [];
     acc[p.viajeId].push(p);
     return acc;
   }, {});
+
   Object.values(paradasPorViaje).forEach(grupo => {
+    // Ordenar (asumiendo orden de creación o fecha, aquí simple array order)
     if (grupo.length > 1) {
-      rutasGeoJSON.features.push({
-        type: 'Feature',
-        geometry: { type: 'LineString', coordinates: grupo.map(p => p.coordenadas) }
-      });
+        for (let i = 0; i < grupo.length - 1; i++) {
+            const start = grupo[i].coordenadas;
+            const end = grupo[i+1].coordenadas;
+            rutasGeoJSON.features.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: getCurvedRoute(start, end) // Usamos la curva
+                }
+            });
+        }
     }
   });
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: '24px', overflow: 'hidden', backgroundColor: '#0f172a' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', borderRadius: '24px', overflow: 'hidden', backgroundColor: '#F4EDE4' }}>
       <Map
         ref={mapRef}
         {...viewState}
         onMove={evt => setViewState(evt.viewState)}
-        mapStyle="mapbox://styles/mapbox/satellite-streets-v12" // Cambio a Satélite híbrido para más "wow" en globo
+        // CAMBIO: Estilo Minimalista Light (Mapbox standard)
+        mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="globe" 
         onMouseMove={e => {
-            const feature = e.features && e.features[0];
-            setHoverInfo(feature ? { name: feature.properties.name, x: e.point.x, y: e.point.y } : null);
+            if (window.innerWidth > 768) {
+                const feature = e.features && e.features[0];
+                setHoverInfo(feature ? { name: feature.properties.name, x: e.point.x, y: e.point.y } : null);
+            }
         }}
         interactiveLayerIds={['country-fills', 'paradas-points']}
       >
-        <Layer id="sky" type="sky" paint={{ 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 15 }} />
+        {/* Atmósfera más suave para estilo light */}
+        <Layer id="sky" type="sky" paint={{ 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 5 }} />
 
-        {/* Polígonos Países */}
+        {/* Capa de Países (Polígonos) */}
         <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
           <Layer
             id="country-fills"
             type="fill"
             source-layer="country_boundaries"
             paint={{
-              'fill-color': COLORS.atomicTangerine, // Color más vibrante sobre satélite
-              'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], paises.length > 0 ? paises : [''], 0.4, 0]
+              'fill-color': COLORS.mutedTeal,
+              'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], paises.length > 0 ? paises : [''], 0.6, 0]
             }}
           />
         </Source>
 
-        {/* Rutas */}
+        {/* Capa de Rutas (Curvas) */}
         <Source id="rutas" type="geojson" data={rutasGeoJSON}>
-          <Layer id="rutas-line" type="line" paint={{ 'line-color': 'rgba(255,255,255,0.6)', 'line-width': 1.5, 'line-dasharray': [2, 2] }} />
+          <Layer 
+            id="rutas-line" 
+            type="line" 
+            paint={{ 
+                'line-color': COLORS.atomicTangerine, 
+                'line-width': 2, 
+                'line-dasharray': [1, 1], // Punteado fino
+                'line-opacity': 0.8
+            }} 
+          />
         </Source>
 
-        {/* Paradas */}
+        {/* Capa de Paradas (Puntos) */}
         <Source id="paradas" type="geojson" data={paradasGeoJSON}>
           <Layer
             id="paradas-points"
             type="circle"
             paint={{
-              'circle-radius': 6,
-              'circle-color': COLORS.linen,
+              'circle-radius': 5,
+              'circle-color': COLORS.charcoalBlue,
               'circle-stroke-width': 2,
-              'circle-stroke-color': COLORS.charcoalBlue
+              'circle-stroke-color': 'white'
             }}
           />
         </Source>
@@ -109,8 +156,9 @@ function MapaViajes({ paises, setPaises, destino, paradas = [] }) {
         {hoverInfo && (
           <div style={{ 
             position: 'absolute', left: hoverInfo.x + 15, top: hoverInfo.y + 15,
-            backgroundColor: 'rgba(0,0,0,0.8)', color: 'white',
-            padding: '6px 10px', borderRadius: '6px', fontSize: '0.8rem', pointerEvents: 'none', zIndex: 10
+            backgroundColor: 'white', color: COLORS.charcoalBlue,
+            padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold',
+            pointerEvents: 'none', zIndex: 10, boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
           }}>
             {hoverInfo.name}
           </div>
