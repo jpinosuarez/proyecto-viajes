@@ -2,92 +2,56 @@ import { COLORS } from '../../theme';
 
 export const styles = {
   modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 3000,
-    backdropFilter: 'blur(8px)',
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(44, 62, 80, 0.4)', backdropFilter: 'blur(4px)',
+    zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '100px'
   },
   modalContent: {
-    backgroundColor: COLORS.linen,
-    width: '480px',
-    height: '80vh', // Altura fija para que el scroll interno funcione
-    borderRadius: '28px',
-    padding: '30px',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-    border: '1px solid rgba(255, 255, 255, 0.6)',
+    width: '500px', maxWidth: '90%',
+    backgroundColor: 'white', borderRadius: '20px',
+    boxShadow: '0 20px 50px rgba(0,0,0,0.1)', overflow: 'hidden'
   },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  titulo: {
-    margin: 0,
-    color: COLORS.charcoalBlue,
-    fontWeight: '800',
-    fontSize: '1.4rem',
-  },
+  header: { padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  titulo: { margin: 0, fontSize: '1.1rem', color: COLORS.charcoalBlue, fontWeight: '800' },
+  
   searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    backgroundColor: 'rgba(44, 62, 80, 0.05)',
-    padding: '16px',
-    borderRadius: '16px',
-    marginBottom: '20px',
-    border: '1px solid rgba(44, 62, 80, 0.1)',
+    margin: '0 20px 10px', padding: '12px 16px',
+    backgroundColor: '#F8FAFC', borderRadius: '12px', border: `1px solid ${COLORS.border}`,
+    display: 'flex', alignItems: 'center', gap: '10px'
   },
-  inputStyle: {
-    border: 'none',
-    background: 'none',
-    outline: 'none',
-    width: '100%',
-    fontSize: '1rem',
-    color: COLORS.charcoalBlue,
-    fontWeight: '500',
+  inputStyle: { border: 'none', background: 'transparent', fontSize: '1rem', width: '100%', outline: 'none', color: COLORS.charcoalBlue },
+  
+  listaContainer: { maxHeight: '300px', overflowY: 'auto' },
+  
+  tagBtn: {
+    background: 'white', border: `1px solid ${COLORS.border}`, padding: '8px 12px',
+    borderRadius: '20px', cursor: 'pointer', fontSize: '0.9rem', color: COLORS.charcoalBlue,
+    display: 'flex', alignItems: 'center', gap: '6px',
+    transition: 'all 0.2s',
+    ':hover': { borderColor: COLORS.atomicTangerine, color: COLORS.atomicTangerine }
   },
-  listaContainer: {
-    overflowY: 'auto', // Permite ver todos los países
-    flex: 1,
-    paddingRight: '8px',
+
+  resultItem: {
+    padding: '12px 20px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '15px',
+    transition: 'background 0.1s',
+    position: 'relative',
+    ':hover': { backgroundColor: '#F8FAFC' }
   },
-  paisItem: (isVisited) => ({
-    padding: '14px 16px',
-    borderRadius: '14px',
-    cursor: isVisited ? 'default' : 'pointer',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    transition: 'all 0.2s ease',
-    marginBottom: '6px',
-    backgroundColor: 'white',
-    border: '1px solid rgba(44, 62, 80, 0.05)',
+  iconBox: (isCountry) => ({
+    width: '36px', height: '36px', borderRadius: '10px',
+    backgroundColor: isCountry ? `${COLORS.atomicTangerine}15` : `${COLORS.mutedTeal}15`,
+    color: isCountry ? COLORS.atomicTangerine : COLORS.mutedTeal,
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
   }),
-  paisInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '14px',
-  },
-  nombrePais: {
-    fontWeight: '600',
-    color: COLORS.charcoalBlue,
-  },
-  badgeVisitado: {
-    color: COLORS.mutedTeal,
-    fontSize: '0.7rem',
-    fontWeight: '800',
-    backgroundColor: `${COLORS.mutedTeal}15`,
-    padding: '4px 8px',
-    borderRadius: '6px',
+  nombrePais: { fontWeight: '700', color: COLORS.charcoalBlue, display: 'block' },
+  subtext: { fontSize: '0.8rem', color: '#94a3b8' },
+  
+  addLabel: {
+    position: 'absolute', right: '20px',
+    fontSize: '0.8rem', fontWeight: '700', color: COLORS.mutedTeal,
+    display: 'none', alignItems: 'center', gap: '4px',
+    // Se muestra vía hover en CSS o lógica de JS si se usa styled-components real, 
+    // aquí simulado o dependiente del hover del padre
   }
 };

@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MapPin, Globe, Plus } from 'lucide-react';
+import { Search, X, MapPin, Globe, Plus, TrendingUp } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BuscadorModal.styles';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
+
+const DESTINOS_POPULARES = [
+  { nombre: 'Japón', code: 'JP', icon: '🇯🇵' },
+  { nombre: 'Italia', code: 'IT', icon: '🇮🇹' },
+  { nombre: 'Francia', code: 'FR', icon: '🇫🇷' },
+  { nombre: 'México', code: 'MX', icon: '🇲🇽' },
+  { nombre: 'Argentina', code: 'AR', icon: '🇦🇷' },
+  { nombre: 'Nueva York', code: 'US', icon: '🗽', esCiudad: true, coords: [-74.006, 40.712] }
+];
 
 const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar }) => {
   const [resultados, setResultados] = useState([]);
@@ -12,17 +21,19 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
   const debounceRef = useRef(null);
 
   useEffect(() => {
-    if (!filtro || filtro.length < 3) {
-      setResultados([]);
-      return;
+    if (!filtro) {
+        setResultados([]); // Limpiar si borra
+        return;
     }
+    
+    if (filtro.length < 3) return;
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
       setCargando(true);
       try {
-        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(filtro)}.json?types=country,place,locality,poi&language=es&access_token=${MAPBOX_TOKEN}`;
+        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(filtro)}.json?types=country,place,locality&language=es&access_token=${MAPBOX_TOKEN}`;
         const res = await fetch(endpoint);
         const data = await res.json();
         
@@ -40,19 +51,36 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
             paisNombre: contextoPais?.text || feat.text 
           };
         });
-
         setResultados(procesados);
-      } catch (error) {
-        console.error("Error buscando en Mapbox:", error);
-      } finally {
-        setCargando(false);
-      }
+      } catch (error) { console.error(error); } 
+      finally { setCargando(false); }
     }, 400);
 
   }, [filtro]);
 
+  // Selección rápida de tags populares
+  const seleccionarPopular = (destino) => {
+    if (destino.esCiudad) {
+        // Simular objeto de Mapbox para ciudad
+        seleccionarLugar({
+            esPais: false,
+            nombre: destino.nombre,
+            coordenadas: destino.coords,
+            paisCodigo: destino.code, // Asumimos código
+            paisNombre: 'USA' // Simplificado
+        });
+    } else {
+        // Simular objeto país
+        seleccionarLugar({
+            esPais: true,
+            nombre: destino.nombre,
+            code: destino.code,
+            coordenadas: [0, 0] // Coords dummy, el hook buscará en catalogo
+        });
+    }
+  };
+
   const manejarSeleccion = (item) => {
-    // Normalizar para enviar
     seleccionarLugar({
       esPais: item.tipo === 'country',
       nombre: item.nombre,
@@ -72,23 +100,19 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
         style={styles.modalOverlay} onClick={onClose}
       >
         <motion.div 
-          initial={{ y: 30, opacity: 0, scale: 0.98 }} 
-          animate={{ y: 0, opacity: 1, scale: 1 }} 
-          exit={{ y: 30, opacity: 0, scale: 0.98 }} 
+          initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} 
           style={styles.modalContent} onClick={(e) => e.stopPropagation()}
         >
           <div style={styles.header}>
-            <h3 style={styles.titulo}>Explora el Mundo</h3>
-            <div onClick={onClose} style={{ cursor: 'pointer', padding: '5px' }}>
-              <X size={20} color={COLORS.charcoalBlue} />
-            </div>
+            <h3 style={styles.titulo}>Nuevo Destino</h3>
+            <div onClick={onClose} style={{ cursor: 'pointer' }}><X size={20} color={COLORS.charcoalBlue} /></div>
           </div>
           
           <div style={styles.searchBox}>
-            <Search size={20} color={COLORS.atomicTangerine} />
+            <Search size={18} color={COLORS.atomicTangerine} />
             <input 
               autoFocus 
-              placeholder="Busca países o ciudades..." 
+              placeholder="Escribe un país o ciudad..." 
               style={styles.inputStyle} 
               value={filtro} 
               onChange={(e) => setFiltro(e.target.value)} 
@@ -96,43 +120,40 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
           </div>
 
           <div style={styles.listaContainer} className="custom-scroll">
-            {cargando && <div style={{textAlign:'center', padding:'20px', color:'#94a3b8'}}>Explorando... 🗺️</div>}
+            
+            {/* Quick Tags si no hay búsqueda */}
+            {!filtro && (
+                <div style={{padding:'20px'}}>
+                    <p style={{fontSize:'0.8rem', fontWeight:'700', color: COLORS.mutedTeal, marginBottom:'10px', display:'flex', alignItems:'center', gap:'6px'}}>
+                        <TrendingUp size={14}/> DESTINOS POPULARES
+                    </p>
+                    <div style={{display:'flex', flexWrap:'wrap', gap:'10px'}}>
+                        {DESTINOS_POPULARES.map(dest => (
+                            <button key={dest.nombre} onClick={() => seleccionarPopular(dest)} style={styles.tagBtn}>
+                                <span>{dest.icon}</span> {dest.nombre}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Resultados de búsqueda */}
+            {cargando && <div style={{textAlign:'center', padding:'20px', color:'#94a3b8'}}>Buscando...</div>}
             
             {resultados.map(item => (
               <div 
                 key={item.id} 
-                className="resultado-item" // Clase para CSS hover si necesario
-                style={{
-                  ...styles.paisItem(false),
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f1f5f9',
-                  position: 'relative'
-                }} 
+                style={styles.resultItem}
                 onClick={() => manejarSeleccion(item)}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <div style={styles.paisInfo}>
-                  <div style={{ 
-                    width: '32px', height: '32px', borderRadius: '8px', 
-                    backgroundColor: item.tipo === 'country' ? `${COLORS.atomicTangerine}20` : `${COLORS.mutedTeal}20`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: item.tipo === 'country' ? COLORS.atomicTangerine : COLORS.mutedTeal
-                  }}>
+                <div style={styles.iconBox(item.tipo === 'country')}>
                     {item.tipo === 'country' ? <Globe size={18} /> : <MapPin size={18} />}
-                  </div>
-                  <div>
+                </div>
+                <div>
                     <span style={styles.nombrePais}>{item.nombre}</span>
-                    <span style={{ display:'block', fontSize:'0.75rem', color:'#94a3b8' }}>
-                        {item.tipo === 'country' ? 'País' : `${item.paisNombre}`}
-                    </span>
-                  </div>
+                    <span style={styles.subtext}>{item.tipo === 'country' ? 'País' : item.paisNombre}</span>
                 </div>
-                
-                {/* Botón Añadir en Hover (Simulado con posición absoluta o renderizado simple) */}
-                <div style={{ color: COLORS.atomicTangerine, fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                   <Plus size={14} /> Añadir
-                </div>
+                <div style={styles.addLabel}><Plus size={14}/> Añadir</div>
               </div>
             ))}
           </div>

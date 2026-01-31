@@ -1,93 +1,124 @@
-import { COLORS } from '../../theme';
+import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export const styles = {
   dashboardContainer: {
     width: '100%',
-    maxWidth: '1200px', // Limitar ancho en pantallas gigantes
-    margin: '0 auto',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: '30px',
-    paddingBottom: '40px'
+    gap: '20px',
+    paddingBottom: '20px',
+    boxSizing: 'border-box',
+    overflow: 'hidden' // Evita que la página entera scrollee
   },
+
+  // Header simplificado
   header: {
-    marginBottom: '10px'
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'end',
+    paddingBottom: '10px',
+    borderBottom: `1px solid ${COLORS.border}`,
+    flexShrink: 0 // No se encoge
   },
-  title: {
-    fontSize: '2rem',
-    fontWeight: '900',
-    color: COLORS.charcoalBlue,
-    margin: 0
-  },
-  subtitle: {
-    fontSize: '1rem',
-    color: '#64748b',
-    marginTop: '5px'
-  },
+  title: { fontSize: '1.8rem', fontWeight: '900', color: COLORS.charcoalBlue, margin: 0, letterSpacing: '-0.5px' },
+  subtitle: { fontSize: '0.95rem', color: COLORS.textSecondary, margin: '4px 0 0 0' },
+
+  // GRID DE 3 COLUMNAS
   mainGrid: {
     display: 'grid',
-    gridTemplateColumns: '1.2fr 0.8fr', // Asimetría para interés visual
-    gap: '30px',
+    gridTemplateColumns: '300px 1fr 340px', // Estructura fija: Info | Mapa | Recientes
+    gridTemplateRows: '100%',
+    gap: '24px',
+    flex: 1, // Ocupa el resto del alto
+    minHeight: 0, // Clave para que los hijos scrolleen
+    
+    '@media (max-width: 1200px)': {
+      gridTemplateColumns: '1fr 1fr', // Tablet
+      gridTemplateRows: 'auto 1fr',
+      overflowY: 'auto'
+    },
     '@media (max-width: 900px)': {
-      gridTemplateColumns: '1fr'
+      gridTemplateColumns: '1fr', // Mobile
+      overflowY: 'auto'
     }
   },
-  leftColumn: {
+
+  // COL 1: Stats & Perfil
+  colLeft: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '30px'
+    gap: '20px',
+    overflowY: 'auto',
+    paddingRight: '5px'
   },
-  rightColumn: {
+  statsCard: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    padding: '24px',
+    boxShadow: SHADOWS.sm,
+    border: `1px solid ${COLORS.border}`,
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px'
+    gap: '15px'
   },
-  mapTeaser: {
-    height: '200px',
-    borderRadius: '24px',
-    position: 'relative',
+  statRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: COLORS.textSecondary },
+  statValue: { fontWeight: '800', color: COLORS.charcoalBlue, fontSize: '1.1rem' },
+
+  // COL 2: Mapa Hero
+  colCenter: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.md,
+    border: `1px solid ${COLORS.border}`,
     overflow: 'hidden',
-    cursor: 'pointer',
-    backgroundImage: 'url("https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-    transition: 'transform 0.2s',
-    ':hover': { transform: 'scale(1.01)' }
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column'
   },
-  mapOverlay: {
-    position: 'absolute', inset: 0,
-    background: 'linear-gradient(to right, rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.4))'
+  mapContainer: { flex: 1, position: 'relative', minHeight: '300px' },
+
+  // COL 3: Recientes
+  colRight: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.sm,
+    border: `1px solid ${COLORS.border}`,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden' // El scroll va dentro
   },
-  mapContent: {
-    position: 'relative', zIndex: 2, padding: '30px', height: '100%',
-    display: 'flex', flexDirection: 'column', justifyContent: 'center',
-    color: 'white'
-  },
-  sectionHeader: {
+  recentsHeader: {
+    padding: '20px',
+    borderBottom: `1px solid ${COLORS.border}`,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontSize: '1.1rem', fontWeight: '800', color: COLORS.charcoalBlue,
-    '& button': {
-        background: 'none', border:'none', color: COLORS.atomicTangerine, 
-        fontWeight:'700', cursor:'pointer'
-    }
+    fontWeight: '800', color: COLORS.charcoalBlue
   },
-  cardsContainer: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  card: {
-    display: 'flex', alignItems: 'center', gap: '15px',
-    background: 'white', padding: '15px', borderRadius: '20px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)',
-    cursor: 'pointer', transition: 'transform 0.2s',
-    ':hover': { transform: 'translateX(5px)' }
+  recentsList: {
+    flex: 1,
+    overflowY: 'auto', // Scroll interno
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
   },
-  cardImage: (img) => ({
-    width: '70px', height: '70px', borderRadius: '14px',
-    backgroundImage: img ? `url(${img})` : 'none',
-    backgroundColor: COLORS.charcoalBlue,
+  
+  // Tarjetas pequeñas de recientes
+  miniCard: {
+    display: 'flex', gap: '12px',
+    cursor: 'pointer', padding: '10px', borderRadius: RADIUS.md,
+    transition: 'background 0.2s',
+    ':hover': { backgroundColor: '#F8FAFC' }
+  },
+  miniImg: (url) => ({
+    width: '60px', height: '60px', borderRadius: '12px',
+    backgroundColor: '#eee', backgroundImage: url ? `url(${url})` : 'none',
     backgroundSize: 'cover', backgroundPosition: 'center',
-    display: 'flex', alignItems: 'center', justifyContent: 'center'
+    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem'
   }),
-  cardContent: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  tag: { fontSize: '0.7rem', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', width: 'fit-content', color: COLORS.mutedTeal, fontWeight:'700' },
-  emptyState: { padding: '30px', textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: '20px' }
+  miniInfo: { display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+  miniTitle: { fontWeight: '700', fontSize: '0.9rem', color: COLORS.charcoalBlue, lineHeight: 1.2 },
+  miniDate: { fontSize: '0.75rem', color: COLORS.textSecondary, marginTop: '4px' },
+  
+  actionBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontSize:'0.85rem', fontWeight:'700', cursor:'pointer' }
 };
