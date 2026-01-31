@@ -3,10 +3,10 @@ import { COLORS } from './theme';
 export const styles = {
   appWrapper: {
     display: 'flex',
-    backgroundColor: '#F8FAFC', // Fondo general suave
-    minHeight: '100vh',
-    width: '100vw',
-    overflow: 'hidden' // Evita scroll doble
+    backgroundColor: '#F1F5F9', 
+    height: '100vh',       // Fuerza altura exacta de pantalla
+    width: '100%',         // Usa % en lugar de vw para evitar scrollbar fantasma
+    overflow: 'hidden'     // BLOQUEA cualquier scroll a nivel de ventana
   },
   
   // Main Content Dinámico
@@ -14,27 +14,36 @@ export const styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh',
-    // marginLeft se inyecta dinámicamente en App.jsx
-    transition: 'margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)', // Animación suave
-    width: '100%', // Asegura que tome el espacio restante
-    position: 'relative'
+    height: '100%',        // Hereda 100vh del padre
+    // width: '100%',      <--- ELIMINADO: Esto causaba el scroll horizontal al sumar el margen
+    minWidth: 0,           // Truco Flexbox: evita que hijos grandes rompan el layout
+    transition: 'margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)', 
+    position: 'relative',
+    overflow: 'hidden'     // Asegura que nada se desborde del contenedor principal
   },
 
   sectionWrapper: {
     flex: 1,
     padding: '30px',
-    overflow: 'hidden',
+    overflow: 'hidden',    // El wrapper no scrollea, lo hace el contenido interno
     position: 'relative',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    maxWidth: '1600px',    // Buenas práctica: evita que en pantallas ultra-wide se vea eterno
+    width: '100%',
+    margin: '0 auto'       // Centra el contenido si la pantalla es gigante
   },
 
+  // Este es el único lugar donde permitimos scroll vertical controlado
   scrollableContent: {
     height: '100%',
-    overflowY: 'auto',
-    paddingRight: '10px', // Espacio para scrollbar
-    paddingBottom: '40px'
+    overflowY: 'auto',     // Scroll vertical solo aquí
+    overflowX: 'hidden',   // Prohibido scroll horizontal
+    paddingRight: '6px',   // Espacio para que la scrollbar no tape contenido
+    paddingBottom: '40px',
+    // Estilización de Scrollbar (WebKit)
+    scrollbarWidth: 'thin',
+    scrollbarColor: `${COLORS.mutedTeal} transparent`
   },
 
   containerMapaStyle: {
@@ -43,6 +52,7 @@ export const styles = {
     borderRadius: '24px',
     overflow: 'hidden',
     position: 'relative',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+    backgroundColor: 'white', 
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' 
   }
 };

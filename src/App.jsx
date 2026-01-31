@@ -31,7 +31,7 @@ function App() {
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
   
-  // ESTADO NUEVO: Control del Sidebar
+  // ESTADO DE UI
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
@@ -88,7 +88,6 @@ function App() {
   return (
     <div style={styles.appWrapper}>
       
-      {/* Sidebar con Estado Controlado */}
       <Sidebar 
         vistaActiva={vistaActiva} 
         setVistaActiva={setVistaActiva} 
@@ -96,12 +95,11 @@ function App() {
         toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      {/* Contenido Principal Dinámico */}
+      {/* Main usa margin-left dinámico + background diferente en App.styles */}
       <motion.main 
-        layout 
         style={{
           ...styles.mainContent,
-          marginLeft: sidebarCollapsed ? '80px' : '260px', // AQUÍ ESTÁ LA MAGIA PARA EVITAR SOLAPAMIENTO
+          marginLeft: sidebarCollapsed ? '80px' : '260px', 
         }}
       >
         <Header 
