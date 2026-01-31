@@ -35,7 +35,6 @@ export const useViajes = () => {
       }, {});
       setBitacoraData(dataMap);
 
-      // Carga de paradas (optimización pendiente para grandes volúmenes)
       const paradasPromises = docs.map(async (viaje) => {
         const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
         const paradasSnap = await getDocs(paradasRef);
@@ -79,14 +78,13 @@ export const useViajes = () => {
     } catch { return null; }
   };
 
-  const obtenerFotoConCache = async (pais) => {
+  const obtenerFotoConCache = async (paisNombre, paisCode) => {
     try {
-      const docRef = doc(db, 'paises_info', pais.code);
+      const docRef = doc(db, 'paises_info', paisCode);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) return docSnap.data();
 
-      const nombreBusqueda = pais.name || pais.nombreEspanol;
-      const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(nombreBusqueda + ' travel landscape')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
+      const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(paisNombre + ' travel landmark')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
       const data = await response.json();
       const rawUrl = data.urls.raw;
       const urlOptimizada = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=1600&q=80&auto=format&fit=crop`;
@@ -100,60 +98,81 @@ export const useViajes = () => {
     } catch { return null; }
   };
 
-  // --- ACCIONES ---
+  // --- ACCIONES PRINCIPALES ---
 
-  const agregarViaje = async (pais, tituloPersonalizado = null) => {
+  // NUEVO: Función para confirmar y guardar un viaje nuevo desde el Modal
+  const guardarNuevoViaje = async (datosViaje, ciudadInicial = null) => {
     if (!usuario) return null;
-    const viajeExistente = bitacora.find(v => v.code === pais.code);
-    if (viajeExistente) return viajeExistente.id;
 
-    const fechaISO = new Date().toISOString().split('T')[0];
-    const fotoInfo = await obtenerFotoConCache(pais);
+    // 1. Verificar Foto: Si el usuario no subió una, buscamos en API/Caché
+    let fotoFinal = datosViaje.foto;
+    let creditoFinal = null;
+
+    if (!fotoFinal || !fotoFinal.startsWith('data:image')) {
+       // Si es URL existente (no base64) o null, intentamos buscar si está vacío
+       if (!fotoFinal) {
+         const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
+         if (fotoInfo) {
+            fotoFinal = fotoInfo.url;
+            creditoFinal = fotoInfo.credito;
+         }
+       }
+    } else {
+        // Si es base64, se subirá a Storage en el paso siguiente (simulamos URL temporal o manejamos subida despues)
+        // Por simplicidad, en este MVP la subida real a Storage la delegamos o la hacemos aquí:
+        // (Para este código, asumimos que si es base64, se guarda en el documento y luego update)
+    }
 
     const nuevoViaje = {
-      code: pais.code,
-      nombreEspanol: pais.nombreEspanol,
-      titulo: tituloPersonalizado || `Viaje a ${pais.nombreEspanol}`,
-      flag: pais.flag,
-      continente: pais.continente,
-      latlng: pais.latlng,
-      fecha: fechaISO, fechaInicio: fechaISO, fechaFin: fechaISO,
-      texto: "", rating: 5,
-      foto: fotoInfo?.url || null,
-      fotoCredito: fotoInfo?.credito || null,
-      ciudades: ""
+      code: datosViaje.code,
+      nombreEspanol: datosViaje.nombreEspanol,
+      titulo: datosViaje.titulo || `Viaje a ${datosViaje.nombreEspanol}`,
+      flag: datosViaje.flag,
+      continente: datosViaje.continente,
+      latlng: datosViaje.latlng,
+      fecha: datosViaje.fechaInicio || new Date().toISOString().split('T')[0],
+      fechaInicio: datosViaje.fechaInicio,
+      fechaFin: datosViaje.fechaFin,
+      texto: datosViaje.texto || "",
+      rating: 5,
+      foto: fotoFinal,
+      fotoCredito: creditoFinal,
+      ciudades: ciudadInicial ? ciudadInicial.nombre : ""
     };
 
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
+      
+      // Si el usuario subió foto propia (Base64), subirla ahora que tenemos ID
+      if (datosViaje.foto && datosViaje.foto.startsWith('data:image')) {
+         await actualizarDetallesViaje(docRef.id, { foto: datosViaje.foto });
+      }
+
+      // Si había una ciudad inicial seleccionada, agregarla como parada
+      if (ciudadInicial) {
+         await agregarParada(ciudadInicial, docRef.id);
+      }
+
       return docRef.id;
-    } catch { return null; }
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   };
 
-  const agregarParada = async (lugarInfo, viajeIdForzado = null) => {
-    if (!usuario) return null;
-    
-    let viajeId = viajeIdForzado;
-
-    // Si no forzamos un ID (no venimos del modal de edición), buscamos el país
-    if (!viajeId) {
-        const paisCatalogo = buscarPaisEnCatalogo(lugarInfo.paisNombre, lugarInfo.paisCodigo);
-        if (!paisCatalogo) return null;
-        
-        viajeId = bitacora.find(v => v.code === paisCatalogo.code)?.id;
-        if (!viajeId) {
-          viajeId = await agregarViaje(paisCatalogo, `Aventura en ${lugarInfo.nombre}`);
-        }
-    }
+  const agregarParada = async (lugarInfo, viajeId) => {
+    if (!usuario || !viajeId) return null;
 
     const fechaHoy = new Date().toISOString().split('T')[0];
-    const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaHoy);
+    // Intentar obtener clima para la fecha del viaje si es pasada, sino hoy
+    const fechaClima = lugarInfo.fecha || fechaHoy;
+    const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaClima);
 
     const nuevaParada = {
       nombre: lugarInfo.nombre,
-      tipo: lugarInfo.tipo || 'place',
+      tipo: 'place',
       coordenadas: lugarInfo.coordenadas,
-      fecha: fechaHoy,
+      fecha: fechaClima,
       clima: climaInfo,
       relato: "",
     };
@@ -161,26 +180,24 @@ export const useViajes = () => {
     try {
       await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), nuevaParada);
       
-      // Actualizar resumen de ciudades en el padre
+      // Actualizar string resumen
       const viajeRef = doc(db, `usuarios/${usuario.uid}/viajes`, viajeId);
-      const viajeSnapshot = await getDoc(viajeRef);
-      const viajeData = viajeSnapshot.data();
-      const ciudadesPrevias = viajeData?.ciudades ? viajeData.ciudades.split(', ') : [];
-      
-      if (!ciudadesPrevias.includes(lugarInfo.nombre)) {
-        await updateDoc(viajeRef, { ciudades: [...ciudadesPrevias, lugarInfo.nombre].join(', ') });
+      const viajeDoc = await getDoc(viajeRef);
+      if(viajeDoc.exists()) {
+          const actual = viajeDoc.data().ciudades ? viajeDoc.data().ciudades.split(', ') : [];
+          if (!actual.includes(lugarInfo.nombre)) {
+             await updateDoc(viajeRef, { ciudades: [...actual, lugarInfo.nombre].join(', ') });
+          }
       }
-      return viajeId;
-    } catch { return null; }
+    } catch (e) { console.error(e) }
   };
 
-  const eliminarParada = async (viajeId, paradaId) => {
-      if(!usuario) return;
-      try {
-          await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`, paradaId));
-          // Nota: No actualizamos el string resumen 'ciudades' del padre por simplicidad, 
-          // pero idealmente debería recalcularse.
-      } catch (e) { console.error(e) }
+  const subirFotoStorage = async (viajeId, fotoBase64) => {
+    try {
+      const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
+      await uploadString(storageRef, fotoBase64, 'data_url');
+      return await getDownloadURL(storageRef);
+    } catch { return null; }
   };
 
   const actualizarDetallesViaje = async (id, data) => {
@@ -191,7 +208,9 @@ export const useViajes = () => {
         fotoUrl = await subirFotoStorage(id, data.foto);
       }
       const datosLimpios = { ...data, foto: fotoUrl };
+      // Si subió foto manual, borramos crédito
       if (data.foto && data.foto.startsWith('data:image')) datosLimpios.fotoCredito = null;
+      
       await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), datosLimpios);
     } catch (e) { console.error(e); }
   };
@@ -205,24 +224,19 @@ export const useViajes = () => {
     } catch (e) { console.error(e); }
   };
 
-  const manejarCambioPaises = async (nuevosCodes) => {
-    if (!usuario) return null;
-    if (nuevosCodes.length > paisesVisitados.length) {
-      const codeAdded = nuevosCodes.find(c => !paisesVisitados.includes(c));
-      const paisInfo = MAPA_SELLOS.find(p => p.code === codeAdded);
-      if (paisInfo) return await agregarViaje(paisInfo);
-    } else {
-      const codeRemoved = paisesVisitados.find(c => !nuevosCodes.includes(c));
-      const viajeAEliminar = bitacora.find(v => v.code === codeRemoved);
-      if (viajeAEliminar) eliminarViaje(viajeAEliminar.id);
-    }
-    return null;
+  const eliminarParada = async (viajeId, paradaId) => {
+      if(!usuario) return;
+      try {
+          await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`, paradaId));
+      } catch (e) { console.error(e) }
   };
 
   return {
     paisesVisitados, bitacora, bitacoraData, todasLasParadas,
     listaPaises: MAPA_SELLOS,
-    agregarViaje, agregarParada, eliminarParada,
-    actualizarDetallesViaje, eliminarViaje, manejarCambioPaises
+    buscarPaisEnCatalogo, // Exportada para usar en App.jsx
+    guardarNuevoViaje, // NUEVA función principal
+    agregarParada, eliminarParada,
+    actualizarDetallesViaje, eliminarViaje
   };
 };

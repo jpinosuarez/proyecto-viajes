@@ -1,75 +1,112 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Compass, Map as MapIcon, BookOpen, ArrowRight } from 'lucide-react';
+import { Compass, Map, Plus } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import StatsMapa from './StatsMapa';
 import { COLORS } from '../../theme';
 import { styles } from './DashboardHome.styles';
 
-const DashboardHome = ({ paisesVisitados = [], bitacora = [], setVistaActiva, abrirVisor }) => {
-  const ultimosViajes = bitacora.slice(0, 3);
+const DashboardHome = ({ paisesVisitados, bitacora, setVistaActiva, abrirVisor }) => {
+  const { usuario } = useAuth();
+  
+  // Obtener primer nombre
+  const nombreUsuario = usuario?.displayName ? usuario.displayName.split(' ')[0] : 'Viajero';
+
+  // Obtener aventuras recientes
+  const recientes = [...bitacora]
+    .sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio))
+    .slice(0, 4);
 
   return (
     <div style={styles.dashboardContainer}>
-      {/* ... Hero Section igual ... */}
-      <section style={styles.heroSection}>
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 style={styles.welcomeTitle}>¡Hola!</h1>
-          <p style={{ ...styles.welcomeSubtitle, display: 'flex', gap: '6px', alignItems: 'center' }}>
-            Has capturado momentos en 
-            <span style={{ fontWeight: '800', color: COLORS.atomicTangerine }}>{paisesVisitados.length} países</span> 
-            y 
-            <span style={{ fontWeight: '800', color: COLORS.atomicTangerine }}>{bitacora.length} aventuras</span>.
+      {/* Hero Section */}
+      <div style={styles.heroSection}>
+        <div>
+          <h1 style={styles.welcomeTitle}>¡Hola, {nombreUsuario}! 👋</h1>
+          <p style={styles.welcomeSubtitle}>
+            Tu pasaporte digital tiene <strong style={{color: COLORS.atomicTangerine}}>{paisesVisitados.length} sellos</strong>. 
+            ¿Cuál es la próxima historia?
           </p>
-        </motion.div>
+        </div>
         
         <div style={styles.quickActionsGrid}>
-          <div style={styles.statBox} onClick={() => setVistaActiva('mapa')}>
-            <div style={styles.iconCircle(`${COLORS.mutedTeal}20`)}><MapIcon color={COLORS.mutedTeal} /></div>
-            <div><span style={styles.statLabel}>Explorar</span><div style={styles.statValue}>Mapa</div></div>
-          </div>
-          <div style={styles.statBox} onClick={() => setVistaActiva('bitacora')}>
-            <div style={styles.iconCircle(`${COLORS.atomicTangerine}20`)}><BookOpen color={COLORS.atomicTangerine} /></div>
-            <div><span style={styles.statLabel}>Memorias</span><div style={styles.statValue}>Bitácora</div></div>
-          </div>
-        </div>
-      </section>
-
-      {/* ... Map Banner igual ... */}
-      <motion.div whileHover={{ scale: 1.005 }} style={styles.mapBanner} onClick={() => setVistaActiva('mapa')}>
-        <div style={styles.mapBannerContent}>
-          <Compass size={44} color={COLORS.linen} />
-          <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: '15px 0 5px' }}>Tu Mapa Global</h2>
-          <p>Visualiza tus rutas y conquista nuevos horizontes.</p>
-        </div>
-        <div style={styles.mapBannerOverlay} />
-      </motion.div>
-
-      <section style={{ marginTop: '10px' }}>
-        <div style={styles.sectionHeader}>
-          <h3 style={styles.sectionTitle}>Aventuras Recientes</h3>
-          <button style={styles.viewAllBtn} onClick={() => setVistaActiva('bitacora')}>
-            Ver historial <ArrowRight size={16} />
+          <button style={styles.statBox} onClick={() => setVistaActiva('mapa')}>
+            <div style={styles.iconCircle(COLORS.atomicTangerine)}>
+              <Map size={20} />
+            </div>
+            <div>
+              <span style={styles.statLabel}>Mapa Global</span>
+              <span style={styles.statValue}>Explorar</span>
+            </div>
+          </button>
+          
+          <button style={styles.statBox} onClick={() => setVistaActiva('bitacora')}>
+            <div style={styles.iconCircle(COLORS.charcoalBlue)}>
+              <Compass size={20} />
+            </div>
+            <div>
+              <span style={styles.statLabel}>Bitácora</span>
+              <span style={styles.statValue}>Ver Todo</span>
+            </div>
           </button>
         </div>
-        <div style={styles.recentGrid}>
-          {ultimosViajes.map((viaje, index) => (
-            <motion.div 
-              key={viaje.id} 
-              initial={{ opacity: 0, y: 10 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              whileHover={{ y: -5, boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }} // Hover effect
-              style={styles.miniCard}
-              onClick={() => abrirVisor(viaje.id)} // Click action
-            >
-              <span className="emoji-span" style={{ fontSize: '2rem' }}>{viaje.flag}</span>
-              <div style={styles.miniCardInfo}>
-                <strong style={{ color: COLORS.charcoalBlue }}>{viaje.nombreEspanol}</strong>
-                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{viaje.fecha}</span>
-                <div style={styles.badge}>RECIÉN AÑADIDO</div>
+      </div>
+
+      {/* Grid Principal */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+        
+        {/* Columna Izquierda: Banner Mapa + Stats */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+           <div style={styles.mapBanner} onClick={() => setVistaActiva('mapa')}>
+              <div style={styles.mapBannerOverlay} />
+              <div style={styles.mapBannerContent}>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0 }}>Mapa Interactivo</h3>
+                <p style={{ opacity: 0.9, marginTop: '8px' }}>Visualiza tus rutas y completa el mundo.</p>
               </div>
-            </motion.div>
-          ))}
+           </div>
+           
+           <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
         </div>
-      </section>
+
+        {/* Columna Derecha: Recientes */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={styles.sectionHeader}>
+            <h3 style={styles.sectionTitle}>Aventuras Recientes</h3>
+            <button style={styles.viewAllBtn} onClick={() => setVistaActiva('bitacora')}>
+              Ver Bitácora
+            </button>
+          </div>
+
+          <div style={styles.recentGrid}>
+            {recientes.length > 0 ? recientes.map(viaje => (
+              <div key={viaje.id} style={styles.miniCard} onClick={() => abrirVisor(viaje.id)}>
+                <div style={{
+                  width: '60px', height: '60px', borderRadius: '12px',
+                  backgroundColor: COLORS.charcoalBlue,
+                  backgroundImage: viaje.foto ? `url(${viaje.foto})` : 'none',
+                  backgroundSize: 'cover', backgroundPosition: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.5rem', color: 'white', flexShrink: 0
+                }}>
+                  {!viaje.foto && viaje.flag}
+                </div>
+                <div style={styles.miniCardInfo}>
+                  <span style={{fontWeight: '800', color: COLORS.charcoalBlue, fontSize: '1rem'}}>
+                    {viaje.titulo || viaje.nombreEspanol}
+                  </span>
+                  <span style={{fontSize: '0.8rem', color: '#64748b'}}>
+                    {viaje.fechaInicio}
+                  </span>
+                  {viaje.ciudades && <span style={styles.badge}>{viaje.ciudades.split(',')[0]}</span>}
+                </div>
+              </div>
+            )) : (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: '20px' }}>
+                <p>Aún no hay viajes registrados.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

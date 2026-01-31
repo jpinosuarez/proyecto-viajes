@@ -22,7 +22,7 @@ function App() {
   
   const { 
     paisesVisitados, bitacora, bitacoraData, listaPaises, todasLasParadas,
-    agregarViaje, agregarParada, 
+    buscarPaisEnCatalogo, guardarNuevoViaje, agregarParada, // Hooks actualizados
     actualizarDetallesViaje, manejarCambioPaises, eliminarViaje 
   } = useViajes();
   
@@ -30,41 +30,93 @@ function App() {
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
   const [filtro, setFiltro] = useState('');
   const [destino, setDestino] = useState(null);
-  
-  // ESTADO DE UI
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
+  
+  // NUEVO ESTADO: Viaje en Borrador (Para el Modal de Config Rápida)
+  const [viajeBorrador, setViajeBorrador] = useState(null); 
+  const [ciudadInicialBorrador, setCiudadInicialBorrador] = useState(null);
 
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
   const irAPerfil = () => setVistaActiva('config');
 
-  const onLugarSeleccionado = useCallback(async (lugar) => {
-    let viajeId = null;
+  // Lógica de Selección: Prepara el borrador y abre modal, NO guarda directo
+  const onLugarSeleccionado = useCallback((lugar) => {
+    let datosPais = null;
+    let ciudad = null;
+
     if (lugar.esPais) {
-      const paisCatalogo = listaPaises.find(p => p.code === lugar.code) 
-                        || listaPaises.find(p => p.name.toLowerCase().includes(lugar.nombre.toLowerCase()));
-      if (paisCatalogo) viajeId = await agregarViaje(paisCatalogo);
+      // Intentar matchear con catálogo
+      datosPais = listaPaises.find(p => p.code === lugar.code) 
+                  || listaPaises.find(p => p.name.toLowerCase().includes(lugar.nombre.toLowerCase()));
+      
+      if (!datosPais) datosPais = { code: lugar.code, nombreEspanol: lugar.nombre, flag: '🌍', continente: 'Mundo', latlng: lugar.coordenadas };
     } else {
-      viajeId = await agregarParada(lugar);
+      // Es ciudad, buscar país padre
+      datosPais = buscarPaisEnCatalogo(lugar.paisNombre, lugar.paisCodigo);
+      if (!datosPais) {
+        alert("País no soportado aún para esta ciudad.");
+        return;
+      }
+      ciudad = { nombre: lugar.nombre, coordenadas: lugar.coordenadas, fecha: new Date().toISOString().split('T')[0] };
     }
 
-    if (viajeId) {
-      setDestino({ 
-        longitude: lugar.coordenadas[0], latitude: lugar.coordenadas[1], 
-        zoom: lugar.esPais ? 4 : 11, essential: true 
-      });
-      setVistaActiva('mapa'); 
-      setMostrarBuscador(false);
-      setFiltro('');
-      setTimeout(() => {
-        if (!lugar.esPais) abrirVisor(viajeId);
-        else abrirEditor(viajeId);
-      }, 800);
+    // Verificar si el viaje ya existe
+    const viajeExistente = bitacora.find(v => v.code === datosPais.code);
+
+    setMostrarBuscador(false);
+    setFiltro('');
+
+    if (viajeExistente) {
+      // Si existe, si era ciudad, la agregamos directo? O abrimos editor? 
+      // El prompt pide modal rápido siempre.
+      if (ciudad) agregarParada(ciudad, viajeExistente.id);
+      
+      setDestino({ longitude: lugar.coordenadas[0], latitude: lugar.coordenadas[1], zoom: 6, essential: true });
+      setVistaActiva('mapa');
+      setTimeout(() => abrirEditor(viajeExistente.id), 500);
+    } else {
+      // NO EXISTE: Preparamos borrador
+      const nuevoBorrador = {
+        id: 'new', // Flag para el modal
+        code: datosPais.code,
+        nombreEspanol: datosPais.nombreEspanol,
+        flag: datosPais.flag,
+        continente: datosPais.continente,
+        latlng: datosPais.latlng,
+        titulo: `Viaje a ${datosPais.nombreEspanol}`,
+        fechaInicio: new Date().toISOString().split('T')[0],
+        fechaFin: new Date().toISOString().split('T')[0],
+        foto: null // Foto vacía para disparar lógica de API
+      };
+      
+      setViajeBorrador(nuevoBorrador);
+      setCiudadInicialBorrador(ciudad);
+      
+      // UX: Mover mapa al destino mientras edita
+      setDestino({ longitude: datosPais.latlng[1], latitude: datosPais.latlng[0], zoom: 4, essential: true });
+      setVistaActiva('mapa');
     }
-  }, [agregarViaje, agregarParada, listaPaises]);
+  }, [bitacora, listaPaises, buscarPaisEnCatalogo, agregarParada]);
+
+  // Handler de Guardado desde Modal
+  const handleGuardarViaje = async (id, datos) => {
+    if (id === 'new') {
+      // Crear Nuevo
+      const nuevoId = await guardarNuevoViaje(datos, ciudadInicialBorrador);
+      if (nuevoId) {
+        setViajeBorrador(null);
+        setCiudadInicialBorrador(null);
+        setTimeout(() => abrirVisor(nuevoId), 500); // Llevar al visor al terminar
+      }
+    } else {
+      // Editar Existente
+      actualizarDetallesViaje(id, datos);
+    }
+  };
 
   const onMapaPaisToggle = async (nuevosCodes) => {
     const nuevoId = await manejarCambioPaises(nuevosCodes);
@@ -83,73 +135,36 @@ function App() {
 
   if (!cargando && !usuario) return <LandingPage />;
 
-  const viajeParaEditar = bitacora.find(v => v.id === viajeEnEdicionId);
+  // Determinar qué viaje pasar al modal (Existente o Borrador)
+  const viajeParaEditar = viajeEnEdicionId ? bitacora.find(v => v.id === viajeEnEdicionId) : viajeBorrador;
 
   return (
     <div style={styles.appWrapper}>
-      
-      <Sidebar 
-        vistaActiva={vistaActiva} 
-        setVistaActiva={setVistaActiva} 
-        collapsed={sidebarCollapsed}
-        toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      <Sidebar vistaActiva={vistaActiva} setVistaActiva={setVistaActiva} collapsed={sidebarCollapsed} toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}/>
 
-      {/* Main usa margin-left dinámico + background diferente en App.styles */}
-      <motion.main 
-        style={{
-          ...styles.mainContent,
-          marginLeft: sidebarCollapsed ? '80px' : '260px', 
-        }}
-      >
-        <Header 
-          titulo={getTituloHeader()} 
-          onAddClick={() => setMostrarBuscador(true)} 
-          onProfileClick={irAPerfil} 
-        />
+      <motion.main style={{...styles.mainContent, marginLeft: sidebarCollapsed ? '80px' : '260px'}}>
+        <Header titulo={getTituloHeader()} onAddClick={() => setMostrarBuscador(true)} onProfileClick={irAPerfil} />
 
         <section style={styles.sectionWrapper}>
           <AnimatePresence mode="wait">
             {vistaActiva === 'home' && (
-              <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                style={styles.scrollableContent} className="custom-scroll">
-                <DashboardHome 
-                  paisesVisitados={paisesVisitados} 
-                  bitacora={bitacora} 
-                  setVistaActiva={setVistaActiva}
-                  abrirVisor={abrirVisor} 
-                />
+              <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+                <DashboardHome paisesVisitados={paisesVisitados} bitacora={bitacora} setVistaActiva={setVistaActiva} abrirVisor={abrirVisor} />
               </motion.div>
             )}
-
             {vistaActiva === 'mapa' && (
               <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle}>
                 <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
-                <MapaViajes 
-                   paises={paisesVisitados} 
-                   setPaises={onMapaPaisToggle} 
-                   destino={destino} 
-                   paradas={todasLasParadas} 
-                />
+                <MapaViajes paises={paisesVisitados} setPaises={onMapaPaisToggle} destino={destino} paradas={todasLasParadas} />
               </motion.div>
             )}
-
             {vistaActiva === 'bitacora' && (
-              <motion.div key="bitacora" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-                style={styles.scrollableContent} className="custom-scroll">
-                <BentoGrid 
-                  viajes={bitacora} 
-                  bitacoraData={bitacoraData} 
-                  manejarEliminar={eliminarViaje}
-                  abrirEditor={abrirEditor}
-                  abrirVisor={abrirVisor} 
-                />
+              <motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+                <BentoGrid viajes={bitacora} bitacoraData={bitacoraData} manejarEliminar={eliminarViaje} abrirEditor={abrirEditor} abrirVisor={abrirVisor} />
               </motion.div>
             )}
-
             {vistaActiva === 'config' && (
-              <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                style={styles.scrollableContent} className="custom-scroll">
+              <motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <SettingsPage />
               </motion.div>
             )}
@@ -157,32 +172,19 @@ function App() {
         </section>
       </motion.main>
 
-      <BuscadorModal 
-        isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} 
-        filtro={filtro} setFiltro={setFiltro} listaPaises={listaPaises} 
-        seleccionarLugar={onLugarSeleccionado} 
-        paisesVisitados={paisesVisitados} 
-      />
+      <BuscadorModal isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} filtro={filtro} setFiltro={setFiltro} seleccionarLugar={onLugarSeleccionado} />
 
+      {/* Modal Reutilizado para Edición y Creación Rápida */}
       <EdicionModal 
         viaje={viajeParaEditar} 
-        bitacoraData={bitacoraData} 
-        onClose={() => setViajeEnEdicionId(null)} 
-        onSave={actualizarDetallesViaje} 
+        bitacoraData={bitacoraData} // Solo útil para edición, no borrador
+        onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }} 
+        onSave={handleGuardarViaje} 
+        esBorrador={!!viajeBorrador}
+        ciudadInicial={ciudadInicialBorrador}
       />
 
-      <VisorViaje 
-        viajeId={viajeExpandidoId}
-        bitacoraLista={bitacora}
-        bitacoraData={bitacoraData}
-        onClose={() => setViajeExpandidoId(null)}
-        onEdit={abrirEditor}
-        onSave={actualizarDetallesViaje}
-        onAddParada={() => {
-            setViajeExpandidoId(null);
-            setMostrarBuscador(true);
-        }}
-      />
+      <VisorViaje viajeId={viajeExpandidoId} bitacoraLista={bitacora} bitacoraData={bitacoraData} onClose={() => setViajeExpandidoId(null)} onEdit={abrirEditor} onSave={actualizarDetallesViaje} onAddParada={() => { setViajeExpandidoId(null); setMostrarBuscador(true); }} />
     </div>
   );
 }

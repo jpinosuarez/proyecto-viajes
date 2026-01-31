@@ -6,10 +6,10 @@ export const styles = {
     flexDirection: 'column',
     gap: '24px',
     width: '100%',
-    maxWidth: '100%', // Evita desbordamiento
-    padding: '0 0 40px 0', // Padding solo abajo, el lateral lo da el contenedor padre
-    boxSizing: 'border-box',
-    overflowX: 'hidden'
+    paddingBottom: '40px',
+    // IMPORTANTE: Evitamos overflow horizontal
+    overflowX: 'hidden',
+    boxSizing: 'border-box'
   },
 
   heroSection: {
@@ -17,21 +17,22 @@ export const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: '30px',
-    flexWrap: 'wrap', // Clave para móviles
+    flexWrap: 'wrap', 
     marginBottom: '10px'
   },
 
   welcomeTitle: {
-    fontSize: '2.2rem',
+    fontSize: '2rem',
     fontWeight: '900',
     color: COLORS.charcoalBlue,
     margin: 0,
     letterSpacing: '-1px',
-    lineHeight: 1.2
+    lineHeight: 1.2,
+    '@media (max-width: 768px)': { fontSize: '1.5rem' }
   },
 
   welcomeSubtitle: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     color: COLORS.charcoalBlue,
     opacity: 0.8,
     marginTop: '8px',
@@ -56,7 +57,8 @@ export const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
     border: '1px solid rgba(44, 62, 80, 0.05)',
     transition: 'transform 0.2s ease',
-    minWidth: '140px'
+    minWidth: '140px',
+    ':hover': { transform: 'translateY(-2px)' }
   },
 
   iconCircle: (bgColor) => ({
@@ -88,7 +90,7 @@ export const styles = {
 
   mapBanner: {
     width: '100%',
-    minHeight: '220px',
+    minHeight: '200px',
     borderRadius: '24px',
     position: 'relative',
     overflow: 'hidden',
@@ -98,7 +100,7 @@ export const styles = {
     backgroundPosition: 'center',
     display: 'flex',
     alignItems: 'center',
-    padding: '40px',
+    padding: '30px',
     boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
   },
 
@@ -113,7 +115,7 @@ export const styles = {
     position: 'relative',
     zIndex: 2,
     color: COLORS.linen,
-    maxWidth: '600px'
+    maxWidth: '100%'
   },
 
   sectionHeader: {
@@ -121,11 +123,11 @@ export const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '16px',
-    marginTop: '20px'
+    marginTop: '10px'
   },
 
   sectionTitle: { 
-    fontSize: '1.4rem', 
+    fontSize: '1.3rem', 
     fontWeight: '800', 
     color: COLORS.charcoalBlue, 
     margin: 0 
@@ -144,15 +146,15 @@ export const styles = {
   },
 
   recentGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', // Auto-fit evita huecos
-    gap: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
     width: '100%'
   },
 
   miniCard: {
     backgroundColor: 'white',
-    padding: '20px',
+    padding: '16px',
     borderRadius: '20px',
     border: '1px solid rgba(44, 62, 80, 0.05)',
     boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
@@ -161,7 +163,8 @@ export const styles = {
     gap: '16px',
     cursor: 'pointer',
     transition: 'transform 0.2s ease',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    ':hover': { transform: 'translateX(5px)' }
   },
 
   miniCardInfo: {
@@ -169,7 +172,7 @@ export const styles = {
     flexDirection: 'column',
     gap: '4px',
     flex: 1,
-    minWidth: 0 // Permite truncar texto
+    minWidth: 0 
   },
 
   badge: {
