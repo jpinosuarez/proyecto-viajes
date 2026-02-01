@@ -1,103 +1,116 @@
 import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export const styles = {
-  container: {
+  dashboardContainer: {
     width: '100%',
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    padding: '0 20px 20px 0', // Padding derecho e inferior
+    gap: '20px',
+    padding: '0 20px 20px 0',
     boxSizing: 'border-box',
-    overflow: 'hidden' // ZERO SCROLL POLICY
+    overflow: 'hidden'
   },
-  welcomeArea: {
-    marginBottom: '20px',
-    flexShrink: 0
-  },
-  title: { fontSize: '1.8rem', fontWeight: '900', color: COLORS.charcoalBlue, margin: 0 },
+  welcomeArea: { marginBottom: '10px', flexShrink: 0 },
+  title: { fontSize: '2rem', fontWeight: '900', color: COLORS.charcoalBlue, margin: 0 },
   subtitle: { fontSize: '1rem', color: COLORS.textSecondary },
 
-  // BENTO GRID PRINCIPAL
   bentoGrid: {
     display: 'grid',
-    gridTemplateColumns: '2fr 1fr', // Mapa grande | Lateral
-    gridTemplateRows: '1fr 1fr',    // Filas automáticas
+    gridTemplateColumns: '2fr 1fr', 
+    gridTemplateRows: 'repeat(3, 1fr)', // 3 filas iguales
     gap: '20px',
     flex: 1,
-    minHeight: 0 // Importante para que el grid no desborde
+    minHeight: 0
   },
 
-  // 1. MAPA CARD (Ocupa columna izq completa)
+  // Mapa ocupa 2/3 de ancho y 2/3 de alto
   mapCard: {
     gridColumn: '1 / 2',
     gridRow: '1 / 3',
-    backgroundColor: 'white',
+    backgroundColor: '#F8FAFC', // Match con el mapa
     borderRadius: RADIUS.lg,
     boxShadow: SHADOWS.md,
     border: `1px solid ${COLORS.border}`,
     overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative'
+    position: 'relative',
+    display: 'flex'
   },
-  mapHeader: {
+  mapOverlayInfo: {
     position: 'absolute', top: 20, left: 20, zIndex: 10,
-    background: 'rgba(255,255,255,0.9)', padding: '10px 15px',
-    borderRadius: RADIUS.md, backdropFilter: 'blur(4px)',
-    boxShadow: SHADOWS.sm
+    background: 'rgba(255,255,255,0.95)', padding: '15px 20px',
+    borderRadius: RADIUS.md, backdropFilter: 'blur(8px)',
+    boxShadow: SHADOWS.lg,
+    border: `1px solid ${COLORS.border}`
   },
-  cardTitle: { display: 'block', fontSize: '0.8rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase' },
-  cardValue: { fontSize: '1.5rem', fontWeight: '900', color: COLORS.charcoalBlue },
+  mapTitle: { display: 'block', fontSize: '0.75rem', fontWeight: '800', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: '1px' },
+  mapProgress: { display: 'flex', alignItems: 'baseline', gap: '10px' },
+  mapPercent: { fontSize: '2.5rem', fontWeight: '900', color: COLORS.atomicTangerine, lineHeight: 1 },
+  mapTotal: { fontSize: '0.9rem', color: COLORS.charcoalBlue, fontWeight: '700' },
 
-  // 2. STATS COLUMN (Arriba derecha)
+  // Stats
   statsColumn: {
     gridColumn: '2 / 3',
-    gridRow: '1 / 2',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr', // Dos stats lado a lado
+    gridRow: '1 / 4', // Ocupa toda la altura derecha
+    display: 'flex',
+    flexDirection: 'column',
     gap: '15px'
   },
-  statCard: {
-    backgroundColor: 'white',
+  statCard: (color) => ({
+    flex: 1, // Se distribuyen equitativamente
+    backgroundColor: color,
     borderRadius: RADIUS.lg,
     padding: '20px',
     boxShadow: SHADOWS.sm,
-    border: `1px solid ${COLORS.border}`,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    gap: '10px'
-  },
-  iconBox: (color) => ({
-    width: '40px', height: '40px', borderRadius: '10px',
-    backgroundColor: `${color}15`, color: color,
-    display: 'flex', alignItems: 'center', justifyContent: 'center'
+    justifyContent: 'space-between',
+    color: 'white',
+    position: 'relative',
+    overflow: 'hidden'
   }),
-  statLabel: { fontSize: '0.8rem', color: COLORS.textSecondary, fontWeight: '600' },
-  statNumber: { fontSize: '1.8rem', fontWeight: '800', color: COLORS.charcoalBlue, lineHeight: 1 },
+  statIcon: { 
+    background: 'rgba(255,255,255,0.2)', width: '40px', height: '40px', 
+    borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+  },
+  statLabel: { fontSize: '0.85rem', opacity: 0.9, fontWeight: '600' },
+  statValue: { fontSize: '2rem', fontWeight: '800' },
 
-  // 3. RECIENTES (Abajo derecha)
+  // Recientes (Abajo a la izquierda)
   recentCard: {
-    gridColumn: '2 / 3',
-    gridRow: '2 / 3',
+    gridColumn: '1 / 2',
+    gridRow: '3 / 4',
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
-    padding: '20px',
     boxShadow: SHADOWS.sm,
     border: `1px solid ${COLORS.border}`,
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden'
   },
-  list: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' },
-  listItem: {
-    display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '10px', borderRadius: RADIUS.md,
-    cursor: 'pointer', transition: 'background 0.2s',
-    ':hover': { backgroundColor: '#F8FAFC' }
+  recentHeader: {
+    padding: '15px 20px',
+    borderBottom: `1px solid ${COLORS.border}`,
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    background: '#F8FAFC'
   },
-  listIcon: { fontSize: '1.2rem', width: '30px', textAlign: 'center' },
-  listTitle: { display: 'block', fontWeight: '700', fontSize: '0.9rem', color: COLORS.charcoalBlue },
-  listDate: { display: 'block', fontSize: '0.75rem', color: COLORS.textSecondary },
-  linkBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontWeight:'700', cursor:'pointer', fontSize:'0.85rem' }
+  cardTitle: { fontSize: '0.9rem', fontWeight: '800', color: COLORS.charcoalBlue, display: 'flex', alignItems: 'center', gap: '8px' },
+  linkBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontWeight:'700', cursor:'pointer', fontSize:'0.8rem' },
+  
+  list: { flex: 1, overflowY: 'auto', padding: '10px' },
+  listItem: {
+    display: 'flex', alignItems: 'center', gap: '15px',
+    padding: '10px 15px', borderRadius: RADIUS.md,
+    cursor: 'pointer', transition: 'all 0.2s',
+    ':hover': { backgroundColor: '#F1F5F9', transform: 'translateX(4px)' }
+  },
+  listIcon: { 
+    fontSize: '1.5rem', width: '40px', height: '40px', 
+    background: '#fff', border: `1px solid ${COLORS.border}`, borderRadius: '10px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
+  },
+  listTitle: { display: 'block', fontWeight: '700', fontSize: '0.95rem', color: COLORS.charcoalBlue },
+  listDate: { fontSize: '0.8rem', color: COLORS.textSecondary },
+  listSub: { fontSize: '0.75rem', color: COLORS.mutedTeal, fontWeight: '600', background: '#F0FDFA', padding: '2px 6px', borderRadius: '4px' },
+  emptyText: { padding: '20px', textAlign: 'center', color: COLORS.textSecondary, fontStyle: 'italic' }
 };

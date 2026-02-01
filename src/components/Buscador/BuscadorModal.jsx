@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, MapPin, Plus, TrendingUp } from 'lucide-react';
+import { Search, X, MapPin, Plus, TrendingUp, Globe } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BuscadorModal.styles';
-import { getFlagEmoji } from '../../utils/countryUtils'; // Asegúrate de tener este archivo creado
+import { getFlagEmoji } from '../../utils/countryUtils';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
@@ -165,14 +165,16 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                   key={item.id} 
                   style={styles.resultItem}
                   onClick={() => manejarSeleccion(item)}
-                  className="result-item-hover" // Clase auxiliar si usas CSS externo, sino el style hover inline abajo
+                  className="result-item-hover"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#F8FAFC';
-                    e.currentTarget.querySelector('.add-label').style.opacity = '1';
+                    const label = e.currentTarget.querySelector('.add-label');
+                    if(label) label.style.opacity = '1';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.querySelector('.add-label').style.opacity = '0';
+                    const label = e.currentTarget.querySelector('.add-label');
+                    if(label) label.style.opacity = '0';
                   }}
                 >
                   {/* Icono: Bandera o Pin */}
@@ -180,7 +182,7 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                       {flagEmoji && flagEmoji !== '🏳️' ? (
                         <span style={{fontSize: '1.4rem', lineHeight: 1}}>{flagEmoji}</span>
                       ) : (
-                        <MapPin size={18} />
+                        item.tipo === 'country' ? <Globe size={18} /> : <MapPin size={18} />
                       )}
                   </div>
                   
