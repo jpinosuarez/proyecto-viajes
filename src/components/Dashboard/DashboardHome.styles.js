@@ -56,6 +56,17 @@ export const styles = {
     flexDirection: 'column',
     gap: '15px'
   },
+  recentCard: {
+    gridColumn: '1 / 2',
+    gridRow: '3 / 4',
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.sm,
+    border: `1px solid ${COLORS.border}`,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden'
+  },
   statCard: (color) => ({
     flex: 1, // Se distribuyen equitativamente
     backgroundColor: color,
@@ -77,24 +88,34 @@ export const styles = {
   statValue: { fontSize: '2rem', fontWeight: '800' },
 
   // Recientes (Abajo a la izquierda)
-  recentCard: {
-    gridColumn: '1 / 2',
-    gridRow: '3 / 4',
-    backgroundColor: 'white',
-    borderRadius: RADIUS.lg,
-    boxShadow: SHADOWS.sm,
-    border: `1px solid ${COLORS.border}`,
+  recentItem: {
+    position: 'relative',
+    height: '80px',
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    padding: '0 20px',
+    marginBottom: '10px',
     display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
-  },
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'transform 0.2s',
+    boxShadow: SHADOWS.sm,
+    ':hover': { transform: 'scale(1.01)' }
+},
   recentHeader: {
     padding: '15px 20px',
     borderBottom: `1px solid ${COLORS.border}`,
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     background: '#F8FAFC'
   },
-  cardTitle: { fontSize: '0.9rem', fontWeight: '800', color: COLORS.charcoalBlue, display: 'flex', alignItems: 'center', gap: '8px' },
+  cardTitle: {
+    fontSize: '0.9rem',
+    fontWeight: '800',
+    color: COLORS.charcoalBlue,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px' },
+  
   linkBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontWeight:'700', cursor:'pointer', fontSize:'0.8rem' },
   
   list: { flex: 1, overflowY: 'auto', padding: '10px' },

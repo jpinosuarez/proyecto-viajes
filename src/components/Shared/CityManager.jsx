@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Calendar, Trash2, ArrowUp, ArrowDown, Plus, Search } from 'lucide-react';
 import { COLORS } from '../../theme';
-import { getCountryISO3, getFlagEmoji } from '../../utils/countryUtils';
+import { getCountryISO3 } from '../../utils/countryUtils';
+import { getFlagUrl } from '../../utils/countryUtils';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
@@ -37,7 +38,7 @@ const CityManager = ({ paradas, setParadas }) => {
       fechaSalida: '',  // Nueva fecha
       fecha: new Date().toISOString().split('T')[0], // Fallback para compatibilidad
       paisCodigo: countryCode, 
-      flag: getFlagEmoji(countryCode)
+      flag: getFlagUrl(countryCode)
     };
     setParadas([...paradas, nuevaParada]);
     setBusqueda('');

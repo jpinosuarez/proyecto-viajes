@@ -3,9 +3,10 @@ import { COLORS, FONTS } from '../../theme';
 export const styles = {
   container: {
     minHeight: '100vh',
+    height: '100vh', // Altura fija
+    overflowY: 'auto', // SCROLL HABILITADO
     background: '#F8FAFC',
     position: 'relative',
-    overflow: 'hidden',
     fontFamily: FONTS.heading
   },
   nav: {

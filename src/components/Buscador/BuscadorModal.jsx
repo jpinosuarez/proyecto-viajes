@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, MapPin, Plus, TrendingUp, Globe } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BuscadorModal.styles';
-import { getFlagEmoji } from '../../utils/countryUtils';
+import { getFlagUrl } from '../../utils/countryUtils';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
