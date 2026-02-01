@@ -73,5 +73,36 @@ export const styles = {
   timelineItem: { position: 'relative' },
   timelineDot: { position: 'absolute', left: '-25px', top: '6px', width: '8px', height: '8px', borderRadius: '50%', background: COLORS.atomicTangerine, border: '2px solid white' },
   stopCard: { background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid #f1f5f9' },
-  emptyState: { fontStyle: 'italic', color: '#94a3b8' }
+  emptyState: { fontStyle: 'italic', color: '#94a3b8' },
+  weatherNote: {
+    marginTop: '8px',
+    fontSize: '0.9rem',
+    color: '#475569',
+    fontStyle: 'italic',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: '#F1F5F9',
+    padding: '8px 12px',
+    borderRadius: '8px'
+  },
+  verifiedBadge: {
+    fontSize: '0.65rem',
+    textTransform: 'uppercase',
+    fontWeight: '800',
+    color: COLORS.mutedTeal,
+    background: 'white',
+    padding: '2px 6px',
+    borderRadius: '4px'
+  },
+  creditLink: {
+    position: 'absolute', bottom: 15, right: 20,
+    color: 'rgba(255,255,255,0.8)', // Blanco semitransparente, no azul
+    fontSize: '0.75rem', textDecoration: 'none',
+    background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '20px',
+    backdropFilter: 'blur(4px)', display: 'flex', gap: '6px', alignItems: 'center',
+    zIndex: 20,
+    border: '1px solid rgba(255,255,255,0.2)'
+}
 };
+

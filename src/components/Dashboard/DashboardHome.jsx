@@ -1,93 +1,110 @@
 import React from 'react';
-import { Globe, Calendar, Map as MapIcon, ChevronRight } from 'lucide-react';
+import Map, { Source, Layer } from 'react-map-gl';
+import { Compass, Calendar, Flag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS } from '../../theme';
 import { styles } from './DashboardHome.styles';
-import StatsMapa from './StatsMapa'; // Componente pequeño de stats
-import MapaViajes from '../Mapa/MapaView'; // Reusamos el mapa
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
 const DashboardHome = ({ paisesVisitados, bitacora, setVistaActiva, abrirVisor }) => {
   const { usuario } = useAuth();
   const nombre = usuario?.displayName ? usuario.displayName.split(' ')[0] : 'Viajero';
   
-  // Recientes ordenados
-  const recientes = [...bitacora].sort((a,b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+  // Ordenar recientes
+  const recientes = [...bitacora].sort((a,b) => new Date(b.fechaInicio) - new Date(a.fechaInicio)).slice(0, 3);
+
+  // Estadísticas
+  const totalPaises = 195;
+  const visitadosCount = paisesVisitados.length;
+  const porcentaje = ((visitadosCount / totalPaises) * 100).toFixed(0);
 
   return (
-    <div style={styles.dashboardContainer}>
-      
-      {/* Header */}
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Hola, {nombre} 👋</h1>
-          <p style={styles.subtitle}>Tu mundo, tus historias.</p>
-        </div>
-      </header>
+    <div style={styles.container}>
+      {/* HEADER INTEGRADO */}
+      <div style={styles.welcomeArea}>
+        <h1 style={styles.title}>Hola, {nombre}</h1>
+        <p style={styles.subtitle}>Tu mundo en datos.</p>
+      </div>
 
-      {/* Grid 3 Columnas */}
-      <div style={styles.mainGrid}>
+      {/* BENTO GRID LAYOUT */}
+      <div style={styles.bentoGrid}>
         
-        {/* COL 1: Resumen & Stats */}
-        <div style={styles.colLeft}>
-          <div style={styles.statsCard}>
-            <div style={styles.statRow}>
-              <span>Países</span>
-              <span style={styles.statValue}>{paisesVisitados.length} / 195</span>
-            </div>
-            <div style={styles.statRow}>
-              <span>Viajes</span>
-              <span style={styles.statValue}>{bitacora.length}</span>
-            </div>
-            {/* Barra Progreso */}
-            <div style={{height: '6px', background: '#f1f5f9', borderRadius: '4px', overflow:'hidden', marginTop:'10px'}}>
-               <div style={{width: `${(paisesVisitados.length/195)*100}%`, background: COLORS.atomicTangerine, height:'100%'}} />
-            </div>
+        {/* 1. MAPA ESTÁTICO MERCATOR (Bloque Grande) */}
+        <div style={styles.mapCard}>
+          <div style={styles.mapHeader}>
+            <span style={styles.cardTitle}>Mundo Descubierto</span>
+            <span style={styles.cardValue}>{porcentaje}%</span>
           </div>
-          
-          <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
+          <div style={{flex: 1, position: 'relative', width: '100%', height: '100%'}}>
+             <Map
+                initialViewState={{ longitude: 10, latitude: 20, zoom: 1.2 }}
+                mapStyle="mapbox://styles/mapbox/light-v11"
+                mapboxAccessToken={MAPBOX_TOKEN}
+                projection="mercator" // SOLICITADO: Mercator Fijo
+                interactive={false}   // SOLICITADO: Sin navegación
+                attributionControl={false}
+             >
+                {/* Capa de Países Visitados */}
+                <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
+                  <Layer
+                    id="country-fills"
+                    type="fill"
+                    source-layer="country_boundaries"
+                    paint={{
+                      'fill-color': COLORS.atomicTangerine,
+                      'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], paisesVisitados.length > 0 ? paisesVisitados : [''], 0.8, 0] // Solo pinta visitados
+                    }}
+                  />
+                  <Layer
+                    id="country-borders"
+                    type="line"
+                    source-layer="country_boundaries"
+                    paint={{ 'line-color': '#e2e8f0', 'line-width': 0.5 }}
+                  />
+                </Source>
+             </Map>
+          </div>
         </div>
 
-        {/* COL 2: Mapa Central */}
-        <div style={styles.colCenter} onClick={() => setVistaActiva('mapa')}>
-           <div style={styles.mapContainer}>
-             {/* Mapa en modo solo lectura/visualización */}
-             <MapaViajes paises={paisesVisitados} /> 
-             {/* Overlay para click */}
-             <div style={{position:'absolute', inset:0, background:'transparent', cursor:'pointer'}} />
-           </div>
-           <div style={{padding:'15px', borderTop:`1px solid ${COLORS.border}`, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-             <span style={{fontWeight:'700', color: COLORS.charcoalBlue, fontSize:'0.9rem'}}>Tu Mapa Global</span>
-             <button style={styles.actionBtn}>Expandir <ChevronRight size={14}/></button>
-           </div>
+        {/* 2. STATS (Vertical) */}
+        <div style={styles.statsColumn}>
+          <div style={styles.statCard}>
+            <div style={styles.iconBox(COLORS.mutedTeal)}><Flag size={20}/></div>
+            <div>
+                <span style={styles.statLabel}>Países</span>
+                <span style={styles.statNumber}>{visitadosCount}</span>
+            </div>
+          </div>
+          <div style={styles.statCard}>
+            <div style={styles.iconBox(COLORS.charcoalBlue)}><Compass size={20}/></div>
+            <div>
+                <span style={styles.statLabel}>Viajes</span>
+                <span style={styles.statNumber}>{bitacora.length}</span>
+            </div>
+          </div>
         </div>
 
-        {/* COL 3: Bitácora Reciente */}
-        <div style={styles.colRight}>
-          <div style={styles.recentsHeader}>
-            <span>Recientes</span>
-            <button style={styles.actionBtn} onClick={() => setVistaActiva('bitacora')}>Ver todo</button>
+        {/* 3. RECIENTES (Lista Compacta) */}
+        <div style={styles.recentCard}>
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px'}}>
+             <span style={styles.cardTitle}>Aventuras Recientes</span>
+             <button onClick={() => setVistaActiva('bitacora')} style={styles.linkBtn}>Ver todo</button>
           </div>
-          
-          <div style={styles.recentsList} className="custom-scroll">
-            {recientes.length > 0 ? recientes.map(viaje => (
-              <div key={viaje.id} style={styles.miniCard} onClick={() => abrirVisor(viaje.id)}>
-                <div style={styles.miniImg(viaje.foto)}>
-                  {!viaje.foto && <span>{viaje.banderas ? viaje.banderas[0] : viaje.flag}</span>}
-                </div>
-                <div style={styles.miniInfo}>
-                  <span style={styles.miniTitle}>{viaje.titulo || viaje.nombreEspanol}</span>
-                  <span style={styles.miniDate}>{viaje.fechaInicio}</span>
-                  {/* Banderas Extra */}
-                  {viaje.banderas && viaje.banderas.length > 1 && (
-                    <div style={{display:'flex', gap:'2px', marginTop:'4px', fontSize:'0.8rem'}}>
-                      {viaje.banderas.slice(0,4).map((b,i) => <span key={i}>{b}</span>)}
+          <div style={styles.list}>
+            {recientes.map(viaje => (
+                <div key={viaje.id} style={styles.listItem} onClick={() => abrirVisor(viaje.id)}>
+                    <div style={styles.listIcon}>
+                        {viaje.banderas ? viaje.banderas[0] : '✈️'}
                     </div>
-                  )}
+                    <div style={{flex:1}}>
+                        <span style={styles.listTitle}>{viaje.titulo}</span>
+                        <span style={styles.listDate}>{viaje.fechaInicio}</span>
+                    </div>
                 </div>
-              </div>
-            )) : (
-              <p style={{color:'#94a3b8', textAlign:'center', marginTop:'20px'}}>Aún no hay viajes.</p>
-            )}
+            ))}
+            {recientes.length === 0 && <p style={{color: '#94a3b8', fontSize:'0.9rem'}}>Tu bitácora está vacía.</p>}
           </div>
         </div>
 

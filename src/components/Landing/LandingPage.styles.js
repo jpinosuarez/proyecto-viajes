@@ -1,165 +1,103 @@
-import { COLORS } from '../../theme';
+import { COLORS, FONTS } from '../../theme';
 
 export const styles = {
-  landingContainer: {
+  container: {
     minHeight: '100vh',
-    width: '100%',
-    backgroundColor: COLORS.linen,
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: '"Plus Jakarta Sans", sans-serif',
-    overflowX: 'hidden'
+    background: '#F8FAFC',
+    position: 'relative',
+    overflow: 'hidden',
+    fontFamily: FONTS.heading
   },
   nav: {
-    padding: '20px 40px',
+    padding: '24px 40px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    position: 'sticky',
-    top: 0,
-    backgroundColor: 'rgba(244, 237, 228, 0.9)',
-    backdropFilter: 'blur(10px)',
-    zIndex: 100
+    zIndex: 10,
+    position: 'relative'
   },
   logo: {
     fontSize: '1.5rem',
     fontWeight: '900',
     color: COLORS.charcoalBlue,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px'
+    letterSpacing: '-1px'
   },
   loginBtn: {
     padding: '10px 24px',
-    backgroundColor: 'transparent',
-    border: `2px solid ${COLORS.charcoalBlue}`,
-    borderRadius: '12px',
+    borderRadius: '30px',
+    border: `1px solid ${COLORS.border}`,
+    background: 'white',
     color: COLORS.charcoalBlue,
     fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
+    cursor: 'pointer'
   },
-  heroSection: {
-    padding: '60px 20px',
-    textAlign: 'center',
-    maxWidth: '1000px',
+  hero: {
+    maxWidth: '1200px',
     margin: '0 auto',
+    padding: '60px 20px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '24px'
+    textAlign: 'center',
+    zIndex: 10,
+    position: 'relative'
   },
-  heroTitle: {
-    fontSize: '3.5rem',
+  title: {
+    fontSize: '4rem',
     fontWeight: '900',
     color: COLORS.charcoalBlue,
-    lineHeight: '1.1',
-    letterSpacing: '-2px',
-    margin: 0
+    lineHeight: 1.1,
+    marginBottom: '24px'
   },
-  heroSubtitle: {
-    fontSize: '1.2rem',
-    color: '#64748b',
+  gradientText: {
+    background: `linear-gradient(90deg, ${COLORS.atomicTangerine}, ${COLORS.mutedTeal})`,
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent'
+  },
+  subtitle: {
+    fontSize: '1.25rem',
+    color: COLORS.textSecondary,
     maxWidth: '600px',
-    lineHeight: '1.6'
+    marginBottom: '40px',
+    lineHeight: 1.6
   },
-  ctaButton: {
-    padding: '16px 32px',
-    backgroundColor: COLORS.atomicTangerine,
+  ctaBtn: {
+    padding: '16px 40px',
+    fontSize: '1.1rem',
+    fontWeight: '800',
+    background: COLORS.charcoalBlue,
     color: 'white',
     border: 'none',
     borderRadius: '50px',
-    fontSize: '1.1rem',
-    fontWeight: '800',
     cursor: 'pointer',
-    boxShadow: '0 10px 25px -5px rgba(255, 107, 53, 0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    transition: 'transform 0.2s ease'
+    boxShadow: '0 10px 30px rgba(44, 62, 80, 0.3)',
+    transition: 'transform 0.2s',
+    ':hover': { transform: 'scale(1.05)' }
   },
-  googleHint: {
-    fontSize: '0.85rem',
-    color: '#94a3b8',
-    marginTop: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
-  demoSection: {
-    padding: '80px 20px',
-    backgroundColor: 'white',
-    borderRadius: '40px 40px 0 0',
-    marginTop: '40px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '80px'
-  },
-  featureBlock: {
-    maxWidth: '1200px',
-    margin: '0 auto',
+  featuresGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '60px',
-    alignItems: 'center'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '30px',
+    marginTop: '80px',
+    width: '100%'
   },
-  featureText: {
+  featureCard: {
+    background: 'white',
+    padding: '30px',
+    borderRadius: '24px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    alignItems: 'center',
+    gap: '15px'
   },
-  featureTag: {
-    color: COLORS.atomicTangerine,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    fontSize: '0.8rem',
-    letterSpacing: '2px'
-  },
-  featureTitle: {
-    fontSize: '2.5rem',
-    fontWeight: '800',
-    color: COLORS.charcoalBlue,
-    margin: 0
-  },
-  featureDesc: {
-    fontSize: '1.1rem',
-    color: '#64748b',
-    lineHeight: '1.6'
-  },
-  visualCard: {
-    backgroundColor: COLORS.linen,
-    borderRadius: '24px',
-    padding: '30px',
-    boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)',
-    position: 'relative',
-    overflow: 'hidden'
-  },
-  statsRow: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '40px',
-    marginTop: '20px',
-    flexWrap: 'wrap'
-  },
-  statItem: {
-    textAlign: 'center'
-  },
-  statNumber: {
-    fontSize: '2.5rem',
-    fontWeight: '900',
-    color: COLORS.charcoalBlue
-  },
-  statLabel: {
-    color: '#94a3b8',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    fontSize: '0.8rem'
-  },
-  footer: {
-    padding: '40px 20px',
-    textAlign: 'center',
-    borderTop: '1px solid #f1f5f9',
-    color: '#94a3b8',
-    fontSize: '0.9rem'
+  backgroundMap: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")',
+    backgroundSize: 'cover',
+    opacity: 0.03,
+    zIndex: 0,
+    pointerEvents: 'none'
   }
 };

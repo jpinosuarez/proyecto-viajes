@@ -1,124 +1,103 @@
 import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export const styles = {
-  dashboardContainer: {
+  container: {
     width: '100%',
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
-    paddingBottom: '20px',
+    padding: '0 20px 20px 0', // Padding derecho e inferior
     boxSizing: 'border-box',
-    overflow: 'hidden' // Evita que la página entera scrollee
+    overflow: 'hidden' // ZERO SCROLL POLICY
   },
-
-  // Header simplificado
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'end',
-    paddingBottom: '10px',
-    borderBottom: `1px solid ${COLORS.border}`,
-    flexShrink: 0 // No se encoge
+  welcomeArea: {
+    marginBottom: '20px',
+    flexShrink: 0
   },
-  title: { fontSize: '1.8rem', fontWeight: '900', color: COLORS.charcoalBlue, margin: 0, letterSpacing: '-0.5px' },
-  subtitle: { fontSize: '0.95rem', color: COLORS.textSecondary, margin: '4px 0 0 0' },
+  title: { fontSize: '1.8rem', fontWeight: '900', color: COLORS.charcoalBlue, margin: 0 },
+  subtitle: { fontSize: '1rem', color: COLORS.textSecondary },
 
-  // GRID DE 3 COLUMNAS
-  mainGrid: {
+  // BENTO GRID PRINCIPAL
+  bentoGrid: {
     display: 'grid',
-    gridTemplateColumns: '300px 1fr 340px', // Estructura fija: Info | Mapa | Recientes
-    gridTemplateRows: '100%',
-    gap: '24px',
-    flex: 1, // Ocupa el resto del alto
-    minHeight: 0, // Clave para que los hijos scrolleen
-    
-    '@media (max-width: 1200px)': {
-      gridTemplateColumns: '1fr 1fr', // Tablet
-      gridTemplateRows: 'auto 1fr',
-      overflowY: 'auto'
-    },
-    '@media (max-width: 900px)': {
-      gridTemplateColumns: '1fr', // Mobile
-      overflowY: 'auto'
-    }
-  },
-
-  // COL 1: Stats & Perfil
-  colLeft: {
-    display: 'flex',
-    flexDirection: 'column',
+    gridTemplateColumns: '2fr 1fr', // Mapa grande | Lateral
+    gridTemplateRows: '1fr 1fr',    // Filas automáticas
     gap: '20px',
-    overflowY: 'auto',
-    paddingRight: '5px'
+    flex: 1,
+    minHeight: 0 // Importante para que el grid no desborde
   },
-  statsCard: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.lg,
-    padding: '24px',
-    boxShadow: SHADOWS.sm,
-    border: `1px solid ${COLORS.border}`,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px'
-  },
-  statRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: COLORS.textSecondary },
-  statValue: { fontWeight: '800', color: COLORS.charcoalBlue, fontSize: '1.1rem' },
 
-  // COL 2: Mapa Hero
-  colCenter: {
+  // 1. MAPA CARD (Ocupa columna izq completa)
+  mapCard: {
+    gridColumn: '1 / 2',
+    gridRow: '1 / 3',
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
     boxShadow: SHADOWS.md,
     border: `1px solid ${COLORS.border}`,
     overflow: 'hidden',
-    position: 'relative',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    position: 'relative'
   },
-  mapContainer: { flex: 1, position: 'relative', minHeight: '300px' },
+  mapHeader: {
+    position: 'absolute', top: 20, left: 20, zIndex: 10,
+    background: 'rgba(255,255,255,0.9)', padding: '10px 15px',
+    borderRadius: RADIUS.md, backdropFilter: 'blur(4px)',
+    boxShadow: SHADOWS.sm
+  },
+  cardTitle: { display: 'block', fontSize: '0.8rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase' },
+  cardValue: { fontSize: '1.5rem', fontWeight: '900', color: COLORS.charcoalBlue },
 
-  // COL 3: Recientes
-  colRight: {
+  // 2. STATS COLUMN (Arriba derecha)
+  statsColumn: {
+    gridColumn: '2 / 3',
+    gridRow: '1 / 2',
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr', // Dos stats lado a lado
+    gap: '15px'
+  },
+  statCard: {
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
+    padding: '20px',
     boxShadow: SHADOWS.sm,
     border: `1px solid ${COLORS.border}`,
     display: 'flex',
     flexDirection: 'column',
-    overflow: 'hidden' // El scroll va dentro
+    justifyContent: 'center',
+    gap: '10px'
   },
-  recentsHeader: {
+  iconBox: (color) => ({
+    width: '40px', height: '40px', borderRadius: '10px',
+    backgroundColor: `${color}15`, color: color,
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
+  }),
+  statLabel: { fontSize: '0.8rem', color: COLORS.textSecondary, fontWeight: '600' },
+  statNumber: { fontSize: '1.8rem', fontWeight: '800', color: COLORS.charcoalBlue, lineHeight: 1 },
+
+  // 3. RECIENTES (Abajo derecha)
+  recentCard: {
+    gridColumn: '2 / 3',
+    gridRow: '2 / 3',
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
     padding: '20px',
-    borderBottom: `1px solid ${COLORS.border}`,
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontWeight: '800', color: COLORS.charcoalBlue
-  },
-  recentsList: {
-    flex: 1,
-    overflowY: 'auto', // Scroll interno
-    padding: '20px',
+    boxShadow: SHADOWS.sm,
+    border: `1px solid ${COLORS.border}`,
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    overflow: 'hidden'
   },
-  
-  // Tarjetas pequeñas de recientes
-  miniCard: {
-    display: 'flex', gap: '12px',
-    cursor: 'pointer', padding: '10px', borderRadius: RADIUS.md,
-    transition: 'background 0.2s',
+  list: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' },
+  listItem: {
+    display: 'flex', alignItems: 'center', gap: '12px',
+    padding: '10px', borderRadius: RADIUS.md,
+    cursor: 'pointer', transition: 'background 0.2s',
     ':hover': { backgroundColor: '#F8FAFC' }
   },
-  miniImg: (url) => ({
-    width: '60px', height: '60px', borderRadius: '12px',
-    backgroundColor: '#eee', backgroundImage: url ? `url(${url})` : 'none',
-    backgroundSize: 'cover', backgroundPosition: 'center',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem'
-  }),
-  miniInfo: { display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  miniTitle: { fontWeight: '700', fontSize: '0.9rem', color: COLORS.charcoalBlue, lineHeight: 1.2 },
-  miniDate: { fontSize: '0.75rem', color: COLORS.textSecondary, marginTop: '4px' },
-  
-  actionBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontSize:'0.85rem', fontWeight:'700', cursor:'pointer' }
+  listIcon: { fontSize: '1.2rem', width: '30px', textAlign: 'center' },
+  listTitle: { display: 'block', fontWeight: '700', fontSize: '0.9rem', color: COLORS.charcoalBlue },
+  listDate: { display: 'block', fontSize: '0.75rem', color: COLORS.textSecondary },
+  linkBtn: { background: 'none', border:'none', color: COLORS.atomicTangerine, fontWeight:'700', cursor:'pointer', fontSize:'0.85rem' }
 };
