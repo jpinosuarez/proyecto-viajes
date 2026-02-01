@@ -7,7 +7,6 @@ import { getFlagUrl } from '../../utils/countryUtils';
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
 
-// Lista de sugerencias iniciales
 const DESTINOS_POPULARES = [
   { nombre: 'Japón', code: 'JP', icon: '🇯🇵' },
   { nombre: 'Italia', code: 'IT', icon: '🇮🇹' },
@@ -22,18 +21,14 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
   const [cargando, setCargando] = useState(false);
   const debounceRef = useRef(null);
 
-  // Efecto de búsqueda automática al escribir
   useEffect(() => {
-    // Si no hay filtro o es muy corto, limpiamos resultados
     if (!filtro) {
       setResultados([]);
       return;
     }
     
-    // Esperar al menos 3 letras para buscar
     if (filtro.length < 3) return;
 
-    // Limpiar timeout anterior (Debounce)
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
@@ -44,15 +39,14 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
         const data = await res.json();
         
         const procesados = data.features.map(feat => {
-          // Detectar contexto de país
           const contextoPais = feat.context?.find(c => c.id.startsWith('country')) || (feat.place_type.includes('country') ? feat : null);
-          const codigoPais = contextoPais?.properties?.short_code?.toUpperCase(); // Ej: AR, FR
+          const codigoPais = contextoPais?.properties?.short_code?.toUpperCase();
           
           return {
             id: feat.id,
             nombre: feat.text, 
             nombreCompleto: feat.place_name,
-            tipo: feat.place_type[0], // 'country' o 'place'
+            tipo: feat.place_type[0],
             coordenadas: feat.center, 
             paisCodigo: codigoPais, 
             paisNombre: contextoPais?.text || feat.text 
@@ -65,11 +59,10 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
       } finally {
         setCargando(false);
       }
-    }, 300); // 300ms de espera
+    }, 300);
 
   }, [filtro]);
 
-  // Selección desde Tags Populares
   const seleccionarPopular = (destino) => {
     if (destino.esCiudad) {
         seleccionarLugar({
@@ -77,19 +70,18 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
             nombre: destino.nombre,
             coordenadas: destino.coords,
             paisCodigo: destino.code,
-            paisNombre: 'USA' // Simplificado para el tag
+            paisNombre: 'USA'
         });
     } else {
         seleccionarLugar({
             esPais: true,
             nombre: destino.nombre,
             code: destino.code,
-            coordenadas: [0, 0] // Coordenadas dummy, el hook buscará las reales
+            coordenadas: [0, 0]
         });
     }
   };
 
-  // Selección desde Resultados de Búsqueda
   const manejarSeleccion = (item) => {
     seleccionarLugar({
       esPais: item.tipo === 'country',
@@ -133,7 +125,6 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
 
           <div style={styles.listaContainer} className="custom-scroll">
             
-            {/* VISTA 1: Sugerencias (Si no hay texto) */}
             {!filtro && (
                 <div style={{padding:'20px'}}>
                     <p style={{
@@ -152,13 +143,11 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                 </div>
             )}
 
-            {/* VISTA 2: Cargando */}
             {cargando && <div style={{textAlign:'center', padding:'30px', color:'#94a3b8', fontStyle:'italic'}}>Buscando en el mapa... 🌍</div>}
             
-            {/* VISTA 3: Resultados */}
             {resultados.map(item => {
-              // Obtener bandera emoji basada en el código de país
-              const flagEmoji = getFlagEmoji(item.paisCodigo);
+              // Obtener bandera SVG
+              const flagUrl = getFlagUrl(item.paisCodigo);
 
               return (
                 <div 
@@ -177,10 +166,13 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                     if(label) label.style.opacity = '0';
                   }}
                 >
-                  {/* Icono: Bandera o Pin */}
                   <div style={styles.iconBox(item.tipo === 'country')}>
-                      {flagEmoji && flagEmoji !== '🏳️' ? (
-                        <span style={{fontSize: '1.4rem', lineHeight: 1}}>{flagEmoji}</span>
+                      {flagUrl && item.tipo === 'country' ? (
+                        <img 
+                            src={flagUrl} 
+                            alt="flag" 
+                            style={{width: '24px', height: '18px', objectFit: 'cover', borderRadius: '2px'}} 
+                        />
                       ) : (
                         item.tipo === 'country' ? <Globe size={18} /> : <MapPin size={18} />
                       )}
@@ -193,7 +185,6 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                       </span>
                   </div>
 
-                  {/* Etiqueta "Añadir" visible en Hover */}
                   <div className="add-label" style={styles.addLabel}>
                      <Plus size={14}/> Añadir
                   </div>

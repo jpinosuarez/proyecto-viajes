@@ -1,5 +1,5 @@
 // Fuente de verdad para banderas y códigos.
-// Usamos flagcdn.com para asegurar que las banderas se vean en Windows/Android/Mac igual.
+// Usamos flagcdn.com para asegurar compatibilidad total (Windows/Mac/Android).
 
 export const getFlagUrl = (countryCode) => {
   if (!countryCode) return null;
@@ -7,6 +7,7 @@ export const getFlagUrl = (countryCode) => {
   return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
 };
 
+// Convierte código Alpha-2 (ej: AR) a Alpha-3 (ej: ARG) para Mapbox
 export const getCountryISO3 = (code2) => {
   if (!code2) return null;
   const country = COUNTRIES_DATA.find(c => c.code === code2.toUpperCase());
@@ -19,7 +20,7 @@ export const getCountryName = (code) => {
   return country ? country.name : code;
 };
 
-// LISTA ESTÁNDAR ISO 3166-1 (Selección principal para evitar archivo de 5000 lineas, cubre 99% de casos)
+// LISTA ESTÁNDAR ISO 3166-1 (Selección principal)
 export const COUNTRIES_DATA = [
   { code: 'AF', iso3: 'AFG', name: 'Afganistán' },
   { code: 'AL', iso3: 'ALB', name: 'Albania' },

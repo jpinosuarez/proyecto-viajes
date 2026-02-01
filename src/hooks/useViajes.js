@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl } from '../utils/countryUtils';
 
@@ -23,7 +23,6 @@ export const useViajes = () => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setBitacora(docs);
       
-      // Mapeo para acceso rápido por ID
       const dataMap = docs.reduce((acc, viaje) => {
         acc[viaje.id] = { ...viaje };
         return acc;
@@ -80,7 +79,7 @@ export const useViajes = () => {
     } catch { }
   };
 
-  // --- LÓGICA DE ACTUALIZACIÓN DEL RESUMEN ---
+  // --- LOGICA RESUMEN (Multipaís + Fechas) ---
   const actualizarResumenViaje = async (viajeId) => {
     try {
       const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
@@ -89,29 +88,19 @@ export const useViajes = () => {
 
       if (paradas.length === 0) return;
 
-      // Calcular Fechas Reales (Min Inicio / Max Fin)
-      // Se toman en cuenta fechaLlegada y fechaSalida
       const fechas = paradas.flatMap(p => [p.fechaLlegada, p.fechaSalida, p.fecha].filter(Boolean));
       let inicio, fin;
-      
       if (fechas.length > 0) {
           const fechasTime = fechas.map(f => new Date(f).getTime());
           inicio = new Date(Math.min(...fechasTime)).toISOString().split('T')[0];
           fin = new Date(Math.max(...fechasTime)).toISOString().split('T')[0];
       }
 
-      // Calcular Banderas (URLs)
       const codigosUnicos = [...new Set(paradas.map(p => p.paisCodigo).filter(Boolean))];
       const banderas = codigosUnicos.map(code => getFlagUrl(code));
-
-      // Ciudades
       const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
 
-      const updateData = {
-        ciudades: ciudadesStr,
-        banderas: banderas
-      };
-      
+      const updateData = { ciudades: ciudadesStr, banderas: banderas };
       if (inicio) updateData.fechaInicio = inicio;
       if (fin) updateData.fechaFin = fin;
 
@@ -119,7 +108,7 @@ export const useViajes = () => {
     } catch (e) { console.error(e); }
   };
 
-  // --- CREAR VIAJE (Siempre crea uno nuevo) ---
+  // --- GUARDAR NUEVO VIAJE ---
   const guardarNuevoViaje = async (datosViaje, ciudadInicial = null) => {
     if (!usuario) return null;
 
@@ -137,22 +126,21 @@ export const useViajes = () => {
       code: datosViaje.code,
       nombreEspanol: datosViaje.nombreEspanol,
       titulo: datosViaje.titulo || `Viaje a ${datosViaje.nombreEspanol}`,
-      // Aseguramos que las fechas del modal se guarden
       fechaInicio: datosViaje.fechaInicio || new Date().toISOString().split('T')[0],
       fechaFin: datosViaje.fechaFin || datosViaje.fechaInicio || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: fotoFinal,
+      foto: (fotoFinal && fotoFinal.startsWith('data:image')) ? null : fotoFinal,
       fotoCredito: creditoFinal,
-      banderas: [getFlagUrl(datosViaje.code)], // Bandera inicial SVG
+      banderas: [getFlagUrl(datosViaje.code)], 
       ciudades: ""
     };
 
     try {
       const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
       
-      if (datosViaje.foto && datosViaje.foto.startsWith('data:image')) {
-         await subirFotoStorage(docRef.id, datosViaje.foto);
+      if (fotoFinal && fotoFinal.startsWith('data:image')) {
+         await subirFotoStorage(docRef.id, fotoFinal);
       }
       return docRef.id;
     } catch (e) { return null; }
@@ -160,7 +148,6 @@ export const useViajes = () => {
 
   const agregarParada = async (lugarInfo, viajeId) => {
     if (!usuario || !viajeId) return null;
-    
     const nuevaParada = {
       nombre: lugarInfo.nombre,
       coordenadas: lugarInfo.coordenadas,
@@ -170,7 +157,6 @@ export const useViajes = () => {
       paisCodigo: lugarInfo.paisCodigo || "",
       relato: "",
     };
-
     try {
       await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), nuevaParada);
       await actualizarResumenViaje(viajeId);
