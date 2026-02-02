@@ -95,33 +95,26 @@ function App() {
   const handleGuardarViaje = async (id, datosCombinados) => {
     const { paradasNuevas, ...datosViaje } = datosCombinados;
 
-    if (id === 'new') {
-      const nuevoId = await guardarNuevoViaje(datosViaje, null);
-      
+    if (id === "new") {
+      const nuevoId = await guardarNuevoViaje(datosViaje, paradasNuevas); // Pasamos paradas para que genere título
+
       if (nuevoId) {
-          if (ciudadInicialBorrador) {
-             const existe = paradasNuevas?.some(p => p.nombre === ciudadInicialBorrador.nombre);
-             if (!existe) await agregarParada(ciudadInicialBorrador, nuevoId);
+        // Agregar las paradas a la subcolección
+        if (paradasNuevas && paradasNuevas.length > 0) {
+          for (const parada of paradasNuevas) {
+            await agregarParada(parada, nuevoId);
           }
-          if (paradasNuevas && paradasNuevas.length > 0) {
-              for (const parada of paradasNuevas) {
-                  await agregarParada(parada, nuevoId);
-              }
-          }
+        } else if (ciudadInicialBorrador) {
+          // Si no había paradas definidas pero sí una ciudad inicial del buscador
+          await agregarParada(ciudadInicialBorrador, nuevoId);
+        }
       }
-      
+
+      // RESET COMPLETO
       setViajeBorrador(null);
       setCiudadInicialBorrador(null);
-      setTimeout(() => abrirVisor(nuevoId), 500); 
-
-    } else {
-      actualizarDetallesViaje(id, datosViaje);
-      if (paradasNuevas && paradasNuevas.length > 0) {
-         const nuevasReales = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
-         for (const parada of nuevasReales) {
-            await agregarParada(parada, id);
-         }
-      }
+      setViajeEnEdicionId(null); // Asegurar que no quede nada abierto
+      setTimeout(() => abrirVisor(nuevoId), 500);
     }
   };
 

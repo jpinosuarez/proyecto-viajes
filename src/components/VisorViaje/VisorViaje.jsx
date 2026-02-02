@@ -62,64 +62,104 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
 
   return createPortal(
     <AnimatePresence>
-      <motion.div 
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} 
-        transition={{ type: 'spring', damping: 25 }} 
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25 }}
         style={styles.expandedOverlay}
       >
-        <div style={styles.expandedHeader(modoEdicion ? formTemp.foto : data.foto)}>
+        <div
+          style={styles.expandedHeader(modoEdicion ? formTemp.foto : data.foto)}
+        >
           <div style={styles.fotoOverlay} />
-          
+
           <div style={styles.navBar}>
-            <button onClick={onClose} style={styles.iconBtn}><ArrowLeft size={24} /></button>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={onClose} style={styles.iconBtn}>
+              <ArrowLeft size={24} />
+            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
               {!modoEdicion ? (
-                <button onClick={iniciarEdicion} style={styles.primaryBtn(false)}>
+                <button
+                  onClick={iniciarEdicion}
+                  style={styles.primaryBtn(false)}
+                >
                   <Edit3 size={16} /> Editar
                 </button>
               ) : (
                 <>
-                  <button onClick={() => setModoEdicion(false)} style={styles.secondaryBtn}><X size={16} /></button>
-                  <button onClick={guardarCambios} style={styles.primaryBtn(true)}><Check size={16} /> Guardar</button>
+                  <button
+                    onClick={() => setModoEdicion(false)}
+                    style={styles.secondaryBtn}
+                  >
+                    <X size={16} />
+                  </button>
+                  <button
+                    onClick={guardarCambios}
+                    style={styles.primaryBtn(true)}
+                  >
+                    <Check size={16} /> Guardar
+                  </button>
                 </>
               )}
             </div>
           </div>
 
           <div style={styles.headerContent}>
-             {/* Lógica de Banderas Múltiples */}
-             <div style={{display:'flex', gap:'10px', marginBottom:'10px'}}>
-                {data.banderas && data.banderas.length > 0 
-                    ? data.banderas.map((b, i) => <span key={i} style={styles.flagIcon}>{b}</span>)
-                    : <span style={styles.flagIcon}>{viajeBase.flag}</span>
+            {/* Banderas SVG */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+              {data.banderas && data.banderas.length > 0 ? (
+                data.banderas.map((b, i) => (
+                  <img
+                    key={i}
+                    src={b}
+                    alt="flag"
+                    style={{
+                      width: "40px",
+                      borderRadius: "4px",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                  />
+                ))
+              ) : (
+                <span style={styles.flagIcon}>✈️</span> // Fallback
+              )}
+            </div>
+
+            {modoEdicion ? (
+              <input
+                style={styles.titleInput}
+                value={formTemp.titulo}
+                onChange={(e) =>
+                  setFormTemp({ ...formTemp, titulo: e.target.value })
                 }
-             </div>
+                placeholder="Título del viaje"
+              />
+            ) : (
+              <h1 style={styles.titleDisplay}>
+                {data.titulo || viajeBase.nombreEspanol}
+              </h1>
+            )}
 
-             {modoEdicion ? (
-               <input 
-                 style={styles.titleInput} 
-                 value={formTemp.titulo} 
-                 onChange={e => setFormTemp({...formTemp, titulo: e.target.value})} 
-                 placeholder="Título del viaje"
-               />
-             ) : (
-               <h1 style={styles.titleDisplay}>{data.titulo || viajeBase.nombreEspanol}</h1>
-             )}
-             
-             <div style={styles.metaBadge}>
-               <Calendar size={14} /> {data.fechaInicio} {data.fechaFin && data.fechaFin !== data.fechaInicio ? ` - ${data.fechaFin}` : ''}
-             </div>
+            <div style={styles.metaBadge}>
+              <Calendar size={14} /> {data.fechaInicio}{" "}
+              {data.fechaFin && data.fechaFin !== data.fechaInicio
+                ? ` - ${data.fechaFin}`
+                : ""}
+            </div>
 
-             {/* Crédito Foto (Solo lectura) */}
-             {!modoEdicion && data.fotoCredito && (
-                <a 
-                    href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
-                    target="_blank" rel="noreferrer"
-                    style={styles.creditLink}
-                >
-                    <Camera size={12} /> Foto por {data.fotoCredito.nombre} / Unsplash
-                </a>
-             )}
+            {/* Crédito Foto (Solo lectura) */}
+            {!modoEdicion && data.fotoCredito && (
+              <a
+                href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
+                target="_blank"
+                rel="noreferrer"
+                style={styles.creditLink}
+              >
+                <Camera size={12} /> Foto por {data.fotoCredito.nombre} /
+                Unsplash
+              </a>
+            )}
           </div>
         </div>
 
@@ -128,10 +168,12 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
           <div style={styles.mainColumn}>
             <h3 style={styles.sectionTitle}>Bitácora de Viaje</h3>
             {modoEdicion ? (
-              <textarea 
-                style={styles.textArea} 
-                value={formTemp.texto} 
-                onChange={e => setFormTemp({...formTemp, texto: e.target.value})} 
+              <textarea
+                style={styles.textArea}
+                value={formTemp.texto}
+                onChange={(e) =>
+                  setFormTemp({ ...formTemp, texto: e.target.value })
+                }
                 placeholder="Escribe aquí tu relato..."
               />
             ) : (
@@ -139,49 +181,66 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             )}
 
             {/* Mapa de Ruta Específico del Viaje */}
-            <div style={{ marginTop: '40px' }}>
-                <h3 style={styles.sectionTitle}>Mapa de Ruta</h3>
-                <MiniMapaRuta paradas={paradas} />
+            <div style={{ marginTop: "40px" }}>
+              <h3 style={styles.sectionTitle}>Mapa de Ruta</h3>
+              <MiniMapaRuta paradas={paradas} />
             </div>
           </div>
 
           {/* Columna Lateral: Hoja de Ruta */}
           <div style={styles.sideColumn}>
             <h3 style={styles.sectionTitle}>Hoja de Ruta</h3>
-            
+
             {modoEdicion ? (
-                // Modo Edición: CityManager completo (Agregar, Borrar, Reordenar)
-                <CityManager paradas={paradas} setParadas={setParadas} />
+              // Modo Edición: CityManager completo (Agregar, Borrar, Reordenar)
+              <CityManager paradas={paradas} setParadas={setParadas} />
             ) : (
-                // Modo Lectura: Timeline estilizado
-                <div style={styles.timeline}>
-                    {paradas.map((p, i) => (
-                        <div key={i} style={styles.timelineItem}>
-                            <div style={styles.timelineDot} />
-                            <div style={styles.stopCard}>
-                                <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-                                    <strong style={{fontSize:'1rem', color: COLORS.charcoalBlue}}>{p.nombre}</strong>
-                                    <span style={{fontSize:'0.75rem', color: '#64748b'}}>{p.fecha}</span>
-                                </div>
-                                
-                                {/* Nota de Clima con Storytelling */}
-                                {p.clima && (
-                                    <div style={styles.weatherNote}>
-                                        {getClimaTexto(p.clima.desc, p.clima.max)}
-                                        <span style={styles.verifiedBadge}>✓ API</span>
-                                    </div>
-                                )}
-                            </div>
+              // Modo Lectura: Timeline estilizado
+              <div style={styles.timeline}>
+                {paradas.map((p, i) => (
+                  <div key={i} style={styles.timelineItem}>
+                    <div style={styles.timelineDot} />
+                    <div style={styles.stopCard}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "baseline",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            fontSize: "1rem",
+                            color: COLORS.charcoalBlue,
+                          }}
+                        >
+                          {p.nombre}
+                        </strong>
+                        <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                          {p.fecha}
+                        </span>
+                      </div>
+
+                      {/* Nota de Clima con Storytelling */}
+                      {p.clima && (
+                        <div style={styles.weatherNote}>
+                          {getClimaTexto(p.clima.desc, p.clima.max)}
+                          <span style={styles.verifiedBadge}>✓ API</span>
                         </div>
-                    ))}
-                    {paradas.length === 0 && <p style={styles.emptyState}>No hay paradas registradas.</p>}
-                </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {paradas.length === 0 && (
+                  <p style={styles.emptyState}>No hay paradas registradas.</p>
+                )}
+              </div>
             )}
           </div>
         </div>
       </motion.div>
-    </AnimatePresence>, 
-    document.body
+    </AnimatePresence>,
+    document.body,
   );
 };
 
