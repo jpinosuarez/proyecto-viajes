@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Camera, Calendar } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
-import { useAuth } from '../../context/AuthContext';
-import CityManager from '../Shared/CityManager'; // Reutilizamos
+import CityManager from '../Shared/CityManager';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => {
   const [formData, setFormData] = useState({});
@@ -14,21 +13,33 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
       setFormData({
         ...viaje,
         titulo: viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
-        fechaInicio: viaje.fechaInicio,
-        fechaFin: viaje.fechaFin,
+        fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+        fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
         foto: viaje.foto,
-        texto: viaje.texto || ""
+        texto: viaje.texto || "",
+        flag: viaje.flag,
+        code: viaje.code,
+        nombreEspanol: viaje.nombreEspanol
       });
-      // Inicializar paradas si es borrador y hay ciudad inicial
+      
       if (esBorrador && ciudadInicial) {
-        setParadas([{ id: 'init', nombre: ciudadInicial.nombre, fecha: viaje.fechaInicio }]);
+        setParadas([{ 
+            id: 'init', 
+            nombre: ciudadInicial.nombre, 
+            coordenadas: ciudadInicial.coordenadas,
+            fecha: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+            paisCodigo: ciudadInicial.paisCodigo,
+            flag: viaje.flag 
+        }]);
+      } else {
+          setParadas([]); 
       }
     }
   }, [viaje, esBorrador, ciudadInicial]);
 
   const handleSave = () => {
-    // Al guardar, pasamos los datos del form + las paradas gestionadas
-    onSave(viaje.id, { ...formData, paradasNuevas: paradas }); 
+    if (!formData.nombreEspanol) return;
+    onSave(viaje.id, { ...formData, paradasNuevas: paradas });
     onClose();
   };
 
@@ -45,29 +56,17 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-        style={styles.overlay} onClick={onClose}
-      >
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} 
-          style={styles.modal} onClick={e => e.stopPropagation()}
-        >
+      <motion.div style={styles.overlay} onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+        <motion.div style={styles.modal} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
           <div style={styles.header(formData.foto)}>
             <div style={styles.headerOverlay} />
             <div style={styles.headerContent}>
-                <span style={styles.flag}>{viaje.flag}</span>
-                <input 
-                    value={formData.titulo || ''} 
-                    onChange={e => setFormData({...formData, titulo: e.target.value})} 
-                    style={styles.titleInput} 
-                    placeholder="Título del viaje" 
-                />
+                {formData.flag ? (
+                    <img src={formData.flag} alt="Bandera" style={styles.flagImg} onError={(e) => e.target.style.display = 'none'}/>
+                ) : <span style={{fontSize:'3rem'}}>🌍</span>}
+                <input name="titulo" value={formData.titulo || ''} onChange={e => setFormData({...formData, titulo: e.target.value})} style={styles.titleInput} placeholder="Título del viaje" />
             </div>
-            <label style={styles.cameraBtn}>
-              <Camera size={18} />
-              <input type="file" hidden onChange={handleFileChange} accept="image/*" />
-            </label>
+            <label style={styles.cameraBtn}><Camera size={18} /><input type="file" hidden onChange={handleFileChange} accept="image/*" /></label>
           </div>
 
           <div style={styles.body} className="custom-scroll">
@@ -79,17 +78,17 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
                     <input type="date" value={formData.fechaFin || ''} onChange={e => setFormData({...formData, fechaFin: e.target.value})} style={styles.dateInput} />
                 </div>
             </div>
-
             <div style={styles.section}>
                 <label style={styles.label}>Ciudades</label>
                 <CityManager paradas={paradas} setParadas={setParadas} />
             </div>
-
+            <div style={styles.section}>
+                <label style={styles.label}>Notas</label>
+                <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." />
+            </div>
             <div style={styles.footer}>
                 <button onClick={onClose} style={styles.cancelBtn}>Cancelar</button>
-                <button onClick={handleSave} style={styles.saveBtn}>
-                    <Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar'}
-                </button>
+                <button onClick={handleSave} style={styles.saveBtn}><Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar'}</button>
             </div>
           </div>
         </motion.div>
