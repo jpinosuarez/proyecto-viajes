@@ -1,11 +1,25 @@
-import React from 'react';
-import { Search, Plus, LogOut, User } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Search, Plus, LogOut, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { styles } from './Header.styles';
-import { COLORS } from '../../theme';
 
-const Header = ({ titulo, onAddClick, onProfileClick }) => {
+const Header = ({
+  titulo,
+  onAddClick,
+  onProfileClick,
+  mostrarBusqueda = false,
+  busqueda = '',
+  onBusquedaChange,
+  onBusquedaClear,
+  searchPlaceholder = 'Buscar...'
+}) => {
   const { usuario, login, logout } = useAuth();
+  const [avatarError, setAvatarError] = useState(false);
+  const iniciales = useMemo(() => usuario?.displayName?.trim()?.[0]?.toUpperCase() || '', [usuario?.displayName]);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [usuario?.photoURL]);
 
   return (
     <header style={styles.header}>
@@ -16,10 +30,29 @@ const Header = ({ titulo, onAddClick, onProfileClick }) => {
       </div>
 
       <div style={styles.rightSide}>
-        <div style={styles.searchContainer}>
-          <Search size={16} color="#94a3b8" />
-          <input type="text" placeholder="Buscar en mis recuerdos..." style={styles.searchInput} />
-        </div>
+        {mostrarBusqueda && (
+          <div style={styles.searchContainer}>
+            <Search size={16} color="#94a3b8" />
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              aria-label="Buscar en la bitácora"
+              value={busqueda}
+              onChange={(event) => onBusquedaChange?.(event.target.value)}
+              style={styles.searchInput}
+            />
+            {busqueda && (
+              <button
+                type="button"
+                onClick={() => onBusquedaClear?.()}
+                style={styles.clearButton}
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        )}
 
         <button style={styles.addButton} onClick={onAddClick}>
           <Plus size={18} /> Añadir Viaje
@@ -28,18 +61,21 @@ const Header = ({ titulo, onAddClick, onProfileClick }) => {
         {usuario ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Avatar Clickeable con Fallback a Icono */}
-            <div 
-              style={{ ...styles.avatar, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', color: '#94a3b8' }} 
+            <div
+              style={{ ...styles.avatar, cursor: 'pointer' }}
               onClick={onProfileClick}
               title="Configurar Perfil"
+              role="button"
             >
-              {usuario.photoURL ? (
-                <img 
-                  src={usuario.photoURL} 
-                  alt="User" 
-                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
-                  onError={(e) => { e.target.style.display='none'; e.target.parentNode.firstChild.style.display='block'; }} // Fallback si rompe url
+              {usuario.photoURL && !avatarError ? (
+                <img
+                  src={usuario.photoURL}
+                  alt={`Foto de ${usuario.displayName || 'usuario'}`}
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                  onError={() => setAvatarError(true)}
                 />
+              ) : iniciales ? (
+                <span style={styles.avatarInitials}>{iniciales}</span>
               ) : (
                 <User size={20} />
               )}
