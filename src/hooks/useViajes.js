@@ -216,11 +216,51 @@ export const useViajes = () => {
   const actualizarDetallesViaje = async (id, data) => {
       if(!usuario) return;
       try {
-        if (data.foto && data.foto.startsWith('data:image')) {
-            await subirFotoStorage(id, data.foto);
-            delete data.foto;
+        const { paradasNuevas, ...datosViaje } = data || {};
+
+        if (datosViaje.foto && datosViaje.foto.startsWith('data:image')) {
+            await subirFotoStorage(id, datosViaje.foto);
+            delete datosViaje.foto;
         }
-        await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), data);
+
+        if (Object.keys(datosViaje).length > 0) {
+          await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), datosViaje);
+        }
+
+        if (Array.isArray(paradasNuevas)) {
+          const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${id}/paradas`);
+          const snapshot = await getDocs(paradasRef);
+          const existentes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          const idsActuales = new Set(
+            paradasNuevas
+              .map(p => p.id)
+              .filter(Boolean)
+              .filter(p => !p.startsWith('temp-'))
+          );
+
+          const eliminadas = existentes.filter(p => !idsActuales.has(p.id));
+          await Promise.all(
+            eliminadas.map(p =>
+              deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes/${id}/paradas`, p.id))
+            )
+          );
+
+          for (const parada of paradasNuevas) {
+            const paradaData = { ...parada };
+            delete paradaData.id;
+
+            if (parada.id && !parada.id.startsWith('temp-')) {
+              await updateDoc(
+                doc(db, `usuarios/${usuario.uid}/viajes/${id}/paradas`, parada.id),
+                paradaData
+              );
+            } else {
+              await addDoc(paradasRef, paradaData);
+            }
+          }
+
+          await actualizarResumenViaje(id, true);
+        }
       } catch(e) { console.error(e); }
   };
 

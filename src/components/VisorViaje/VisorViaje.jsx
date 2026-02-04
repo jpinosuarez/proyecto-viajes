@@ -36,7 +36,11 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
   if (!viajeId || !viajeBase) return null;
 
   const iniciarEdicion = () => {
-    setFormTemp(data);
+    setFormTemp({
+      ...data,
+      titulo: data.titulo || viajeBase.nombreEspanol,
+      texto: data.texto || ''
+    });
     setModoEdicion(true);
   };
 
@@ -129,7 +133,7 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             {modoEdicion ? (
               <input
                 style={styles.titleInput}
-                value={formTemp.titulo}
+                value={formTemp.titulo || ''}
                 onChange={(e) =>
                   setFormTemp({ ...formTemp, titulo: e.target.value })
                 }
@@ -170,7 +174,7 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
             {modoEdicion ? (
               <textarea
                 style={styles.textArea}
-                value={formTemp.texto}
+                value={formTemp.texto || ''}
                 onChange={(e) =>
                   setFormTemp({ ...formTemp, texto: e.target.value })
                 }

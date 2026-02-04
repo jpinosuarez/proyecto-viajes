@@ -29,9 +29,20 @@ export const styles = {
     backgroundColor: 'rgba(0,0,0,0.04)',
     padding: '8px 15px',
     borderRadius: '12px',
-    border: '1px solid rgba(0,0,0,0.02)'
+    border: '1px solid rgba(0,0,0,0.02)',
+    minWidth: '280px'
   },
-  searchInput: { border: 'none', background: 'none', outline: 'none', fontSize: '0.85rem', color: COLORS.charcoalBlue },
+  searchInput: { border: 'none', background: 'none', outline: 'none', fontSize: '0.85rem', color: COLORS.charcoalBlue, width: '100%' },
+  clearButton: {
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    color: '#94a3b8',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0
+  },
   addButton: {
     backgroundColor: COLORS.atomicTangerine,
     color: COLORS.linen,
@@ -58,5 +69,10 @@ export const styles = {
     color: 'white',
     fontWeight: 'bold',
     fontSize: '0.9rem'
+  },
+  avatarInitials: {
+    fontWeight: '700',
+    fontSize: '0.85rem',
+    letterSpacing: '0.5px'
   }
 };
