@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Header/Header';
 import DashboardHome from './components/Dashboard/DashboardHome';
-import StatsMapa from './components/Dashboard/StatsMapa'; // IMPORTADO
+import StatsMapa from './components/Dashboard/StatsMapa';
 import MapaViajes from './components/Mapa/MapaView'; 
 import BentoGrid from './components/Bento/BentoGrid';
 import LandingPage from './components/Landing/LandingPage';
@@ -24,8 +24,7 @@ function App() {
   
   const { 
     paisesVisitados, bitacora, bitacoraData, todasLasParadas,
-    guardarNuevoViaje, agregarParada, 
-    actualizarDetallesViaje, eliminarViaje 
+    guardarNuevoViaje, actualizarDetallesViaje, eliminarViaje, agregarParada 
   } = useViajes();
   
   const [vistaActiva, setVistaActiva] = useState('home'); 
@@ -35,7 +34,6 @@ function App() {
   
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
-  
   const [viajeBorrador, setViajeBorrador] = useState(null); 
   const [ciudadInicialBorrador, setCiudadInicialBorrador] = useState(null);
 
@@ -63,7 +61,6 @@ function App() {
         nombreEspanol: paisInfo ? paisInfo.name : lugar.paisNombre,
         flag: getFlagUrl(lugar.paisCodigo)
       };
-      
       ciudad = { 
         nombre: lugar.nombre, 
         coordenadas: lugar.coordenadas, 
@@ -74,7 +71,7 @@ function App() {
 
     setMostrarBuscador(false);
     setFiltro('');
-    
+
     const nuevoBorrador = {
       id: 'new',
       code: datosPais.code,
@@ -89,33 +86,58 @@ function App() {
     
     setViajeBorrador(nuevoBorrador);
     setCiudadInicialBorrador(ciudad);
-    
   }, []);
 
-  const handleGuardarViaje = async (id, datosCombinados) => {
+  // Guardado desde el Modal (Creación/Edición Completa)
+  const handleGuardarModal = async (id, datosCombinados) => {
     const { paradasNuevas, ...datosViaje } = datosCombinados;
 
-    if (id === "new") {
-      const nuevoId = await guardarNuevoViaje(datosViaje, paradasNuevas); // Pasamos paradas para que genere título
-
-      if (nuevoId) {
-        // Agregar las paradas a la subcolección
-        if (paradasNuevas && paradasNuevas.length > 0) {
-          for (const parada of paradasNuevas) {
-            await agregarParada(parada, nuevoId);
-          }
-        } else if (ciudadInicialBorrador) {
-          // Si no había paradas definidas pero sí una ciudad inicial del buscador
-          await agregarParada(ciudadInicialBorrador, nuevoId);
-        }
+    if (id === 'new') {
+      let todasLasParadas = [...(paradasNuevas || [])];
+      if (ciudadInicialBorrador) {
+          const yaExiste = todasLasParadas.some(p => p.nombre === ciudadInicialBorrador.nombre);
+          if (!yaExiste) todasLasParadas.unshift(ciudadInicialBorrador);
       }
 
-      // RESET COMPLETO
-      setViajeBorrador(null);
-      setCiudadInicialBorrador(null);
-      setViajeEnEdicionId(null); // Asegurar que no quede nada abierto
-      setTimeout(() => abrirVisor(nuevoId), 500);
+      const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadas);
+      
+      if (nuevoId) {
+          setViajeBorrador(null);
+          setCiudadInicialBorrador(null);
+          setTimeout(() => abrirVisor(nuevoId), 500);
+      }
+    } else {
+      actualizarDetallesViaje(id, datosViaje);
+      if (paradasNuevas && paradasNuevas.length > 0) {
+         // Filtrar IDs temporales
+         const nuevasReales = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
+         for (const parada of nuevasReales) {
+            await agregarParada(parada, id);
+         }
+      }
     }
+  };
+
+  // Guardado desde el Visor (Edición Rápida)
+  const handleGuardarDesdeVisor = async (id, datosCombinados) => {
+      const { paradasNuevas, ...datosViaje } = datosCombinados;
+      
+      // 1. Actualizar datos principales
+      await actualizarDetallesViaje(id, datosViaje);
+
+      // 2. Procesar paradas (solo las nuevas agregadas en el visor)
+      if (paradasNuevas && paradasNuevas.length > 0) {
+          const nuevas = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
+          for (const parada of nuevas) {
+              await agregarParada(parada, id);
+          }
+      }
+  };
+
+  const handleDeleteViaje = async (id) => {
+      await eliminarViaje(id);
+      setViajeExpandidoId(null); // Cerrar visor si estaba abierto
+      setViajeEnEdicionId(null);
   };
 
   const getTituloHeader = () => {
@@ -141,37 +163,27 @@ function App() {
 
         <section style={styles.sectionWrapper}>
           <AnimatePresence mode="wait">
-            
             {vistaActiva === 'home' && (
               <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <DashboardHome paisesVisitados={paisesVisitados} bitacora={bitacora} setVistaActiva={setVistaActiva} abrirVisor={abrirVisor} />
               </motion.div>
             )}
-
             {vistaActiva === 'mapa' && (
               <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle}>
-                
-                {/* Overlay de Stats */}
-                <div style={styles.mapStatsOverlay}>
-                   <StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} />
-                </div>
-
+                <div style={styles.mapStatsOverlay}><StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} /></div>
                 <MapaViajes paises={paisesVisitados} paradas={todasLasParadas} />
               </motion.div>
             )}
-
             {vistaActiva === 'bitacora' && (
               <motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
-                <BentoGrid viajes={bitacora} bitacoraData={bitacoraData} manejarEliminar={eliminarViaje} abrirEditor={abrirEditor} abrirVisor={abrirVisor} />
+                <BentoGrid viajes={bitacora} bitacoraData={bitacoraData} manejarEliminar={handleDeleteViaje} abrirEditor={abrirEditor} abrirVisor={abrirVisor} />
               </motion.div>
             )}
-
             {vistaActiva === 'config' && (
               <motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <SettingsPage />
               </motion.div>
             )}
-
           </AnimatePresence>
         </section>
       </motion.main>
@@ -182,12 +194,20 @@ function App() {
         viaje={viajeParaEditar} 
         bitacoraData={bitacoraData} 
         onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }} 
-        onSave={handleGuardarViaje} 
+        onSave={handleGuardarModal} 
         esBorrador={!!viajeBorrador}
         ciudadInicial={ciudadInicialBorrador}
       />
 
-      <VisorViaje viajeId={viajeExpandidoId} bitacoraLista={bitacora} bitacoraData={bitacoraData} onClose={() => setViajeExpandidoId(null)} onEdit={abrirEditor} onSave={actualizarDetallesViaje} />
+      <VisorViaje 
+        viajeId={viajeExpandidoId} 
+        bitacoraLista={bitacora} 
+        bitacoraData={bitacoraData} 
+        onClose={() => setViajeExpandidoId(null)} 
+        onEdit={abrirEditor} 
+        onSave={handleGuardarDesdeVisor} // CORREGIDO: Usar el handler wrapper
+        onDelete={handleDeleteViaje}     // NUEVO: Pasar función de borrar
+      />
     </div>
   );
 }

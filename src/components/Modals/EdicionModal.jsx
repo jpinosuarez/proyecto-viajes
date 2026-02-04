@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Calendar } from 'lucide-react';
+import { X, Save, Camera, Calendar, MapPin, Trash2, Plus } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import { useAuth } from '../../context/AuthContext';
-import CityManager from '../Shared/CityManager'; // Reutilizamos
+import CityManager from '../Shared/CityManager';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => {
   const [formData, setFormData] = useState({});
@@ -14,21 +14,41 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
       setFormData({
         ...viaje,
         titulo: viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
-        fechaInicio: viaje.fechaInicio,
-        fechaFin: viaje.fechaFin,
+        fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+        fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
         foto: viaje.foto,
-        texto: viaje.texto || ""
+        texto: viaje.texto || "",
+        flag: viaje.flag, // URL del SVG
+        code: viaje.code, // Código ISO
+        nombreEspanol: viaje.nombreEspanol
       });
-      // Inicializar paradas si es borrador y hay ciudad inicial
+      
+      // Si hay ciudad inicial del buscador y es un borrador nuevo, la mostramos
       if (esBorrador && ciudadInicial) {
-        setParadas([{ id: 'init', nombre: ciudadInicial.nombre, fecha: viaje.fechaInicio }]);
+        // La ciudad inicial se gestionará en el CityManager si se desea
+        // Ojo: CityManager maneja "paradas", aquí inicializamos con esa ciudad si no hay otras
+        setParadas([{ 
+            id: 'init', 
+            nombre: ciudadInicial.nombre, 
+            coordenadas: ciudadInicial.coordenadas,
+            fecha: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+            paisCodigo: ciudadInicial.paisCodigo,
+            flag: viaje.flag // O la flag específica si es diferente
+        }]);
+      } else {
+          setParadas([]); // Limpiar o cargar reales si fuera edición (manejado por padre en app real)
       }
     }
   }, [viaje, esBorrador, ciudadInicial]);
 
   const handleSave = () => {
-    // Al guardar, pasamos los datos del form + las paradas gestionadas
-    onSave(viaje.id, { ...formData, paradasNuevas: paradas }); 
+    // Validar datos mínimos antes de enviar
+    if (!formData.nombreEspanol) return;
+    
+    onSave(viaje.id, { 
+        ...formData, 
+        paradasNuevas: paradas 
+    });
     onClose();
   };
 
@@ -56,8 +76,20 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
           <div style={styles.header(formData.foto)}>
             <div style={styles.headerOverlay} />
             <div style={styles.headerContent}>
-                <span style={styles.flag}>{viaje.flag}</span>
+                {/* CORRECCIÓN: Renderizar la bandera como IMAGEN */}
+                {formData.flag ? (
+                    <img 
+                        src={formData.flag} 
+                        alt="Bandera" 
+                        style={styles.flagImg} 
+                        onError={(e) => e.target.style.display = 'none'}
+                    />
+                ) : (
+                    <span style={{fontSize:'3rem'}}>🌍</span>
+                )}
+                
                 <input 
+                    name="titulo"
                     value={formData.titulo || ''} 
                     onChange={e => setFormData({...formData, titulo: e.target.value})} 
                     style={styles.titleInput} 
@@ -81,14 +113,24 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
             </div>
 
             <div style={styles.section}>
-                <label style={styles.label}>Ciudades</label>
+                <label style={styles.label}>Ciudades y Paradas</label>
                 <CityManager paradas={paradas} setParadas={setParadas} />
+            </div>
+
+            <div style={styles.section}>
+                <label style={styles.label}>Notas</label>
+                <textarea 
+                    value={formData.texto || ''} 
+                    onChange={e => setFormData({...formData, texto: e.target.value})} 
+                    style={styles.textarea} 
+                    placeholder="Escribe tus recuerdos aquí..." 
+                />
             </div>
 
             <div style={styles.footer}>
                 <button onClick={onClose} style={styles.cancelBtn}>Cancelar</button>
                 <button onClick={handleSave} style={styles.saveBtn}>
-                    <Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar'}
+                    <Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar Cambios'}
                 </button>
             </div>
           </div>

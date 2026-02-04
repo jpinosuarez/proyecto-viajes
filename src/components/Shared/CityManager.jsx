@@ -37,11 +37,11 @@ const CityManager = ({ paradas, setParadas }) => {
       fechaSalida: '', 
       fecha: new Date().toISOString().split('T')[0], 
       paisCodigo: countryCode, 
-      flag: getFlagUrl(countryCode)
+      flag: getFlagUrl(countryCode) // Guardar URL SVG
     };
     setParadas([...paradas, nuevaParada]);
-    setBusqueda(''); // Limpiar buscador
-    setResultados([]); // Limpiar resultados
+    setBusqueda('');
+    setResultados([]);
   };
 
   const moverParada = (index, direccion) => {
@@ -81,7 +81,7 @@ const CityManager = ({ paradas, setParadas }) => {
       {resultados.length > 0 && (
         <div style={styles.resultsList}>
           {resultados.map(res => {
-            // Extraer país para el icono
+            // Extraer país para el icono en resultados
             const contextCountry = res.context?.find(c => c.id.startsWith('country'));
             const code = contextCountry?.short_code?.toUpperCase();
             const flag = getFlagUrl(code);

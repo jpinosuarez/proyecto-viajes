@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
 
@@ -50,76 +50,56 @@ export const useViajes = () => {
     return [...codigos].filter(Boolean);
   }, [bitacora, todasLasParadas]);
 
-  // --- LOGICA DE NOMBRADO INTELIGENTE ---
+  // --- API CLIMA (RESTAURADA) ---
+  const obtenerClimaHistorico = async (lat, lng, fecha) => {
+    if (!lat || !lng || !fecha) return null;
+    try {
+      // API Open-Meteo para clima histórico
+      const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${fecha}&end_date=${fecha}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
+      const data = await res.json();
+      
+      if (data.daily?.weathercode && data.daily.weathercode.length > 0) {
+        const code = data.daily.weathercode[0];
+        const max = data.daily.temperature_2m_max[0];
+        const min = data.daily.temperature_2m_min[0];
+        
+        // Mapeo simple de códigos WMO
+        let desc = "Despejado";
+        if (code > 3) desc = "Nublado";
+        if (code > 45) desc = "Niebla";
+        if (code > 50) desc = "Lluvioso";
+        if (code > 70) desc = "Nieve";
+        if (code > 95) desc = "Tormenta";
+
+        return { desc, max, min, code };
+      }
+      return null;
+    } catch (e) { 
+      console.warn("No se pudo obtener el clima:", e);
+      return null; 
+    }
+  };
+
+  // --- LOGICA DE TÍTULOS ---
   const generarTituloInteligente = (nombreBase, paradas) => {
     if (!paradas || paradas.length === 0) return nombreBase || "Nuevo Viaje";
-
     const ciudadesUnicas = [...new Set(paradas.map(p => p.nombre))];
     const paisesUnicos = [...new Set(paradas.map(p => p.paisCodigo).filter(Boolean))];
 
-    // 1. Una sola ciudad
-    if (ciudadesUnicas.length === 1) return `${ciudadesUnicas[0]}`;
-    
-    // 2. Dos ciudades
+    if (ciudadesUnicas.length === 1) return `Escapada a ${ciudadesUnicas[0]}`;
     if (ciudadesUnicas.length === 2) return `${ciudadesUnicas[0]} y ${ciudadesUnicas[1]}`;
-
-    // 3. Muchas ciudades, un solo país
+    
     if (paisesUnicos.length === 1) {
         const nombrePais = getCountryName(paisesUnicos[0]) || nombreBase;
         return `Ruta por ${nombrePais}`;
     }
-
-    // 4. Multi-país (Eurotrip, Latam, etc.)
     if (paisesUnicos.length > 1) {
-        if (paisesUnicos.length <= 3) {
-            const nombresPaises = paisesUnicos.map(c => getCountryName(c));
-            return nombresPaises.join(' - ');
-        }
-        return `Gran Viaje: ${paisesUnicos.length} Países`;
+        return `Gran Viaje: ${paisesUnicos.map(c => getCountryName(c)).join(' - ')}`;
     }
-
     return nombreBase;
   };
 
-  // --- ACTUALIZACIÓN DE RESUMEN ---
-  const actualizarResumenViaje = async (viajeId, forzarTitulo = false) => {
-    try {
-      const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
-      const snapshot = await getDocs(paradasRef);
-      const paradas = snapshot.docs.map(d => d.data());
-
-      if (paradas.length === 0) return;
-
-      // Fechas
-      const fechas = paradas.flatMap(p => [p.fechaLlegada, p.fechaSalida, p.fecha].filter(Boolean));
-      let inicio, fin;
-      if (fechas.length > 0) {
-          const fechasTime = fechas.map(f => new Date(f).getTime());
-          inicio = new Date(Math.min(...fechasTime)).toISOString().split('T')[0];
-          fin = new Date(Math.max(...fechasTime)).toISOString().split('T')[0];
-      }
-
-      // Banderas y Ciudades
-      const codigosUnicos = [...new Set(paradas.map(p => p.paisCodigo).filter(Boolean))];
-      const banderas = codigosUnicos.map(code => getFlagUrl(code));
-      const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
-
-      const updateData = { ciudades: ciudadesStr, banderas: banderas };
-      if (inicio) updateData.fechaInicio = inicio;
-      if (fin) updateData.fechaFin = fin;
-
-      // Actualizar Título si se solicita o si es genérico
-      if (forzarTitulo) {
-          // Obtenemos nombre base actual por si acaso
-          const viajeDoc = await getDoc(doc(db, `usuarios/${usuario.uid}/viajes`, viajeId));
-          const nombreBase = viajeDoc.data()?.nombreEspanol || "Viaje";
-          updateData.titulo = generarTituloInteligente(nombreBase, paradas);
-      }
-
-      await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, viajeId), updateData);
-    } catch (e) { console.error(e); }
-  };
-
+  // --- FOTOS ---
   const obtenerFotoConCache = async (paisNombre, paisCode) => {
     try {
       const docRef = doc(db, 'paises_info', paisCode);
@@ -131,10 +111,7 @@ export const useViajes = () => {
       const rawUrl = data.urls.raw;
       const urlOptimizada = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=1600&q=80&auto=format&fit=crop`;
 
-      const nuevaFotoInfo = {
-        url: urlOptimizada,
-        credito: { nombre: data.user.name, link: data.user.links.html }
-      };
+      const nuevaFotoInfo = { url: urlOptimizada, credito: { nombre: data.user.name, link: data.user.links.html } };
       await setDoc(docRef, nuevaFotoInfo);
       return nuevaFotoInfo;
     } catch { return null; }
@@ -144,83 +121,110 @@ export const useViajes = () => {
     try {
       const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
       await uploadString(storageRef, fotoBase64, 'data_url');
-      const url = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, viajeId), { foto: url, fotoCredito: null });
-    } catch { }
+      return await getDownloadURL(storageRef);
+    } catch { return null; }
   };
 
-  // --- GUARDAR NUEVO VIAJE ---
-  const guardarNuevoViaje = async (datosViaje, paradasIniciales = []) => {
+  // --- GUARDADO ROBUSTO CON CLIMA ---
+  const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
     let fotoFinal = datosViaje.foto;
-    let creditoFinal = null;
+    let creditoFinal = datosViaje.fotoCredito || null;
+    const esFotoBase64 = fotoFinal && fotoFinal.startsWith('data:image');
 
-    if (!fotoFinal || !fotoFinal.startsWith('data:image')) {
+    if (!fotoFinal || esFotoBase64) {
        if (!fotoFinal) {
          const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
          if (fotoInfo) { fotoFinal = fotoInfo.url; creditoFinal = fotoInfo.credito; }
        }
     }
 
-    // Generar título inicial basado en las paradas si existen
-    const tituloFinal = generarTituloInteligente(datosViaje.nombreEspanol, paradasIniciales);
+    const banderasParadas = paradas.map(p => getFlagUrl(p.paisCodigo)).filter(Boolean);
+    const banderasBase = [getFlagUrl(datosViaje.code)].filter(Boolean);
+    const banderasFinales = banderasParadas.length > 0 ? [...new Set(banderasParadas)] : banderasBase;
 
-    // Calcular banderas iniciales
-    const banderasIniciales = paradasIniciales.length > 0 
-        ? [...new Set(paradasIniciales.map(p => p.paisCodigo).filter(Boolean))].map(c => getFlagUrl(c))
-        : [getFlagUrl(datosViaje.code)];
+    const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
+    const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
+
+    // Preparar Paradas CON Clima (Procesamiento en paralelo)
+    const paradasProcesadas = await Promise.all(paradas.map(async (p) => {
+        const fechaUso = p.fecha || datosViaje.fechaInicio;
+        // Obtener clima
+        const climaInfo = await obtenerClimaHistorico(p.coordenadas[1], p.coordenadas[0], fechaUso);
+        
+        return {
+            nombre: p.nombre,
+            coordenadas: p.coordenadas,
+            fecha: fechaUso,
+            fechaLlegada: p.fechaLlegada || "",
+            fechaSalida: p.fechaSalida || "",
+            paisCodigo: p.paisCodigo || "",
+            clima: climaInfo, // Guardamos el objeto clima
+            tipo: 'place'
+        };
+    }));
 
     const nuevoViaje = {
-      code: datosViaje.code,
-      nombreEspanol: datosViaje.nombreEspanol,
-      titulo: tituloFinal,
+      code: datosViaje.code || "",
+      nombreEspanol: datosViaje.nombreEspanol || "Viaje",
+      titulo: datosViaje.titulo || titulo,
       fechaInicio: datosViaje.fechaInicio || new Date().toISOString().split('T')[0],
       fechaFin: datosViaje.fechaFin || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: (fotoFinal && fotoFinal.startsWith('data:image')) ? null : fotoFinal,
+      foto: esFotoBase64 ? null : fotoFinal,
       fotoCredito: creditoFinal,
-      banderas: banderasIniciales,
-      ciudades: paradasIniciales.map(p => p.nombre).join(', ')
+      banderas: banderasFinales,
+      ciudades: ciudadesStr
     };
 
+    const batch = writeBatch(db);
+    const viajeRef = doc(collection(db, `usuarios/${usuario.uid}/viajes`));
+    batch.set(viajeRef, nuevoViaje);
+
+    paradasProcesadas.forEach(p => {
+        const paradaRef = doc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeRef.id}/paradas`));
+        batch.set(paradaRef, p);
+    });
+
     try {
-      const docRef = await addDoc(collection(db, `usuarios/${usuario.uid}/viajes`), nuevoViaje);
+      await batch.commit();
       
-      if (fotoFinal && fotoFinal.startsWith('data:image')) {
-         await subirFotoStorage(docRef.id, fotoFinal);
+      if (esFotoBase64) {
+         const url = await subirFotoStorage(viajeRef.id, datosViaje.foto);
+         if(url) await updateDoc(viajeRef, { foto: url });
       }
-      return docRef.id;
-    } catch (e) { return null; }
-  };
-
-  const agregarParada = async (lugarInfo, viajeId) => {
-    if (!usuario || !viajeId) return null;
-    const nuevaParada = {
-      nombre: lugarInfo.nombre,
-      coordenadas: lugarInfo.coordenadas,
-      fecha: lugarInfo.fecha || new Date().toISOString().split('T')[0],
-      fechaLlegada: lugarInfo.fechaLlegada || "",
-      fechaSalida: lugarInfo.fechaSalida || "",
-      paisCodigo: lugarInfo.paisCodigo || "",
-      relato: "",
-    };
-    try {
-      await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), nuevaParada);
-      // Al agregar parada, actualizamos título y resumen
-      await actualizarResumenViaje(viajeId, true);
-    } catch (e) { console.error(e) }
+      return viajeRef.id;
+    } catch (e) { 
+      console.error("Error al guardar viaje:", e); 
+      return null; 
+    }
   };
 
   const actualizarDetallesViaje = async (id, data) => {
       if(!usuario) return;
       try {
         if (data.foto && data.foto.startsWith('data:image')) {
-            await subirFotoStorage(id, data.foto);
-            delete data.foto;
+            const url = await subirFotoStorage(id, data.foto);
+            data.foto = url;
         }
         await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), data);
+      } catch(e) { console.error(e); }
+  };
+
+  const agregarParada = async (lugarInfo, viajeId) => {
+      if (!usuario || !viajeId) return;
+      try {
+          // Obtener clima al agregar parada individualmente
+          const fechaUso = lugarInfo.fecha || new Date().toISOString().split('T')[0];
+          const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaUso);
+
+          await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), {
+              ...lugarInfo,
+              clima: climaInfo,
+              tipo: 'place'
+          });
       } catch(e) { console.error(e); }
   };
 
