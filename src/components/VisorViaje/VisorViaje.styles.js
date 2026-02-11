@@ -5,16 +5,22 @@ export const styles = {
     position: 'fixed', inset: 0, backgroundColor: '#fff', zIndex: 10000, overflowY: 'auto' 
   },
   expandedHeader: (foto) => ({ 
-    height: '50vh', width: '100%', position: 'relative', 
+    height: foto ? '50vh' : '35vh', 
+    width: '100%', 
+    position: 'relative', 
     backgroundImage: foto ? `url(${foto})` : 'none', 
-    backgroundColor: COLORS.charcoalBlue, 
-    backgroundSize: 'cover', backgroundPosition: 'center',
-    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
+    backgroundColor: foto ? 'transparent' : '#1e293b', 
+    backgroundSize: 'cover', 
+    backgroundPosition: 'center',
+    display: 'flex', 
+    flexDirection: 'column', 
+    justifyContent: 'flex-end'
   }),
-  // Gradiente más fuerte para legibilidad
+  // Gradiente más fuerte para legibilidad, y como fallback cuando no hay foto
   fotoOverlay: { 
-    position: 'absolute', inset: 0, 
-    background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9))' 
+    position: 'absolute', 
+    inset: 0, 
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.8))' 
   },
   navBar: {
     position: 'absolute', top: 20, left: 20, right: 20,

@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Camera, Calendar, MapPin, Trash2, Plus } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
+import { db } from '../../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { useAuth } from '../../context/AuthContext';
 import CityManager from '../Shared/CityManager';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => {
+  const { usuario } = useAuth();
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
 
@@ -23,6 +27,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
       });
       
       if (esBorrador && ciudadInicial) {
+        // Nuevo viaje: agregar ciudad inicial
         setParadas([{ 
             id: 'init', 
             nombre: ciudadInicial.nombre, 
@@ -31,11 +36,25 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
             paisCodigo: ciudadInicial.paisCodigo,
             flag: viaje.flag 
         }]);
+      } else if (!esBorrador && usuario && viaje.id) {
+        // Viaje existente: cargar paradas desde Firestore
+        const cargarParadas = async () => {
+          try {
+            const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
+            const snap = await getDocs(paradasRef);
+            const loaded = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            setParadas(loaded.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)));
+          } catch (e) {
+            console.error("Error cargando paradas:", e);
+            setParadas([]);
+          }
+        };
+        cargarParadas();
       } else {
-          setParadas([]); 
+        setParadas([]); 
       }
     }
-  }, [viaje, esBorrador, ciudadInicial]);
+  }, [viaje, esBorrador, ciudadInicial, usuario]);
 
   const handleSave = () => {
     if (!formData.nombreEspanol) return;

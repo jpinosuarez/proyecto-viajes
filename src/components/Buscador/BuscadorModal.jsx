@@ -177,7 +177,7 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
                   }}
                 >
                   <div style={styles.iconBox(item.tipo === 'country')}>
-                      {flagUrl && item.tipo === 'country' ? (
+                      {flagUrl ? (
                         <img 
                             src={flagUrl} 
                             alt="flag" 

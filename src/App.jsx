@@ -111,7 +111,7 @@ function App() {
     } else {
       actualizarDetallesViaje(id, datosViaje);
       if (paradasNuevas && paradasNuevas.length > 0) {
-         // Filtrar IDs temporales
+         // Solo agregar paradas con IDs temporales (nuevas)
          const nuevasReales = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
          for (const parada of nuevasReales) {
             await agregarParada(parada, id);

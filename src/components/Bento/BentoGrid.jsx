@@ -54,25 +54,34 @@ const BentoGrid = ({
       
       <div style={styles.masonryContainer}>
         {viajesOrdenados.map((viaje) => {
-          const data = bitacoraData[viaje.id] || {};
-          const tieneFoto = !!data.foto;
-          // Banderas: Usar array nuevo o fallback a single flag
-          const banderas = data.banderas || [viaje.flag];
+          const data = bitacoraData[viaje.id] || viaje || {};
+          
+          // Validar que haya datos mínimos (título y país)
+          if (!data.nombreEspanol && !data.titulo) return null;
+          
+          // Validar que la foto sea una URL válida (comienza con http)
+          const tieneFoto = !!(data.foto && typeof data.foto === 'string' && data.foto.startsWith('http'));
+          const banderas = data.banderas && data.banderas.length > 0 ? data.banderas : (viaje.flag ? [viaje.flag] : []);
 
           return (
             <div 
               key={viaje.id} 
-              style={{ ...styles.masonryItem, ...(tieneFoto ? styles.cardConFoto(data.foto) : {}) }}
+              style={{ 
+                ...styles.masonryItem,
+                ...(tieneFoto ? {
+                  backgroundImage: `url('${data.foto}')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                } : {})
+              }}
               onClick={() => abrirVisor(viaje.id)}
             >
               <div style={styles.topGradient}>
-                <div style={{display:'flex', gap:'4px'}}>
+                <div style={{display:'flex', gap:'6px', alignItems:'center'}}>
                     {banderas.slice(0, 3).map((b, i) => (
-                        <span key={i} className="emoji-span" style={{ fontSize: '1.5rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
-                            {b}
-                        </span>
+                        <img key={i} src={b} alt="flag" style={{ width: '28px', height: '20px', borderRadius: '3px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} onError={(e) => e.target.style.display = 'none'} />
                     ))}
-                    {banderas.length > 3 && <span style={{color:'white', fontWeight:'bold', fontSize:'0.8rem'}}>+{banderas.length - 3}</span>}
+                    {banderas.length > 3 && <span style={{color:'white', fontWeight:'bold', fontSize:'0.75rem', textShadow:'0 1px 2px rgba(0,0,0,0.3)'}}>+{banderas.length - 3}</span>}
                 </div>
                 
                 <div style={{ display: 'flex', gap: '6px' }}>

@@ -63,7 +63,9 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
     return `${clima}, ${temp}°C`;
   };
 
-  const fotoMostrada = modoEdicion ? formTemp.foto : (data.foto || viajeBase?.foto);
+  const fotoMostrada = modoEdicion 
+    ? formTemp.foto 
+    : (data.foto && typeof data.foto === 'string' && data.foto.trim() ? data.foto : (viajeBase?.foto && typeof viajeBase.foto === 'string' && viajeBase.foto.trim() ? viajeBase.foto : null));
 
   return createPortal(
     <AnimatePresence>
@@ -140,8 +142,8 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
                 : ""}
             </div>
 
-            {/* Crédito Foto (Solo lectura) */}
-            {!modoEdicion && data.fotoCredito && (
+            {/* Crédito Foto (Solo lectura, solo si hay foto) */}
+            {!modoEdicion && fotoMostrada && data.fotoCredito && (
               <a
                 href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
                 target="_blank"
@@ -149,7 +151,7 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
                 style={styles.creditLink}
               >
                 <Camera size={12} /> Foto por {data.fotoCredito.nombre} /
-                Unsplash
+                Pexels
               </a>
             )}
           </div>

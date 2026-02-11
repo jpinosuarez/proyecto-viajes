@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS } from '../../theme';
@@ -9,9 +9,20 @@ function MapaView({ paises = [], paradas = [] }) {
   const mapRef = useRef(null);
   const [viewState, setViewState] = useState({ longitude: 20, latitude: 20, zoom: 1.5 });
 
+  // Deduplicar paradas por coordenadas (evitar pines duplicados)
+  const paradasUnicas = useMemo(() => {
+    const vistas = new Set();
+    return paradas.filter(p => {
+      const key = `${p.coordenadas[0]},${p.coordenadas[1]}`;
+      if (vistas.has(key)) return false;
+      vistas.add(key);
+      return true;
+    });
+  }, [paradas]);
+
   const paradasGeoJSON = {
     type: 'FeatureCollection',
-    features: paradas.map(p => ({
+    features: paradasUnicas.map(p => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: p.coordenadas },
       properties: { id: p.id, name: p.nombre }

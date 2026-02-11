@@ -5,8 +5,8 @@ import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, order
 import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
 
-// ⚠️ IMPORTANTE: Reemplaza esto con TU propia Access Key de Unsplash Developers
-const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg'; 
+// Clave API de Pexels desde variables de entorno
+const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || ''; 
 
 export const useViajes = () => {
   const { usuario } = useAuth();
@@ -43,19 +43,16 @@ export const useViajes = () => {
     return () => unsubscribe();
   }, [usuario]);
 
-  // --- CORRECCIÓN PINTADO MAPA ---
-  // Generamos un array limpio de códigos ISO-3 (ej: ['ARG', 'BRA', 'DEU'])
+  // ISO3 para Mapbox
   const paisesVisitados = useMemo(() => {
     const codigos = new Set();
-    // 1. Del código principal del viaje
     bitacora.forEach(v => { 
         const iso3 = getCountryISO3(v.code);
-        if(iso3) codigos.add(iso3); 
+        if(iso3) codigos.add(iso3);
     });
-    // 2. De las paradas individuales
     todasLasParadas.forEach(p => { 
         const iso3 = getCountryISO3(p.paisCodigo);
-        if(iso3) codigos.add(iso3); 
+        if(iso3) codigos.add(iso3);
     });
     return [...codigos].filter(Boolean);
   }, [bitacora, todasLasParadas]);
@@ -82,6 +79,7 @@ export const useViajes = () => {
     } catch (e) { return null; }
   };
 
+  // --- GENERADOR DE NOMBRES ---
   const generarTituloInteligente = (nombreBase, paradas) => {
     if (!paradas || paradas.length === 0) return nombreBase || "Nuevo Viaje";
     const ciudadesUnicas = [...new Set(paradas.map(p => p.nombre))];
@@ -100,39 +98,59 @@ export const useViajes = () => {
     return nombreBase;
   };
 
-  // --- CORRECCIÓN FOTOS UNSPLASH ---
+  // --- FOTOS PEXELS CON CACHÉ ---
   const obtenerFotoConCache = async (paisNombre, paisCode) => {
     try {
-      // 1. Verificar cache local en Firestore
-      const docRef = doc(db, 'paises_info', paisCode);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) return docSnap.data();
-
-      // 2. Llamada a API
-      const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(paisNombre + ' travel landmark')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
-      
-      if (!response.ok) {
-          console.error("Error Unsplash:", response.status, response.statusText);
-          throw new Error("Fallo Unsplash");
+      // Si no hay clave de API, no consultar
+      if (!PEXELS_ACCESS_KEY) {
+        console.warn("Clave de API de Pexels no configurada. Usa VITE_PEXELS_ACCESS_KEY en .env");
+        return null;
       }
 
-      const data = await response.json();
-      
-      // 3. Validar respuesta
-      if (!data || !data.urls || !data.urls.regular) return null;
+      // Verificar si está en caché global (paises_info)
+      const docRef = doc(db, 'paises_info', paisCode);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists() && docSnap.data().url) {
+        return docSnap.data(); // Devolver objeto con url y credito
+      }
 
-      const urlOptimizada = data.urls.regular; // Usar 'regular' es más seguro y rápido
+      // Consultar API de Pexels
+      const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(paisNombre + ' travel landmark')}&per_page=1`, {
+        headers: {
+          'Authorization': PEXELS_ACCESS_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        console.warn(`Error de Pexels: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      if (!data.photos || data.photos.length === 0) {
+        console.warn("No se encontraron fotos en Pexels para:", paisNombre);
+        return null;
+      }
+
+      const foto = data.photos[0];
+      const fotoUrl = foto.src?.large || foto.src?.medium || foto.src?.small;
+      
+      if (!fotoUrl) {
+        console.warn("Foto de Pexels sin URL válida");
+        return null;
+      }
+      
       const nuevaFotoInfo = { 
-          url: urlOptimizada, 
-          credito: { nombre: data.user.name, link: data.user.links.html } 
+          url: fotoUrl,
+          credito: { nombre: foto.photographer || 'Fotógrafo', link: foto.photographer_url || 'https://pexels.com' } 
       };
       
-      // 4. Guardar en cache
+      // Guardar en caché para futuras consultas
       await setDoc(docRef, nuevaFotoInfo);
+      console.log("Foto de Pexels cacheada para:", paisCode);
       return nuevaFotoInfo;
-
     } catch (e) { 
-        console.warn("Usando imagen de respaldo por error en API:", e);
+        console.error("No se pudo cargar foto de Pexels:", e.message);
         return null; 
     }
   };
@@ -145,20 +163,23 @@ export const useViajes = () => {
     } catch { return null; }
   };
 
+  // --- GUARDADO ---
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
     let fotoFinal = datosViaje.foto;
     let creditoFinal = datosViaje.fotoCredito || null;
-    const esFotoBase64 = fotoFinal && fotoFinal.startsWith('data:image');
+    const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
 
-    // Si no hay foto o es base64 (que subiremos luego), intentamos buscar una en Unsplash si no es subida manual
-    if (!fotoFinal && !esFotoBase64) {
+    // Si no hay foto o es Base64, intentar obtener de Pexels
+    if (!fotoFinal || esFotoBase64) {
+       if (!fotoFinal) {
          const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
          if (fotoInfo) { 
-             fotoFinal = fotoInfo.url; 
-             creditoFinal = fotoInfo.credito; 
+           fotoFinal = fotoInfo.url; 
+           creditoFinal = fotoInfo.credito; 
          }
+       }
     }
 
     const banderasParadas = paradas.map(p => getFlagUrl(p.paisCodigo)).filter(Boolean);
@@ -168,6 +189,7 @@ export const useViajes = () => {
     const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
     const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
 
+    // Procesar Paradas + Clima (Paralelo)
     const paradasProcesadas = await Promise.all(paradas.map(async (p) => {
         const fechaUso = p.fecha || datosViaje.fechaInicio;
         const climaInfo = await obtenerClimaHistorico(p.coordenadas[1], p.coordenadas[0], fechaUso);
@@ -191,7 +213,7 @@ export const useViajes = () => {
       fechaFin: datosViaje.fechaFin || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: esFotoBase64 ? null : fotoFinal, // Guardamos la URL o null (si es base64)
+      foto: esFotoBase64 ? null : (fotoFinal || null),
       fotoCredito: creditoFinal,
       banderas: banderasFinales,
       ciudades: ciudadesStr
@@ -208,15 +230,13 @@ export const useViajes = () => {
 
     try {
       await batch.commit();
-      
-      // Subida diferida de imagen manual
       if (esFotoBase64) {
          const url = await subirFotoStorage(viajeRef.id, datosViaje.foto);
          if(url) await updateDoc(viajeRef, { foto: url });
       }
       return viajeRef.id;
     } catch (e) { 
-      console.error("Error al guardar viaje:", e); 
+      console.error("Error guardando:", e); 
       return null; 
     }
   };
@@ -224,7 +244,7 @@ export const useViajes = () => {
   const actualizarDetallesViaje = async (id, data) => {
       if(!usuario) return;
       try {
-        if (data.foto && data.foto.startsWith('data:image')) {
+        if (data.foto && typeof data.foto === 'string' && data.foto.startsWith('data:image')) {
             const url = await subirFotoStorage(id, data.foto);
             data.foto = url;
         }
