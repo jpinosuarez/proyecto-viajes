@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Calendar, MapPin, Trash2, Plus } from 'lucide-react';
+import { Save, Camera, Calendar, LoaderCircle } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import CityManager from '../Shared/CityManager';
 
-const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => {
+const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
@@ -56,10 +56,10 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
     }
   }, [viaje, esBorrador, ciudadInicial, usuario]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.nombreEspanol) return;
-    onSave(viaje.id, { ...formData, paradasNuevas: paradas });
-    onClose();
+    const ok = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
+    if (ok) onClose();
   };
 
   const handleFileChange = (e) => {
@@ -106,8 +106,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
                 <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." />
             </div>
             <div style={styles.footer}>
-                <button onClick={onClose} style={styles.cancelBtn}>Cancelar</button>
-                <button onClick={handleSave} style={styles.saveBtn}><Save size={18} /> {esBorrador ? 'Crear Viaje' : 'Guardar'}</button>
+                <button onClick={onClose} style={styles.cancelBtn(isSaving)} disabled={isSaving}>Cancelar</button>
+                <button onClick={handleSave} style={styles.saveBtn(isSaving)} disabled={isSaving}>
+                  {isSaving ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
+                  {isSaving ? 'Guardando...' : (esBorrador ? 'Crear Viaje' : 'Guardar')}
+                </button>
             </div>
           </div>
         </motion.div>
