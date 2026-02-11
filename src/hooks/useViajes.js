@@ -8,6 +8,8 @@ import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtil
 
 // Clave API de Pexels desde variables de entorno
 const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
+const EXTERNAL_API_TIMEOUT_MS = 3000;
+const FOTO_DEFAULT_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%231f2937'/><stop offset='100%' stop-color='%230f766e'/></linearGradient></defs><rect width='1200' height='800' fill='url(%23g)'/><circle cx='180' cy='160' r='90' fill='rgba(255,255,255,0.15)'/><path d='M100 650 L420 360 L600 560 L780 420 L1100 700 L100 700 Z' fill='rgba(255,255,255,0.18)'/><text x='80' y='120' fill='white' font-size='56' font-family='Arial, sans-serif' opacity='0.9'>Viaje</text></svg>";
 
 // DEBUG: Verificar que la clave está disponible
 if (!PEXELS_ACCESS_KEY) {
@@ -70,6 +72,17 @@ export const useViajes = () => {
     return [...codigos].filter(Boolean);
   }, [bitacora, todasLasParadas]);
 
+  const obtenerConTimeout = async (fn, fallbackValue) => {
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise(resolve => setTimeout(() => resolve(fallbackValue), EXTERNAL_API_TIMEOUT_MS))
+      ]);
+    } catch {
+      return fallbackValue;
+    }
+  };
+
   // --- API CLIMA ---
   const obtenerClimaHistorico = async (lat, lng, fecha) => {
     if (!lat || !lng || !fecha) return null;
@@ -90,6 +103,11 @@ export const useViajes = () => {
       }
       return null;
     } catch { return null; }
+  };
+
+  const obtenerClimaHistoricoSeguro = async (lat, lng, fecha) => {
+    if (!lat || !lng || !fecha) return null;
+    return obtenerConTimeout(() => obtenerClimaHistorico(lat, lng, fecha), null);
   };
 
   // --- GENERADOR DE NOMBRES ---
@@ -184,6 +202,16 @@ export const useViajes = () => {
     }
   };
 
+  const obtenerFotoConCacheSeguro = async (paisNombre, paisCode) => {
+    const fotoPorDefecto = { url: FOTO_DEFAULT_URL, credito: null };
+    if (!paisNombre) return fotoPorDefecto;
+    const fotoInfo = await obtenerConTimeout(
+      () => obtenerFotoConCache(paisNombre, paisCode),
+      null
+    );
+    return fotoInfo || fotoPorDefecto;
+  };
+
   const subirFotoStorage = async (viajeId, fotoOptimizada) => {
     try {
       const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
@@ -210,21 +238,6 @@ export const useViajes = () => {
     const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
     const esFotoParaStorage = !!fotoFileOptimizada || !!esFotoBase64;
 
-    // Si no hay foto o es Base64, intentar obtener de Pexels
-    if (!fotoFinal || esFotoBase64) {
-       if (!fotoFinal) {
-         console.log("📸 Intentando obtener foto de Pexels...");
-         const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
-         if (fotoInfo) { 
-           fotoFinal = fotoInfo.url; 
-           creditoFinal = fotoInfo.credito;
-           console.log("✅ Foto obtenida de Pexels"); 
-         } else {
-           console.log("⚠️ No se pudo obtener foto de Pexels");
-         }
-       }
-    }
-
     const banderasParadas = paradas.map(p => getFlagUrl(p.paisCodigo)).filter(Boolean);
     const banderasBase = [getFlagUrl(datosViaje.code)].filter(Boolean);
     const banderasFinales = banderasParadas.length > 0 ? [...new Set(banderasParadas)] : banderasBase;
@@ -232,21 +245,31 @@ export const useViajes = () => {
     const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
     const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
 
-    // Procesar Paradas + Clima (Paralelo)
-    const paradasProcesadas = await Promise.all(paradas.map(async (p) => {
-        const fechaUso = p.fecha || datosViaje.fechaInicio;
-        const climaInfo = await obtenerClimaHistorico(p.coordenadas[1], p.coordenadas[0], fechaUso);
-        return {
-            nombre: p.nombre,
-            coordenadas: p.coordenadas,
-            fecha: fechaUso,
-            fechaLlegada: p.fechaLlegada || "",
-            fechaSalida: p.fechaSalida || "",
-            paisCodigo: p.paisCodigo || "",
-            clima: climaInfo,
-            tipo: 'place'
-        };
+    // Resolver APIs externas en paralelo con wrappers seguros
+    const necesitaFotoExterna = !fotoFinal;
+    const fotoPromise = necesitaFotoExterna
+      ? obtenerFotoConCacheSeguro(datosViaje.nombreEspanol, datosViaje.code)
+      : Promise.resolve(null);
+    const paradasPromise = Promise.all(paradas.map(async (p) => {
+      const fechaUso = p.fecha || datosViaje.fechaInicio;
+      const climaInfo = await obtenerClimaHistoricoSeguro(p.coordenadas[1], p.coordenadas[0], fechaUso);
+      return {
+        nombre: p.nombre,
+        coordenadas: p.coordenadas,
+        fecha: fechaUso,
+        fechaLlegada: p.fechaLlegada || "",
+        fechaSalida: p.fechaSalida || "",
+        paisCodigo: p.paisCodigo || "",
+        clima: climaInfo,
+        tipo: 'place'
+      };
     }));
+    const [fotoInfo, paradasProcesadas] = await Promise.all([fotoPromise, paradasPromise]);
+
+    if (fotoInfo) {
+      fotoFinal = fotoInfo.url;
+      creditoFinal = fotoInfo.credito;
+    }
 
     const nuevoViaje = {
       code: datosViaje.code || "",
@@ -256,7 +279,7 @@ export const useViajes = () => {
       fechaFin: datosViaje.fechaFin || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: esFotoParaStorage ? null : (fotoFinal || null),
+      foto: esFotoParaStorage ? null : (fotoFinal || FOTO_DEFAULT_URL),
       fotoCredito: creditoFinal,
       banderas: banderasFinales,
       ciudades: ciudadesStr
@@ -314,7 +337,7 @@ export const useViajes = () => {
       if (!usuario || !viajeId) return false;
       try {
           const fechaUso = lugarInfo.fecha || new Date().toISOString().split('T')[0];
-          const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaUso);
+          const climaInfo = await obtenerClimaHistoricoSeguro(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaUso);
           
           await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), {
               ...lugarInfo,
