@@ -117,11 +117,9 @@ function App() {
 
         const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
         if (!nuevoId) {
-          pushToast('No se pudo guardar el viaje', 'error');
           return false;
         }
 
-        pushToast('Viaje guardado con exito', 'success');
         setViajeBorrador(null);
         setCiudadInicialBorrador(null);
         setTimeout(() => abrirVisor(nuevoId), 500);
@@ -140,11 +138,12 @@ function App() {
       }
 
       if (okViaje && okParadas) {
-        pushToast('Cambios guardados', 'success');
         return true;
       }
 
-      pushToast('No se pudieron guardar algunos cambios', 'error');
+      if (okViaje && !okParadas) {
+        pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
+      }
       return false;
     } finally {
       setIsSavingModal(false);
@@ -169,11 +168,12 @@ function App() {
       }
 
       if (okViaje && okParadas) {
-        pushToast('Viaje actualizado', 'success');
         return true;
       }
 
-      pushToast('Error al actualizar el viaje', 'error');
+      if (okViaje && !okParadas) {
+        pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
+      }
       return false;
     } finally {
       setIsSavingViewer(false);
@@ -197,12 +197,7 @@ function App() {
 
     try {
       const ok = await eliminarViaje(id);
-      if (!ok) {
-        pushToast('No se pudo eliminar el viaje', 'error');
-        return false;
-      }
-
-      pushToast('Viaje eliminado', 'success');
+      if (!ok) return false;
       setViajeExpandidoId(null);
       setViajeEnEdicionId(null);
       return true;
