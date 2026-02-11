@@ -5,7 +5,8 @@ import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, order
 import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
 
-const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg';
+// ⚠️ IMPORTANTE: Reemplaza esto con TU propia Access Key de Unsplash Developers
+const UNSPLASH_ACCESS_KEY = 'IHckgwuhGnzg4MoJamPuB6rECV9MJsBb3rRE2ty3WJg'; 
 
 export const useViajes = () => {
   const { usuario } = useAuth();
@@ -42,45 +43,45 @@ export const useViajes = () => {
     return () => unsubscribe();
   }, [usuario]);
 
-  // Mapbox Colors Logic
+  // --- CORRECCIÓN PINTADO MAPA ---
+  // Generamos un array limpio de códigos ISO-3 (ej: ['ARG', 'BRA', 'DEU'])
   const paisesVisitados = useMemo(() => {
     const codigos = new Set();
-    bitacora.forEach(v => { if(v.code) codigos.add(getCountryISO3(v.code)); });
-    todasLasParadas.forEach(p => { if(p.paisCodigo) codigos.add(getCountryISO3(p.paisCodigo)); });
+    // 1. Del código principal del viaje
+    bitacora.forEach(v => { 
+        const iso3 = getCountryISO3(v.code);
+        if(iso3) codigos.add(iso3); 
+    });
+    // 2. De las paradas individuales
+    todasLasParadas.forEach(p => { 
+        const iso3 = getCountryISO3(p.paisCodigo);
+        if(iso3) codigos.add(iso3); 
+    });
     return [...codigos].filter(Boolean);
   }, [bitacora, todasLasParadas]);
 
-  // --- API CLIMA (RESTAURADA) ---
+  // --- API CLIMA ---
   const obtenerClimaHistorico = async (lat, lng, fecha) => {
     if (!lat || !lng || !fecha) return null;
     try {
-      // API Open-Meteo para clima histórico
       const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${fecha}&end_date=${fecha}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
       const data = await res.json();
       
       if (data.daily?.weathercode && data.daily.weathercode.length > 0) {
         const code = data.daily.weathercode[0];
         const max = data.daily.temperature_2m_max[0];
-        const min = data.daily.temperature_2m_min[0];
-        
-        // Mapeo simple de códigos WMO
         let desc = "Despejado";
         if (code > 3) desc = "Nublado";
         if (code > 45) desc = "Niebla";
         if (code > 50) desc = "Lluvioso";
         if (code > 70) desc = "Nieve";
         if (code > 95) desc = "Tormenta";
-
-        return { desc, max, min, code };
+        return { desc, max, code };
       }
       return null;
-    } catch (e) { 
-      console.warn("No se pudo obtener el clima:", e);
-      return null; 
-    }
+    } catch (e) { return null; }
   };
 
-  // --- LOGICA DE TÍTULOS ---
   const generarTituloInteligente = (nombreBase, paradas) => {
     if (!paradas || paradas.length === 0) return nombreBase || "Nuevo Viaje";
     const ciudadesUnicas = [...new Set(paradas.map(p => p.nombre))];
@@ -99,22 +100,41 @@ export const useViajes = () => {
     return nombreBase;
   };
 
-  // --- FOTOS ---
+  // --- CORRECCIÓN FOTOS UNSPLASH ---
   const obtenerFotoConCache = async (paisNombre, paisCode) => {
     try {
+      // 1. Verificar cache local en Firestore
       const docRef = doc(db, 'paises_info', paisCode);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) return docSnap.data();
 
+      // 2. Llamada a API
       const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(paisNombre + ' travel landmark')}&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`);
-      const data = await response.json();
-      const rawUrl = data.urls.raw;
-      const urlOptimizada = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}w=1600&q=80&auto=format&fit=crop`;
+      
+      if (!response.ok) {
+          console.error("Error Unsplash:", response.status, response.statusText);
+          throw new Error("Fallo Unsplash");
+      }
 
-      const nuevaFotoInfo = { url: urlOptimizada, credito: { nombre: data.user.name, link: data.user.links.html } };
+      const data = await response.json();
+      
+      // 3. Validar respuesta
+      if (!data || !data.urls || !data.urls.regular) return null;
+
+      const urlOptimizada = data.urls.regular; // Usar 'regular' es más seguro y rápido
+      const nuevaFotoInfo = { 
+          url: urlOptimizada, 
+          credito: { nombre: data.user.name, link: data.user.links.html } 
+      };
+      
+      // 4. Guardar en cache
       await setDoc(docRef, nuevaFotoInfo);
       return nuevaFotoInfo;
-    } catch { return null; }
+
+    } catch (e) { 
+        console.warn("Usando imagen de respaldo por error en API:", e);
+        return null; 
+    }
   };
 
   const subirFotoStorage = async (viajeId, fotoBase64) => {
@@ -125,7 +145,6 @@ export const useViajes = () => {
     } catch { return null; }
   };
 
-  // --- GUARDADO ROBUSTO CON CLIMA ---
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
@@ -133,11 +152,13 @@ export const useViajes = () => {
     let creditoFinal = datosViaje.fotoCredito || null;
     const esFotoBase64 = fotoFinal && fotoFinal.startsWith('data:image');
 
-    if (!fotoFinal || esFotoBase64) {
-       if (!fotoFinal) {
+    // Si no hay foto o es base64 (que subiremos luego), intentamos buscar una en Unsplash si no es subida manual
+    if (!fotoFinal && !esFotoBase64) {
          const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
-         if (fotoInfo) { fotoFinal = fotoInfo.url; creditoFinal = fotoInfo.credito; }
-       }
+         if (fotoInfo) { 
+             fotoFinal = fotoInfo.url; 
+             creditoFinal = fotoInfo.credito; 
+         }
     }
 
     const banderasParadas = paradas.map(p => getFlagUrl(p.paisCodigo)).filter(Boolean);
@@ -147,12 +168,9 @@ export const useViajes = () => {
     const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
     const ciudadesStr = [...new Set(paradas.map(p => p.nombre))].join(', ');
 
-    // Preparar Paradas CON Clima (Procesamiento en paralelo)
     const paradasProcesadas = await Promise.all(paradas.map(async (p) => {
         const fechaUso = p.fecha || datosViaje.fechaInicio;
-        // Obtener clima
         const climaInfo = await obtenerClimaHistorico(p.coordenadas[1], p.coordenadas[0], fechaUso);
-        
         return {
             nombre: p.nombre,
             coordenadas: p.coordenadas,
@@ -160,7 +178,7 @@ export const useViajes = () => {
             fechaLlegada: p.fechaLlegada || "",
             fechaSalida: p.fechaSalida || "",
             paisCodigo: p.paisCodigo || "",
-            clima: climaInfo, // Guardamos el objeto clima
+            clima: climaInfo,
             tipo: 'place'
         };
     }));
@@ -173,7 +191,7 @@ export const useViajes = () => {
       fechaFin: datosViaje.fechaFin || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: esFotoBase64 ? null : fotoFinal,
+      foto: esFotoBase64 ? null : fotoFinal, // Guardamos la URL o null (si es base64)
       fotoCredito: creditoFinal,
       banderas: banderasFinales,
       ciudades: ciudadesStr
@@ -191,6 +209,7 @@ export const useViajes = () => {
     try {
       await batch.commit();
       
+      // Subida diferida de imagen manual
       if (esFotoBase64) {
          const url = await subirFotoStorage(viajeRef.id, datosViaje.foto);
          if(url) await updateDoc(viajeRef, { foto: url });
@@ -216,10 +235,9 @@ export const useViajes = () => {
   const agregarParada = async (lugarInfo, viajeId) => {
       if (!usuario || !viajeId) return;
       try {
-          // Obtener clima al agregar parada individualmente
           const fechaUso = lugarInfo.fecha || new Date().toISOString().split('T')[0];
           const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaUso);
-
+          
           await addDoc(collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`), {
               ...lugarInfo,
               clima: climaInfo,

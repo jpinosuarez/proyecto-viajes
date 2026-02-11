@@ -1,21 +1,56 @@
 import React, { useMemo } from 'react';
 import StatsBitacora from '../Dashboard/StatsBitacora'; 
-import { Trash2, Edit3, Calendar, MapPin } from 'lucide-react';
+import { Trash2, Edit3, Calendar, MapPin, Search } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BentoGrid.styles';
 
-const BentoGrid = ({ viajes = [], bitacoraData = {}, manejarEliminar, abrirEditor, abrirVisor }) => {
+const BentoGrid = ({
+  viajes = [],
+  bitacoraData = {},
+  manejarEliminar,
+  abrirEditor,
+  abrirVisor,
+  searchTerm = '',
+  onClearSearch
+}) => {
+  const termino = searchTerm.trim().toLowerCase();
+  const viajesFiltrados = useMemo(() => {
+    if (!termino) return viajes;
+    return viajes.filter((viaje) => {
+      const data = bitacoraData[viaje.id] || {};
+      const campos = [
+        data.titulo,
+        viaje.nombreEspanol,
+        data.ciudades
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return campos.includes(termino);
+    });
+  }, [viajes, bitacoraData, termino]);
+
   const viajesOrdenados = useMemo(() => {
-    return [...viajes].sort((a, b) => {
+    return [...viajesFiltrados].sort((a, b) => {
       const fA = new Date(bitacoraData[a.id]?.fechaInicio || a.fecha).getTime();
       const fB = new Date(bitacoraData[b.id]?.fechaInicio || b.fecha).getTime();
       return fB - fA;
     });
-  }, [viajes, bitacoraData]);
+  }, [viajesFiltrados, bitacoraData]);
 
   return (
     <div style={{ width: '100%', paddingBottom: '50px' }}>
-      <StatsBitacora bitacora={viajes} bitacoraData={bitacoraData} />
+      <StatsBitacora bitacora={viajesFiltrados} bitacoraData={bitacoraData} />
+      {termino && (
+        <div style={styles.searchMeta}>
+          <span>
+            Mostrando {viajesOrdenados.length} de {viajes.length} viajes
+          </span>
+          <button type="button" onClick={() => onClearSearch?.()} style={styles.clearSearchButton}>
+            Limpiar búsqueda
+          </button>
+        </div>
+      )}
       
       <div style={styles.masonryContainer}>
         {viajesOrdenados.map((viaje) => {
@@ -64,6 +99,22 @@ const BentoGrid = ({ viajes = [], bitacoraData = {}, manejarEliminar, abrirEdito
             </div>
           );
         })}
+        {viajesOrdenados.length === 0 && (
+          <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>
+              <Search size={28} />
+            </div>
+            <h3 style={styles.emptyTitle}>No encontramos resultados</h3>
+            <p style={styles.emptyText}>
+              Prueba con otro nombre de viaje, país o ciudad.
+            </p>
+            {termino && (
+              <button type="button" onClick={() => onClearSearch?.()} style={styles.emptyAction}>
+                Limpiar búsqueda
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
@@ -31,6 +31,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
   const [filtro, setFiltro] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
@@ -40,6 +41,7 @@ function App() {
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
   const irAPerfil = () => setVistaActiva('config');
+  const limpiarBusqueda = () => setBusqueda('');
 
   const onLugarSeleccionado = useCallback((lugar) => {
     let datosPais = null;
@@ -150,16 +152,33 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (vistaActiva !== 'bitacora' && busqueda) {
+      setBusqueda('');
+    }
+  }, [vistaActiva, busqueda]);
+
   if (!cargando && !usuario) return <LandingPage />;
 
   const viajeParaEditar = viajeEnEdicionId ? bitacora.find(v => v.id === viajeEnEdicionId) : viajeBorrador;
+  const mostrarBusqueda = vistaActiva === 'bitacora';
+  const placeholderBusqueda = 'Buscar viajes, países o ciudades...';
 
   return (
     <div style={styles.appWrapper}>
       <Sidebar vistaActiva={vistaActiva} setVistaActiva={setVistaActiva} collapsed={sidebarCollapsed} toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}/>
 
       <motion.main style={{...styles.mainContent, marginLeft: sidebarCollapsed ? '80px' : '260px'}}>
-        <Header titulo={getTituloHeader()} onAddClick={() => setMostrarBuscador(true)} onProfileClick={irAPerfil} />
+        <Header
+          titulo={getTituloHeader()}
+          onAddClick={() => setMostrarBuscador(true)}
+          onProfileClick={irAPerfil}
+          mostrarBusqueda={mostrarBusqueda}
+          busqueda={busqueda}
+          onBusquedaChange={setBusqueda}
+          onBusquedaClear={limpiarBusqueda}
+          searchPlaceholder={placeholderBusqueda}
+        />
 
         <section style={styles.sectionWrapper}>
           <AnimatePresence mode="wait">
@@ -176,7 +195,15 @@ function App() {
             )}
             {vistaActiva === 'bitacora' && (
               <motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
-                <BentoGrid viajes={bitacora} bitacoraData={bitacoraData} manejarEliminar={handleDeleteViaje} abrirEditor={abrirEditor} abrirVisor={abrirVisor} />
+                <BentoGrid
+                  viajes={bitacora}
+                  bitacoraData={bitacoraData}
+                  manejarEliminar={eliminarViaje}
+                  abrirEditor={abrirEditor}
+                  abrirVisor={abrirVisor}
+                  searchTerm={busqueda}
+                  onClearSearch={limpiarBusqueda}
+                />
               </motion.div>
             )}
             {vistaActiva === 'config' && (

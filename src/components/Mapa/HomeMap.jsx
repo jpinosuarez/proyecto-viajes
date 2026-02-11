@@ -9,23 +9,13 @@ const HomeMap = ({ paisesVisitados = [] }) => {
   const [hoverInfo, setHoverInfo] = useState(null);
 
   const onHover = useCallback(event => {
-    const {
-      features,
-      point: { x, y }
-    } = event;
-    
+    const { features, point: { x, y } } = event;
     const hoveredFeature = features && features[0];
-    
-    setHoverInfo(
-      hoveredFeature
-        ? {
-            feature: hoveredFeature,
-            x,
-            y
-          }
-        : null
-    );
+    setHoverInfo(hoveredFeature ? { feature: hoveredFeature, x, y } : null);
   }, []);
+
+  // Asegurar que la lista no esté vacía para la expresión de Mapbox
+  const listaPaises = paisesVisitados.length > 0 ? paisesVisitados : ['EMPTY_LIST'];
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', background: '#F8FAFC', borderRadius: '24px', overflow: 'hidden' }}>
@@ -33,39 +23,22 @@ const HomeMap = ({ paisesVisitados = [] }) => {
         initialViewState={{
           longitude: 0,
           latitude: 15,
-          zoom: 0.6, // Zoom ajustado para ver el mundo completo
+          zoom: 0.6, 
         }}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
-        
-        // Desactivar navegación para que sea fijo/estático
         scrollZoom={false}
-        boxZoom={false}
-        dragRotate={false}
         dragPan={false}
-        keyboard={false}
         doubleClickZoom={false}
-        touchZoomRotate={false}
         
-        // Habilitar hover
         onMouseMove={onHover}
-        interactiveLayerIds={['country-fills', 'world-fills']} // Detectar hover en países
+        interactiveLayerIds={['country-fills']} // Solo interactuar con países pintados
         attributionControl={false}
       >
         <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
           
-          {/* Capa Base Transparente (para detectar hover en países no visitados también) */}
-          <Layer
-            id="world-fills"
-            type="fill"
-            source-layer="country_boundaries"
-            paint={{
-              'fill-color': 'transparent'
-            }}
-          />
-
-          {/* Países Visitados Coloreados */}
+          {/* Capa de Relleno: Solo pinta si el ISO3 está en la lista */}
           <Layer
             id="country-fills"
             type="fill"
@@ -74,15 +47,15 @@ const HomeMap = ({ paisesVisitados = [] }) => {
               'fill-color': COLORS.atomicTangerine,
               'fill-opacity': [
                 'match',
-                ['get', 'iso_3166_1_alpha_3'],
-                paisesVisitados.length > 0 ? paisesVisitados : [''], 
-                0.8, 
-                0
+                ['get', 'iso_3166_1_alpha_3'], // Campo del vector tile
+                listaPaises,                   // Lista de mis países
+                0.8,                           // Opacidad si coincide
+                0                              // Opacidad si no coincide
               ]
             }}
           />
 
-          {/* Fronteras Limpias */}
+          {/* Fronteras */}
           <Layer
             id="borders"
             type="line"
@@ -95,7 +68,6 @@ const HomeMap = ({ paisesVisitados = [] }) => {
           />
         </Source>
 
-        {/* Tooltip Personalizado */}
         {hoverInfo && (
           <div style={{
             position: 'absolute',
@@ -103,17 +75,15 @@ const HomeMap = ({ paisesVisitados = [] }) => {
             pointerEvents: 'none',
             left: hoverInfo.x,
             top: hoverInfo.y,
-            transform: 'translate(-50%, -120%)', // Centrado arriba del mouse
+            transform: 'translate(-50%, -120%)',
             background: 'rgba(30, 41, 59, 0.9)',
             color: 'white',
             padding: '4px 8px',
             borderRadius: '6px',
             fontSize: '0.75rem',
-            fontWeight: '600',
-            whiteSpace: 'nowrap',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            fontWeight: '600'
           }}>
-            {/* Intentamos mostrar nombre en español si está disponible en las propiedades, o el nombre local */}
+            {/* Mapbox suele tener name_es o name_en */}
             {hoverInfo.feature.properties.name_es || hoverInfo.feature.properties.name_en || "País"}
           </div>
         )}

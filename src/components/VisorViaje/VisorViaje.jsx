@@ -34,7 +34,11 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
   if (!viajeId || !data) return null;
 
   const iniciarEdicion = () => {
-    setFormTemp(data);
+    setFormTemp({
+      ...data,
+      titulo: data.titulo || viajeBase.nombreEspanol,
+      texto: data.texto || ''
+    });
     setModoEdicion(true);
   };
 
@@ -94,36 +98,60 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
           </div>
 
           <div style={styles.headerContent}>
-             <div style={{display:'flex', gap:'10px', marginBottom:'15px'}}>
-                {data.banderas && data.banderas.length > 0 ? (
-                    data.banderas.map((b, i) => (
-                        <img key={i} src={b} alt="flag" style={{width:'40px', borderRadius:'4px', boxShadow:'0 4px 10px rgba(0,0,0,0.3)'}} />
-                    ))
-                ) : (
-                    <span style={{fontSize:'2rem'}}>🌍</span>
-                )}
-             </div>
+            {/* Banderas SVG */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+              {data.banderas && data.banderas.length > 0 ? (
+                data.banderas.map((b, i) => (
+                  <img
+                    key={i}
+                    src={b}
+                    alt="flag"
+                    style={{
+                      width: "40px",
+                      borderRadius: "4px",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                    }}
+                  />
+                ))
+              ) : (
+                <span style={styles.flagIcon}>✈️</span> // Fallback
+              )}
+            </div>
 
-             {modoEdicion ? (
-               <input 
-                 style={styles.titleInput} 
-                 value={formTemp.titulo} 
-                 onChange={e => setFormTemp({...formTemp, titulo: e.target.value})} 
-                 placeholder="Título del viaje"
-               />
-             ) : (
-               <h1 style={styles.titleDisplay}>{data.titulo || data.nombreEspanol}</h1>
-             )}
-             
-             <div style={styles.metaBadge}>
-               <Calendar size={14} /> {data.fechaInicio} {data.fechaFin && data.fechaFin !== data.fechaInicio ? ` - ${data.fechaFin}` : ''}
-             </div>
+            {modoEdicion ? (
+              <input
+                style={styles.titleInput}
+                value={formTemp.titulo || ''}
+                onChange={(e) =>
+                  setFormTemp({ ...formTemp, titulo: e.target.value })
+                }
+                placeholder="Título del viaje"
+              />
+            ) : (
+              <h1 style={styles.titleDisplay}>
+                {data.titulo || viajeBase.nombreEspanol}
+              </h1>
+            )}
 
-             {!modoEdicion && data.fotoCredito && (
-                <a href={data.fotoCredito.link} target="_blank" rel="noreferrer" style={styles.creditLink}>
-                    <Camera size={12} /> Foto por {data.fotoCredito.nombre}
-                </a>
-             )}
+            <div style={styles.metaBadge}>
+              <Calendar size={14} /> {data.fechaInicio}{" "}
+              {data.fechaFin && data.fechaFin !== data.fechaInicio
+                ? ` - ${data.fechaFin}`
+                : ""}
+            </div>
+
+            {/* Crédito Foto (Solo lectura) */}
+            {!modoEdicion && data.fotoCredito && (
+              <a
+                href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
+                target="_blank"
+                rel="noreferrer"
+                style={styles.creditLink}
+              >
+                <Camera size={12} /> Foto por {data.fotoCredito.nombre} /
+                Unsplash
+              </a>
+            )}
           </div>
         </div>
 
@@ -131,10 +159,12 @@ const VisorViaje = ({ viajeId, bitacoraData, bitacoraLista, onClose, onEdit, onS
           <div style={styles.mainColumn}>
             <h3 style={styles.sectionTitle}>Bitácora</h3>
             {modoEdicion ? (
-              <textarea 
-                style={styles.textArea} 
-                value={formTemp.texto} 
-                onChange={e => setFormTemp({...formTemp, texto: e.target.value})} 
+              <textarea
+                style={styles.textArea}
+                value={formTemp.texto || ''}
+                onChange={(e) =>
+                  setFormTemp({ ...formTemp, texto: e.target.value })
+                }
                 placeholder="Escribe aquí tu relato..."
               />
             ) : (
