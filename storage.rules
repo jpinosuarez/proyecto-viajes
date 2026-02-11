@@ -1,9 +1,32 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Regla por defecto: todo denegado salvo rutas permitidas explicitamente.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Helper: valida que el usuario autenticado sea dueno del espacio /usuarios/{userId}/...
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Helper: solo permitir imagenes y con tamano maximo de 2 MB.
+    function isValidImageUpload() {
+      return request.resource != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size <= 2 * 1024 * 1024;
+    }
+
     match /usuarios/{userId}/{allPaths=**} {
-      // Solo el usuario autenticado puede subir/ver sus fotos
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Lectura unicamente para el dueno del espacio.
+      allow read: if isOwner(userId);
+
+      // Escrituras de archivo (create/update) solo si es dueno y el archivo es imagen <= 2 MB.
+      allow create, update: if isOwner(userId) && isValidImageUpload();
+
+      // Borrado permitido solo al dueno.
+      allow delete: if isOwner(userId);
     }
   }
 }
