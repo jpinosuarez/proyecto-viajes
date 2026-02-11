@@ -1,21 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, LogOut, User, X, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useSearch, useUI } from '../../context/UIContext';
 import { styles } from './Header.styles';
 
-const Header = ({
-  titulo,
-  onAddClick,
-  onProfileClick,
-  mostrarBusqueda = false,
-  busqueda = '',
-  onBusquedaChange,
-  onBusquedaClear,
-  searchPlaceholder = 'Buscar...',
-  isMobile = false,
-  onMenuClick
-}) => {
+const Header = ({ isMobile = false }) => {
   const { usuario, login, logout } = useAuth();
+  const {
+    tituloHeader,
+    mostrarBusqueda,
+    searchPlaceholder,
+    openBuscador,
+    setVistaActiva,
+    openMobileDrawer
+  } = useUI();
+  const { busqueda, setBusqueda, limpiarBusqueda } = useSearch();
   const [avatarError, setAvatarError] = useState(false);
   const iniciales = useMemo(() => usuario?.displayName?.trim()?.[0]?.toUpperCase() || '', [usuario?.displayName]);
 
@@ -27,13 +26,13 @@ const Header = ({
     <header style={styles.header(isMobile)}>
       <div style={styles.leftSide}>
         {isMobile && (
-          <button type="button" style={styles.menuButton} onClick={onMenuClick} aria-label="Abrir menu">
+          <button type="button" style={styles.menuButton} onClick={openMobileDrawer} aria-label="Abrir menu">
             <Menu size={18} />
           </button>
         )}
         {!isMobile && <span style={styles.breadcrumb}>Keeptrip</span>}
         {!isMobile && <span style={styles.separator}>/</span>}
-        <h2 style={styles.titulo(isMobile)}>{titulo}</h2>
+        <h2 style={styles.titulo(isMobile)}>{tituloHeader}</h2>
       </div>
 
       <div style={styles.rightSide(isMobile)}>
@@ -45,13 +44,13 @@ const Header = ({
               placeholder={searchPlaceholder}
               aria-label="Buscar en la bitacora"
               value={busqueda}
-              onChange={(event) => onBusquedaChange?.(event.target.value)}
+              onChange={(event) => setBusqueda(event.target.value)}
               style={styles.searchInput}
             />
             {busqueda && (
               <button
                 type="button"
-                onClick={() => onBusquedaClear?.()}
+                onClick={limpiarBusqueda}
                 style={styles.clearButton}
                 aria-label="Limpiar busqueda"
               >
@@ -61,7 +60,7 @@ const Header = ({
           </div>
         )}
 
-        <button style={styles.addButton(isMobile)} onClick={onAddClick}>
+        <button style={styles.addButton(isMobile)} onClick={openBuscador}>
           <Plus size={18} />
           {!isMobile && <span style={styles.addButtonLabel}>Anadir Viaje</span>}
         </button>
@@ -70,7 +69,7 @@ const Header = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{ ...styles.avatar, cursor: 'pointer' }}
-              onClick={onProfileClick}
+              onClick={() => setVistaActiva('config')}
               title="Configurar Perfil"
               role="button"
             >

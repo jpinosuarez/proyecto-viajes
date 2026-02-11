@@ -12,18 +12,19 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 import { COLORS } from '../../theme';
 
-const Sidebar = ({
-  vistaActiva,
-  setVistaActiva,
-  collapsed,
-  toggleCollapse,
-  isMobile = false,
-  mobileOpen = false,
-  onMobileOpenChange
-}) => {
+const Sidebar = ({ isMobile = false }) => {
   const { logout } = useAuth();
+  const {
+    vistaActiva,
+    setVistaActiva,
+    sidebarCollapsed,
+    toggleSidebarCollapse,
+    mobileDrawerOpen,
+    setMobileDrawerOpen
+  } = useUI();
 
   const menuItems = [
     { id: 'home', icon: LayoutGrid, label: 'Inicio' },
@@ -34,11 +35,11 @@ const Sidebar = ({
 
   const handleSelect = (id) => {
     setVistaActiva(id);
-    if (isMobile) onMobileOpenChange?.(false);
+    if (isMobile) setMobileDrawerOpen(false);
   };
 
   const handleLogout = () => {
-    if (isMobile) onMobileOpenChange?.(false);
+    if (isMobile) setMobileDrawerOpen(false);
     logout();
   };
 
@@ -50,20 +51,20 @@ const Sidebar = ({
             <Disc size={28} color={COLORS.atomicTangerine} />
             <h1 style={styles.logoText}>Keeptrip</h1>
           </div>
-          <button type="button" onClick={() => onMobileOpenChange?.(false)} style={styles.mobileCloseBtn}>
+          <button type="button" onClick={() => setMobileDrawerOpen(false)} style={styles.mobileCloseBtn}>
             <X size={18} />
           </button>
         </div>
       ) : (
         <>
-          <button onClick={toggleCollapse} style={styles.toggleBtn}>
-            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          <button onClick={toggleSidebarCollapse} style={styles.toggleBtn}>
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
 
-          <div style={{ ...styles.logoContainer, justifyContent: collapsed ? 'center' : 'flex-start' }}>
+          <div style={{ ...styles.logoContainer, justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
             <Disc size={32} color={COLORS.atomicTangerine} />
             <AnimatePresence>
-              {!collapsed && (
+              {!sidebarCollapsed && (
                 <motion.h1
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -91,15 +92,15 @@ const Sidebar = ({
                 ...styles.navItem,
                 backgroundColor: isActive ? COLORS.charcoalBlue : 'transparent',
                 color: isActive ? 'white' : '#64748b',
-                justifyContent: isMobile || !collapsed ? 'flex-start' : 'center',
-                padding: isMobile || !collapsed ? '12px 16px' : '12px'
+                justifyContent: isMobile || !sidebarCollapsed ? 'flex-start' : 'center',
+                padding: isMobile || !sidebarCollapsed ? '12px 16px' : '12px'
               }}
-              title={!isMobile && collapsed ? item.label : ''}
+              title={!isMobile && sidebarCollapsed ? item.label : ''}
             >
               <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
 
               <AnimatePresence>
-                {(isMobile || !collapsed) && (
+                {(isMobile || !sidebarCollapsed) && (
                   <motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
@@ -118,11 +119,11 @@ const Sidebar = ({
       <div style={styles.footer}>
         <button
           onClick={handleLogout}
-          style={{ ...styles.logoutBtn, justifyContent: isMobile || !collapsed ? 'flex-start' : 'center' }}
+          style={{ ...styles.logoutBtn, justifyContent: isMobile || !sidebarCollapsed ? 'flex-start' : 'center' }}
         >
           <LogOut size={20} />
           <AnimatePresence>
-            {(isMobile || !collapsed) && (
+            {(isMobile || !sidebarCollapsed) && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
@@ -141,7 +142,7 @@ const Sidebar = ({
   if (isMobile) {
     return (
       <AnimatePresence>
-        {mobileOpen && (
+        {mobileDrawerOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -149,7 +150,7 @@ const Sidebar = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               style={styles.mobileOverlay}
-              onClick={() => onMobileOpenChange?.(false)}
+              onClick={() => setMobileDrawerOpen(false)}
             />
 
             <motion.aside
@@ -171,7 +172,7 @@ const Sidebar = ({
     <motion.aside
       initial={false}
       animate={{
-        width: collapsed ? '80px' : '260px'
+        width: sidebarCollapsed ? '80px' : '260px'
       }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       style={styles.sidebar}

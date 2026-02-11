@@ -1,4 +1,4 @@
-﻿rules_version = '2';
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -10,7 +10,7 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 1. ZONA PRIVADA: Datos del usuario.
+    // 1. ZONA PRIVADA: datos del usuario.
     // Solo el propietario puede leer/escribir su documento y cualquier subcoleccion.
     match /usuarios/{userId} {
       allow read, write: if isOwner(userId);
@@ -20,7 +20,7 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
-    // 2. ZONA COMPARTIDA: Cache global de paises/fotos.
+    // 2. ZONA COMPARTIDA: cache global de paises/fotos.
     // Cualquier usuario autenticado puede leer y escribir.
     match /paises_info/{paisCode} {
       allow read, write: if isAuthenticated();
