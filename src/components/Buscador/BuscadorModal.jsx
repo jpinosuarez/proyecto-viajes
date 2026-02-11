@@ -4,6 +4,7 @@ import { Search, X, MapPin, Plus, TrendingUp, Globe } from "lucide-react";
 import { COLORS } from "../../theme";
 import { styles } from "./BuscadorModal.styles";
 import { getFlagUrl } from "../../utils/countryUtils";
+import { useWindowSize } from "../../hooks/useWindowSize";
 
 const MAPBOX_TOKEN =
   "pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw";
@@ -26,6 +27,7 @@ const BuscadorModal = ({
   onSearchError,
   onNoResults
 }) => {
+  const { isMobile } = useWindowSize(768);
   const [resultados, setResultados] = useState([]);
   const [cargando, setCargando] = useState(false);
   const debounceRef = useRef(null);
@@ -131,14 +133,14 @@ const BuscadorModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        style={styles.modalOverlay}
+        style={styles.modalOverlay(isMobile)}
         onClick={onClose}
       >
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
-          style={styles.modalContent}
+          style={styles.modalContent(isMobile)}
           onClick={(e) => e.stopPropagation()}
         >
           <div style={styles.header}>
@@ -159,7 +161,7 @@ const BuscadorModal = ({
             />
           </div>
 
-          <div style={styles.listaContainer} className="custom-scroll">
+          <div style={styles.listaContainer(isMobile)} className="custom-scroll">
             {!filtro && (
               <div style={{ padding: "20px" }}>
                 <p

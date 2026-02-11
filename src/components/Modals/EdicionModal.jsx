@@ -6,12 +6,14 @@ import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useWindowSize } from '../../hooks/useWindowSize';
 import CityManager from '../Shared/CityManager';
 import { compressImage } from '../../utils/imageUtils';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
+  const { isMobile } = useWindowSize(768);
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
@@ -100,9 +102,9 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
 
   return (
     <AnimatePresence>
-      <motion.div style={styles.overlay} onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-        <motion.div style={styles.modal} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
-          <div style={styles.header(formData.foto)}>
+      <motion.div style={styles.overlay(isMobile)} onClick={onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+        <motion.div style={styles.modal(isMobile)} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
+          <div style={styles.header(formData.foto, isMobile)}>
             <div style={styles.headerOverlay} />
             <div style={styles.headerContent}>
                 {formData.flag ? (

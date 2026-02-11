@@ -18,17 +18,13 @@ export const styles = {
     fontWeight: '700',
     fontSize: '0.85rem'
   },
-  // Masonry Layout Real usando Columnas CSS
   masonryContainer: {
-    columnCount: 4, // 4 Columnas en escritorio
+    columnCount: 4,
     columnGap: '20px',
-    padding: '20px',
-    '@media (max-width: 1200px)': { columnCount: 3 },
-    '@media (max-width: 800px)': { columnCount: 2 },
-    '@media (max-width: 500px)': { columnCount: 1 }
+    padding: '20px'
   },
   masonryItem: {
-    breakInside: 'avoid', // Evita que la tarjeta se parta entre columnas
+    breakInside: 'avoid',
     marginBottom: '20px',
     borderRadius: '20px',
     backgroundColor: 'white',
@@ -40,16 +36,8 @@ export const styles = {
     minHeight: '180px',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
-    ':hover': { transform: 'translateY(-5px)' }
+    justifyContent: 'space-between'
   },
-  // Imagen Full Bleed (Ocupa todo)
-  cardConFoto: (foto) => ({
-    backgroundImage: `url(${foto})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    color: 'white'
-  }),
   topGradient: {
     padding: '15px',
     display: 'flex',
@@ -78,14 +66,6 @@ export const styles = {
     backgroundColor: 'white',
     marginTop: 'auto'
   }),
-  regionTag: (color) => ({
-    margin: 0,
-    color: color,
-    fontSize: '0.6rem',
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em'
-  }),
   metaRow: (isDark) => ({
     display: 'flex', gap: '12px', alignItems: 'center',
     fontSize: '0.7rem',
@@ -99,7 +79,8 @@ export const styles = {
     padding: '32px',
     textAlign: 'center',
     color: COLORS.charcoalBlue,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+    boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+    columnSpan: 'all'
   },
   emptyIcon: {
     width: '48px',
@@ -130,6 +111,50 @@ export const styles = {
     padding: '8px 14px',
     borderRadius: '10px',
     fontWeight: '700',
+    cursor: 'pointer'
+  },
+  emptyStatePrimary: {
+    background: `linear-gradient(155deg, ${COLORS.linen} 0%, #ffffff 65%)`,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '20px',
+    padding: '38px 26px',
+    textAlign: 'center',
+    color: COLORS.charcoalBlue,
+    boxShadow: '0 10px 30px rgba(15,23,42,0.08)',
+    columnSpan: 'all'
+  },
+  emptyIconPrimary: {
+    width: '72px',
+    height: '72px',
+    borderRadius: '18px',
+    background: '#ffffff',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: COLORS.atomicTangerine,
+    marginBottom: '14px',
+    border: `1px solid ${COLORS.border}`
+  },
+  emptyTitlePrimary: {
+    margin: '0 0 8px',
+    fontSize: '1.2rem',
+    fontWeight: '900'
+  },
+  emptyTextPrimary: {
+    margin: '0 auto',
+    color: COLORS.textSecondary,
+    fontSize: '0.9rem',
+    lineHeight: 1.5,
+    maxWidth: '480px'
+  },
+  emptyActionPrimary: {
+    marginTop: '16px',
+    border: 'none',
+    background: COLORS.atomicTangerine,
+    color: '#fff',
+    padding: '10px 16px',
+    borderRadius: '12px',
+    fontWeight: '800',
     cursor: 'pointer'
   }
 };
