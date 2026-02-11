@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import StatsBitacora from '../Dashboard/StatsBitacora'; 
-import { Trash2, Edit3, Calendar, MapPin, Search } from 'lucide-react';
+import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { styles } from './BentoGrid.styles';
 
@@ -8,6 +8,7 @@ const BentoGrid = ({
   viajes = [],
   bitacoraData = {},
   manejarEliminar,
+  isDeletingViaje = () => false,
   abrirEditor,
   abrirVisor,
   searchTerm = '',
@@ -86,7 +87,14 @@ const BentoGrid = ({
                 
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button onClick={(e) => { e.stopPropagation(); abrirEditor(viaje.id); }} style={styles.miniBtn}><Edit3 size={14} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); manejarEliminar(viaje.id); }} style={styles.miniBtn}><Trash2 size={14} /></button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); manejarEliminar(viaje.id); }}
+                    style={styles.miniBtn}
+                    disabled={isDeletingViaje(viaje.id)}
+                    title={isDeletingViaje(viaje.id) ? 'Eliminando...' : 'Eliminar viaje'}
+                  >
+                    {isDeletingViaje(viaje.id) ? <LoaderCircle size={14} className="spin" /> : <Trash2 size={14} />}
+                  </button>
                 </div>
               </div>
 

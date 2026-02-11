@@ -63,14 +63,15 @@ export const styles = {
     borderTop: `1px solid ${COLORS.border}`, padding: '20px',
     display: 'flex', justifyContent: 'flex-end', gap: '10px'
   },
-  cancelBtn: {
+  cancelBtn: (disabled = false) => ({
     background: 'transparent', border: 'none', color: COLORS.textSecondary,
-    fontWeight: '600', cursor: 'pointer', padding: '10px 20px'
-  },
-  saveBtn: {
+    fontWeight: '600', cursor: disabled ? 'not-allowed' : 'pointer', padding: '10px 20px',
+    opacity: disabled ? 0.6 : 1
+  }),
+  saveBtn: (disabled = false) => ({
     background: COLORS.atomicTangerine, color: 'white', border: 'none',
     padding: '10px 24px', borderRadius: '30px', fontWeight: '700',
-    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-    boxShadow: SHADOWS.sm
-  }
+    cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+    boxShadow: SHADOWS.sm, opacity: disabled ? 0.7 : 1
+  })
 };

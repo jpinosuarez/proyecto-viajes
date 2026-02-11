@@ -5,7 +5,7 @@ import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Header/Header';
 import DashboardHome from './components/Dashboard/DashboardHome';
 import StatsMapa from './components/Dashboard/StatsMapa';
-import MapaViajes from './components/Mapa/MapaView'; 
+import MapaViajes from './components/Mapa/MapaView';
 import BentoGrid from './components/Bento/BentoGrid';
 import LandingPage from './components/Landing/LandingPage';
 
@@ -16,56 +16,62 @@ import SettingsPage from './pages/Configuracion/SettingsPage';
 
 import { useViajes } from './hooks/useViajes';
 import { useAuth } from './context/AuthContext';
-import { styles } from './App.styles'; 
+import { useToast } from './context/ToastContext';
+import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 
 function App() {
   const { usuario, cargando } = useAuth();
-  
-  const { 
+  const { pushToast } = useToast();
+
+  const {
     paisesVisitados, bitacora, bitacoraData, todasLasParadas,
-    guardarNuevoViaje, actualizarDetallesViaje, eliminarViaje, agregarParada 
+    guardarNuevoViaje, actualizarDetallesViaje, eliminarViaje, agregarParada
   } = useViajes();
-  
-  const [vistaActiva, setVistaActiva] = useState('home'); 
+
+  const [vistaActiva, setVistaActiva] = useState('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
   const [filtro, setFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
-  
+
   const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
   const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
-  const [viajeBorrador, setViajeBorrador] = useState(null); 
+  const [viajeBorrador, setViajeBorrador] = useState(null);
   const [ciudadInicialBorrador, setCiudadInicialBorrador] = useState(null);
+  const [isSavingModal, setIsSavingModal] = useState(false);
+  const [isSavingViewer, setIsSavingViewer] = useState(false);
+  const [viajesEliminando, setViajesEliminando] = useState(new Set());
 
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
   const irAPerfil = () => setVistaActiva('config');
   const limpiarBusqueda = () => setBusqueda('');
+  const isDeletingViaje = (id) => viajesEliminando.has(id);
 
   const onLugarSeleccionado = useCallback((lugar) => {
     let datosPais = null;
     let ciudad = null;
 
     if (lugar.esPais) {
-      const paisInfo = COUNTRIES_DATA.find(c => c.code === lugar.code);
-      datosPais = { 
-        code: lugar.code, 
-        nombreEspanol: paisInfo ? paisInfo.name : lugar.nombre, 
-        flag: getFlagUrl(lugar.code), 
+      const paisInfo = COUNTRIES_DATA.find((c) => c.code === lugar.code);
+      datosPais = {
+        code: lugar.code,
+        nombreEspanol: paisInfo ? paisInfo.name : lugar.nombre,
+        flag: getFlagUrl(lugar.code),
         continente: 'Mundo',
-        latlng: lugar.coordenadas 
+        latlng: lugar.coordenadas
       };
     } else {
-      const paisInfo = COUNTRIES_DATA.find(c => c.code === lugar.paisCodigo);
-      datosPais = { 
-        code: lugar.paisCodigo, 
+      const paisInfo = COUNTRIES_DATA.find((c) => c.code === lugar.paisCodigo);
+      datosPais = {
+        code: lugar.paisCodigo,
         nombreEspanol: paisInfo ? paisInfo.name : lugar.paisNombre,
         flag: getFlagUrl(lugar.paisCodigo)
       };
-      ciudad = { 
-        nombre: lugar.nombre, 
-        coordenadas: lugar.coordenadas, 
+      ciudad = {
+        nombre: lugar.nombre,
+        coordenadas: lugar.coordenadas,
         fecha: new Date().toISOString().split('T')[0],
         paisCodigo: lugar.paisCodigo,
         flag: getFlagUrl(lugar.paisCodigo)
@@ -79,75 +85,130 @@ function App() {
       id: 'new',
       code: datosPais.code,
       nombreEspanol: datosPais.nombreEspanol,
-      flag: datosPais.flag, 
+      flag: datosPais.flag,
       continente: 'Mundo',
       titulo: `Viaje a ${datosPais.nombreEspanol}`,
       fechaInicio: new Date().toISOString().split('T')[0],
       fechaFin: new Date().toISOString().split('T')[0],
-      foto: null 
+      foto: null
     };
-    
+
     setViajeBorrador(nuevoBorrador);
     setCiudadInicialBorrador(ciudad);
   }, []);
 
-  // Guardado desde el Modal (Creación/Edición Completa)
   const handleGuardarModal = async (id, datosCombinados) => {
+    if (isSavingModal) return false;
+    setIsSavingModal(true);
     const { paradasNuevas, ...datosViaje } = datosCombinados;
 
-    if (id === 'new') {
-      let todasLasParadas = [...(paradasNuevas || [])];
-      if (ciudadInicialBorrador) {
-          const yaExiste = todasLasParadas.some(p => p.nombre === ciudadInicialBorrador.nombre);
-          if (!yaExiste) todasLasParadas.unshift(ciudadInicialBorrador);
+    try {
+      if (id === 'new') {
+        let todasLasParadasLocal = [...(paradasNuevas || [])];
+        if (ciudadInicialBorrador) {
+          const yaExiste = todasLasParadasLocal.some((p) => p.nombre === ciudadInicialBorrador.nombre);
+          if (!yaExiste) todasLasParadasLocal.unshift(ciudadInicialBorrador);
+        }
+
+        const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
+        if (!nuevoId) {
+          pushToast('No se pudo guardar el viaje', 'error');
+          return false;
+        }
+
+        pushToast('Viaje guardado con exito', 'success');
+        setViajeBorrador(null);
+        setCiudadInicialBorrador(null);
+        setTimeout(() => abrirVisor(nuevoId), 500);
+        return true;
       }
 
-      const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadas);
-      
-      if (nuevoId) {
-          setViajeBorrador(null);
-          setCiudadInicialBorrador(null);
-          setTimeout(() => abrirVisor(nuevoId), 500);
-      }
-    } else {
-      actualizarDetallesViaje(id, datosViaje);
+      const okViaje = await actualizarDetallesViaje(id, datosViaje);
+      let okParadas = true;
+
       if (paradasNuevas && paradasNuevas.length > 0) {
-         // Solo agregar paradas con IDs temporales (nuevas)
-         const nuevasReales = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
-         for (const parada of nuevasReales) {
-            await agregarParada(parada, id);
-         }
+        const nuevasReales = paradasNuevas.filter((p) => p.id && p.id.toString().startsWith('temp'));
+        for (const parada of nuevasReales) {
+          const okParada = await agregarParada(parada, id);
+          if (!okParada) okParadas = false;
+        }
       }
+
+      if (okViaje && okParadas) {
+        pushToast('Cambios guardados', 'success');
+        return true;
+      }
+
+      pushToast('No se pudieron guardar algunos cambios', 'error');
+      return false;
+    } finally {
+      setIsSavingModal(false);
     }
   };
 
-  // Guardado desde el Visor (Edición Rápida)
   const handleGuardarDesdeVisor = async (id, datosCombinados) => {
-      const { paradasNuevas, ...datosViaje } = datosCombinados;
-      
-      // 1. Actualizar datos principales
-      await actualizarDetallesViaje(id, datosViaje);
+    if (isSavingViewer) return false;
+    setIsSavingViewer(true);
+    const { paradasNuevas, ...datosViaje } = datosCombinados;
 
-      // 2. Procesar paradas (solo las nuevas agregadas en el visor)
+    try {
+      const okViaje = await actualizarDetallesViaje(id, datosViaje);
+      let okParadas = true;
+
       if (paradasNuevas && paradasNuevas.length > 0) {
-          const nuevas = paradasNuevas.filter(p => p.id && p.id.toString().startsWith('temp'));
-          for (const parada of nuevas) {
-              await agregarParada(parada, id);
-          }
+        const nuevas = paradasNuevas.filter((p) => p.id && p.id.toString().startsWith('temp'));
+        for (const parada of nuevas) {
+          const okParada = await agregarParada(parada, id);
+          if (!okParada) okParadas = false;
+        }
       }
+
+      if (okViaje && okParadas) {
+        pushToast('Viaje actualizado', 'success');
+        return true;
+      }
+
+      pushToast('Error al actualizar el viaje', 'error');
+      return false;
+    } finally {
+      setIsSavingViewer(false);
+    }
   };
 
   const handleDeleteViaje = async (id) => {
-      await eliminarViaje(id);
-      setViajeExpandidoId(null); // Cerrar visor si estaba abierto
+    if (viajesEliminando.has(id)) return false;
+
+    setViajesEliminando((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+
+    try {
+      const ok = await eliminarViaje(id);
+      if (!ok) {
+        pushToast('No se pudo eliminar el viaje', 'error');
+        return false;
+      }
+
+      pushToast('Viaje eliminado', 'success');
+      setViajeExpandidoId(null);
       setViajeEnEdicionId(null);
+      return true;
+    } finally {
+      setViajesEliminando((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   const getTituloHeader = () => {
-    switch(vistaActiva) {
+    switch (vistaActiva) {
       case 'home': return 'Inicio';
       case 'mapa': return 'Mapa Mundial';
-      case 'bitacora': return 'Mi Bitácora';
+      case 'bitacora': return 'Mi Bitacora';
       case 'config': return 'Ajustes';
       default: return 'Keeptrip';
     }
@@ -161,15 +222,20 @@ function App() {
 
   if (!cargando && !usuario) return <LandingPage />;
 
-  const viajeParaEditar = viajeEnEdicionId ? bitacora.find(v => v.id === viajeEnEdicionId) : viajeBorrador;
+  const viajeParaEditar = viajeEnEdicionId ? bitacora.find((v) => v.id === viajeEnEdicionId) : viajeBorrador;
   const mostrarBusqueda = vistaActiva === 'bitacora';
-  const placeholderBusqueda = 'Buscar viajes, países o ciudades...';
+  const placeholderBusqueda = 'Buscar viajes, paises o ciudades...';
 
   return (
     <div style={styles.appWrapper}>
-      <Sidebar vistaActiva={vistaActiva} setVistaActiva={setVistaActiva} collapsed={sidebarCollapsed} toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}/>
+      <Sidebar
+        vistaActiva={vistaActiva}
+        setVistaActiva={setVistaActiva}
+        collapsed={sidebarCollapsed}
+        toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-      <motion.main style={{...styles.mainContent, marginLeft: sidebarCollapsed ? '80px' : '260px'}}>
+      <motion.main style={{ ...styles.mainContent, marginLeft: sidebarCollapsed ? '80px' : '260px' }}>
         <Header
           titulo={getTituloHeader()}
           onAddClick={() => setMostrarBuscador(true)}
@@ -199,7 +265,8 @@ function App() {
                 <BentoGrid
                   viajes={bitacora}
                   bitacoraData={bitacoraData}
-                  manejarEliminar={eliminarViaje}
+                  manejarEliminar={handleDeleteViaje}
+                  isDeletingViaje={isDeletingViaje}
                   abrirEditor={abrirEditor}
                   abrirVisor={abrirVisor}
                   searchTerm={busqueda}
@@ -216,25 +283,36 @@ function App() {
         </section>
       </motion.main>
 
-      <BuscadorModal isOpen={mostrarBuscador} onClose={() => setMostrarBuscador(false)} filtro={filtro} setFiltro={setFiltro} seleccionarLugar={onLugarSeleccionado} />
+      <BuscadorModal
+        isOpen={mostrarBuscador}
+        onClose={() => setMostrarBuscador(false)}
+        filtro={filtro}
+        setFiltro={setFiltro}
+        seleccionarLugar={onLugarSeleccionado}
+        onSearchError={() => pushToast('Error de conexion al buscar ciudad', 'error')}
+        onNoResults={(query) => pushToast(`Sin resultados para "${query}"`, 'info', 2500)}
+      />
 
-      <EdicionModal 
-        viaje={viajeParaEditar} 
-        bitacoraData={bitacoraData} 
-        onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }} 
-        onSave={handleGuardarModal} 
+      <EdicionModal
+        viaje={viajeParaEditar}
+        bitacoraData={bitacoraData}
+        onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
+        onSave={handleGuardarModal}
+        isSaving={isSavingModal}
         esBorrador={!!viajeBorrador}
         ciudadInicial={ciudadInicialBorrador}
       />
 
-      <VisorViaje 
-        viajeId={viajeExpandidoId} 
-        bitacoraLista={bitacora} 
-        bitacoraData={bitacoraData} 
-        onClose={() => setViajeExpandidoId(null)} 
-        onEdit={abrirEditor} 
-        onSave={handleGuardarDesdeVisor} // CORREGIDO: Usar el handler wrapper
-        onDelete={handleDeleteViaje}     // NUEVO: Pasar función de borrar
+      <VisorViaje
+        viajeId={viajeExpandidoId}
+        bitacoraLista={bitacora}
+        bitacoraData={bitacoraData}
+        onClose={() => setViajeExpandidoId(null)}
+        onEdit={abrirEditor}
+        onSave={handleGuardarDesdeVisor}
+        onDelete={handleDeleteViaje}
+        isSaving={isSavingViewer}
+        isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
       />
     </div>
   );

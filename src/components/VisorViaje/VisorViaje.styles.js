@@ -26,20 +26,23 @@ export const styles = {
     position: 'absolute', top: 20, left: 20, right: 20,
     display: 'flex', justifyContent: 'space-between', zIndex: 20
   },
-  iconBtn: { 
+  iconBtn: (disabled = false) => ({ 
     background: 'rgba(255,255,255,0.2)', border:'none', borderRadius:'50%', width:'40px', height:'40px', 
-    display:'flex', alignItems:'center', justifyContent:'center', color: 'white', cursor:'pointer', backdropFilter:'blur(10px)' 
-  },
-  primaryBtn: (isSave) => ({
+    display:'flex', alignItems:'center', justifyContent:'center', color: 'white', backdropFilter:'blur(10px)',
+    opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer'
+  }),
+  primaryBtn: (isSave, disabled = false) => ({
     background: isSave ? COLORS.atomicTangerine : 'white', 
     color: isSave ? 'white' : COLORS.charcoalBlue,
     border: 'none', borderRadius: '50px', padding: '10px 20px', 
-    fontWeight: '700', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'center'
+    fontWeight: '700', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', gap: '8px', alignItems: 'center',
+    opacity: disabled ? 0.7 : 1
   }),
-  secondaryBtn: {
+  secondaryBtn: (disabled = false) => ({
     background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', width:'40px', height:'40px',
-    display: 'flex', alignItems:'center', justifyContent:'center', cursor: 'pointer', backdropFilter:'blur(10px)'
-  },
+    display: 'flex', alignItems:'center', justifyContent:'center', cursor: disabled ? 'not-allowed' : 'pointer', backdropFilter:'blur(10px)',
+    opacity: disabled ? 0.6 : 1
+  }),
   headerContent: {
     position: 'relative', zIndex: 10, padding: '0 40px 40px', maxWidth: '1000px', margin: '0 auto', width: '100%'
   },

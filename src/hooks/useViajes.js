@@ -271,18 +271,22 @@ export const useViajes = () => {
   };
 
   const actualizarDetallesViaje = async (id, data) => {
-      if(!usuario) return;
+      if(!usuario) return false;
       try {
         if (data.foto && typeof data.foto === 'string' && data.foto.startsWith('data:image')) {
             const url = await subirFotoStorage(id, data.foto);
             data.foto = url;
         }
         await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), data);
-      } catch(e) { console.error(e); }
+        return true;
+      } catch(e) {
+        console.error(e);
+        return false;
+      }
   };
 
   const agregarParada = async (lugarInfo, viajeId) => {
-      if (!usuario || !viajeId) return;
+      if (!usuario || !viajeId) return false;
       try {
           const fechaUso = lugarInfo.fecha || new Date().toISOString().split('T')[0];
           const climaInfo = await obtenerClimaHistorico(lugarInfo.coordenadas[1], lugarInfo.coordenadas[0], fechaUso);
@@ -292,12 +296,22 @@ export const useViajes = () => {
               clima: climaInfo,
               tipo: 'place'
           });
-      } catch(e) { console.error(e); }
+          return true;
+      } catch(e) {
+          console.error(e);
+          return false;
+      }
   };
 
   const eliminarViaje = async (id) => {
-      if (!usuario) return;
-      await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
+      if (!usuario) return false;
+      try {
+        await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
+        return true;
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
   };
 
   return {
