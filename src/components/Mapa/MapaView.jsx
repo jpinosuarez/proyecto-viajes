@@ -1,4 +1,5 @@
 import React, { useRef, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS } from '../../theme';
@@ -9,10 +10,9 @@ function MapaView({ paises = [], paradas = [] }) {
   const mapRef = useRef(null);
   const [viewState, setViewState] = useState({ longitude: 20, latitude: 20, zoom: 1.5 });
 
-  // Deduplicar paradas por coordenadas (evitar pines duplicados)
   const paradasUnicas = useMemo(() => {
     const vistas = new Set();
-    return paradas.filter(p => {
+    return paradas.filter((p) => {
       const key = `${p.coordenadas[0]},${p.coordenadas[1]}`;
       if (vistas.has(key)) return false;
       vistas.add(key);
@@ -22,7 +22,7 @@ function MapaView({ paises = [], paradas = [] }) {
 
   const paradasGeoJSON = {
     type: 'FeatureCollection',
-    features: paradasUnicas.map(p => ({
+    features: paradasUnicas.map((p) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: p.coordenadas },
       properties: { id: p.id, name: p.nombre }
@@ -30,16 +30,17 @@ function MapaView({ paises = [], paradas = [] }) {
   };
 
   const listaPaises = paises.length > 0 ? paises : ['EMPTY'];
+  const isEmptyMap = paises.length === 0;
 
   return (
-    <div style={{ width: '100%', height: '100%', borderRadius: '24px', overflow: 'hidden', background: '#e0f2fe' }}>
+    <div style={{ width: '100%', height: '100%', borderRadius: '24px', overflow: 'hidden', background: '#e0f2fe', position: 'relative' }}>
       <Map
         ref={mapRef}
         {...viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        onMove={(evt) => setViewState(evt.viewState)}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
-        projection="globe" 
+        projection="globe"
         reuseMaps
       >
         <Layer id="sky" type="sky" paint={{ 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 5 }} />
@@ -57,40 +58,73 @@ function MapaView({ paises = [], paradas = [] }) {
         </Source>
 
         <Source id="paradas" type="geojson" data={paradasGeoJSON} cluster={true} clusterMaxZoom={14} clusterRadius={50}>
-            <Layer
-                id="clusters"
-                type="circle"
-                filter={['has', 'point_count']}
-                paint={{
-                    'circle-color': COLORS.charcoalBlue,
-                    'circle-radius': ['step', ['get', 'point_count'], 15, 5, 20, 10, 30],
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': '#fff'
-                }}
-            />
-            <Layer
-                id="cluster-count"
-                type="symbol"
-                filter={['has', 'point_count']}
-                layout={{ 'text-field': '{point_count_abbreviated}', 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'], 'text-size': 12 }}
-                paint={{ 'text-color': '#ffffff' }}
-            />
-            <Layer
-                id="unclustered-point"
-                type="circle"
-                filter={['!', ['has', 'point_count']]}
-                paint={{
-                    'circle-color': COLORS.atomicTangerine,
-                    'circle-radius': 6,
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': 'white'
-                }}
-            />
+          <Layer
+            id="clusters"
+            type="circle"
+            filter={['has', 'point_count']}
+            paint={{
+              'circle-color': COLORS.charcoalBlue,
+              'circle-radius': ['step', ['get', 'point_count'], 15, 5, 20, 10, 30],
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#fff'
+            }}
+          />
+          <Layer
+            id="cluster-count"
+            type="symbol"
+            filter={['has', 'point_count']}
+            layout={{ 'text-field': '{point_count_abbreviated}', 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'], 'text-size': 12 }}
+            paint={{ 'text-color': '#ffffff' }}
+          />
+          <Layer
+            id="unclustered-point"
+            type="circle"
+            filter={['!', ['has', 'point_count']]}
+            paint={{
+              'circle-color': COLORS.atomicTangerine,
+              'circle-radius': 6,
+              'circle-stroke-width': 2,
+              'circle-stroke-color': 'white'
+            }}
+          />
         </Source>
 
         <FullscreenControl position="top-right" />
         <NavigationControl position="top-right" />
       </Map>
+
+      <AnimatePresence>
+        {isEmptyMap && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: '18px',
+              transform: 'translateX(-50%)',
+              background: 'rgba(44, 62, 80, 0.88)',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: '9999px',
+              padding: '10px 16px',
+              fontSize: '0.86rem',
+              fontWeight: '700',
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 8px 22px rgba(15, 23, 42, 0.25)',
+              pointerEvents: 'none',
+              zIndex: 3,
+              whiteSpace: 'nowrap',
+              maxWidth: 'calc(100% - 24px)',
+              textAlign: 'center'
+            }}
+          >
+            Pulsa el boton (+) para marcar tu primer pais en el mapa
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

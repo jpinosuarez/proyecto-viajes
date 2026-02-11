@@ -1,19 +1,25 @@
 import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export const styles = {
-  overlay: {
+  overlay: (isMobile) => ({
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)',
-    zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
-  },
-  modal: {
-    width: '600px', maxWidth: '90%', maxHeight: '90vh',
-    backgroundColor: 'white', borderRadius: RADIUS.lg,
-    overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    zIndex: 2000, display: 'flex', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'center',
+    padding: isMobile ? 0 : '20px'
+  }),
+  modal: (isMobile) => ({
+    width: isMobile ? '100%' : 'min(600px, 100%)',
+    maxWidth: '100%',
+    maxHeight: isMobile ? '100vh' : '90vh',
+    backgroundColor: 'white',
+    borderRadius: isMobile ? 0 : RADIUS.lg,
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
     boxShadow: SHADOWS.float
-  },
-  header: (img) => ({
-    height: '180px', position: 'relative',
+  }),
+  header: (img, isMobile) => ({
+    height: isMobile ? '160px' : '180px', position: 'relative',
     backgroundImage: img ? `url(${img})` : 'none',
     backgroundColor: COLORS.charcoalBlue,
     backgroundSize: 'cover', backgroundPosition: 'center',
@@ -27,7 +33,6 @@ export const styles = {
     position: 'relative', zIndex: 2, padding: '20px',
     display: 'flex', alignItems: 'center', gap: '15px'
   },
-  // ESTILO NUEVO PARA LA BANDERA IMG
   flagImg: {
     width: '50px', height: 'auto', borderRadius: '4px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
@@ -51,10 +56,10 @@ export const styles = {
     padding: '6px 10px', fontSize: '0.75rem', fontWeight: '700',
     display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(4px)'
   },
-  body: { padding: '25px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' },
+  body: { padding: '25px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 },
   section: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { fontSize: '0.8rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', display:'flex', alignItems:'center', gap:'6px' },
-  row: { display: 'flex', alignItems: 'center', gap: '10px' },
+  row: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
   dateInput: {
     border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm,
     padding: '10px', fontSize: '0.9rem', color: COLORS.charcoalBlue,

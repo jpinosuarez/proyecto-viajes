@@ -1,5 +1,3 @@
-import { COLORS } from './theme';
-
 export const styles = {
   appWrapper: {
     display: 'flex',
@@ -8,29 +6,31 @@ export const styles = {
     width: '100%',
     overflow: 'hidden'
   },
-  
-  mainContent: {
+
+  mainContent: (isMobile) => ({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
     minWidth: 0,
-    transition: 'margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+    transition: 'margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), padding 0.25s ease',
     position: 'relative',
-    overflow: 'hidden'
-  },
+    overflow: 'hidden',
+    marginLeft: isMobile ? '0' : undefined
+  }),
 
-  sectionWrapper: {
+  sectionWrapper: (isMobile) => ({
     flex: 1,
-    padding: '20px', // Reduje un poco el padding para ganar espacio en mapa
+    padding: isMobile ? '10px' : '20px',
     overflow: 'hidden',
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     width: '100%',
-    maxWidth: '100%', // Asegura uso total
-    margin: '0 auto'
-  },
+    maxWidth: '100%',
+    margin: '0 auto',
+    transition: 'padding 0.25s ease'
+  }),
 
   scrollableContent: {
     height: '100%',
@@ -41,26 +41,26 @@ export const styles = {
     paddingBottom: '40px'
   },
 
-  containerMapaStyle: {
+  containerMapaStyle: (isMobile) => ({
     width: '100%',
     height: '100%',
-    borderRadius: '24px',
+    borderRadius: isMobile ? '16px' : '24px',
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: 'white',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-  },
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    transition: 'border-radius 0.25s ease'
+  }),
 
-  // NUEVO: Contenedor flotante para las stats sobre el mapa
-  mapStatsOverlay: {
+  mapStatsOverlay: (isMobile) => ({
     position: 'absolute',
-    top: '20px',
-    left: '20px',
+    top: isMobile ? '10px' : '20px',
+    left: isMobile ? '10px' : '20px',
     zIndex: 10,
-    width: '260px', // Ancho fijo para que se apilen verticalmente
+    width: isMobile ? 'min(220px, calc(100% - 20px))' : '260px',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-    pointerEvents: 'none' // Para que no bloquee clicks en el área vacía (si el hijo tiene pointer-events: auto)
-  }
+    pointerEvents: 'none'
+  })
 };

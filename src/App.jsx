@@ -16,6 +16,7 @@ import VisorViaje from './components/VisorViaje/VisorViaje';
 import SettingsPage from './pages/Configuracion/SettingsPage';
 
 import { useViajes } from './hooks/useViajes';
+import { useWindowSize } from './hooks/useWindowSize';
 import { useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
 import { styles } from './App.styles';
@@ -24,6 +25,7 @@ import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 function App() {
   const { usuario, cargando } = useAuth();
   const { pushToast } = useToast();
+  const { isMobile } = useWindowSize(768);
 
   const {
     paisesVisitados, bitacora, bitacoraData, todasLasParadas,
@@ -32,6 +34,7 @@ function App() {
 
   const [vistaActiva, setVistaActiva] = useState('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mostrarBuscador, setMostrarBuscador] = useState(false);
   const [filtro, setFiltro] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -229,6 +232,18 @@ function App() {
     }
   }, [vistaActiva, busqueda]);
 
+  useEffect(() => {
+    if (isMobile && mobileDrawerOpen) {
+      setMobileDrawerOpen(false);
+    }
+  }, [vistaActiva, isMobile, mobileDrawerOpen]);
+
+  useEffect(() => {
+    if (!isMobile && mobileDrawerOpen) {
+      setMobileDrawerOpen(false);
+    }
+  }, [isMobile, mobileDrawerOpen]);
+
   if (!cargando && !usuario) return <LandingPage />;
 
   const viajeParaEditar = viajeEnEdicionId ? bitacora.find((v) => v.id === viajeEnEdicionId) : viajeBorrador;
@@ -246,9 +261,17 @@ function App() {
         setVistaActiva={setVistaActiva}
         collapsed={sidebarCollapsed}
         toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isMobile={isMobile}
+        mobileOpen={mobileDrawerOpen}
+        onMobileOpenChange={setMobileDrawerOpen}
       />
 
-      <motion.main style={{ ...styles.mainContent, marginLeft: sidebarCollapsed ? '80px' : '260px' }}>
+      <motion.main
+        style={{
+          ...styles.mainContent(isMobile),
+          marginLeft: isMobile ? 0 : (sidebarCollapsed ? '80px' : '260px')
+        }}
+      >
         <Header
           titulo={getTituloHeader()}
           onAddClick={() => setMostrarBuscador(true)}
@@ -258,18 +281,27 @@ function App() {
           onBusquedaChange={setBusqueda}
           onBusquedaClear={limpiarBusqueda}
           searchPlaceholder={placeholderBusqueda}
+          isMobile={isMobile}
+          onMenuClick={() => setMobileDrawerOpen(true)}
         />
 
-        <section style={styles.sectionWrapper}>
+        <section style={styles.sectionWrapper(isMobile)}>
           <AnimatePresence mode="wait">
             {vistaActiva === 'home' && (
               <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
-                <DashboardHome paisesVisitados={paisesVisitados} bitacora={bitacora} setVistaActiva={setVistaActiva} abrirVisor={abrirVisor} />
+                <DashboardHome
+                  paisesVisitados={paisesVisitados}
+                  bitacora={bitacora}
+                  setVistaActiva={setVistaActiva}
+                  abrirVisor={abrirVisor}
+                  onStartFirstTrip={() => setMostrarBuscador(true)}
+                  isMobile={isMobile}
+                />
               </motion.div>
             )}
             {vistaActiva === 'mapa' && (
-              <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle}>
-                <div style={styles.mapStatsOverlay}><StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} /></div>
+              <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle(isMobile)}>
+                <div style={styles.mapStatsOverlay(isMobile)}><StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} /></div>
                 <MapaViajes paises={paisesVisitados} paradas={todasLasParadas} />
               </motion.div>
             )}
@@ -284,6 +316,7 @@ function App() {
                   abrirVisor={abrirVisor}
                   searchTerm={busqueda}
                   onClearSearch={limpiarBusqueda}
+                  onStartFirstTrip={() => setMostrarBuscador(true)}
                 />
               </motion.div>
             )}
