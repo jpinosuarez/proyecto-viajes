@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import StatsBitacora from '../Dashboard/StatsBitacora';
 import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle, Map } from 'lucide-react';
+import { useSearch, useUI } from '../../context/UIContext';
 import { COLORS } from '../../theme';
 import { styles } from './BentoGrid.styles';
 
@@ -9,14 +10,11 @@ const BentoGrid = ({
   viajes = [],
   bitacoraData = {},
   manejarEliminar,
-  isDeletingViaje = () => false,
-  abrirEditor,
-  abrirVisor,
-  searchTerm = '',
-  onClearSearch,
-  onStartFirstTrip
+  isDeletingViaje = () => false
 }) => {
-  const termino = searchTerm.trim().toLowerCase();
+  const { busqueda, limpiarBusqueda } = useSearch();
+  const { abrirEditor, abrirVisor, openBuscador } = useUI();
+  const termino = busqueda.trim().toLowerCase();
   const viajesFiltrados = useMemo(() => {
     if (!termino) return viajes;
     return viajes.filter((viaje) => {
@@ -52,7 +50,7 @@ const BentoGrid = ({
           <span>
             Mostrando {viajesOrdenados.length} de {viajes.length} viajes
           </span>
-          <button type="button" onClick={() => onClearSearch?.()} style={styles.clearSearchButton}>
+          <button type="button" onClick={limpiarBusqueda} style={styles.clearSearchButton}>
             Limpiar busqueda
           </button>
         </div>
@@ -134,7 +132,7 @@ const BentoGrid = ({
             <p style={styles.emptyTextPrimary}>
               Guarda tu primera parada para empezar a construir recuerdos, ver estadisticas y seguir tu ruta.
             </p>
-            <button type="button" onClick={() => onStartFirstTrip?.()} style={styles.emptyActionPrimary}>
+            <button type="button" onClick={openBuscador} style={styles.emptyActionPrimary}>
               Registrar primera parada
             </button>
           </motion.div>
@@ -154,7 +152,7 @@ const BentoGrid = ({
             <p style={styles.emptyText}>
               Prueba con otro nombre de viaje, pais o ciudad.
             </p>
-            <button type="button" onClick={() => onClearSearch?.()} style={styles.emptyAction}>
+            <button type="button" onClick={limpiarBusqueda} style={styles.emptyAction}>
               Borrar filtro
             </button>
           </motion.div>

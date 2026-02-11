@@ -2,12 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Compass, Calendar, Flag, TrendingUp, MapPin, ArrowRight, Trophy, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useUI } from '../../context/UIContext';
 import { COLORS } from '../../theme';
 import { styles } from './DashboardHome.styles';
 import HomeMap from '../Mapa/HomeMap';
 
-const DashboardHome = ({ paisesVisitados, bitacora, setVistaActiva, abrirVisor, onStartFirstTrip, isMobile = false }) => {
+const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false }) => {
   const { usuario } = useAuth();
+  const { setVistaActiva, abrirVisor, openBuscador } = useUI();
   const nombre = usuario?.displayName ? usuario.displayName.split(' ')[0] : 'Viajero';
 
   const recientes = [...bitacora].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
@@ -126,7 +128,7 @@ const DashboardHome = ({ paisesVisitados, bitacora, setVistaActiva, abrirVisor, 
                 <p style={styles.welcomeText}>
                   Registra tu primera parada para activar tu bitacora, tus estadisticas y tu mapa de viajes.
                 </p>
-                <button type="button" style={styles.welcomeCta} onClick={() => onStartFirstTrip?.()}>
+                <button type="button" style={styles.welcomeCta} onClick={openBuscador}>
                   Registrar primera parada
                 </button>
               </motion.div>

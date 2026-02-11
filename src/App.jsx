@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
@@ -19,6 +19,7 @@ import { useViajes } from './hooks/useViajes';
 import { useWindowSize } from './hooks/useWindowSize';
 import { useAuth } from './context/AuthContext';
 import { useToast } from './context/ToastContext';
+import { useSearch, useUI } from './context/UIContext';
 import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 
@@ -28,30 +29,43 @@ function App() {
   const { isMobile } = useWindowSize(768);
 
   const {
-    paisesVisitados, bitacora, bitacoraData, todasLasParadas,
-    guardarNuevoViaje, actualizarDetallesViaje, eliminarViaje, agregarParada
+    paisesVisitados,
+    bitacora,
+    bitacoraData,
+    todasLasParadas,
+    guardarNuevoViaje,
+    actualizarDetallesViaje,
+    eliminarViaje,
+    agregarParada
   } = useViajes();
 
-  const [vistaActiva, setVistaActiva] = useState('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [mostrarBuscador, setMostrarBuscador] = useState(false);
-  const [filtro, setFiltro] = useState('');
-  const [busqueda, setBusqueda] = useState('');
+  const {
+    vistaActiva,
+    sidebarCollapsed,
+    mobileDrawerOpen,
+    setMobileDrawerOpen,
+    mostrarBuscador,
+    closeBuscador,
+    viajeEnEdicionId,
+    setViajeEnEdicionId,
+    viajeExpandidoId,
+    setViajeExpandidoId,
+    viajeBorrador,
+    setViajeBorrador,
+    ciudadInicialBorrador,
+    setCiudadInicialBorrador,
+    confirmarEliminacion,
+    setConfirmarEliminacion,
+    abrirEditor,
+    abrirVisor
+  } = useUI();
 
-  const [viajeEnEdicionId, setViajeEnEdicionId] = useState(null);
-  const [viajeExpandidoId, setViajeExpandidoId] = useState(null);
-  const [viajeBorrador, setViajeBorrador] = useState(null);
-  const [ciudadInicialBorrador, setCiudadInicialBorrador] = useState(null);
+  const { filtro, setFiltro, busqueda, setBusqueda } = useSearch();
+
   const [isSavingModal, setIsSavingModal] = useState(false);
   const [isSavingViewer, setIsSavingViewer] = useState(false);
   const [viajesEliminando, setViajesEliminando] = useState(new Set());
-  const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
 
-  const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
-  const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
-  const irAPerfil = () => setVistaActiva('config');
-  const limpiarBusqueda = () => setBusqueda('');
   const isDeletingViaje = (id) => viajesEliminando.has(id);
 
   const onLugarSeleccionado = useCallback((lugar) => {
@@ -83,7 +97,7 @@ function App() {
       };
     }
 
-    setMostrarBuscador(false);
+    closeBuscador();
     setFiltro('');
 
     const nuevoBorrador = {
@@ -100,7 +114,7 @@ function App() {
 
     setViajeBorrador(nuevoBorrador);
     setCiudadInicialBorrador(ciudad);
-  }, []);
+  }, [closeBuscador, setFiltro, setViajeBorrador, setCiudadInicialBorrador]);
 
   const handleGuardarModal = async (id, datosCombinados) => {
     if (isSavingModal) return false;
@@ -109,7 +123,7 @@ function App() {
 
     try {
       if (id === 'new') {
-        let todasLasParadasLocal = [...(paradasNuevas || [])];
+        const todasLasParadasLocal = [...(paradasNuevas || [])];
         if (ciudadInicialBorrador) {
           const yaExiste = todasLasParadasLocal.some((p) => p.nombre === ciudadInicialBorrador.nombre);
           if (!yaExiste) todasLasParadasLocal.unshift(ciudadInicialBorrador);
@@ -211,33 +225,23 @@ function App() {
     }
   };
 
-  const getTituloHeader = () => {
-    switch (vistaActiva) {
-      case 'home': return 'Inicio';
-      case 'mapa': return 'Mapa Mundial';
-      case 'bitacora': return 'Mi Bitacora';
-      case 'config': return 'Ajustes';
-      default: return 'Keeptrip';
-    }
-  };
-
   useEffect(() => {
     if (vistaActiva !== 'bitacora' && busqueda) {
       setBusqueda('');
     }
-  }, [vistaActiva, busqueda]);
+  }, [vistaActiva, busqueda, setBusqueda]);
 
   useEffect(() => {
     if (isMobile && mobileDrawerOpen) {
       setMobileDrawerOpen(false);
     }
-  }, [vistaActiva, isMobile, mobileDrawerOpen]);
+  }, [vistaActiva, isMobile, mobileDrawerOpen, setMobileDrawerOpen]);
 
   useEffect(() => {
     if (!isMobile && mobileDrawerOpen) {
       setMobileDrawerOpen(false);
     }
-  }, [isMobile, mobileDrawerOpen]);
+  }, [isMobile, mobileDrawerOpen, setMobileDrawerOpen]);
 
   if (!cargando && !usuario) return <LandingPage />;
 
@@ -246,20 +250,10 @@ function App() {
     ? (bitacoraData[confirmarEliminacion] || bitacora.find((v) => v.id === confirmarEliminacion))
     : null;
   const tituloViajeAEliminar = viajeAEliminar?.titulo || viajeAEliminar?.nombreEspanol || 'este viaje';
-  const mostrarBusqueda = vistaActiva === 'bitacora';
-  const placeholderBusqueda = 'Buscar viajes, paises o ciudades...';
 
   return (
     <div style={styles.appWrapper}>
-      <Sidebar
-        vistaActiva={vistaActiva}
-        setVistaActiva={setVistaActiva}
-        collapsed={sidebarCollapsed}
-        toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        isMobile={isMobile}
-        mobileOpen={mobileDrawerOpen}
-        onMobileOpenChange={setMobileDrawerOpen}
-      />
+      <Sidebar isMobile={isMobile} />
 
       <motion.main
         style={{
@@ -267,18 +261,7 @@ function App() {
           marginLeft: isMobile ? 0 : (sidebarCollapsed ? '80px' : '260px')
         }}
       >
-        <Header
-          titulo={getTituloHeader()}
-          onAddClick={() => setMostrarBuscador(true)}
-          onProfileClick={irAPerfil}
-          mostrarBusqueda={mostrarBusqueda}
-          busqueda={busqueda}
-          onBusquedaChange={setBusqueda}
-          onBusquedaClear={limpiarBusqueda}
-          searchPlaceholder={placeholderBusqueda}
-          isMobile={isMobile}
-          onMenuClick={() => setMobileDrawerOpen(true)}
-        />
+        <Header isMobile={isMobile} />
 
         <section style={styles.sectionWrapper(isMobile)}>
           <AnimatePresence mode="wait">
@@ -287,9 +270,6 @@ function App() {
                 <DashboardHome
                   paisesVisitados={paisesVisitados}
                   bitacora={bitacora}
-                  setVistaActiva={setVistaActiva}
-                  abrirVisor={abrirVisor}
-                  onStartFirstTrip={() => setMostrarBuscador(true)}
                   isMobile={isMobile}
                 />
               </motion.div>
@@ -307,11 +287,6 @@ function App() {
                   bitacoraData={bitacoraData}
                   manejarEliminar={solicitarEliminarViaje}
                   isDeletingViaje={isDeletingViaje}
-                  abrirEditor={abrirEditor}
-                  abrirVisor={abrirVisor}
-                  searchTerm={busqueda}
-                  onClearSearch={limpiarBusqueda}
-                  onStartFirstTrip={() => setMostrarBuscador(true)}
                 />
               </motion.div>
             )}
@@ -326,7 +301,7 @@ function App() {
 
       <BuscadorModal
         isOpen={mostrarBuscador}
-        onClose={() => setMostrarBuscador(false)}
+        onClose={closeBuscador}
         filtro={filtro}
         setFiltro={setFiltro}
         seleccionarLugar={onLugarSeleccionado}
@@ -358,7 +333,7 @@ function App() {
 
       <ConfirmModal
         isOpen={!!confirmarEliminacion}
-        title={`¿Eliminar ${tituloViajeAEliminar}?`}
+        title={`Eliminar ${tituloViajeAEliminar}?`}
         message="Esta accion eliminara el viaje y sus recuerdos asociados de forma permanente. No se puede deshacer."
         confirmText="Eliminar"
         cancelText="Cancelar"
