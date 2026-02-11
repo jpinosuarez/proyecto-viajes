@@ -5,10 +5,12 @@ import { ArrowLeft, Edit3, Calendar, Check, X, Camera, Trash2, LoaderCircle } fr
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { styles } from './VisorViaje.styles';
 import { COLORS } from '../../theme';
 import CityManager from '../Shared/CityManager';
 import MiniMapaRuta from '../Shared/MiniMapaRuta';
+import { compressImage } from '../../utils/imageUtils';
 
 const VisorViaje = ({
   viajeId,
@@ -22,12 +24,14 @@ const VisorViaje = ({
   isDeleting = false
 }) => {
   const { usuario } = useAuth();
+  const { pushToast } = useToast();
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
   const data = bitacoraData[viajeId] || viajeBase || {};
 
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formTemp, setFormTemp] = useState({});
   const [paradas, setParadas] = useState([]);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   useEffect(() => {
     if (viajeId && usuario) {
@@ -53,12 +57,46 @@ const VisorViaje = ({
   };
 
   const guardarCambios = async () => {
+    if (isProcessingImage || isSaving) return;
     const ok = await onSave(viajeId, { ...formTemp, paradasNuevas: paradas });
     if (ok) setModoEdicion(false);
   };
 
   const eliminarEsteViaje = () => {
     onDelete(viajeId);
+  };
+
+  const handleReplaceImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      pushToast('Formato no soportado. Usa JPG o PNG.', 'error');
+      e.target.value = '';
+      return;
+    }
+
+    setIsProcessingImage(true);
+    try {
+      const { blob, dataUrl } = await compressImage(file, 1920, 0.8);
+      const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      setFormTemp((prev) => ({
+        ...prev,
+        foto: dataUrl,
+        fotoFile: optimizedFile,
+        fotoCredito: null
+      }));
+    } catch (error) {
+      console.error('Error optimizando imagen en visor:', error);
+      pushToast('No se pudo optimizar la imagen seleccionada.', 'error');
+    } finally {
+      setIsProcessingImage(false);
+      e.target.value = '';
+    }
   };
 
   const getClimaTexto = (clima, temperatura) => {
@@ -76,6 +114,7 @@ const VisorViaje = ({
     : (data.foto && typeof data.foto === 'string' && data.foto.trim()
       ? data.foto
       : (viajeBase?.foto && typeof viajeBase.foto === 'string' && viajeBase.foto.trim() ? viajeBase.foto : null));
+  const isBusy = isSaving || isDeleting || isProcessingImage;
 
   return createPortal(
     <AnimatePresence>
@@ -88,24 +127,24 @@ const VisorViaje = ({
           <div style={styles.fotoOverlay} />
 
           <div style={styles.navBar}>
-            <button onClick={onClose} style={styles.iconBtn(isSaving || isDeleting)} disabled={isSaving || isDeleting}><ArrowLeft size={24} /></button>
+            <button onClick={onClose} style={styles.iconBtn(isBusy)} disabled={isBusy}><ArrowLeft size={24} /></button>
 
             <div style={{ display: 'flex', gap: '10px' }}>
               {!modoEdicion ? (
                 <>
-                  <button onClick={eliminarEsteViaje} style={styles.secondaryBtn(isSaving || isDeleting)} disabled={isSaving || isDeleting}>
+                  <button onClick={eliminarEsteViaje} style={styles.secondaryBtn(isBusy)} disabled={isBusy}>
                     {isDeleting ? <LoaderCircle size={16} className="spin" /> : <Trash2 size={16} color="#ff6b6b" />}
                   </button>
-                  <button onClick={iniciarEdicion} style={styles.primaryBtn(false, isSaving || isDeleting)} disabled={isSaving || isDeleting}>
+                  <button onClick={iniciarEdicion} style={styles.primaryBtn(false, isBusy)} disabled={isBusy}>
                     <Edit3 size={16} /> Editar
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => setModoEdicion(false)} style={styles.secondaryBtn(isSaving)} disabled={isSaving}><X size={16} /></button>
-                  <button onClick={guardarCambios} style={styles.primaryBtn(true, isSaving)} disabled={isSaving}>
-                    {isSaving ? <LoaderCircle size={16} className="spin" /> : <Check size={16} />}
-                    {isSaving ? 'Guardando...' : 'Guardar'}
+                  <button onClick={() => setModoEdicion(false)} style={styles.secondaryBtn(isBusy)} disabled={isBusy}><X size={16} /></button>
+                  <button onClick={guardarCambios} style={styles.primaryBtn(true, isBusy)} disabled={isBusy}>
+                    {isBusy ? <LoaderCircle size={16} className="spin" /> : <Check size={16} />}
+                    {isProcessingImage ? 'Optimizando...' : (isSaving ? 'Guardando...' : 'Guardar')}
                   </button>
                 </>
               )}
@@ -133,12 +172,27 @@ const VisorViaje = ({
             </div>
 
             {modoEdicion ? (
-              <input
-                style={styles.titleInput}
-                value={formTemp.titulo || ''}
-                onChange={(e) => setFormTemp({ ...formTemp, titulo: e.target.value })}
-                placeholder="Titulo del viaje"
-              />
+              <div style={styles.editHeaderStack}>
+                <input
+                  style={styles.titleInput}
+                  value={formTemp.titulo || ''}
+                  onChange={(e) => setFormTemp({ ...formTemp, titulo: e.target.value })}
+                  placeholder="Titulo del viaje"
+                />
+                <div style={styles.imageActionsRow}>
+                  <label style={styles.imageReplaceBtn(isProcessingImage)}>
+                    <Camera size={14} />
+                    {isProcessingImage ? 'Optimizando...' : 'Reemplazar portada'}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={handleReplaceImage}
+                      accept="image/jpeg,image/png"
+                      disabled={isProcessingImage}
+                    />
+                  </label>
+                </div>
+              </div>
             ) : (
               <h1 style={styles.titleDisplay}>
                 {data.titulo || viajeBase.nombreEspanol}

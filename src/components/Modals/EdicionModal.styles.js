@@ -38,11 +38,18 @@ export const styles = {
     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)',
     width: '100%', outline: 'none', paddingBottom: '4px'
   },
-  cameraBtn: {
+  cameraBtn: (disabled = false) => ({
     position: 'absolute', top: '15px', right: '15px', zIndex: 10,
     background: 'rgba(0,0,0,0.4)', color: 'white',
-    padding: '8px', borderRadius: '50%', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', backdropFilter: 'blur(4px)'
+    padding: '8px', borderRadius: '50%', cursor: disabled ? 'not-allowed' : 'pointer',
+    display: 'flex', alignItems: 'center', backdropFilter: 'blur(4px)',
+    opacity: disabled ? 0.6 : 1
+  }),
+  processingBadge: {
+    position: 'absolute', top: '18px', right: '64px', zIndex: 10,
+    background: 'rgba(0,0,0,0.55)', color: 'white', borderRadius: '999px',
+    padding: '6px 10px', fontSize: '0.75rem', fontWeight: '700',
+    display: 'flex', alignItems: 'center', gap: '6px', backdropFilter: 'blur(4px)'
   },
   body: { padding: '25px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' },
   section: { display: 'flex', flexDirection: 'column', gap: '8px' },

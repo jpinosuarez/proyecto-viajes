@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
 
 // Clave API de Pexels desde variables de entorno
@@ -83,7 +83,7 @@ export const useViajes = () => {
         return { desc, max, code };
       }
       return null;
-    } catch (e) { return null; }
+    } catch { return null; }
   };
 
   // --- GENERADOR DE NOMBRES ---
@@ -178,10 +178,16 @@ export const useViajes = () => {
     }
   };
 
-  const subirFotoStorage = async (viajeId, fotoBase64) => {
+  const subirFotoStorage = async (viajeId, fotoOptimizada) => {
     try {
       const storageRef = ref(storage, `usuarios/${usuario.uid}/viajes/${viajeId}/portada.jpg`);
-      await uploadString(storageRef, fotoBase64, 'data_url');
+      if (fotoOptimizada instanceof Blob) {
+        await uploadBytes(storageRef, fotoOptimizada, { contentType: fotoOptimizada.type || 'image/jpeg' });
+      } else if (typeof fotoOptimizada === 'string' && fotoOptimizada.startsWith('data:image')) {
+        await uploadString(storageRef, fotoOptimizada, 'data_url');
+      } else {
+        return null;
+      }
       return await getDownloadURL(storageRef);
     } catch { return null; }
   };
@@ -194,7 +200,9 @@ export const useViajes = () => {
 
     let fotoFinal = datosViaje.foto;
     let creditoFinal = datosViaje.fotoCredito || null;
+    const fotoFileOptimizada = datosViaje.fotoFile || null;
     const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
+    const esFotoParaStorage = !!fotoFileOptimizada || !!esFotoBase64;
 
     // Si no hay foto o es Base64, intentar obtener de Pexels
     if (!fotoFinal || esFotoBase64) {
@@ -242,7 +250,7 @@ export const useViajes = () => {
       fechaFin: datosViaje.fechaFin || new Date().toISOString().split('T')[0],
       texto: datosViaje.texto || "",
       rating: 5,
-      foto: esFotoBase64 ? null : (fotoFinal || null),
+      foto: esFotoParaStorage ? null : (fotoFinal || null),
       fotoCredito: creditoFinal,
       banderas: banderasFinales,
       ciudades: ciudadesStr
@@ -259,8 +267,8 @@ export const useViajes = () => {
 
     try {
       await batch.commit();
-      if (esFotoBase64) {
-         const url = await subirFotoStorage(viajeRef.id, datosViaje.foto);
+      if (esFotoParaStorage) {
+         const url = await subirFotoStorage(viajeRef.id, fotoFileOptimizada || datosViaje.foto);
          if(url) await updateDoc(viajeRef, { foto: url });
       }
       return viajeRef.id;
@@ -273,11 +281,18 @@ export const useViajes = () => {
   const actualizarDetallesViaje = async (id, data) => {
       if(!usuario) return false;
       try {
-        if (data.foto && typeof data.foto === 'string' && data.foto.startsWith('data:image')) {
-            const url = await subirFotoStorage(id, data.foto);
-            data.foto = url;
+        const dataToSave = { ...data };
+        if (dataToSave.fotoFile instanceof Blob) {
+            const url = await subirFotoStorage(id, dataToSave.fotoFile);
+            if (!url) throw new Error('No se pudo subir la imagen optimizada');
+            dataToSave.foto = url;
+        } else if (dataToSave.foto && typeof dataToSave.foto === 'string' && dataToSave.foto.startsWith('data:image')) {
+            const url = await subirFotoStorage(id, dataToSave.foto);
+            if (!url) throw new Error('No se pudo subir la imagen en base64');
+            dataToSave.foto = url;
         }
-        await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), data);
+        delete dataToSave.fotoFile;
+        await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), dataToSave);
         return true;
       } catch(e) {
         console.error(e);

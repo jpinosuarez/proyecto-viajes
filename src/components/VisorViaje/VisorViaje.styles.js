@@ -55,6 +55,30 @@ export const styles = {
     fontSize: '2.5rem', fontWeight: '900', background: 'rgba(255,255,255,0.1)', border: 'none', 
     borderBottom: '2px solid white', color: 'white', width: '100%', outline: 'none' 
   },
+  editHeaderStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  imageActionsRow: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  imageReplaceBtn: (disabled = false) => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    borderRadius: '999px',
+    border: '1px solid rgba(255,255,255,0.4)',
+    background: 'rgba(0,0,0,0.35)',
+    color: 'white',
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    padding: '8px 14px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.7 : 1,
+    backdropFilter: 'blur(4px)'
+  }),
   metaBadge: { 
     display: 'inline-flex', alignItems: 'center', gap: '6px', 
     background: 'rgba(255,255,255,0.15)', padding: '6px 12px', borderRadius: '8px', 

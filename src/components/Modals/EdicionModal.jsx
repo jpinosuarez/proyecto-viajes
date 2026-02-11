@@ -5,12 +5,16 @@ import { styles } from './EdicionModal.styles';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import CityManager from '../Shared/CityManager';
+import { compressImage } from '../../utils/imageUtils';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
+  const { pushToast } = useToast();
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   useEffect(() => {
     if (viaje) {
@@ -57,21 +61,42 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   }, [viaje, esBorrador, ciudadInicial, usuario]);
 
   const handleSave = async () => {
-    if (!formData.nombreEspanol) return;
+    if (!formData.nombreEspanol || isProcessingImage || isSaving) return;
     const ok = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
     if (ok) onClose();
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setFormData(prev => ({ ...prev, foto: reader.result }));
-      reader.readAsDataURL(file);
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      pushToast('Formato no soportado. Usa JPG o PNG.', 'error');
+      e.target.value = '';
+      return;
+    }
+
+    setIsProcessingImage(true);
+    try {
+      const { blob, dataUrl } = await compressImage(file, 1920, 0.8);
+      const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+
+      setFormData((prev) => ({ ...prev, foto: dataUrl, fotoFile: optimizedFile }));
+    } catch (error) {
+      console.error('Error optimizando imagen:', error);
+      pushToast('No se pudo optimizar la imagen seleccionada.', 'error');
+    } finally {
+      setIsProcessingImage(false);
+      e.target.value = '';
     }
   };
 
   if (!viaje) return null;
+
+  const isBusy = isSaving || isProcessingImage;
 
   return (
     <AnimatePresence>
@@ -85,7 +110,16 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 ) : <span style={{fontSize:'3rem'}}>🌍</span>}
                 <input name="titulo" value={formData.titulo || ''} onChange={e => setFormData({...formData, titulo: e.target.value})} style={styles.titleInput} placeholder="Título del viaje" />
             </div>
-            <label style={styles.cameraBtn}><Camera size={18} /><input type="file" hidden onChange={handleFileChange} accept="image/*" /></label>
+            {isProcessingImage && (
+              <div style={styles.processingBadge}>
+                <LoaderCircle size={14} className="spin" />
+                Optimizando...
+              </div>
+            )}
+            <label style={styles.cameraBtn(isProcessingImage)}>
+              <Camera size={18} />
+              <input type="file" hidden onChange={handleFileChange} accept="image/jpeg,image/png" disabled={isProcessingImage} />
+            </label>
           </div>
 
           <div style={styles.body} className="custom-scroll">
@@ -106,10 +140,10 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." />
             </div>
             <div style={styles.footer}>
-                <button onClick={onClose} style={styles.cancelBtn(isSaving)} disabled={isSaving}>Cancelar</button>
-                <button onClick={handleSave} style={styles.saveBtn(isSaving)} disabled={isSaving}>
-                  {isSaving ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
-                  {isSaving ? 'Guardando...' : (esBorrador ? 'Crear Viaje' : 'Guardar')}
+                <button onClick={onClose} style={styles.cancelBtn(isBusy)} disabled={isBusy}>Cancelar</button>
+                <button onClick={handleSave} style={styles.saveBtn(isBusy)} disabled={isBusy}>
+                  {isBusy ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
+                  {isProcessingImage ? 'Optimizando...' : (isSaving ? 'Guardando...' : (esBorrador ? 'Crear Viaje' : 'Guardar'))}
                 </button>
             </div>
           </div>
