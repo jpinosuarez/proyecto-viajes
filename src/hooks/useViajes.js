@@ -6,7 +6,14 @@ import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storag
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
 
 // Clave API de Pexels desde variables de entorno
-const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || ''; 
+const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
+
+// DEBUG: Verificar que la clave está disponible
+if (!PEXELS_ACCESS_KEY) {
+  console.warn('⚠️ VITE_PEXELS_ACCESS_KEY no está configurada en .env');
+} else {
+  console.log('✅ VITE_PEXELS_ACCESS_KEY cargada correctamente (primeros 10 caracteres):', PEXELS_ACCESS_KEY.substring(0, 10) + '...');
+}
 
 export const useViajes = () => {
   const { usuario } = useAuth();
@@ -101,20 +108,32 @@ export const useViajes = () => {
   // --- FOTOS PEXELS CON CACHÉ ---
   const obtenerFotoConCache = async (paisNombre, paisCode) => {
     try {
-      // Si no hay clave de API, no consultar
-      if (!PEXELS_ACCESS_KEY) {
-        console.warn("Clave de API de Pexels no configurada. Usa VITE_PEXELS_ACCESS_KEY en .env");
+      // Validar parámetros
+      if (!paisNombre) {
+        console.warn("❌ Nombre de país no proporcionado");
         return null;
       }
 
-      // Verificar si está en caché global (paises_info)
-      const docRef = doc(db, 'paises_info', paisCode);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data().url) {
-        return docSnap.data(); // Devolver objeto con url y credito
+      // Si no hay clave de API, no consultar
+      if (!PEXELS_ACCESS_KEY) {
+        console.warn("❌ Clave de API de Pexels no configurada. Usa VITE_PEXELS_ACCESS_KEY en .env");
+        return null;
+      }
+
+      console.log(`🔍 Buscando foto de Pexels para: ${paisNombre} (${paisCode || 'sin código'})`);
+
+      // Si hay código, verificar si está en caché
+      if (paisCode) {
+        const docRef = doc(db, 'paises_info', paisCode);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().url) {
+          console.log(`📦 Foto encontrada en caché para ${paisCode}`);
+          return docSnap.data(); // Devolver objeto con url y credito
+        }
       }
 
       // Consultar API de Pexels
+      console.log(`🌐 Consultando API de Pexels...`);
       const response = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(paisNombre + ' travel landmark')}&per_page=1`, {
         headers: {
           'Authorization': PEXELS_ACCESS_KEY
@@ -122,13 +141,13 @@ export const useViajes = () => {
       });
       
       if (!response.ok) {
-        console.warn(`Error de Pexels: ${response.status} ${response.statusText}`);
+        console.error(`❌ Error de Pexels: ${response.status} ${response.statusText}`);
         return null;
       }
       
       const data = await response.json();
       if (!data.photos || data.photos.length === 0) {
-        console.warn("No se encontraron fotos en Pexels para:", paisNombre);
+        console.warn(`⚠️ No se encontraron fotos en Pexels para: ${paisNombre}`);
         return null;
       }
 
@@ -136,7 +155,7 @@ export const useViajes = () => {
       const fotoUrl = foto.src?.large || foto.src?.medium || foto.src?.small;
       
       if (!fotoUrl) {
-        console.warn("Foto de Pexels sin URL válida");
+        console.warn("⚠️ Foto de Pexels sin URL válida");
         return null;
       }
       
@@ -145,12 +164,16 @@ export const useViajes = () => {
           credito: { nombre: foto.photographer || 'Fotógrafo', link: foto.photographer_url || 'https://pexels.com' } 
       };
       
-      // Guardar en caché para futuras consultas
-      await setDoc(docRef, nuevaFotoInfo);
-      console.log("Foto de Pexels cacheada para:", paisCode);
+      // Guardar en caché solo si hay código válido
+      if (paisCode) {
+        const docRef = doc(db, 'paises_info', paisCode);
+        await setDoc(docRef, nuevaFotoInfo);
+        console.log(`✅ Foto de Pexels cacheada para: ${paisCode}`);
+      }
+      
       return nuevaFotoInfo;
     } catch (e) { 
-        console.error("No se pudo cargar foto de Pexels:", e.message);
+        console.error("❌ No se pudo cargar foto de Pexels:", e.message);
         return null; 
     }
   };
@@ -167,6 +190,8 @@ export const useViajes = () => {
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
+    console.log("📝 Guardando viaje:", { nombreEspanol: datosViaje.nombreEspanol, code: datosViaje.code });
+
     let fotoFinal = datosViaje.foto;
     let creditoFinal = datosViaje.fotoCredito || null;
     const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
@@ -174,10 +199,14 @@ export const useViajes = () => {
     // Si no hay foto o es Base64, intentar obtener de Pexels
     if (!fotoFinal || esFotoBase64) {
        if (!fotoFinal) {
+         console.log("📸 Intentando obtener foto de Pexels...");
          const fotoInfo = await obtenerFotoConCache(datosViaje.nombreEspanol, datosViaje.code);
          if (fotoInfo) { 
            fotoFinal = fotoInfo.url; 
-           creditoFinal = fotoInfo.credito; 
+           creditoFinal = fotoInfo.credito;
+           console.log("✅ Foto obtenida de Pexels"); 
+         } else {
+           console.log("⚠️ No se pudo obtener foto de Pexels");
          }
        }
     }

@@ -67,7 +67,8 @@ function App() {
         nombre: lugar.nombre, 
         coordenadas: lugar.coordenadas, 
         fecha: new Date().toISOString().split('T')[0],
-        paisCodigo: lugar.paisCodigo
+        paisCodigo: lugar.paisCodigo,
+        flag: getFlagUrl(lugar.paisCodigo)
       };
     }
 
