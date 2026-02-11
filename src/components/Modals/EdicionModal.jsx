@@ -69,16 +69,20 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   };
 
   const handleFileChange = async (e) => {
+    setIsProcessingImage(true);
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setIsProcessingImage(false);
+      return;
+    }
 
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       pushToast('Formato no soportado. Usa JPG o PNG.', 'error');
       e.target.value = '';
+      setIsProcessingImage(false);
       return;
     }
 
-    setIsProcessingImage(true);
     try {
       const { blob, dataUrl } = await compressImage(file, 1920, 0.8);
       const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
@@ -145,7 +149,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 <button onClick={onClose} style={styles.cancelBtn(isBusy)} disabled={isBusy}>Cancelar</button>
                 <button onClick={handleSave} style={styles.saveBtn(isBusy)} disabled={isBusy}>
                   {isBusy ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
-                  {isProcessingImage ? 'Optimizando...' : (isSaving ? 'Guardando...' : (esBorrador ? 'Crear Viaje' : 'Guardar'))}
+                  {isProcessingImage ? 'Procesando...' : (isSaving ? 'Guardando...' : (esBorrador ? 'Crear Viaje' : 'Guardar'))}
                 </button>
             </div>
           </div>

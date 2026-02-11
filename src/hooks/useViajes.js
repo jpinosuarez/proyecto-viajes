@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot, query, orderBy, getDoc, setDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getCountryISO3, getFlagUrl, getCountryName } from '../utils/countryUtils';
@@ -17,6 +18,11 @@ if (!PEXELS_ACCESS_KEY) {
 
 export const useViajes = () => {
   const { usuario } = useAuth();
+  const { pushToast } = useToast();
+  const toast = {
+    success: (message) => pushToast(message, 'success'),
+    error: (message) => pushToast(message, 'error')
+  };
   const [bitacora, setBitacora] = useState([]);
   const [bitacoraData, setBitacoraData] = useState({});
   const [todasLasParadas, setTodasLasParadas] = useState([]);
@@ -271,9 +277,11 @@ export const useViajes = () => {
          const url = await subirFotoStorage(viajeRef.id, fotoFileOptimizada || datosViaje.foto);
          if(url) await updateDoc(viajeRef, { foto: url });
       }
+      toast.success('Viaje guardado');
       return viajeRef.id;
     } catch (e) { 
       console.error("Error guardando:", e); 
+      toast.error('No se pudo guardar el viaje');
       return null; 
     }
   };
@@ -293,9 +301,11 @@ export const useViajes = () => {
         }
         delete dataToSave.fotoFile;
         await updateDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id), dataToSave);
+        toast.success('Viaje actualizado');
         return true;
       } catch(e) {
         console.error(e);
+        toast.error('No se pudo actualizar el viaje');
         return false;
       }
   };
@@ -322,9 +332,11 @@ export const useViajes = () => {
       if (!usuario) return false;
       try {
         await deleteDoc(doc(db, `usuarios/${usuario.uid}/viajes`, id));
+        toast.success('Eliminado correctamente');
         return true;
       } catch (e) {
         console.error(e);
+        toast.error('No se pudo eliminar el viaje');
         return false;
       }
   };

@@ -1,8 +1,13 @@
+const appViewportHeight =
+  typeof window !== 'undefined' && window.CSS?.supports?.('height', '100dvh')
+    ? '100dvh'
+    : '100vh';
+
 export const styles = {
   appWrapper: {
     display: 'flex',
     backgroundColor: '#F8FAFC',
-    height: '100vh',
+    height: appViewportHeight,
     width: '100%',
     overflow: 'hidden'
   },
