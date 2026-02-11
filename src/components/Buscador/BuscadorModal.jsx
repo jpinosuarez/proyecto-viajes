@@ -21,6 +21,16 @@ const BuscadorModal = ({ isOpen, onClose, filtro, setFiltro, seleccionarLugar })
   const [cargando, setCargando] = useState(false);
   const debounceRef = useRef(null);
 
+  // RESETEAR AL CERRAR
+  useEffect(() => {
+    if (!isOpen) {
+        setResultados([]);
+        // setFiltro('') debe ser llamado por el padre o aquí si lo controlas localmente
+        // En tu App.jsx pasas setFiltro, así que lo limpiamos allá o aquí si tienes acceso
+    }
+  }, [isOpen]);
+
+
   useEffect(() => {
     if (!filtro) {
       setResultados([]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Camera, Calendar } from 'lucide-react';
+import { X, Save, Camera, Calendar, MapPin, Trash2, Plus } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import CityManager from '../Shared/CityManager';
 
@@ -79,7 +79,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial }) => 
                 </div>
             </div>
             <div style={styles.section}>
-                <label style={styles.label}>Ciudades</label>
+                <label style={styles.label}>Ciudades y Paradas</label>
                 <CityManager paradas={paradas} setParadas={setParadas} />
             </div>
             <div style={styles.section}>

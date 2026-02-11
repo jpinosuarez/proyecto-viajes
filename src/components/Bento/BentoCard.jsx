@@ -1,12 +1,11 @@
 import React from 'react';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Trash2 } from 'lucide-react';
 import { COLORS } from '../../theme';
 
-// Estilos definidos inline para mantener el componente autocontenido como pediste
 const styles = {
   card: {
     backgroundColor: 'white',
-    borderRadius: '20px',
+    borderRadius: '24px',
     border: '1px solid rgba(241, 245, 249, 0.8)',
     position: 'relative',
     overflow: 'hidden',
@@ -16,58 +15,51 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    minHeight: '200px', // Altura mínima para que se vea bien
+    minHeight: '220px',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   },
   overlay: {
-    position: 'absolute',
-    inset: 0,
-    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.7))',
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.9) 100%)',
     zIndex: 1
   },
   content: {
-    position: 'relative',
-    zIndex: 2,
-    padding: '20px',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
+    position: 'relative', zIndex: 2,
+    padding: '20px', height: '100%',
+    display: 'flex', flexDirection: 'column',
     justifyContent: 'space-between'
   },
-  topRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start'
+  topRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+  flagImg: {
+    width: '32px', height: '24px', borderRadius: '4px', objectFit: 'cover',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.3)'
   },
-  flags: {
-    display: 'flex',
-    gap: '4px',
-    alignItems: 'center'
-  },
-  footer: {
-    marginTop: 'auto'
-  },
-  title: {
-    fontSize: '1.2rem',
-    fontWeight: '800',
-    margin: '0 0 8px 0',
-    lineHeight: 1.2
-  },
-  meta: {
-    display: 'flex',
-    gap: '12px',
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    alignItems: 'center'
+  footer: { marginTop: 'auto' },
+  title: { fontSize: '1.3rem', fontWeight: '800', margin: '0 0 8px 0', lineHeight: 1.1 },
+  meta: { display: 'flex', gap: '12px', fontSize: '0.85rem', fontWeight: '600', alignItems: 'center' },
+  deleteBtn: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none', borderRadius: '50%',
+    width: '32px', height: '32px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', color: 'white', backdropFilter: 'blur(4px)',
+    transition: 'background 0.2s',
+    ':hover': { background: '#ef4444' }
   }
 };
 
-const BentoCard = ({ viaje, onClick }) => {
-  // Asegurar fallback de datos
+const BentoCard = ({ viaje, onClick, manejarEliminar }) => {
   const foto = viaje.foto;
-  const banderas = viaje.banderas && viaje.banderas.length > 0 ? viaje.banderas : (viaje.flag ? [viaje.flag] : ['🏳️']);
   const titulo = viaje.titulo || viaje.nombreEspanol;
+  const banderas = viaje.banderas && viaje.banderas.length > 0 ? viaje.banderas : [];
+
+  const onDelete = (e) => {
+      e.stopPropagation();
+      if(window.confirm('¿Estás seguro de eliminar este viaje?')) {
+          manejarEliminar(viaje.id);
+      }
+  };
 
   return (
     <div 
@@ -75,47 +67,33 @@ const BentoCard = ({ viaje, onClick }) => {
       style={{
         ...styles.card,
         backgroundImage: foto ? `url(${foto})` : 'none',
-        backgroundColor: foto ? 'transparent' : 'white' // Si no hay foto, fondo blanco
+        backgroundColor: foto ? 'transparent' : 'white'
       }}
-      // Efecto hover simple via onMouseEnter/Leave se podría agregar aquí si se desea,
-      // pero BentoGrid ya suele manejar la estructura.
     >
-      {/* Overlay oscuro para legibilidad si hay foto */}
       {foto && <div style={styles.overlay} />}
 
       <div style={styles.content}>
-        {/* Header: Banderas */}
         <div style={styles.topRow}>
-           <div style={styles.flags}>
-              {banderas.slice(0,3).map((b, i) => (
-                  <span key={i} style={{fontSize:'1.5rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'}}>{b}</span>
-              ))}
-              {banderas.length > 3 && <span style={{color:'white', fontSize:'0.8rem', fontWeight:'bold'}}>+{banderas.length-3}</span>}
+           <div style={{display:'flex', gap:'5px'}}>
+               {banderas.slice(0, 3).map((b, i) => (
+                   <img key={i} src={b} alt="flag" style={styles.flagImg} onError={(e) => e.target.style.display='none'}/>
+               ))}
+               {banderas.length > 3 && <span style={{color:'white', fontWeight:'bold', textShadow:'0 2px 2px black'}}>+{banderas.length-3}</span>}
            </div>
+           
+           {/* Botón Eliminar */}
+           <button style={styles.deleteBtn} onClick={onDelete} title="Eliminar viaje">
+               <Trash2 size={16} />
+           </button>
         </div>
 
-        {/* Footer: Textos */}
         <div style={styles.footer}>
-           <h3 style={{
-               ...styles.title, 
-               color: foto ? 'white' : COLORS.charcoalBlue,
-               textShadow: foto ? '0 2px 4px rgba(0,0,0,0.5)' : 'none'
-           }}>
+           <h3 style={{...styles.title, color: foto ? 'white' : COLORS.charcoalBlue, textShadow: foto ? '0 2px 10px rgba(0,0,0,0.5)' : 'none'}}>
                {titulo}
            </h3>
-           
-           <div style={{
-               ...styles.meta, 
-               color: foto ? 'rgba(255,255,255,0.9)' : '#64748b'
-           }}>
-              <span style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                  <Calendar size={14}/> {viaje.fechaInicio?.split('-')[0]}
-              </span>
-              {viaje.ciudades && (
-                  <span style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                      <MapPin size={14}/> {viaje.ciudades.split(',').length}
-                  </span>
-              )}
+           <div style={{...styles.meta, color: foto ? 'rgba(255,255,255,0.9)' : '#64748b'}}>
+              <span style={{display:'flex', alignItems:'center', gap:'4px'}}><Calendar size={14}/> {viaje.fechaInicio?.split('-')[0]}</span>
+              {viaje.ciudades && <span style={{display:'flex', alignItems:'center', gap:'4px'}}><MapPin size={14}/> {viaje.ciudades.split(',').length}</span>}
            </div>
         </div>
       </div>

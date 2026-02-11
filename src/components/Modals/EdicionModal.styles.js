@@ -1,55 +1,76 @@
-import { COLORS } from '../../theme';
+import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export const styles = {
-  overlay: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000 },
-  modal: { backgroundColor: '#fff', width: '500px', maxWidth: '90%', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', maxHeight: '85vh' },
-  
+  overlay: {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)',
+    zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+  },
+  modal: {
+    width: '600px', maxWidth: '90%', maxHeight: '90vh',
+    backgroundColor: 'white', borderRadius: RADIUS.lg,
+    overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    boxShadow: SHADOWS.float
+  },
   header: (img) => ({
     height: '180px', position: 'relative',
     backgroundImage: img ? `url(${img})` : 'none',
     backgroundColor: COLORS.charcoalBlue,
     backgroundSize: 'cover', backgroundPosition: 'center',
-    display: 'flex', alignItems: 'flex-end', padding: '20px'
+    display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
   }),
-  headerOverlay: { position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' },
-  headerContent: { position: 'relative', zIndex: 10, width: '100%' },
-  flag: { fontSize: '2rem', display: 'block', marginBottom: '5px' },
-  titleInput: { 
-    fontSize: '1.8rem', fontWeight: '800', color: 'white', 
+  headerOverlay: {
+    position: 'absolute', inset: 0,
+    background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)'
+  },
+  headerContent: {
+    position: 'relative', zIndex: 2, padding: '20px',
+    display: 'flex', alignItems: 'center', gap: '15px'
+  },
+  // ESTILO NUEVO PARA LA BANDERA IMG
+  flagImg: {
+    width: '50px', height: 'auto', borderRadius: '4px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+    border: '2px solid rgba(255,255,255,0.3)'
+  },
+  titleInput: {
+    fontSize: '1.5rem', fontWeight: '800', color: 'white',
     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)',
-    width: '100%', outline: 'none', paddingBottom: '5px'
+    width: '100%', outline: 'none', paddingBottom: '4px'
   },
-  
   cameraBtn: {
-    position: 'absolute', top: 15, right: 15, zIndex: 20,
-    background: 'rgba(255,255,255,0.2)', padding: '10px', borderRadius: '50%',
-    color: 'white', cursor: 'pointer', backdropFilter: 'blur(4px)'
+    position: 'absolute', top: '15px', right: '15px', zIndex: 10,
+    background: 'rgba(0,0,0,0.4)', color: 'white',
+    padding: '8px', borderRadius: '50%', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', backdropFilter: 'blur(4px)'
   },
-
-  body: { padding: '30px', overflowY: 'auto' },
-  section: { marginBottom: '25px' },
-  label: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: '700', color: COLORS.mutedTeal, textTransform: 'uppercase', marginBottom: '10px' },
-  
-  // Custom Date Input Style via CSS
+  body: { padding: '25px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' },
+  section: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  label: { fontSize: '0.8rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', display:'flex', alignItems:'center', gap:'6px' },
+  row: { display: 'flex', alignItems: 'center', gap: '10px' },
   dateInput: {
-    padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0',
-    fontFamily: 'inherit', fontSize: '0.95rem', color: COLORS.charcoalBlue,
-    outline: 'none', background: '#f8fafc',
-    cursor: 'pointer'
+    border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm,
+    padding: '10px', fontSize: '0.9rem', color: COLORS.charcoalBlue,
+    outline: 'none', background: '#F8FAFC'
   },
-  row: { display: 'flex', alignItems: 'center', gap: '15px' },
-
-  // Cities Styles
-  cityList: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' },
-  cityTag: { background: '#f1f5f9', padding: '6px 12px', borderRadius: '20px', fontSize: '0.9rem', color: COLORS.charcoalBlue, display: 'flex', alignItems: 'center', gap: '6px' },
-  deleteCityBtn: { background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex' },
-  addCityRow: { display: 'flex', gap: '10px' },
-  cityInput: { flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' },
-  addBtn: { background: COLORS.atomicTangerine, color: 'white', border: 'none', borderRadius: '10px', width: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-
-  textarea: { width: '100%', minHeight: '100px', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', fontFamily: 'inherit', resize: 'vertical' },
-
-  footer: { display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '20px' },
-  cancelBtn: { padding: '12px 20px', borderRadius: '12px', border: 'none', background: '#f1f5f9', color: '#64748b', fontWeight: '700', cursor: 'pointer' },
-  saveBtn: { padding: '12px 24px', borderRadius: '12px', border: 'none', background: COLORS.charcoalBlue, color: 'white', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }
+  textarea: {
+    width: '100%', minHeight: '100px', padding: '12px',
+    border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm,
+    resize: 'vertical', fontFamily: 'inherit', fontSize: '0.9rem',
+    outline: 'none'
+  },
+  footer: {
+    borderTop: `1px solid ${COLORS.border}`, padding: '20px',
+    display: 'flex', justifyContent: 'flex-end', gap: '10px'
+  },
+  cancelBtn: {
+    background: 'transparent', border: 'none', color: COLORS.textSecondary,
+    fontWeight: '600', cursor: 'pointer', padding: '10px 20px'
+  },
+  saveBtn: {
+    background: COLORS.atomicTangerine, color: 'white', border: 'none',
+    padding: '10px 24px', borderRadius: '30px', fontWeight: '700',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+    boxShadow: SHADOWS.sm
+  }
 };
