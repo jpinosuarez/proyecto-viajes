@@ -11,6 +11,7 @@ import LandingPage from './components/Landing/LandingPage';
 
 import BuscadorModal from './components/Buscador/BuscadorModal';
 import EdicionModal from './components/Modals/EdicionModal';
+import ConfirmModal from './components/Modals/ConfirmModal';
 import VisorViaje from './components/VisorViaje/VisorViaje';
 import SettingsPage from './pages/Configuracion/SettingsPage';
 
@@ -42,6 +43,7 @@ function App() {
   const [isSavingModal, setIsSavingModal] = useState(false);
   const [isSavingViewer, setIsSavingViewer] = useState(false);
   const [viajesEliminando, setViajesEliminando] = useState(new Set());
+  const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
 
   const abrirEditor = (viajeId) => setViajeEnEdicionId(viajeId);
   const abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
@@ -175,8 +177,14 @@ function App() {
     }
   };
 
-  const handleDeleteViaje = async (id) => {
-    if (viajesEliminando.has(id)) return false;
+  const solicitarEliminarViaje = (id) => {
+    if (!id || viajesEliminando.has(id)) return;
+    setConfirmarEliminacion(id);
+  };
+
+  const handleDeleteViaje = async () => {
+    const id = confirmarEliminacion;
+    if (!id || viajesEliminando.has(id)) return false;
 
     setViajesEliminando((prev) => {
       const next = new Set(prev);
@@ -196,6 +204,7 @@ function App() {
       setViajeEnEdicionId(null);
       return true;
     } finally {
+      setConfirmarEliminacion(null);
       setViajesEliminando((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -223,6 +232,10 @@ function App() {
   if (!cargando && !usuario) return <LandingPage />;
 
   const viajeParaEditar = viajeEnEdicionId ? bitacora.find((v) => v.id === viajeEnEdicionId) : viajeBorrador;
+  const viajeAEliminar = confirmarEliminacion
+    ? (bitacoraData[confirmarEliminacion] || bitacora.find((v) => v.id === confirmarEliminacion))
+    : null;
+  const tituloViajeAEliminar = viajeAEliminar?.titulo || viajeAEliminar?.nombreEspanol || 'este viaje';
   const mostrarBusqueda = vistaActiva === 'bitacora';
   const placeholderBusqueda = 'Buscar viajes, paises o ciudades...';
 
@@ -265,7 +278,7 @@ function App() {
                 <BentoGrid
                   viajes={bitacora}
                   bitacoraData={bitacoraData}
-                  manejarEliminar={handleDeleteViaje}
+                  manejarEliminar={solicitarEliminarViaje}
                   isDeletingViaje={isDeletingViaje}
                   abrirEditor={abrirEditor}
                   abrirVisor={abrirVisor}
@@ -310,9 +323,20 @@ function App() {
         onClose={() => setViajeExpandidoId(null)}
         onEdit={abrirEditor}
         onSave={handleGuardarDesdeVisor}
-        onDelete={handleDeleteViaje}
+        onDelete={solicitarEliminarViaje}
         isSaving={isSavingViewer}
         isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmarEliminacion}
+        title={`¿Eliminar ${tituloViajeAEliminar}?`}
+        message="Esta accion eliminara el viaje y sus recuerdos asociados de forma permanente. No se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteViaje}
+        onClose={() => setConfirmarEliminacion(null)}
+        isLoading={!!(confirmarEliminacion && viajesEliminando.has(confirmarEliminacion))}
       />
     </div>
   );

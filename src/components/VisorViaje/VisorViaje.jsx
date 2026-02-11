@@ -58,9 +58,7 @@ const VisorViaje = ({
   };
 
   const eliminarEsteViaje = () => {
-    if (window.confirm('Estas seguro de eliminar este viaje y todos sus recuerdos?')) {
-      onDelete(viajeId);
-    }
+    onDelete(viajeId);
   };
 
   const getClimaTexto = (clima, temperatura) => {
