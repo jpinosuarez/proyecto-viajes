@@ -6,8 +6,7 @@ import { styles } from "./BuscadorModal.styles";
 import { getFlagUrl } from "../../utils/countryUtils";
 import { useWindowSize } from "../../hooks/useWindowSize";
 
-const MAPBOX_TOKEN =
-  "pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw";
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const DESTINOS_POPULARES = [
   { nombre: "Japón", code: "JP", icon: "🇯🇵" },
@@ -62,7 +61,12 @@ const BuscadorModal = ({
             feat.context?.find((c) => c.id.startsWith("country")) ||
             (feat.place_type.includes("country") ? feat : null);
 
-          const codigoPais = contextoPais?.properties?.short_code?.toUpperCase();
+          const codigoPais = (
+            contextoPais?.short_code ||
+            contextoPais?.properties?.short_code ||
+            feat.properties?.short_code ||
+            feat.short_code
+          )?.toUpperCase();
 
           return {
             id: feat.id,
@@ -71,7 +75,7 @@ const BuscadorModal = ({
             tipo: feat.place_type[0],
             coordenadas: feat.center,
             paisCodigo: codigoPais,
-            paisNombre: contextoPais?.text || feat.text
+            paisNombre: contextoPais?.text || (feat.place_type.includes("country") ? feat.text : "")
           };
         });
 
@@ -101,7 +105,7 @@ const BuscadorModal = ({
         nombre: destino.nombre,
         coordenadas: destino.coords,
         paisCodigo: destino.code,
-        paisNombre: "USA"
+        paisNombre: "Estados Unidos"
       });
       return;
     }

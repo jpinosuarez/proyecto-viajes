@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save, Camera, Calendar, LoaderCircle } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
@@ -9,6 +9,7 @@ import { useToast } from '../../context/ToastContext';
 import { useWindowSize } from '../../hooks/useWindowSize';
 import CityManager from '../Shared/CityManager';
 import { compressImage } from '../../utils/imageUtils';
+import { generarTituloInteligente } from '../../utils/viajeUtils';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
@@ -17,12 +18,15 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [isTituloAuto, setIsTituloAuto] = useState(true);
+  const [titlePulse, setTitlePulse] = useState(false);
+  const titlePulseRef = useRef(null);
 
   useEffect(() => {
     if (viaje) {
       setFormData({
         ...viaje,
-        titulo: viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
+        titulo: esBorrador ? (viaje.titulo || '') : (viaje.titulo || `Viaje a ${viaje.nombreEspanol}`),
         fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
         fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
         foto: viaje.foto,
@@ -59,8 +63,24 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       } else {
         setParadas([]); 
       }
+      setIsTituloAuto(esBorrador);
     }
   }, [viaje, esBorrador, ciudadInicial, usuario]);
+
+  useEffect(() => {
+    if (!esBorrador || !isTituloAuto) return;
+    const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
+    if (tituloAuto && tituloAuto !== formData.titulo) {
+      setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
+      setTitlePulse(true);
+      if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
+      titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
+    }
+  }, [esBorrador, isTituloAuto, paradas, formData.nombreEspanol, formData.titulo]);
+
+  useEffect(() => () => {
+    if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
+  }, []);
 
   const handleSave = async () => {
     if (!formData.nombreEspanol || isProcessingImage || isSaving) return;
@@ -103,6 +123,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   if (!viaje) return null;
 
   const isBusy = isSaving || isProcessingImage;
+  const fechasInvalidas =
+    formData.fechaInicio &&
+    formData.fechaFin &&
+    new Date(formData.fechaInicio) > new Date(formData.fechaFin);
+  const sinParadas = paradas.length === 0;
 
   return (
     <AnimatePresence>
@@ -114,7 +139,34 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 {formData.flag ? (
                     <img src={formData.flag} alt="Bandera" style={styles.flagImg} onError={(e) => e.target.style.display = 'none'}/>
                 ) : <span style={{fontSize:'3rem'}}>🌍</span>}
-                <input name="titulo" value={formData.titulo || ''} onChange={e => setFormData({...formData, titulo: e.target.value})} style={styles.titleInput} placeholder="Título del viaje" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      name="titulo"
+                      value={formData.titulo || ''}
+                      onChange={e => {
+                        setFormData({...formData, titulo: e.target.value});
+                        if (esBorrador && isTituloAuto) setIsTituloAuto(false);
+                      }}
+                      style={titlePulse ? styles.titleInputAutoPulse : styles.titleInput}
+                      placeholder="Título del viaje"
+                      disabled={isBusy}
+                    />
+                    {esBorrador && (
+                      <button
+                        type="button"
+                        style={styles.autoBadge(isTituloAuto)}
+                        title={isTituloAuto
+                          ? 'Se actualiza al agregar o quitar ciudades'
+                          : 'Usando titulo manual. Click para volver a auto.'}
+                        onClick={() => setIsTituloAuto((prev) => !prev)}
+                        disabled={isBusy}
+                      >
+                        {isTituloAuto ? 'Auto' : 'Manual'}
+                      </button>
+                    )}
+                  </div>
+                </div>
             </div>
             {isProcessingImage && (
               <div style={styles.processingBadge}>
@@ -122,9 +174,9 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 Optimizando...
               </div>
             )}
-            <label style={styles.cameraBtn(isProcessingImage)}>
+            <label style={styles.cameraBtn(isBusy)}>
               <Camera size={18} />
-              <input type="file" hidden onChange={handleFileChange} accept="image/jpeg,image/png" disabled={isProcessingImage} />
+              <input type="file" hidden onChange={handleFileChange} accept="image/jpeg,image/png" disabled={isBusy} />
             </label>
           </div>
 
@@ -132,18 +184,24 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
             <div style={styles.section}>
                 <label style={styles.label}><Calendar size={14}/> Fechas</label>
                 <div style={styles.row}>
-                    <input type="date" value={formData.fechaInicio || ''} onChange={e => setFormData({...formData, fechaInicio: e.target.value})} style={styles.dateInput} />
+                <input type="date" value={formData.fechaInicio || ''} onChange={e => setFormData({...formData, fechaInicio: e.target.value})} style={styles.dateInput} disabled={isBusy} />
                     <span style={{color:'#94a3b8'}}>hasta</span>
-                    <input type="date" value={formData.fechaFin || ''} onChange={e => setFormData({...formData, fechaFin: e.target.value})} style={styles.dateInput} />
+                <input type="date" value={formData.fechaFin || ''} onChange={e => setFormData({...formData, fechaFin: e.target.value})} style={styles.dateInput} disabled={isBusy} />
                 </div>
+              {fechasInvalidas && (
+                <span style={styles.inlineError}>La fecha de fin no puede ser anterior al inicio.</span>
+              )}
             </div>
             <div style={styles.section}>
                 <label style={styles.label}>Ciudades y Paradas</label>
                 <CityManager paradas={paradas} setParadas={setParadas} />
+              {sinParadas && (
+                <span style={styles.inlineError}>Agrega al menos una ciudad para continuar.</span>
+              )}
             </div>
             <div style={styles.section}>
                 <label style={styles.label}>Notas</label>
-                <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." />
+              <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." disabled={isBusy} />
             </div>
             <div style={styles.footer}>
                 <button onClick={onClose} style={styles.cancelBtn(isBusy)} disabled={isBusy}>Cancelar</button>

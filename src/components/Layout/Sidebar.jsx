@@ -5,6 +5,7 @@ import {
   Map,
   BookOpen,
   Settings,
+  Image,
   LogOut,
   Disc,
   ChevronLeft,
@@ -16,7 +17,7 @@ import { useUI } from '../../context/UIContext';
 import { COLORS } from '../../theme';
 
 const Sidebar = ({ isMobile = false }) => {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   const {
     vistaActiva,
     setVistaActiva,
@@ -30,8 +31,9 @@ const Sidebar = ({ isMobile = false }) => {
     { id: 'home', icon: LayoutGrid, label: 'Inicio' },
     { id: 'mapa', icon: Map, label: 'Mapa' },
     { id: 'bitacora', icon: BookOpen, label: 'Bitacora' },
+    { id: 'curacion', icon: Image, label: 'Curacion' },
     { id: 'config', icon: Settings, label: 'Ajustes' }
-  ];
+  ].filter((item) => item.id !== 'curacion' || isAdmin);
 
   const handleSelect = (id) => {
     setVistaActiva(id);

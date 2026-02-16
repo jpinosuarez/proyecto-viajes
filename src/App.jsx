@@ -14,6 +14,7 @@ import EdicionModal from './components/Modals/EdicionModal';
 import ConfirmModal from './components/Modals/ConfirmModal';
 import VisorViaje from './components/VisorViaje/VisorViaje';
 import SettingsPage from './pages/Configuracion/SettingsPage';
+import CuracionPage from './pages/Curacion/CuracionPage';
 
 import { useViajes } from './hooks/useViajes';
 import { useWindowSize } from './hooks/useWindowSize';
@@ -24,7 +25,7 @@ import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 
 function App() {
-  const { usuario, cargando } = useAuth();
+  const { usuario, cargando, isAdmin } = useAuth();
   const { pushToast } = useToast();
   const { isMobile } = useWindowSize(768);
 
@@ -57,7 +58,8 @@ function App() {
     confirmarEliminacion,
     setConfirmarEliminacion,
     abrirEditor,
-    abrirVisor
+    abrirVisor,
+    setVistaActiva
   } = useUI();
 
   const { filtro, setFiltro, busqueda, setBusqueda } = useSearch();
@@ -106,7 +108,7 @@ function App() {
       nombreEspanol: datosPais.nombreEspanol,
       flag: datosPais.flag,
       continente: 'Mundo',
-      titulo: `Viaje a ${datosPais.nombreEspanol}`,
+      titulo: '',
       fechaInicio: new Date().toISOString().split('T')[0],
       fechaFin: new Date().toISOString().split('T')[0],
       foto: null
@@ -243,6 +245,12 @@ function App() {
     }
   }, [isMobile, mobileDrawerOpen, setMobileDrawerOpen]);
 
+  useEffect(() => {
+    if (vistaActiva === 'curacion' && !isAdmin) {
+      setVistaActiva('home');
+    }
+  }, [vistaActiva, isAdmin, setVistaActiva]);
+
   if (!cargando && !usuario) return <LandingPage />;
 
   const viajeParaEditar = viajeEnEdicionId ? bitacora.find((v) => v.id === viajeEnEdicionId) : viajeBorrador;
@@ -293,6 +301,11 @@ function App() {
             {vistaActiva === 'config' && (
               <motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <SettingsPage />
+              </motion.div>
+            )}
+            {vistaActiva === 'curacion' && isAdmin && (
+              <motion.div key="curacion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+                <CuracionPage />
               </motion.div>
             )}
           </AnimatePresence>

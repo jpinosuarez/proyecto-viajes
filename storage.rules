@@ -11,6 +11,15 @@ service firebase.storage {
       return request.auth != null && request.auth.uid == userId;
     }
 
+    // Helper: emails con permisos de curacion (mantener en sync con VITE_ADMIN_EMAILS).
+    function isCuracionAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+          'pinosuarezjoaquin@gmail.com',
+          'otro@tu-dominio.com'
+        ];
+    }
+
     // Helper: solo permitir imagenes y con tamano maximo de 2 MB.
     function isValidImageUpload() {
       return request.resource != null
@@ -27,6 +36,11 @@ service firebase.storage {
 
       // Borrado permitido solo al dueno.
       allow delete: if isOwner(userId);
+    }
+
+    match /curated/{allPaths=**} {
+      allow read: if true;
+      allow create, update, delete: if isCuracionAdmin() && isValidImageUpload();
     }
   }
 }

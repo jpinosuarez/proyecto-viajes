@@ -53,11 +53,6 @@ const obtenerCoordenadasViaje = ({ datosViaje = {}, viajeActual = null, paradas 
 };
 
 const validarDatosViaje = ({ datosViaje = {}, viajeActual = null, paradas = [], tituloGenerado = '' }) => {
-  const titulo = datosViaje.titulo ?? viajeActual?.titulo ?? tituloGenerado;
-  if (!isNonEmptyString(titulo)) {
-    return { esValido: false, mensaje: 'El titulo del viaje es obligatorio' };
-  }
-
   const codigoPais = datosViaje.code ?? datosViaje.paisCodigo ?? viajeActual?.code ?? viajeActual?.paisCodigo;
   if (!isNonEmptyString(codigoPais)) {
     return { esValido: false, mensaje: 'Debes seleccionar un pais valido' };
@@ -136,34 +131,47 @@ export const useViajes = () => {
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
-    const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
-    const validacion = validarDatosViaje({ datosViaje, paradas, tituloGenerado: titulo });
+    const tituloDefault = isNonEmptyString(datosViaje?.nombreEspanol)
+      ? `Viaje a ${datosViaje.nombreEspanol}`
+      : '';
+    const tituloPersonalizado = isNonEmptyString(datosViaje?.titulo) && datosViaje.titulo !== tituloDefault
+      ? datosViaje.titulo
+      : '';
+    const datosViajeNormalizados = {
+      ...datosViaje,
+      titulo: tituloPersonalizado
+    };
+
+    const titulo = generarTituloInteligente(datosViajeNormalizados.nombreEspanol, paradas);
+    const validacion = validarDatosViaje({ datosViaje: datosViajeNormalizados, paradas, tituloGenerado: titulo });
     if (!validacion.esValido) {
       toast.warning(validacion.mensaje);
       return null;
     }
 
-    let fotoFinal = datosViaje.foto;
-    let creditoFinal = datosViaje.fotoCredito || null;
-    const fotoFileOptimizada = datosViaje.fotoFile || null;
+    let fotoFinal = datosViajeNormalizados.foto;
+    let creditoFinal = datosViajeNormalizados.fotoCredito || null;
+    const fotoFileOptimizada = datosViajeNormalizados.fotoFile || null;
     const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
     const esFotoParaStorage = !!fotoFileOptimizada || !!esFotoBase64;
 
-    const banderas = construirBanderasViaje(datosViaje.code, paradas);
+    const banderas = construirBanderasViaje(datosViajeNormalizados.code, paradas);
     const ciudades = construirCiudadesViaje(paradas);
+    const ciudadesLista = [...new Set(paradas.map((parada) => parada.nombre).filter(isNonEmptyString))];
 
     const fotoPromise = !fotoFinal
       ? obtenerFotoConCacheSeguro({
           db,
-          paisNombre: datosViaje.nombreEspanol,
-          paisCode: datosViaje.code,
-          pexelsApiKey: PEXELS_ACCESS_KEY
+          paisNombre: datosViajeNormalizados.nombreEspanol,
+          paisCode: datosViajeNormalizados.code,
+          pexelsApiKey: PEXELS_ACCESS_KEY,
+          ciudades: ciudadesLista
         })
       : Promise.resolve(null);
 
     const paradasPromise = Promise.all(
       paradas.map(async (parada) => {
-        const fechaUso = parada.fecha || datosViaje.fechaInicio || getTodayIsoDate();
+        const fechaUso = parada.fecha || datosViajeNormalizados.fechaInicio || getTodayIsoDate();
         const climaInfo = await obtenerClimaHistoricoSeguro(
           parada.coordenadas?.[1],
           parada.coordenadas?.[0],
@@ -181,7 +189,7 @@ export const useViajes = () => {
     }
 
     const payloadViaje = construirViajePayload({
-      datosViaje,
+      datosViaje: datosViajeNormalizados,
       titulo,
       banderas,
       ciudades,

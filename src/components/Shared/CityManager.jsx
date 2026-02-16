@@ -3,7 +3,7 @@ import { MapPin, ArrowUp, ArrowDown, Plus, Search, Trash2 } from 'lucide-react';
 import { COLORS } from '../../theme';
 import { getFlagUrl } from '../../utils/countryUtils';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const CityManager = ({ paradas, setParadas }) => {
   const [busqueda, setBusqueda] = useState('');

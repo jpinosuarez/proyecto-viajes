@@ -43,6 +43,20 @@ export const styles = {
     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.3)',
     width: '100%', outline: 'none', paddingBottom: '4px'
   },
+  titleInputAutoPulse: {
+    fontSize: '1.5rem', fontWeight: '800', color: 'white',
+    background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.6)',
+    width: '100%', outline: 'none', paddingBottom: '4px',
+    boxShadow: '0 6px 18px rgba(255,255,255,0.2)'
+  },
+  autoBadge: (isAuto) => ({
+    fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.5px',
+    background: isAuto ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+    color: 'white',
+    padding: '4px 8px', borderRadius: '999px', textTransform: 'uppercase',
+    border: '1px solid rgba(255,255,255,0.2)',
+    cursor: 'pointer'
+  }),
   cameraBtn: (disabled = false) => ({
     position: 'absolute', top: '15px', right: '15px', zIndex: 10,
     background: 'rgba(0,0,0,0.4)', color: 'white',
@@ -70,6 +84,9 @@ export const styles = {
     border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm,
     resize: 'vertical', fontFamily: 'inherit', fontSize: '0.9rem',
     outline: 'none'
+  },
+  inlineError: {
+    fontSize: '0.8rem', fontWeight: '600', color: '#b91c1c'
   },
   footer: {
     borderTop: `1px solid ${COLORS.border}`, padding: '20px',

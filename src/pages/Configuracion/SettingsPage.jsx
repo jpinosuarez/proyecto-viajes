@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { COLORS } from '../../theme';
 
 const SettingsPage = () => {
-  const { usuario, actualizarPerfilUsuario, logout } = useAuth();
+  const { usuario, actualizarPerfilUsuario, logout, isAdmin } = useAuth();
   const [nombre, setNombre] = useState(usuario?.displayName || '');
   const [foto, setFoto] = useState(usuario?.photoURL || '');
   const [msg, setMsg] = useState('');
@@ -19,7 +19,17 @@ const SettingsPage = () => {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Configuración de Cuenta</h1>
+      <div style={styles.titleRow}>
+        <h1 style={styles.title}>Configuración de Cuenta</h1>
+        <div style={styles.badgeGroup}>
+          {usuario?.email && (
+            <span style={styles.emailBadge}>{usuario.email}</span>
+          )}
+          <span style={styles.adminBadge(isAdmin)}>
+            {isAdmin ? 'Administrador' : 'Usuario'}
+          </span>
+        </div>
+      </div>
       
       <div style={styles.card}>
         <div style={styles.section}>
@@ -72,7 +82,27 @@ const SettingsPage = () => {
 
 const styles = {
   container: { padding: '40px', maxWidth: '800px', margin: '0 auto', fontFamily: '"Plus Jakarta Sans", sans-serif' },
+  titleRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' },
+  badgeGroup: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' },
   title: { fontSize: '2.5rem', fontWeight: '900', color: COLORS.charcoalBlue, marginBottom: '30px' },
+  emailBadge: {
+    padding: '8px 14px',
+    borderRadius: '999px',
+    fontSize: '0.78rem',
+    fontWeight: '700',
+    border: '1px solid #e2e8f0',
+    background: '#ffffff',
+    color: '#475569'
+  },
+  adminBadge: (isAdmin) => ({
+    padding: '8px 14px',
+    borderRadius: '999px',
+    fontSize: '0.8rem',
+    fontWeight: '800',
+    border: `1px solid ${isAdmin ? '#fde68a' : '#e2e8f0'}`,
+    background: isAdmin ? '#fff7ed' : '#f8fafc',
+    color: isAdmin ? '#c2410c' : '#64748b'
+  }),
   card: { background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' },
   subtitle: { fontSize: '1.2rem', fontWeight: '800', color: COLORS.charcoalBlue, marginBottom: '20px', borderBottom:'2px solid #f1f5f9', paddingBottom:'10px' },
   section: { display: 'flex', flexDirection: 'column', gap: '20px' },

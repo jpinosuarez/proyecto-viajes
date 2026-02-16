@@ -25,6 +25,8 @@ export const UIProvider = ({ children }) => {
         return 'Mi Bitacora';
       case 'config':
         return 'Ajustes';
+      case 'curacion':
+        return 'Curacion Fotos';
       default:
         return 'Keeptrip';
     }

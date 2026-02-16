@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { 
   signInWithPopup, 
   signOut, 
@@ -9,11 +9,20 @@ import { auth, googleProvider } from '../firebase';
 
 const AuthContext = createContext();
 
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
+  .split(',')
+  .map((value) => value.trim().toLowerCase())
+  .filter(Boolean);
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const isAdmin = useMemo(() => {
+    if (!usuario?.email) return false;
+    return ADMIN_EMAILS.includes(usuario.email.toLowerCase());
+  }, [usuario]);
 
   const login = async () => {
     try {
@@ -50,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const value = { usuario, login, logout, actualizarPerfilUsuario, cargando };
+  const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };
 
   return (
     <AuthContext.Provider value={value}>

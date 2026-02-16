@@ -4,7 +4,7 @@ import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS } from '../../theme';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoianBpbm9zdWFyZXoiLCJhIjoiY21rdWJ1MnU0MXN4YzNlczk5OG91MG1naSJ9.HCnFsirOlTkQsWSDIFeGfw';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 function MapaView({ paises = [], paradas = [] }) {
   const mapRef = useRef(null);

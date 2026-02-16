@@ -1,5 +1,14 @@
 # React + Vite
 
+## Flujo de trabajo (entornos)
+
+Este proyecto usa emuladores para el desarrollo diario y un proyecto Firebase de staging cuando necesitas que los datos (por ejemplo, portadas) persistan.
+
+- Desarrollo diario (emuladores): `npm run dev`
+- Staging (Firebase real): `npm run dev:staging`
+
+Mas detalle en [docs/flujo-entornos.md](docs/flujo-entornos.md).
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

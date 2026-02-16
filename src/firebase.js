@@ -3,14 +3,15 @@ import { getAuth, connectAuthEmulator, GoogleAuthProvider } from "firebase/auth"
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
-// Configuración alineada con tu proyecto local (ver .firebaserc)
+// Configuracion por entorno (con fallback a valores actuales).
 const firebaseConfig = {
-  apiKey: "demo-key",
-  authDomain: "keeptrip-app-b06b3.firebaseapp.com",
-  projectId: "keeptrip-app-b06b3", // ID REAL DE TU PROYECTO
-  storageBucket: "keeptrip-app-b06b3.firebasestorage.app",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcde"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "keeptrip-app-b06b3.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "keeptrip-app-b06b3",
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "keeptrip-app-b06b3.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcde"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -19,8 +20,10 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
+const useEmulators = import.meta.env.VITE_USE_EMULATORS === "true";
+
 // Detectar localhost y conectar a Emuladores
-if (window.location.hostname === "localhost") {
+if (window.location.hostname === "localhost" && useEmulators) {
   console.log("🔧 Conectando a Firebase Emulators...");
   // Nota: disableWarnings ayuda a limpiar la consola en desarrollo
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
