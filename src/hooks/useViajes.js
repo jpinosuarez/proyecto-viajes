@@ -25,6 +25,57 @@ import {
 } from '../utils/viajeUtils';
 
 const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
+const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
+
+const parseDateSafe = (value) => {
+  if (!isNonEmptyString(value)) return null;
+  const time = Date.parse(value);
+  if (Number.isNaN(time)) return null;
+  return new Date(time);
+};
+
+const sonCoordenadasValidas = (coordenadas) =>
+  Array.isArray(coordenadas) &&
+  coordenadas.length === 2 &&
+  coordenadas.every((value) => typeof value === 'number' && Number.isFinite(value));
+
+const obtenerCoordenadasViaje = ({ datosViaje = {}, viajeActual = null, paradas = [] }) => {
+  const primeraParadaConCoords = paradas.find((parada) => Array.isArray(parada?.coordenadas))?.coordenadas;
+  return (
+    datosViaje.coordenadas ||
+    datosViaje.latlng ||
+    datosViaje.ubicacion?.coordenadas ||
+    viajeActual?.coordenadas ||
+    viajeActual?.latlng ||
+    viajeActual?.ubicacion?.coordenadas ||
+    primeraParadaConCoords
+  );
+};
+
+const validarDatosViaje = ({ datosViaje = {}, viajeActual = null, paradas = [], tituloGenerado = '' }) => {
+  const titulo = datosViaje.titulo ?? viajeActual?.titulo ?? tituloGenerado;
+  if (!isNonEmptyString(titulo)) {
+    return { esValido: false, mensaje: 'El titulo del viaje es obligatorio' };
+  }
+
+  const codigoPais = datosViaje.code ?? datosViaje.paisCodigo ?? viajeActual?.code ?? viajeActual?.paisCodigo;
+  if (!isNonEmptyString(codigoPais)) {
+    return { esValido: false, mensaje: 'Debes seleccionar un pais valido' };
+  }
+
+  const fechaInicio = parseDateSafe(datosViaje.fechaInicio ?? viajeActual?.fechaInicio);
+  const fechaFin = parseDateSafe(datosViaje.fechaFin ?? viajeActual?.fechaFin);
+  if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
+    return { esValido: false, mensaje: 'La fecha de fin no puede ser anterior al inicio' };
+  }
+
+  const coordenadas = obtenerCoordenadasViaje({ datosViaje, viajeActual, paradas });
+  if (!sonCoordenadasValidas(coordenadas)) {
+    return { esValido: false, mensaje: 'Debes seleccionar un destino valido' };
+  }
+
+  return { esValido: true };
+};
 
 if (!PEXELS_ACCESS_KEY) {
   console.warn('VITE_PEXELS_ACCESS_KEY no esta configurada en .env');
@@ -35,7 +86,8 @@ export const useViajes = () => {
   const { pushToast } = useToast();
   const toast = {
     success: (message) => pushToast(message, 'success'),
-    error: (message) => pushToast(message, 'error')
+    error: (message) => pushToast(message, 'error'),
+    warning: (message) => pushToast(message, 'warning')
   };
 
   const [bitacora, setBitacora] = useState([]);
@@ -84,13 +136,19 @@ export const useViajes = () => {
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
     if (!usuario) return null;
 
+    const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
+    const validacion = validarDatosViaje({ datosViaje, paradas, tituloGenerado: titulo });
+    if (!validacion.esValido) {
+      toast.warning(validacion.mensaje);
+      return null;
+    }
+
     let fotoFinal = datosViaje.foto;
     let creditoFinal = datosViaje.fotoCredito || null;
     const fotoFileOptimizada = datosViaje.fotoFile || null;
     const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
     const esFotoParaStorage = !!fotoFileOptimizada || !!esFotoBase64;
 
-    const titulo = generarTituloInteligente(datosViaje.nombreEspanol, paradas);
     const banderas = construirBanderasViaje(datosViaje.code, paradas);
     const ciudades = construirCiudadesViaje(paradas);
 
@@ -163,6 +221,17 @@ export const useViajes = () => {
 
   const actualizarDetallesViaje = async (id, data) => {
     if (!usuario) return false;
+    const viajeActual = bitacoraData[id] || bitacora.find((viaje) => viaje.id === id) || null;
+    const paradasDelViaje = todasLasParadas.filter((parada) => parada.viajeId === id);
+    const validacion = validarDatosViaje({
+      datosViaje: data,
+      viajeActual,
+      paradas: paradasDelViaje
+    });
+    if (!validacion.esValido) {
+      toast.warning(validacion.mensaje);
+      return false;
+    }
 
     try {
       const dataToSave = { ...data };
