@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
 import { 
   signInWithPopup, 
   signOut, 
@@ -52,18 +53,44 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    let timeoutId;
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUsuario(currentUser);
       setCargando(false);
+      if (timeoutId) clearTimeout(timeoutId);
     });
-    return unsubscribe;
+    // Timeout de seguridad: si Firebase no responde en 5s, forzar cargando a false
+    timeoutId = setTimeout(() => {
+      setCargando(false);
+      unsubscribe();
+      console.warn('⏰ Timeout de autenticación: Firebase no respondió en 5s. Se fuerza cargando = false.');
+    }, 5000);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
   const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };
 
   return (
     <AuthContext.Provider value={value}>
-      {!cargando && children}
+      {cargando ? (
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#fff',
+          color: '#334155',
+          fontSize: 22,
+          fontWeight: 500
+        }}>
+          <LoaderCircle size={48} className="spin" style={{ marginBottom: 16, color: '#f59e42' }} />
+          Iniciando...
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 };

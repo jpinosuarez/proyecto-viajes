@@ -14,13 +14,30 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcde"
 };
 
+const useEmulators = import.meta.env.VITE_USE_EMULATORS === "true";
+
+// Advertencia si las credenciales son de ejemplo o vacías
+const missingFirebaseConfig = (
+  !firebaseConfig.apiKey ||
+  firebaseConfig.apiKey === 'demo-key' ||
+  firebaseConfig.authDomain === '' ||
+  firebaseConfig.projectId === ''
+);
+
+if (missingFirebaseConfig) {
+  const message = '[Firebase] ⚠️ Las credenciales parecen ser de ejemplo o están vacías. Verifica tu archivo .env y configuración.';
+  if (useEmulators) {
+    console.info(`${message} (Usas emulators, pero el SDK igual requiere config.)`);
+  } else {
+    console.warn(message);
+  }
+}
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
-
-const useEmulators = import.meta.env.VITE_USE_EMULATORS === "true";
 
 // Detectar localhost y conectar a Emuladores
 if (window.location.hostname === "localhost" && useEmulators) {

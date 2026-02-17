@@ -117,61 +117,56 @@ export const ParadaSchema = z.object({
 
 // ==================== VIAJE ====================
 
+
 /**
- * Schema completo para un viaje
+ * Schema base para un viaje (sin refinements a nivel objeto)
  */
-export const ViajeSchema = z.object({
+export const ViajeSchemaBase = z.object({
   id: z.string().optional(),
-  
   // Datos de país
   code: CodigoPaisSchema,
   nombreEspanol: z.string()
     .min(1, 'Nombre del país es requerido')
     .max(100, 'Nombre del país no puede exceder 100 caracteres'),
-  
   // Título y descripción
   titulo: z.string()
     .min(1, 'Título es requerido')
     .max(200, 'Título no puede exceder 200 caracteres')
     .refine(isNonEmptyString, { message: 'Título no puede estar vacío' }),
-  
   texto: z.string()
     .max(10000, 'El relato no puede exceder 10000 caracteres')
     .optional()
     .nullable()
     .default(''),
-  
   // Fechas
   fechaInicio: FechaISOSchema,
   fechaFin: FechaISOSchema,
-  
   // Rating
   rating: z.number()
     .int()
     .min(1, 'Rating mínimo es 1')
     .max(5, 'Rating máximo es 5')
     .default(5),
-  
   // Foto principal (legacy - será fotoPortada en nuevo sistema)
   foto: URLImagenSchema,
   fotoCredito: CreditoFotoSchema,
-  
   // Nuevos campos para galería (preparados para futuro)
   fotoPortada: URLImagenSchema, // URL de la foto principal
   totalFotos: z.number().int().min(0).max(30).default(1), // Límite de 30 fotos
-  
   // Metadata de ubicación
   banderas: z.array(z.string().url()).default([]),
   ciudades: z.string().optional().nullable(), // CSV de ciudades
-  
   // Timestamps
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  
   // Usuario
   userId: z.string().optional()
-})
-.refine(
+});
+
+/**
+ * Schema completo para un viaje (con refinements)
+ */
+export const ViajeSchema = ViajeSchemaBase.refine(
   (data) => {
     // Validar que fechaFin >= fechaInicio
     const inicio = new Date(data.fechaInicio);
@@ -188,13 +183,14 @@ export const ViajeSchema = z.object({
 
 /**
  * Schema para creación de viaje (sin ID)
+ * Usa el schema base para permitir .omit()
  */
-export const CrearViajeSchema = ViajeSchema.omit({ id: true, createdAt: true, updatedAt: true });
+export const CrearViajeSchema = ViajeSchemaBase.omit({ id: true, createdAt: true, updatedAt: true });
 
 /**
  * Schema para actualización de viaje (todos los campos opcionales excepto ID)
  */
-export const ActualizarViajeSchema = ViajeSchema.partial().required({ id: true });
+export const ActualizarViajeSchema = ViajeSchemaBase.partial().required({ id: true });
 
 /**
  * Schema minimal para validación rápida (solo campos críticos)
