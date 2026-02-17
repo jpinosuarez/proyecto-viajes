@@ -23,6 +23,8 @@ import {
   construirViajePayload,
   getTodayIsoDate
 } from '../utils/viajeUtils';
+import { validarViaje, validarCoordenadas } from '../schemas/viajeSchema';
+import { logger } from '../utils/logger';
 
 const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
@@ -52,21 +54,39 @@ const obtenerCoordenadasViaje = ({ datosViaje = {}, viajeActual = null, paradas 
   );
 };
 
+/**
+ * Validación de datos de viaje usando Zod schemas
+ * Mantiene compatibilidad con la interfaz anterior
+ */
 const validarDatosViaje = ({ datosViaje = {}, viajeActual = null, paradas = [], tituloGenerado = '' }) => {
-  const codigoPais = datosViaje.code ?? datosViaje.paisCodigo ?? viajeActual?.code ?? viajeActual?.paisCodigo;
-  if (!isNonEmptyString(codigoPais)) {
-    return { esValido: false, mensaje: 'Debes seleccionar un pais valido' };
+  // Construir objeto completo para validación
+  const datosCompletos = {
+    code: datosViaje.code ?? datosViaje.paisCodigo ?? viajeActual?.code ?? viajeActual?.paisCodigo,
+    nombreEspanol: datosViaje.nombreEspanol ?? viajeActual?.nombreEspanol,
+    titulo: datosViaje.titulo || tituloGenerado || viajeActual?.titulo,
+    fechaInicio: datosViaje.fechaInicio ?? viajeActual?.fechaInicio,
+    fechaFin: datosViaje.fechaFin ?? viajeActual?.fechaFin
+  };
+
+  // Validar con Zod (validación minimal - solo campos críticos)
+  const resultado = validarViaje(datosCompletos, false);
+  
+  if (!resultado.esValido) {
+    logger.warn('Validación de viaje falló', {
+      mensaje: resultado.mensaje,
+      errores: resultado.errores,
+      datosViaje: { ...datosCompletos, titulo: datosCompletos.titulo?.substring(0, 50) }
+    });
+    return resultado;
   }
 
-  const fechaInicio = parseDateSafe(datosViaje.fechaInicio ?? viajeActual?.fechaInicio);
-  const fechaFin = parseDateSafe(datosViaje.fechaFin ?? viajeActual?.fechaFin);
-  if (fechaInicio && fechaFin && fechaInicio > fechaFin) {
-    return { esValido: false, mensaje: 'La fecha de fin no puede ser anterior al inicio' };
-  }
-
+  // Validación adicional de coordenadas (no está en el schema minimal)
   const coordenadas = obtenerCoordenadasViaje({ datosViaje, viajeActual, paradas });
-  if (!sonCoordenadasValidas(coordenadas)) {
-    return { esValido: false, mensaje: 'Debes seleccionar un destino valido' };
+  const coordsValidas = validarCoordenadas(coordenadas);
+  
+  if (!coordsValidas.esValido) {
+    logger.warn('Coordenadas inválidas', { coordenadas });
+    return { esValido: false, mensaje: 'Debes seleccionar un destino válido' };
   }
 
   return { esValido: true };
@@ -93,6 +113,7 @@ export const useViajes = () => {
 
   useEffect(() => {
     if (!usuario) {
+      logger.debug('Usuario no autenticado, limpiando estado de viajes');
       setBitacora([]);
       setBitacoraData({});
       setTodasLasParadas([]);
@@ -101,6 +122,10 @@ export const useViajes = () => {
       return;
     }
 
+    // Configurar userId en el logger para contexto global
+    logger.setUserId(usuario.uid);
+    logger.info('Suscribiendo a viajes del usuario', { userId: usuario.uid });
+
     setLoading(true);
     setError(null);
 
@@ -108,19 +133,30 @@ export const useViajes = () => {
       db,
       userId: usuario.uid,
       onData: ({ viajes, paradas }) => {
+        logger.debug('Datos de viajes actualizados', { 
+          totalViajes: viajes.length, 
+          totalParadas: paradas.length 
+        });
         setBitacora(viajes);
         setBitacoraData(construirBitacoraData(viajes));
         setTodasLasParadas(paradas);
         setLoading(false);
       },
       onError: (snapshotError) => {
-        console.error(snapshotError);
+        logger.error('Error en suscripción de viajes', {
+          error: snapshotError.message,
+          stack: snapshotError.stack,
+          userId: usuario.uid
+        });
         setError(snapshotError);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      logger.debug('Desuscribiendo de viajes del usuario');
+      unsubscribe();
+    };
   }, [usuario]);
 
   const paisesVisitados = useMemo(
@@ -198,6 +234,12 @@ export const useViajes = () => {
     });
 
     try {
+      logger.info('Guardando nuevo viaje', { 
+        userId: usuario.uid,
+        paisCodigo: datosViajeNormalizados.code,
+        totalParadas: paradasProcesadas.length 
+      });
+
       const viajeId = await guardarViajeConParadas({
         db,
         userId: usuario.uid,
@@ -206,6 +248,7 @@ export const useViajes = () => {
       });
 
       if (esFotoParaStorage) {
+        logger.debug('Subiendo foto a Storage', { viajeId });
         const url = await subirFotoViaje({
           storage,
           userId: usuario.uid,
@@ -214,13 +257,20 @@ export const useViajes = () => {
         });
         if (url) {
           await actualizarViaje({ db, userId: usuario.uid, viajeId, data: { foto: url } });
+          logger.debug('Foto subida exitosamente', { viajeId, fotoUrl: url.substring(0, 50) });
         }
       }
 
+      logger.info('Viaje guardado exitosamente', { viajeId });
       toast.success('Viaje guardado');
       return viajeId;
     } catch (saveError) {
-      console.error('Error guardando:', saveError);
+      logger.error('Error guardando viaje', { 
+        error: saveError.message,
+        stack: saveError.stack,
+        userId: usuario.uid,
+        paisCodigo: datosViajeNormalizados.code
+      });
       setError(saveError);
       toast.error('No se pudo guardar el viaje');
       return null;
@@ -242,8 +292,11 @@ export const useViajes = () => {
     }
 
     try {
+      logger.info('Actualizando viaje', { viajeId: id, userId: usuario.uid });
+      
       const dataToSave = { ...data };
       if (dataToSave.fotoFile instanceof Blob) {
+        logger.debug('Subiendo nueva foto (Blob)', { viajeId: id });
         const url = await subirFotoViaje({
           storage,
           userId: usuario.uid,
@@ -257,6 +310,7 @@ export const useViajes = () => {
         typeof dataToSave.foto === 'string' &&
         dataToSave.foto.startsWith('data:image')
       ) {
+        logger.debug('Subiendo nueva foto (base64)', { viajeId: id });
         const url = await subirFotoViaje({
           storage,
           userId: usuario.uid,
@@ -269,10 +323,16 @@ export const useViajes = () => {
 
       delete dataToSave.fotoFile;
       await actualizarViaje({ db, userId: usuario.uid, viajeId: id, data: dataToSave });
+      logger.info('Viaje actualizado exitosamente', { viajeId: id });
       toast.success('Viaje actualizado');
       return true;
     } catch (updateError) {
-      console.error(updateError);
+      logger.error('Error actualizando viaje', {
+        error: updateError.message,
+        stack: updateError.stack,
+        viajeId: id,
+        userId: usuario.uid
+      });
       setError(updateError);
       toast.error('No se pudo actualizar el viaje');
       return false;
@@ -284,6 +344,13 @@ export const useViajes = () => {
 
     try {
       const fechaUso = lugarInfo.fecha || getTodayIsoDate();
+      
+      logger.debug('Agregando parada a viaje', { 
+        viajeId, 
+        paradaNombre: lugarInfo.nombre,
+        coordenadas: lugarInfo.coordenadas 
+      });
+      
       const climaInfo = await obtenerClimaHistoricoSeguro(
         lugarInfo.coordenadas?.[1],
         lugarInfo.coordenadas?.[0],
@@ -300,9 +367,15 @@ export const useViajes = () => {
           tipo: 'place'
         }
       });
+      
+      logger.info('Parada agregada exitosamente', { viajeId, paradaNombre: lugarInfo.nombre });
       return true;
     } catch (stopError) {
-      console.error(stopError);
+      logger.error('Error agregando parada', {
+        error: stopError.message,
+        viajeId,
+        paradaNombre: lugarInfo.nombre
+      });
       setError(stopError);
       return false;
     }
@@ -310,12 +383,22 @@ export const useViajes = () => {
 
   const eliminar = async (id) => {
     if (!usuario) return false;
+    
     try {
+      logger.info('Eliminando viaje', { viajeId: id, userId: usuario.uid });
+      
       await eliminarViaje({ db, userId: usuario.uid, viajeId: id });
+      
+      logger.info('Viaje eliminado exitosamente', { viajeId: id });
       toast.success('Eliminado correctamente');
       return true;
     } catch (deleteError) {
-      console.error(deleteError);
+      logger.error('Error eliminando viaje', {
+        error: deleteError.message,
+        stack: deleteError.stack,
+        viajeId: id,
+        userId: usuario.uid
+      });
       setError(deleteError);
       toast.error('No se pudo eliminar el viaje');
       return false;

@@ -16,6 +16,7 @@ import VisorViaje from './components/VisorViaje/VisorViaje';
 import SettingsPage from './pages/Configuracion/SettingsPage';
 import CuracionPage from './pages/Curacion/CuracionPage';
 
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useViajes } from './hooks/useViajes';
 import { useWindowSize } from './hooks/useWindowSize';
 import { useAuth } from './context/AuthContext';
@@ -285,17 +286,21 @@ function App() {
             {vistaActiva === 'mapa' && (
               <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle(isMobile)}>
                 <div style={styles.mapStatsOverlay(isMobile)}><StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} /></div>
-                <MapaViajes paises={paisesVisitados} paradas={todasLasParadas} />
+                <ErrorBoundary>
+                  <MapaViajes paises={paisesVisitados} paradas={todasLasParadas} />
+                </ErrorBoundary>
               </motion.div>
             )}
             {vistaActiva === 'bitacora' && (
               <motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
-                <BentoGrid
-                  viajes={bitacora}
-                  bitacoraData={bitacoraData}
-                  manejarEliminar={solicitarEliminarViaje}
-                  isDeletingViaje={isDeletingViaje}
-                />
+                <ErrorBoundary>
+                  <BentoGrid
+                    viajes={bitacora}
+                    bitacoraData={bitacoraData}
+                    manejarEliminar={solicitarEliminarViaje}
+                    isDeletingViaje={isDeletingViaje}
+                  />
+                </ErrorBoundary>
               </motion.div>
             )}
             {vistaActiva === 'config' && (
@@ -322,27 +327,31 @@ function App() {
         onNoResults={(query) => pushToast(`Sin resultados para "${query}"`, 'info', 2500)}
       />
 
-      <EdicionModal
-        viaje={viajeParaEditar}
-        bitacoraData={bitacoraData}
-        onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
-        onSave={handleGuardarModal}
-        isSaving={isSavingModal}
-        esBorrador={!!viajeBorrador}
-        ciudadInicial={ciudadInicialBorrador}
-      />
+      <ErrorBoundary>
+        <EdicionModal
+          viaje={viajeParaEditar}
+          bitacoraData={bitacoraData}
+          onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
+          onSave={handleGuardarModal}
+          isSaving={isSavingModal}
+          esBorrador={!!viajeBorrador}
+          ciudadInicial={ciudadInicialBorrador}
+        />
+      </ErrorBoundary>
 
-      <VisorViaje
-        viajeId={viajeExpandidoId}
-        bitacoraLista={bitacora}
-        bitacoraData={bitacoraData}
-        onClose={() => setViajeExpandidoId(null)}
-        onEdit={abrirEditor}
-        onSave={handleGuardarDesdeVisor}
-        onDelete={solicitarEliminarViaje}
-        isSaving={isSavingViewer}
-        isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
-      />
+      <ErrorBoundary>
+        <VisorViaje
+          viajeId={viajeExpandidoId}
+          bitacoraLista={bitacora}
+          bitacoraData={bitacoraData}
+          onClose={() => setViajeExpandidoId(null)}
+          onEdit={abrirEditor}
+          onSave={handleGuardarDesdeVisor}
+          onDelete={solicitarEliminarViaje}
+          isSaving={isSavingViewer}
+          isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
+        />
+      </ErrorBoundary>
 
       <ConfirmModal
         isOpen={!!confirmarEliminacion}
