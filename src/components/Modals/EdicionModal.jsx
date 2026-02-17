@@ -10,6 +10,8 @@ import { useWindowSize } from '../../hooks/useWindowSize';
 import CityManager from '../Shared/CityManager';
 import { compressImage } from '../../utils/imageUtils';
 import { generarTituloInteligente } from '../../utils/viajeUtils';
+import { GalleryUploader } from '../Shared/GalleryUploader';
+import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
@@ -18,6 +20,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  // Estado para galería (solo para viajes existentes)
+  const tieneViaje = !!(viaje && viaje.id);
+  const galeria = useGaleriaViaje(tieneViaje ? viaje.id : null);
+  const [galleryFiles, setGalleryFiles] = useState([]);
+  const [galleryPortada, setGalleryPortada] = useState(0);
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
   const titlePulseRef = useRef(null);
@@ -84,6 +91,12 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
 
   const handleSave = async () => {
     if (!formData.nombreEspanol || isProcessingImage || isSaving) return;
+    // Si hay archivos de galería nuevos y es viaje existente, subirlos
+    if (tieneViaje && galleryFiles.length > 0) {
+      await galeria.subirFotos(galleryFiles, galleryPortada);
+      setGalleryFiles([]);
+      setGalleryPortada(0);
+    }
     const ok = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
     if (ok) onClose();
   };
@@ -181,6 +194,33 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
           </div>
 
           <div style={styles.body} className="custom-scroll">
+            {/* Galería de fotos (solo para viajes existentes) */}
+            {tieneViaje && (
+              <div style={styles.section}>
+                <label style={styles.label}>Galería de fotos</label>
+                <GalleryUploader
+                  files={galleryFiles}
+                  onChange={setGalleryFiles}
+                  portadaIndex={galleryPortada}
+                  onPortadaChange={setGalleryPortada}
+                  maxFiles={10}
+                  disabled={isBusy || galeria.uploading}
+                />
+                {/* Estado de subida */}
+                {galeria.uploading && <span style={styles.inlineInfo}>Subiendo fotos...</span>}
+                {/* Previsualización de fotos ya subidas */}
+                {galeria.fotos.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <span style={styles.labelSecundario}>Fotos ya subidas:</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {galeria.fotos.map((f, i) => (
+                        <img key={f.id} src={f.url} alt={f.caption || 'foto'} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, border: f.esPortada ? '2px solid #f59e42' : '1px solid #e2e8f0' }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div style={styles.section}>
                 <label style={styles.label}><Calendar size={14}/> Fechas</label>
                 <div style={styles.row}>

@@ -11,6 +11,8 @@ import { COLORS } from '../../theme';
 import CityManager from '../Shared/CityManager';
 import MiniMapaRuta from '../Shared/MiniMapaRuta';
 import { compressImage } from '../../utils/imageUtils';
+import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
+import { GalleryGrid } from '../Shared/GalleryGrid';
 
 const VisorViaje = ({
   viajeId,
@@ -44,6 +46,9 @@ const VisorViaje = ({
       fetchParadas();
     }
   }, [viajeId, usuario]);
+
+  // Galería de fotos del viaje
+  const galeria = useGaleriaViaje(viajeId);
 
   if (!viajeId || !data) return null;
 
@@ -232,6 +237,12 @@ const VisorViaje = ({
             ) : (
               <p style={styles.readText}>{data.texto || 'Sin relato aun...'}</p>
             )}
+
+            {/* Galería de fotos */}
+            <div style={{ marginTop: '32px' }}>
+              <h3 style={styles.sectionTitle}>Galería de fotos</h3>
+              <GalleryGrid fotos={galeria.fotos} isMobile={false} />
+            </div>
 
             <div style={{ marginTop: '40px' }}>
               <h3 style={styles.sectionTitle}>Ruta</h3>

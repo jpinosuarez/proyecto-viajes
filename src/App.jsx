@@ -327,31 +327,37 @@ function App() {
         onNoResults={(query) => pushToast(`Sin resultados para "${query}"`, 'info', 2500)}
       />
 
-      <ErrorBoundary>
-        <EdicionModal
-          viaje={viajeParaEditar}
-          bitacoraData={bitacoraData}
-          onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
-          onSave={handleGuardarModal}
-          isSaving={isSavingModal}
-          esBorrador={!!viajeBorrador}
-          ciudadInicial={ciudadInicialBorrador}
-        />
-      </ErrorBoundary>
 
-      <ErrorBoundary>
-        <VisorViaje
-          viajeId={viajeExpandidoId}
-          bitacoraLista={bitacora}
-          bitacoraData={bitacoraData}
-          onClose={() => setViajeExpandidoId(null)}
-          onEdit={abrirEditor}
-          onSave={handleGuardarDesdeVisor}
-          onDelete={solicitarEliminarViaje}
-          isSaving={isSavingViewer}
-          isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
-        />
-      </ErrorBoundary>
+      {/* Renderizar modales solo si hay viaje para editar o expandir */}
+      {viajeParaEditar && (
+        <ErrorBoundary>
+          <EdicionModal
+            viaje={viajeParaEditar}
+            bitacoraData={bitacoraData}
+            onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
+            onSave={handleGuardarModal}
+            isSaving={isSavingModal}
+            esBorrador={!!viajeBorrador}
+            ciudadInicial={ciudadInicialBorrador}
+          />
+        </ErrorBoundary>
+      )}
+
+      {viajeExpandidoId && (
+        <ErrorBoundary>
+          <VisorViaje
+            viajeId={viajeExpandidoId}
+            bitacoraLista={bitacora}
+            bitacoraData={bitacoraData}
+            onClose={() => setViajeExpandidoId(null)}
+            onEdit={abrirEditor}
+            onSave={handleGuardarDesdeVisor}
+            onDelete={solicitarEliminarViaje}
+            isSaving={isSavingViewer}
+            isDeleting={!!(viajeExpandidoId && viajesEliminando.has(viajeExpandidoId))}
+          />
+        </ErrorBoundary>
+      )}
 
       <ConfirmModal
         isOpen={!!confirmarEliminacion}
