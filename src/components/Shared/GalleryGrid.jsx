@@ -74,8 +74,14 @@ function Lightbox({ foto, onClose, onPrev, onNext, hasNext, hasPrev, totalFotos,
       if (e.key === 'ArrowRight' && hasNext) onNext();
     };
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [onClose, onPrev, onNext, hasNext, hasPrev]);
 
   return (
@@ -177,7 +183,8 @@ export function GalleryGrid({ fotos = [], isMobile = false }) {
     return (
       <div style={styles.emptyState}>
         <Star size={48} color={COLORS.textSecondary} />
-        <p style={styles.emptyText}>No hay fotos en la galería</p>
+        <p style={styles.emptyText}>Aun no hay fotos en la galeria</p>
+        <p style={styles.emptySubtext}>Agrega momentos para darle vida a esta historia.</p>
       </div>
     );
   }
@@ -219,7 +226,7 @@ const styles = {
   grid: (isMobile) => ({
     display: 'grid',
     gridTemplateColumns: isMobile 
-      ? 'repeat(auto-fill, minmax(100px, 1fr))' 
+      ? 'repeat(auto-fill, minmax(120px, 1fr))' 
       : 'repeat(auto-fill, minmax(200px, 1fr))',
     gap: isMobile ? '8px' : '16px',
     width: '100%',
@@ -276,12 +283,22 @@ const styles = {
   },
   emptyState: {
     textAlign: 'center',
-    padding: '60px 20px',
+    padding: '50px 20px',
     color: COLORS.textSecondary,
+    backgroundColor: COLORS.background,
+    border: `1px dashed ${COLORS.border}`,
+    borderRadius: RADIUS.md,
   },
   emptyText: {
     fontSize: '16px',
+    fontWeight: '600',
+    color: COLORS.textPrimary,
     marginTop: '16px',
+  },
+  emptySubtext: {
+    marginTop: '6px',
+    fontSize: '13px',
+    color: COLORS.textSecondary,
   },
   
   // Lightbox styles

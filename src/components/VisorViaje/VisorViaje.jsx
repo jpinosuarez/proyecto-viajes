@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Edit3, Calendar, Check, X, Camera, Trash2, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, Check, X, Camera, Trash2, LoaderCircle, Star } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,7 @@ import MiniMapaRuta from '../Shared/MiniMapaRuta';
 import { compressImage } from '../../utils/imageUtils';
 import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
 import { GalleryGrid } from '../Shared/GalleryGrid';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 const VisorViaje = ({
   viajeId,
@@ -27,6 +28,7 @@ const VisorViaje = ({
 }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
+  const { isMobile } = useWindowSize(900);
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
   const data = bitacoraData[viajeId] || viajeBase || {};
 
@@ -34,6 +36,8 @@ const VisorViaje = ({
   const [formTemp, setFormTemp] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [captionDrafts, setCaptionDrafts] = useState({});
+  const [showGalleryTools, setShowGalleryTools] = useState(false);
 
   useEffect(() => {
     if (viajeId && usuario) {
@@ -69,6 +73,37 @@ const VisorViaje = ({
 
   const eliminarEsteViaje = () => {
     onDelete(viajeId);
+  };
+
+  const handleSetPortadaExistente = async (fotoId) => {
+    const ok = await galeria.cambiarPortada(fotoId);
+    if (!ok) pushToast('No se pudo actualizar la portada.', 'error');
+  };
+
+  const handleEliminarFoto = async (fotoId) => {
+    const confirm = window.confirm('Eliminar esta foto de la galeria?');
+    if (!confirm) return;
+    const ok = await galeria.eliminar(fotoId);
+    if (!ok) pushToast('No se pudo eliminar la foto.', 'error');
+  };
+
+  const handleCaptionChange = (fotoId, value) => {
+    setCaptionDrafts((prev) => ({ ...prev, [fotoId]: value }));
+  };
+
+  const handleCaptionSave = async (foto) => {
+    const draft = captionDrafts[foto.id];
+    if (draft === undefined) return;
+    const normalized = draft.trim();
+    const nextCaption = normalized.length ? normalized : null;
+    const currentCaption = foto.caption || null;
+    if (currentCaption === nextCaption) return;
+    const ok = await galeria.actualizarCaption(foto.id, nextCaption);
+    if (!ok) {
+      pushToast('No se pudo guardar el caption.', 'error');
+      return;
+    }
+    pushToast('Caption actualizado.', 'success', 1500);
   };
 
   const handleReplaceImage = async (e) => {
@@ -240,8 +275,60 @@ const VisorViaje = ({
 
             {/* Galería de fotos */}
             <div style={{ marginTop: '32px' }}>
-              <h3 style={styles.sectionTitle}>Galería de fotos</h3>
-              <GalleryGrid fotos={galeria.fotos} isMobile={false} />
+              <div style={styles.galleryHeaderRow}>
+                <h3 style={styles.sectionTitle}>Galería de fotos</h3>
+                <button
+                  type="button"
+                  style={styles.galleryToggleBtn(showGalleryTools)}
+                  onClick={() => setShowGalleryTools((prev) => !prev)}
+                >
+                  {showGalleryTools ? 'Ocultar edicion' : 'Editar galeria'}
+                </button>
+              </div>
+              <p style={styles.gallerySubtitle}>Tus recuerdos, listos para contar la historia.</p>
+              <GalleryGrid fotos={galeria.fotos} isMobile={isMobile} />
+              {showGalleryTools && galeria.fotos.length > 0 && (
+                <div style={styles.galleryManageBlock}>
+                  {galeria.fotos.map((f) => (
+                    <div key={f.id} style={styles.galleryManageCard(f.esPortada)}>
+                      <img src={f.url} alt={f.caption || 'foto'} style={styles.galleryManageImg} />
+                      <input
+                        type="text"
+                        value={captionDrafts[f.id] ?? (f.caption || '')}
+                        onChange={(e) => handleCaptionChange(f.id, e.target.value)}
+                        onBlur={() => handleCaptionSave(f)}
+                        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                        placeholder="Agregar caption..."
+                        style={styles.captionInput}
+                      />
+                      <div style={styles.galleryActionsRow}>
+                        <button
+                          type="button"
+                          style={styles.galleryActionBtn(f.esPortada)}
+                          onClick={() => handleSetPortadaExistente(f.id)}
+                          disabled={isBusy}
+                          title="Marcar como portada"
+                          aria-label="Marcar como portada"
+                        >
+                          <Star size={14} />
+                          {f.esPortada ? 'Portada' : 'Hacer portada'}
+                        </button>
+                        <button
+                          type="button"
+                          style={styles.galleryDangerBtn}
+                          onClick={() => handleEliminarFoto(f.id)}
+                          disabled={isBusy}
+                          title="Eliminar foto"
+                          aria-label="Eliminar foto"
+                        >
+                          <Trash2 size={14} />
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: '40px' }}>

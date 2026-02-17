@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, Camera, Calendar, LoaderCircle } from 'lucide-react';
+import { Save, Camera, Calendar, LoaderCircle, Star, Trash2 } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
@@ -20,85 +20,218 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
-  // Estado para galería (solo para viajes existentes)
-  const tieneViaje = !!(viaje && viaje.id);
-  const galeria = useGaleriaViaje(tieneViaje ? viaje.id : null);
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [galleryPortada, setGalleryPortada] = useState(0);
+  const [captionDrafts, setCaptionDrafts] = useState({});
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
   const titlePulseRef = useRef(null);
+  const prevViajeIdRef = useRef(null);
 
+  // Hook de galería: no cargar para borradores (id 'new') — solo cuando es un viaje guardado
+  const galeria = useGaleriaViaje(!esBorrador && viaje?.id ? viaje.id : null);
+
+  // Limpieza total cuando cambia el viaje o se abre para nuevo registro
   useEffect(() => {
-    if (viaje) {
-      setFormData({
-        ...viaje,
-        titulo: esBorrador ? (viaje.titulo || '') : (viaje.titulo || `Viaje a ${viaje.nombreEspanol}`),
-        fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
-        fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
-        foto: viaje.foto,
-        texto: viaje.texto || "",
-        flag: viaje.flag,
-        code: viaje.code,
-        nombreEspanol: viaje.nombreEspanol
-      });
-      
-      if (esBorrador && ciudadInicial) {
-        // Nuevo viaje: agregar ciudad inicial
-        setParadas([{ 
-            id: 'init', 
-            nombre: ciudadInicial.nombre, 
-            coordenadas: ciudadInicial.coordenadas,
-            fecha: viaje.fechaInicio || new Date().toISOString().split('T')[0],
-            paisCodigo: ciudadInicial.paisCodigo,
-            flag: viaje.flag 
-        }]);
-      } else if (!esBorrador && usuario && viaje.id) {
-        // Viaje existente: cargar paradas desde Firestore
-        const cargarParadas = async () => {
-          try {
-            const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
-            const snap = await getDocs(paradasRef);
-            const loaded = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            setParadas(loaded.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)));
-          } catch (e) {
-            console.error("Error cargando paradas:", e);
-            setParadas([]);
-          }
-        };
-        cargarParadas();
-      } else {
-        setParadas([]); 
-      }
-      setIsTituloAuto(esBorrador);
+    const currentViajeId = viaje?.id || null;
+    const prevViajeId = prevViajeIdRef.current;
+
+    // Si cambió el viajeId, limpiar todo (no dependemos de la referencia de `galeria`)
+    if (prevViajeId !== currentViajeId) {
+      setGalleryFiles([]);
+      setGalleryPortada(0);
+      setCaptionDrafts({});
+      // llamar a limpiar si está disponible
+      galeria.limpiar?.();
+      prevViajeIdRef.current = currentViajeId;
+    }
+  }, [viaje?.id]);
+
+
+  // Inicialización de estado al abrir modal
+  useEffect(() => {
+    if (!viaje) {
+      // Sin viaje: limpiar todo
+      setFormData({});
+      setParadas([]);
+      setGalleryFiles([]);
+      setGalleryPortada(0);
+      setCaptionDrafts({});
+      setIsTituloAuto(true);
+      galeria.limpiar?.();
+      return;
+    }
+
+    // Nuevo viaje (borrador): limpiar archivos locales
+    if (esBorrador) {
+      setGalleryFiles([]);
+      setGalleryPortada(0);
+      setCaptionDrafts({});
+      galeria.limpiar?.();
+    }
+
+    // Inicializar formData
+    setFormData({
+      ...viaje,
+      titulo: esBorrador ? (viaje.titulo || '') : (viaje.titulo || `Viaje a ${viaje.nombreEspanol}`),
+      fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+      fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
+      foto: viaje.foto,
+      texto: viaje.texto || "",
+      flag: viaje.flag,
+      code: viaje.code,
+      nombreEspanol: viaje.nombreEspanol
+    });
+
+    // Solo activar auto si es borrador Y no hay título manual existente
+    setIsTituloAuto(esBorrador && (!viaje.titulo || viaje.titulo.trim() === ''));
+
+    // Paradas
+    if (esBorrador && ciudadInicial) {
+      setParadas([{ 
+        id: 'init', 
+        nombre: ciudadInicial.nombre, 
+        coordenadas: ciudadInicial.coordenadas,
+        fecha: viaje.fechaInicio || new Date().toISOString().split('T')[0],
+        paisCodigo: ciudadInicial.paisCodigo,
+        flag: viaje.flag 
+      }]);
+    } else if (!esBorrador && usuario && viaje.id) {
+      const cargarParadas = async () => {
+        try {
+          const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
+          const snap = await getDocs(paradasRef);
+          const loaded = snap.docs.map(d => ({id: d.id, ...d.data()}));
+          setParadas(loaded.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)));
+        } catch (e) {
+          setParadas([]);
+        }
+      };
+      cargarParadas();
+    } else {
+      setParadas([]); 
     }
   }, [viaje, esBorrador, ciudadInicial, usuario]);
 
+  // Limpieza de estado al cerrar modal
+  useEffect(() => {
+    return () => {
+      setFormData({});
+      setParadas([]);
+      setGalleryFiles([]);
+      setGalleryPortada(0);
+      setCaptionDrafts({});
+      setIsTituloAuto(true);
+    };
+  }, []);
+
+  // Actualiza el título automáticamente solo si isTituloAuto está activo
   useEffect(() => {
     if (!esBorrador || !isTituloAuto) return;
     const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
-    if (tituloAuto && tituloAuto !== formData.titulo) {
+    if (tituloAuto !== formData.titulo) {
       setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
       setTitlePulse(true);
       if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
       titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
     }
-  }, [esBorrador, isTituloAuto, paradas, formData.nombreEspanol, formData.titulo]);
+    // eslint-disable-next-line
+  }, [esBorrador, isTituloAuto, paradas, formData.nombreEspanol]);
+
+  // Si el usuario cambia de manual a auto, regenerar el título inmediatamente
+  useEffect(() => {
+    if (!esBorrador) return;
+    if (isTituloAuto) {
+      const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
+      setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
+      setTitlePulse(true);
+      if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
+      titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
+    }
+    // eslint-disable-next-line
+  }, [isTituloAuto]);
 
   useEffect(() => () => {
     if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
   }, []);
 
+  // Validación cruzada fechas/paradas
+  const paradasFueraDeRango = paradas.some(p =>
+    (formData.fechaInicio && new Date(p.fecha) < new Date(formData.fechaInicio)) ||
+    (formData.fechaFin && new Date(p.fecha) > new Date(formData.fechaFin))
+  );
+
+  const limpiarEstado = () => {
+    setFormData({});
+    setParadas([]);
+    setGalleryFiles([]);
+    setGalleryPortada(0);
+    setCaptionDrafts({});
+    setIsTituloAuto(true);
+    galeria.limpiar?.();
+  };
+
   const handleSave = async () => {
     if (!formData.nombreEspanol || isProcessingImage || isSaving) return;
-    // Si hay archivos de galería nuevos y es viaje existente, subirlos
-    if (tieneViaje && galleryFiles.length > 0) {
-      await galeria.subirFotos(galleryFiles, galleryPortada);
-      setGalleryFiles([]);
-      setGalleryPortada(0);
+
+    // Guardar viaje (retorna el viajeId o null)
+    const savedViajeId = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
+
+    if (savedViajeId) {
+      // Subir fotos pendientes al viaje guardado
+      if (galleryFiles.length > 0) {
+        try {
+          // Crear instancia temporal de galeria con el ID correcto
+          const { subirFotosMultiples } = await import('../../services/viajes/galeriaService');
+          const { storage, db } = await import('../../firebase');
+          await subirFotosMultiples({
+            storage,
+            db,
+            userId: usuario.uid,
+            viajeId: savedViajeId,
+            files: galleryFiles,
+            portadaIndex: galleryPortada
+          });
+          pushToast('Fotos subidas correctamente', 'success');
+        } catch (err) {
+          console.error('Error subiendo fotos:', err);
+          pushToast('No se pudieron subir algunas fotos', 'error');
+        }
+      }
+      limpiarEstado();
+      onClose();
     }
-    const ok = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
-    if (ok) onClose();
+  };
+
+  const handleSetPortadaExistente = async (fotoId) => {
+    const ok = await galeria.cambiarPortada(fotoId);
+    if (!ok) pushToast('No se pudo actualizar la portada.', 'error');
+  };
+
+  const handleEliminarFoto = async (fotoId) => {
+    const confirm = window.confirm('Eliminar esta foto de la galeria?');
+    if (!confirm) return;
+    const ok = await galeria.eliminar(fotoId);
+    if (!ok) pushToast('No se pudo eliminar la foto.', 'error');
+  };
+
+  const handleCaptionChange = (fotoId, value) => {
+    setCaptionDrafts((prev) => ({ ...prev, [fotoId]: value }));
+  };
+
+  const handleCaptionSave = async (foto) => {
+    const draft = captionDrafts[foto.id];
+    if (draft === undefined) return;
+    const normalized = draft.trim();
+    const nextCaption = normalized.length ? normalized : null;
+    const currentCaption = foto.caption || null;
+    if (currentCaption === nextCaption) return;
+    const ok = await galeria.actualizarCaption(foto.id, nextCaption);
+    if (!ok) {
+      pushToast('No se pudo guardar el caption.', 'error');
+      return;
+    }
+    pushToast('Caption actualizado.', 'success', 1500);
   };
 
   const handleFileChange = async (e) => {
@@ -158,7 +291,8 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                       name="titulo"
                       value={formData.titulo || ''}
                       onChange={e => {
-                        setFormData({...formData, titulo: e.target.value});
+                        setFormData(prev => ({...prev, titulo: e.target.value}));
+                        // Solo desactivar auto si estaba en auto y el valor cambia manualmente
                         if (esBorrador && isTituloAuto) setIsTituloAuto(false);
                       }}
                       style={titlePulse ? styles.titleInputAutoPulse : styles.titleInput}
@@ -171,8 +305,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                         style={styles.autoBadge(isTituloAuto)}
                         title={isTituloAuto
                           ? 'Se actualiza al agregar o quitar ciudades'
-                          : 'Usando titulo manual. Click para volver a auto.'}
-                        onClick={() => setIsTituloAuto((prev) => !prev)}
+                          : 'Usando título manual. Click para volver a auto.'}
+                        onClick={() => {
+                          // Si pasa de manual a auto, regenerar el título
+                          setIsTituloAuto((prev) => !prev);
+                        }}
                         disabled={isBusy}
                       >
                         {isTituloAuto ? 'Auto' : 'Manual'}
@@ -194,53 +331,103 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
           </div>
 
           <div style={styles.body} className="custom-scroll">
-            {/* Galería de fotos (solo para viajes existentes) */}
-            {tieneViaje && (
-              <div style={styles.section}>
-                <label style={styles.label}>Galería de fotos</label>
-                <GalleryUploader
-                  files={galleryFiles}
-                  onChange={setGalleryFiles}
-                  portadaIndex={galleryPortada}
-                  onPortadaChange={setGalleryPortada}
-                  maxFiles={10}
-                  disabled={isBusy || galeria.uploading}
-                />
-                {/* Estado de subida */}
-                {galeria.uploading && <span style={styles.inlineInfo}>Subiendo fotos...</span>}
-                {/* Previsualización de fotos ya subidas */}
-                {galeria.fotos.length > 0 && (
-                  <div style={{ marginTop: 12 }}>
-                    <span style={styles.labelSecundario}>Fotos ya subidas:</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {galeria.fotos.map((f, i) => (
-                        <img key={f.id} src={f.url} alt={f.caption || 'foto'} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, border: f.esPortada ? '2px solid #f59e42' : '1px solid #e2e8f0' }} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Galería de fotos (siempre disponible) */}
             <div style={styles.section}>
-                <label style={styles.label}><Calendar size={14}/> Fechas</label>
-                <div style={styles.row}>
-                <input type="date" value={formData.fechaInicio || ''} onChange={e => setFormData({...formData, fechaInicio: e.target.value})} style={styles.dateInput} disabled={isBusy} />
-                    <span style={{color:'#94a3b8'}}>hasta</span>
-                <input type="date" value={formData.fechaFin || ''} onChange={e => setFormData({...formData, fechaFin: e.target.value})} style={styles.dateInput} disabled={isBusy} />
+              <label style={styles.label}>Galería de fotos</label>
+              <GalleryUploader
+                files={galleryFiles}
+                onChange={setGalleryFiles}
+                portadaIndex={galleryPortada}
+                onPortadaChange={setGalleryPortada}
+                maxFiles={10}
+                disabled={isBusy || galeria.uploading}
+                isMobile={isMobile}
+              />
+              {galeria.uploading && <span style={styles.inlineInfo}>Subiendo fotos...</span>}
+              {/* Mostrar galería solo si el viaje tiene id */}
+              {/* Mostrar galería del servidor SOLO para viajes guardados (no para borradores) */}
+              {!esBorrador && viaje?.id && galeria.fotos.length > 0 && (
+                <div style={styles.galleryManageBlock}>
+                  <div style={styles.galleryManageGrid}>
+                    {galeria.fotos.map((f) => (
+                      <div key={f.id} style={styles.galleryManageCard(f.esPortada)}>
+                        <img src={f.url} alt={f.caption || 'foto'} style={styles.galleryManageImg} />
+                        <input
+                          type="text"
+                          value={captionDrafts[f.id] ?? (f.caption || '')}
+                          onChange={(e) => handleCaptionChange(f.id, e.target.value)}
+                          onBlur={() => handleCaptionSave(f)}
+                          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                          placeholder="Caption"
+                          style={styles.captionInput}
+                          aria-label="Editar caption"
+                        />
+                        <div style={styles.galleryActionsRow}>
+                          <button
+                            type="button"
+                            style={styles.galleryActionBtn(f.esPortada)}
+                            onClick={() => handleSetPortadaExistente(f.id)}
+                            disabled={isBusy}
+                            title="Marcar como portada"
+                            aria-label={f.esPortada ? 'Imagen actual de portada' : 'Marcar como portada'}
+                          >
+                            <Star size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            style={styles.galleryDangerBtn}
+                            onClick={() => handleEliminarFoto(f.id)}
+                            disabled={isBusy}
+                            title="Eliminar foto"
+                            aria-label="Eliminar foto"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        {f.esPortada && <span style={styles.portadaBadgeMini}>Portada</span>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+            </div>
+            {/* Fechas y ciudades agrupadas visualmente */}
+            <div style={styles.section}>
+              <label style={styles.label}><Calendar size={14}/> Fechas y Paradas</label>
+              <div style={styles.row}>
+                <input
+                  type="date"
+                  value={formData.fechaInicio || ''}
+                  onChange={e => setFormData({...formData, fechaInicio: e.target.value})}
+                  style={styles.dateInput}
+                  disabled={isBusy}
+                  aria-label="Fecha de inicio"
+                  title="Fecha de inicio del viaje"
+                />
+                <span style={{color:'#94a3b8'}}>hasta</span>
+                <input
+                  type="date"
+                  value={formData.fechaFin || ''}
+                  onChange={e => setFormData({...formData, fechaFin: e.target.value})}
+                  style={styles.dateInput}
+                  disabled={isBusy}
+                  aria-label="Fecha de fin"
+                  title="Fecha de fin del viaje"
+                />
+              </div>
               {fechasInvalidas && (
                 <span style={styles.inlineError}>La fecha de fin no puede ser anterior al inicio.</span>
               )}
-            </div>
-            <div style={styles.section}>
-                <label style={styles.label}>Ciudades y Paradas</label>
-                <CityManager paradas={paradas} setParadas={setParadas} />
+              <CityManager paradas={paradas} setParadas={setParadas} rango={{inicio: formData.fechaInicio, fin: formData.fechaFin}} />
               {sinParadas && (
                 <span style={styles.inlineError}>Agrega al menos una ciudad para continuar.</span>
               )}
+              {paradasFueraDeRango && (
+                <span style={styles.inlineError}>Hay paradas fuera del rango de fechas del viaje.</span>
+              )}
             </div>
             <div style={styles.section}>
-                <label style={styles.label}>Notas</label>
+              <label style={styles.label}>Notas</label>
               <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." disabled={isBusy} />
             </div>
             <div style={styles.footer}>

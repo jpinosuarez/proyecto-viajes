@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Star } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS } from '../../theme';
+import { useToast } from '../../context/ToastContext';
 
 /**
  * Componente para subir múltiples fotos a la galería de un viaje
@@ -20,34 +21,68 @@ export function GalleryUploader({
   maxFiles = 10,
   portadaIndex = 0,
   onPortadaChange,
-  disabled = false 
+  disabled = false,
+  isMobile = false
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [previews, setPreviews] = useState([]);
   const fileInputRef = useRef(null);
+  const { pushToast } = useToast();
+
+  // Previews se generan localmente al seleccionar archivos (handleFileSelect).
+  // No necesitamos un efecto que sincronice previews desde `files` — el padre
+  // controla el array `files` y las previews se crean/limpian al usar `onChange`.
+
 
   const handleFileSelect = (newFiles) => {
     if (disabled) return;
 
-    const validFiles = Array.from(newFiles).filter(file => {
+    const incoming = Array.from(newFiles);
+    const validFiles = [];
+    let invalidTypeCount = 0;
+    let invalidSizeCount = 0;
+
+    incoming.forEach((file) => {
       const isImage = file.type.startsWith('image/');
       const isValidFormat = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
       const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
 
-      return isImage && isValidFormat && isValidSize;
+      if (!isImage || !isValidFormat) {
+        invalidTypeCount += 1;
+        return;
+      }
+
+      if (!isValidSize) {
+        invalidSizeCount += 1;
+        return;
+      }
+
+      validFiles.push(file);
     });
 
-    const totalFiles = files.length + validFiles.length;
-    if (totalFiles > maxFiles) {
-      alert(`Solo puedes subir máximo ${maxFiles} fotos. Seleccionaste ${totalFiles}.`);
-      return;
+    const remainingSlots = Math.max(0, maxFiles - files.length);
+    const acceptedFiles = validFiles.slice(0, remainingSlots);
+    const skippedByLimit = Math.max(0, validFiles.length - acceptedFiles.length);
+
+    if (invalidTypeCount > 0) {
+      pushToast(`Se descartaron ${invalidTypeCount} archivo(s) por formato.`, 'error');
     }
 
-    const updatedFiles = [...files, ...validFiles];
+    if (invalidSizeCount > 0) {
+      pushToast(`Se descartaron ${invalidSizeCount} archivo(s) por tamano (max 10MB).`, 'error');
+    }
+
+    if (skippedByLimit > 0) {
+      pushToast(`Solo puedes subir ${maxFiles} fotos. Se omitieron ${skippedByLimit}.`, 'info');
+    }
+
+    if (acceptedFiles.length === 0) return;
+
+    const updatedFiles = [...files, ...acceptedFiles];
     onChange(updatedFiles);
 
     // Generar previews
-    validFiles.forEach(file => {
+    acceptedFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviews(prev => [...prev, { file, url: e.target.result }]);
@@ -160,12 +195,13 @@ export function GalleryUploader({
                   )}
 
                   {/* Overlay con acciones */}
-                  <div style={styles.overlay}>
+                  <div style={styles.overlay(isMobile)}>
                     {!isPortada && (
                       <button
                         style={styles.actionBtn}
                         onClick={() => handleSetPortada(index)}
                         title="Marcar como portada"
+                        aria-label="Marcar como portada"
                         disabled={disabled}
                       >
                         <Star size={16} />
@@ -175,6 +211,7 @@ export function GalleryUploader({
                       style={styles.actionBtn}
                       onClick={() => handleRemoveFile(index)}
                       title="Eliminar"
+                      aria-label="Eliminar"
                       disabled={disabled}
                     >
                       <X size={16} />
@@ -265,19 +302,16 @@ const styles = {
     justifyContent: 'center',
     backgroundColor: COLORS.background,
   },
-  overlay: {
+  overlay: (isMobile) => ({
     position: 'absolute',
     top: 0,
     right: 0,
     padding: '8px',
     display: 'flex',
     gap: '4px',
-    opacity: 0,
+    opacity: 1,
     transition: 'opacity 0.2s ease',
-    ':hover': {
-      opacity: 1,
-    },
-  },
+  }),
   actionBtn: {
     width: '30px',
     height: '30px',
@@ -339,16 +373,4 @@ const styles = {
   },
 };
 
-// Añadir hover effect con JavaScript (workaround para inline styles)
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    [style*="previewImage"] [style*="overlay"] {
-      opacity: 0;
-    }
-    [style*="previewImage"]:hover [style*="overlay"] {
-      opacity: 1;
-    }
-  `;
-  document.head.appendChild(style);
-}
+// Acciones visibles por defecto para accesibilidad y soporte mobile

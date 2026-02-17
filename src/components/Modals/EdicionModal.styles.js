@@ -73,6 +73,7 @@ export const styles = {
   body: { padding: '25px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 },
   section: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { fontSize: '0.8rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', display:'flex', alignItems:'center', gap:'6px' },
+  subtleText: { fontSize: '0.85rem', color: COLORS.textSecondary },
   row: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' },
   dateInput: {
     border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm,
@@ -87,6 +88,81 @@ export const styles = {
   },
   inlineError: {
     fontSize: '0.8rem', fontWeight: '600', color: '#b91c1c'
+  },
+  inlineInfo: {
+    fontSize: '0.8rem', fontWeight: '600', color: COLORS.mutedTeal
+  },
+  labelSecundario: {
+    fontSize: '0.75rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase'
+  },
+  galleryManageBlock: {
+    marginTop: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px'
+  },
+  galleryManageGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+    gap: '12px'
+  },
+  galleryManageCard: (isPortada) => ({
+    border: `1px solid ${isPortada ? COLORS.atomicTangerine : COLORS.border}`,
+    borderRadius: RADIUS.sm,
+    overflow: 'hidden',
+    background: COLORS.surface,
+    boxShadow: isPortada ? SHADOWS.md : SHADOWS.sm,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    padding: '8px'
+  }),
+  galleryManageImg: {
+    width: '100%',
+    height: '120px',
+    objectFit: 'cover',
+    borderRadius: RADIUS.sm
+  },
+  captionInput: {
+    width: '100%',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: RADIUS.sm,
+    padding: '6px 8px',
+    fontSize: '0.85rem',
+    color: COLORS.textPrimary,
+    outline: 'none',
+    background: COLORS.background
+  },
+  galleryActionsRow: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap'
+  },
+  galleryActionBtn: (isPortada) => ({
+    border: `1px solid ${isPortada ? COLORS.atomicTangerine : COLORS.border}`,
+    background: isPortada ? `${COLORS.atomicTangerine}15` : 'white',
+    color: isPortada ? COLORS.atomicTangerine : COLORS.textPrimary,
+    borderRadius: RADIUS.full,
+    padding: '6px 10px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    cursor: 'pointer'
+  }),
+  galleryDangerBtn: {
+    border: `1px solid ${COLORS.border}`,
+    background: 'white',
+    color: COLORS.danger,
+    borderRadius: RADIUS.full,
+    padding: '6px 10px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    cursor: 'pointer'
   },
   footer: {
     borderTop: `1px solid ${COLORS.border}`, padding: '20px',
