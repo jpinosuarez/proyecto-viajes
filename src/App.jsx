@@ -120,7 +120,7 @@ function App() {
   }, [closeBuscador, setFiltro, setViajeBorrador, setCiudadInicialBorrador]);
 
   const handleGuardarModal = async (id, datosCombinados) => {
-    if (isSavingModal) return false;
+    if (isSavingModal) return null;
     setIsSavingModal(true);
     const { paradasNuevas, ...datosViaje } = datosCombinados;
 
@@ -134,13 +134,13 @@ function App() {
 
         const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
         if (!nuevoId) {
-          return false;
+          return null;
         }
 
         setViajeBorrador(null);
         setCiudadInicialBorrador(null);
         setTimeout(() => abrirVisor(nuevoId), 500);
-        return true;
+        return nuevoId; // Retornar el ID del nuevo viaje
       }
 
       const okViaje = await actualizarDetallesViaje(id, datosViaje);
@@ -155,13 +155,14 @@ function App() {
       }
 
       if (okViaje && okParadas) {
-        return true;
+        return id; // Retornar el ID existente
       }
 
       if (okViaje && !okParadas) {
         pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
+        return id; // Retornar el ID aunque haya error parcial
       }
-      return false;
+      return null;
     } finally {
       setIsSavingModal(false);
     }

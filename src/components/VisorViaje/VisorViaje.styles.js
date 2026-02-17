@@ -95,11 +95,97 @@ export const styles = {
     fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', 
     color: COLORS.mutedTeal, marginBottom: '15px', fontWeight: '800' 
   },
+  galleryHeaderRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px'
+  },
+  galleryToggleBtn: (active = false) => ({
+    border: `1px solid ${active ? COLORS.atomicTangerine : COLORS.border}`,
+    background: active ? `${COLORS.atomicTangerine}15` : 'white',
+    color: active ? COLORS.atomicTangerine : COLORS.textPrimary,
+    borderRadius: '999px',
+    padding: '6px 12px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    cursor: 'pointer'
+  }),
+  gallerySubtitle: {
+    marginTop: '-6px',
+    marginBottom: '12px',
+    color: COLORS.textSecondary,
+    fontSize: '0.9rem'
+  },
   readText: { fontSize: '1.1rem', lineHeight: 1.7, color: COLORS.charcoalBlue, whiteSpace: 'pre-wrap' },
   textArea: { 
     width: '100%', minHeight: '200px', padding: '20px', borderRadius: '16px', 
     border: '2px solid #e2e8f0', fontSize: '1rem', outline: 'none',
     ':focus': { borderColor: COLORS.atomicTangerine } 
+  },
+  galleryManageBlock: {
+    marginTop: '16px',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+    gap: '12px'
+  },
+  galleryManageCard: (isPortada) => ({
+    border: `1px solid ${isPortada ? COLORS.atomicTangerine : COLORS.border}`,
+    borderRadius: '12px',
+    overflow: 'hidden',
+    background: 'white',
+    boxShadow: isPortada ? '0 6px 14px rgba(15, 23, 42, 0.12)' : '0 4px 10px rgba(15, 23, 42, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    padding: '8px'
+  }),
+  galleryManageImg: {
+    width: '100%',
+    height: '120px',
+    objectFit: 'cover',
+    borderRadius: '10px'
+  },
+  captionInput: {
+    width: '100%',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '10px',
+    padding: '6px 8px',
+    fontSize: '0.85rem',
+    color: COLORS.textPrimary,
+    outline: 'none',
+    background: COLORS.background
+  },
+  galleryActionsRow: {
+    display: 'flex',
+    gap: '8px',
+    flexWrap: 'wrap'
+  },
+  galleryActionBtn: (isPortada) => ({
+    border: `1px solid ${isPortada ? COLORS.atomicTangerine : COLORS.border}`,
+    background: isPortada ? `${COLORS.atomicTangerine}15` : 'white',
+    color: isPortada ? COLORS.atomicTangerine : COLORS.textPrimary,
+    borderRadius: '999px',
+    padding: '6px 10px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    cursor: 'pointer'
+  }),
+  galleryDangerBtn: {
+    border: `1px solid ${COLORS.border}`,
+    background: 'white',
+    color: COLORS.danger,
+    borderRadius: '999px',
+    padding: '6px 10px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    cursor: 'pointer'
   },
   
   timeline: { borderLeft: `2px solid #e2e8f0`, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '20px' },

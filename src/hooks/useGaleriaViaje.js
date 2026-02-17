@@ -226,11 +226,26 @@ export function useGaleriaViaje(viajeId) {
   const fotoPortada = fotos.find(f => f.esPortada) || fotos[0] || null;
 
   /**
-   * Carga inicial
+   * Carga inicial y limpieza cuando cambia el viajeId
    */
   useEffect(() => {
-    cargarFotos();
-  }, [cargarFotos]);
+    if (!viajeId) {
+      // Sin viajeId: limpiar estado
+      setFotos([]);
+      setError(null);
+    } else {
+      // Con viajeId: cargar fotos de ese viaje
+      cargarFotos();
+    }
+  }, [viajeId, cargarFotos]);
+
+  /**
+   * Limpia el estado de la galería (para nuevo viaje o cierre de modal)
+   */
+  const limpiar = useCallback(() => {
+    setFotos([]);
+    setError(null);
+  }, []);
 
   return {
     fotos,
@@ -242,6 +257,7 @@ export function useGaleriaViaje(viajeId) {
     eliminar,
     cambiarPortada,
     actualizarCaption,
-    recargar: cargarFotos
+    recargar: cargarFotos,
+    limpiar
   };
 }
