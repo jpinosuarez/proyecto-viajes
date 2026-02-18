@@ -52,6 +52,11 @@ function extractArray(field) {
 }
 
 test.describe('Invitations flow (E2E)', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('console', (msg) => {
+      console.log(`PAGE LOG [${msg.type()}]: ${msg.text()}`);
+    });
+  });
   test('invitee accepts invitation and sees shared viaje', async ({ page }) => {
     const ownerEmail = 'owner@example.test';
     const inviteeEmail = 'invitee@example.test';
