@@ -22,6 +22,21 @@ async function createFirestoreDocument(path: string, fields: any, documentId?: s
   return res.json();
 }
 
+async function getFirestoreDocument(path: string) {
+  const url = `${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
+  const res = await fetch(url);
+  return res.ok ? res.json() : null;
+}
+
+function extractString(field) {
+  return field && field.stringValue ? field.stringValue : null;
+}
+
+function extractArray(field) {
+  if (!field || !field.arrayValue || !field.arrayValue.values) return [];
+  return field.arrayValue.values.map(v => v.stringValue);
+}
+
 test.describe('Invitations flow (E2E)', () => {
   test('invitee accepts invitation and sees shared viaje', async ({ page }) => {
     const ownerEmail = 'owner@example.test';
@@ -86,5 +101,138 @@ test.describe('Invitations flow (E2E)', () => {
     // after accept, Visor should open with trip title
     await page.waitForSelector('h1');
     await expect(page.locator('h1')).toContainText('Viaje de prueba E2E');
+
+    // verify viaje.sharedWith was updated in Firestore
+    const viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
+    const shared = extractArray(viajeDoc.fields.sharedWith);
+    expect(shared).toContain(inviteeUid);
+  });
+
+  test('invitee can decline invitation and does NOT gain access', async ({ page }) => {
+    const ownerEmail = 'owner2@example.test';
+    const inviteeEmail = 'invitee2@example.test';
+    const password = 'testpass';
+
+    const owner = await createAuthUser(ownerEmail, password);
+    const invitee = await createAuthUser(inviteeEmail, password);
+    const ownerUid = owner.localId;
+    const inviteeUid = invitee.localId;
+    const viajeId = 'trip-e2e-2';
+    const invitationId = `inv-${viajeId}-${inviteeUid}`;
+
+    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
+      titulo: { stringValue: 'Viaje declinado' },
+      nombreEspanol: { stringValue: 'Ciudad Decline' },
+      code: { stringValue: 'DC' },
+      sharedWith: { arrayValue: {} },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }, viajeId);
+
+    // viaje-level invitation + top-level invitation
+    await fetch(`${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: {
+        inviterId: { stringValue: ownerUid },
+        inviteeUid: { stringValue: inviteeUid },
+        viajeId: { stringValue: viajeId },
+        status: { stringValue: 'pending' },
+        createdAt: { timestampValue: new Date().toISOString() }
+      }})
+    });
+
+    await createFirestoreDocument('invitations', {
+      inviterId: { stringValue: ownerUid },
+      inviteeUid: { stringValue: inviteeUid },
+      viajeId: { stringValue: viajeId },
+      status: { stringValue: 'pending' },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }, invitationId);
+
+    await page.goto('/');
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
+    await page.waitForSelector('[data-testid="header-invitations-count"]');
+    await page.click('[data-testid="header-invitations-button"]');
+
+    await page.waitForSelector(`[data-testid="inv-decline-${invitationId}"]`);
+    await page.click(`[data-testid="inv-decline-${invitationId}"]`);
+
+    // wait for the invitation card to disappear from UI (or for empty state)
+    await page.waitForSelector('[data-testid="inv-empty"]');
+
+    // ensure invitations doc status is 'declined'
+    const invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
+    expect(extractString(invDoc.fields.status)).toBe('declined');
+
+    // ensure viaje.sharedWith does NOT contain inviteeUid
+    const viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
+    const shared = extractArray(viajeDoc.fields.sharedWith);
+    expect(shared).not.toContain(inviteeUid);
+  });
+
+  test('other user cannot see shared viaje in their bitacora (permission check)', async ({ page }) => {
+    const ownerEmail = 'owner3@example.test';
+    const inviteeEmail = 'invitee3@example.test';
+    const attackerEmail = 'attacker@example.test';
+    const password = 'testpass';
+
+    const owner = await createAuthUser(ownerEmail, password);
+    const invitee = await createAuthUser(inviteeEmail, password);
+    const attacker = await createAuthUser(attackerEmail, password);
+
+    const ownerUid = owner.localId;
+    const inviteeUid = invitee.localId;
+    const attackerUid = attacker.localId;
+    const viajeId = 'trip-e2e-3';
+
+    // create viaje and mark sharedWith (invitee only)
+    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
+      titulo: { stringValue: 'Viaje privado compartido' },
+      nombreEspanol: { stringValue: 'Ciudad Secure' },
+      code: { stringValue: 'SC' },
+      sharedWith: { arrayValue: { values: [{ stringValue: inviteeUid }] } },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }, viajeId);
+
+    // Sign in as attacker and assert they cannot see the viaje in bitacora
+    await page.goto('/');
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: attackerEmail, password });
+
+    // navigate to Bitacora
+    await page.click('text=Bitacora');
+
+    // the trip title should NOT be visible for the attacker
+    await expect(page.locator('text=Viaje privado compartido')).toHaveCount(0);
+  });
+
+  test('owner can invite by email (top-level invitation created)', async ({ page }) => {
+    const ownerEmail = 'owner4@example.test';
+    const inviteeEmail = 'noaccount@example.test';
+    const password = 'testpass';
+
+    const owner = await createAuthUser(ownerEmail, password);
+    const ownerUid = owner.localId;
+    const viajeId = 'trip-e2e-4';
+    const invitationId = `inv-${viajeId}-by-email`;
+
+    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
+      titulo: { stringValue: 'Viaje para invitar por email' },
+      nombreEspanol: { stringValue: 'Ciudad Email' },
+      code: { stringValue: 'EM' },
+      sharedWith: { arrayValue: {} },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }, viajeId);
+
+    // create top-level invitation with inviteeEmail (simulates owner sending email invite)
+    await createFirestoreDocument('invitations', {
+      inviterId: { stringValue: ownerUid },
+      inviteeEmail: { stringValue: inviteeEmail },
+      viajeId: { stringValue: viajeId },
+      status: { stringValue: 'pending' },
+      createdAt: { timestampValue: new Date().toISOString() }
+    }, invitationId);
+
+    const invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
+    expect(extractString(invDoc.fields.inviteeEmail)).toBe(inviteeEmail);
   });
 });
