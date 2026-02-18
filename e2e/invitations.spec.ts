@@ -122,16 +122,23 @@ test.describe('Invitations flow (E2E)', () => {
     await page.click(`[data-testid="inv-accept-${invitationId}"]`);
 
     // wait for Firestore to reflect sharedWith update (poll via client read)
-    let viajeDoc = null;
-    for (let i = 0; i < 25; i++) {
-      viajeDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `usuarios/${ownerUid}/viajes/${viajeId}`);
-      if (viajeDoc && Array.isArray(viajeDoc.sharedWith) && viajeDoc.sharedWith.includes(inviteeUid)) break;
-      await new Promise((r) => setTimeout(r, 200));
-    }
+    // use Playwright's waitForFunction so we block until the browser-authenticated client
+    // can actually read the viaje and see the invitee in sharedWith (longer timeout)
+    await page.waitForFunction(
+      ({ path, uid }) => {
+        return (window as any).__test_readDoc(path).then((doc) => !!(doc && Array.isArray(doc.sharedWith) && doc.sharedWith.includes(uid)));
+      },
+      { path: `usuarios/${ownerUid}/viajes/${viajeId}`, uid: inviteeUid },
+      { timeout: 15000 }
+    );
+
+    // ensure the viaje doc is readable now and contains the invitee
+    const viajeDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `usuarios/${ownerUid}/viajes/${viajeId}`);
     expect(viajeDoc).not.toBeNull();
+    expect(Array.isArray(viajeDoc.sharedWith) ? viajeDoc.sharedWith : []).toContain(inviteeUid);
 
     // then wait for the Visor title to appear
-    await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 8000 });
+    await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 10000 });
 
     // verify viaje.sharedWith was updated in Firestore (read via browser client as owner)
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });

@@ -23,7 +23,6 @@ jobs:
         run: npm test
       - name: Install Firebase CLI
         run: npm i -g firebase-tools@latest
-      - name: Start Firebase emulators
-        run: npx firebase emulators:start --only auth,firestore,storage --project keeptrip-app-b06b3 --host 0.0.0.0 & sleep 6
-      - name: Run Playwright E2E
-        run: npx playwright test --reporter=list
+      - name: Run Playwright E2E with Firebase emulators
+        # use emulators:exec so Playwright runs only after emulators are ready
+        run: npx firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 -- npx playwright test --reporter=list
