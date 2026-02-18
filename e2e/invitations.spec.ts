@@ -140,8 +140,8 @@ test.describe('Invitations flow (E2E)', () => {
     expect(viajeDoc).not.toBeNull();
     expect(Array.isArray(viajeDoc.sharedWith) ? viajeDoc.sharedWith : []).toContain(inviteeUid);
 
-    // navigate to Bitacora and open the trip explicitly (more reliable than relying on abrirVisor side-effect)
-    await page.click('text=Bitacora');
+    // navigate to Bitacora via the dashboard CTA and open the trip explicitly (avoid header overlay issues)
+    await page.click('text=Ver todas');
     await page.waitForSelector(`text=Viaje de prueba E2E`, { timeout: 8000 });
     await page.click('text=Viaje de prueba E2E');
 
