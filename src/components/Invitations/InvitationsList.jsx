@@ -2,9 +2,13 @@ import React from 'react';
 import { Bell } from 'lucide-react';
 import useInvitations from '../../hooks/useInvitations';
 import { styles as headerStyles } from '../Header/Header.styles';
+import { useUI } from '../../context/UIContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function InvitationsList({ compact = false }) {
   const { invitations, acceptInvitation, declineInvitation } = useInvitations();
+  const { abrirVisor, setVistaActiva } = useUI();
+  const { pushToast } = useToast();
 
   if (!invitations || invitations.length === 0) {
     return compact ? (
@@ -27,8 +31,22 @@ export default function InvitationsList({ compact = false }) {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {inv.status === 'pending' ? (
               <>
-                <button onClick={() => acceptInvitation(inv.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}>Aceptar</button>
-                <button onClick={() => declineInvitation(inv.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}>Rechazar</button>
+                <button
+                  onClick={async () => {
+                    const ok = await acceptInvitation(inv.id);
+                    if (ok) {
+                      pushToast('Invitación aceptada — ahora puedes ver el viaje', 'success');
+                      // cambiar a la vista de bitácora y abrir el visor para el viaje compartido
+                      setVistaActiva('bitacora');
+                      abrirVisor(inv.viajeId);
+                    } else {
+                      pushToast('No se pudo aceptar la invitación', 'error');
+                    }
+                  }}
+                  style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}
+                >Aceptar</button>
+
+                <button onClick={async () => { const ok = await declineInvitation(inv.id); if (ok) pushToast('Invitación rechazada', 'warning'); }} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}>Rechazar</button>
               </>
             ) : (
               <div style={{ fontSize: 12, color: '#6b7280' }}>{inv.status}</div>

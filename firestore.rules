@@ -42,6 +42,18 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // Invitations collection: creación por usuarios autenticados y acceso restringido
+    match /invitations/{invId} {
+      // Cualquier usuario autenticado puede crear una invitación (owner crea)
+      allow create: if isAuthenticated();
+      // Lectura: solo el inviter o el invitee pueden leer su invitación
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.inviterId || request.auth.uid == resource.data.inviteeUid);
+      // Actualización: inviter o invitee pueden actualizar el documento
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.inviterId || request.auth.uid == resource.data.inviteeUid);
+      // Eliminación: solo el inviter puede eliminar la invitación
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.inviterId;
+    }
+
     // 2. ZONA COMPARTIDA: cache global de paises/fotos.
     // Cualquier usuario autenticado puede leer y escribir.
     match /paises_info/{paisCode} {
