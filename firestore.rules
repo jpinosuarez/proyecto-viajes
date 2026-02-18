@@ -24,7 +24,7 @@ service cloud.firestore {
       allow update: if isOwner(userId)
         || (
           isAuthenticated()
-          && request.resource.data.keys().hasOnly(['sharedWith'])
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['sharedWith'])
           // resource.data.sharedWith may be missing on old documents — treat as empty array
           && (resource.data.sharedWith == null || request.resource.data.sharedWith.hasAll(resource.data.sharedWith))
           && request.resource.data.sharedWith.size() == (resource.data.sharedWith == null ? 0 : resource.data.sharedWith.size()) + 1
