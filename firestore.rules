@@ -19,7 +19,16 @@ service cloud.firestore {
     // 1.a Viajes compartidos: permitir lectura a usuarios listados en sharedWith (owner o invitados aceptados)
     match /usuarios/{userId}/viajes/{viajeId} {
       allow read: if isOwner(userId) || (isAuthenticated() && request.auth.uid in resource.data.sharedWith);
-      allow write: if isOwner(userId);
+      allow create, delete: if isOwner(userId);
+      // permitir que el invitee agregue SOLO su UID a sharedWith (no otros cambios)
+      allow update: if isOwner(userId)
+        || (
+          isAuthenticated()
+          && request.resource.data.keys().hasOnly(['sharedWith'])
+          && request.resource.data.sharedWith.hasAll(resource.data.sharedWith)
+          && request.resource.data.sharedWith.size() == resource.data.sharedWith.size() + 1
+          && request.resource.data.sharedWith.hasAny([request.auth.uid])
+        );
     }
 
     // Subcolecciones dentro de un viaje (paradas, fotos, etc.) — lectura para owner o usuarios en sharedWith

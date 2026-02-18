@@ -26,8 +26,8 @@ export const UIProvider = ({ children }) => {
       case 'config':
         return 'Ajustes';
       case 'curacion':
-        return 'Curacion Fotos';
-      default:
+        return 'Curacion Fotos';      case 'invitations':
+        return 'Invitaciones';      default:
         return 'Keeptrip';
     }
   }, [vistaActiva]);

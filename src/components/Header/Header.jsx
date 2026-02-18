@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Plus, LogOut, User, X, Menu } from 'lucide-react';
+import { Search, Plus, LogOut, User, X, Menu, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSearch, useUI } from '../../context/UIContext';
 import { styles } from './Header.styles';
+import useInvitations from '../../hooks/useInvitations';
 
 const Header = ({ isMobile = false }) => {
   const { usuario, login, logout } = useAuth();
@@ -15,6 +16,7 @@ const Header = ({ isMobile = false }) => {
     openMobileDrawer
   } = useUI();
   const { busqueda, setBusqueda, limpiarBusqueda } = useSearch();
+  const { invitations } = useInvitations();
   const [avatarError, setAvatarError] = useState(false);
   const iniciales = useMemo(() => usuario?.displayName?.trim()?.[0]?.toUpperCase() || '', [usuario?.displayName]);
 
@@ -67,6 +69,19 @@ const Header = ({ isMobile = false }) => {
 
         {usuario ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              onClick={() => setVistaActiva('invitations')}
+              title="Invitaciones"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+            >
+              <Bell size={18} />
+              {invitations?.length > 0 && (
+                <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 6px', fontSize: 11, marginLeft: 6 }}>
+                  {invitations.length}
+                </span>
+              )}
+            </button>
+
             <div
               style={{ ...styles.avatar, cursor: 'pointer' }}
               onClick={() => setVistaActiva('config')}

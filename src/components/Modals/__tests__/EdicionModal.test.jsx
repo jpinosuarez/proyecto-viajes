@@ -105,7 +105,7 @@ describe('EdicionModal (comportamiento básico)', () => {
     expect(screen.getByText('Ana')).toBeInTheDocument();
   });
 
-  test('autocomplete encuentra usuario y al agregar crea invitación si viaje guardado', async () => {
+  test('autocomplete encuentra usuario y al agregar crea invitación si viaje guardado (debounced)', async () => {
     // Mock de useGaleriaViaje
     vi.spyOn(galeriaHook, 'useGaleriaViaje').mockReturnValue({ fotos: [], uploading: false, limpiar: vi.fn() });
 
@@ -127,9 +127,15 @@ describe('EdicionModal (comportamiento básico)', () => {
     );
 
     const input = screen.getByPlaceholderText('Nombre o email');
-    await userEvent.type(input, 'Test');
 
-    // esperar a que aparezcan resultados (mocked)
+    // Usar timers falsos para verificar debounce
+    vi.useFakeTimers();
+    await userEvent.type(input, 'Test');
+    // aun no debe haberse mostrado
+    expect(screen.queryByText('Test User')).not.toBeInTheDocument();
+    // avanzar tiempo > debounce
+    vi.advanceTimersByTime(300);
+    // esperar a que los resultados aparezcan
     await waitFor(() => expect(screen.getByText('Test User')).toBeInTheDocument());
 
     // Click en agregar desde resultados
@@ -140,5 +146,36 @@ describe('EdicionModal (comportamiento básico)', () => {
 
     // Debe haberse llamado createInvitation (viaje guardado)
     expect(invitations.createInvitation).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  test('cuando no hay resultados y se escribe un email, mostrar "Invitar por email" y crear invitation', async () => {
+    vi.spyOn(galeriaHook, 'useGaleriaViaje').mockReturnValue({ fotos: [], uploading: false, limpiar: vi.fn() });
+    const firestore = await import('firebase/firestore');
+    firestore.getDocs.mockResolvedValue({ docs: [] });
+
+    const invitations = await import('../../../services/invitationsService');
+    vi.spyOn(invitations, 'createInvitation').mockResolvedValue('inv-2');
+
+    const viaje = { id: 'v2', nombreEspanol: 'Perú', titulo: 'Viaje a Perú', code: 'PE', flag: null };
+
+    render(
+      <ToastProvider>
+        <EdicionModal viaje={viaje} onClose={vi.fn()} onSave={vi.fn()} esBorrador={false} ciudadInicial={null} />
+      </ToastProvider>
+    );
+
+    const input = screen.getByPlaceholderText('Nombre o email');
+    vi.useFakeTimers();
+    await userEvent.type(input, 'noone@example.com');
+    vi.advanceTimersByTime(300);
+
+    await waitFor(() => expect(screen.getByText(/Invitar por email/i)).toBeInTheDocument());
+
+    await userEvent.click(screen.getByText(/Invitar por email/i));
+
+    expect(invitations.createInvitation).toHaveBeenCalledWith(expect.objectContaining({ inviteeEmail: 'noone@example.com' }));
+    expect(screen.getByText('noone@example.com')).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
