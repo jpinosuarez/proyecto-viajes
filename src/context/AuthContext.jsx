@@ -119,6 +119,20 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
     };
+
+    // Helper to read a Firestore document from the browser (uses current auth session)
+    window.__test_readDoc = async (fullPath) => {
+      try {
+        const { db } = await import('../firebase');
+        const { doc, getDoc } = await import('firebase/firestore');
+        const ref = doc(db, fullPath);
+        const snap = await getDoc(ref);
+        return snap.exists() ? snap.data() : null;
+      } catch (err) {
+        console.error('🧪 test readDoc failed', err);
+        return null;
+      }
+    };
   }
 
   const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };

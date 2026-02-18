@@ -133,8 +133,11 @@ test.describe('Invitations flow (E2E)', () => {
     // then wait for the Visor title to appear
     await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 8000 });
 
-    // verify viaje.sharedWith was updated in Firestore
-    const shared = extractArray(viajeDoc.fields.sharedWith);
+    // verify viaje.sharedWith was updated in Firestore (read via browser client as owner)
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
+    const viajeData = await page.evaluate((path) => (window as any).__test_readDoc(path), `usuarios/${ownerUid}/viajes/${viajeId}`);
+    const shared = viajeData?.sharedWith || [];
     expect(shared).toContain(inviteeUid);
   });
 
@@ -174,19 +177,22 @@ test.describe('Invitations flow (E2E)', () => {
     // the UI shows the status text for non-pending invitations — assert it changed to 'declined'
     await expect(page.locator(`[data-testid="inv-card-${invitationId}"]`)).toContainText('declined');
 
-    // ensure invitations doc status is 'declined' (poll until updated)
+    // ensure invitations doc status is 'declined' (poll via client read)
     let invDoc = null;
     for (let i = 0; i < 25; i++) {
-      invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
-      if (invDoc && extractString(invDoc.fields.status) === 'declined') break;
+      invDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `invitations/${invitationId}`);
+      if (invDoc && invDoc.status === 'declined') break;
       await new Promise((r) => setTimeout(r, 200));
     }
     expect(invDoc).not.toBeNull();
-    expect(extractString(invDoc.fields.status)).toBe('declined');
+    expect(invDoc.status).toBe('declined');
 
-    // ensure viaje.sharedWith does NOT contain inviteeUid
-    const viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
-    const shared = extractArray(viajeDoc.fields.sharedWith);
+    // ensure viaje.sharedWith does NOT contain inviteeUid (read as owner)
+    await page.evaluate(() => (window as any).__test_signOut());
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
+    const viajeData = await page.evaluate((path) => (window as any).__test_readDoc(path), `usuarios/${ownerUid}/viajes/${viajeId}`);
+    const shared = viajeData?.sharedWith || [];
     expect(shared).not.toContain(inviteeUid);
   });
 
@@ -244,7 +250,8 @@ test.describe('Invitations flow (E2E)', () => {
     // create top-level invitation with inviteeEmail (simulates owner sending email invite)
     await page.evaluate(({ invitationId, ownerUid, inviteeEmail, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeEmail, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeEmail, viajeId });
 
-    const invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
-    expect(extractString(invDoc.fields.inviteeEmail)).toBe(inviteeEmail);
+    const invDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `invitations/${invitationId}`);
+    expect(invDoc).not.toBeNull();
+    expect(invDoc.inviteeEmail).toBe(inviteeEmail);
   });
 });
