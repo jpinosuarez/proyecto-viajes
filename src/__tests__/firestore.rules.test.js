@@ -28,7 +28,7 @@ test('invitee puede agregar su uid a sharedWith, pero no modificar otros campos'
     const adminDb = admin.firestore();
     const viajeRef = adminDb.doc('usuarios/ownerUid/viajes/viaje1');
     await viajeRef.set({ titulo: 'Original', sharedWith: [] });
-    const invRef = adminDb.doc('invitations/inv1');
+    const invRef = adminDb.doc('usuarios/ownerUid/viajes/viaje1/invitations/inviteeUid');
     await invRef.set({ inviterId: 'ownerUid', inviteeUid: 'inviteeUid', viajeId: 'viaje1', status: 'pending' });
   });
 

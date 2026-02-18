@@ -29,6 +29,10 @@ service cloud.firestore {
           && (resource.data.sharedWith == null || request.resource.data.sharedWith.hasAll(resource.data.sharedWith))
           && request.resource.data.sharedWith.size() == (resource.data.sharedWith == null ? 0 : resource.data.sharedWith.size()) + 1
           && request.resource.data.sharedWith.hasAny([request.auth.uid])
+          // solo permitir si existe una invitacion creada por el owner para este viaje + invitee
+          // existe una invitacion bajo el viaje creada por el owner para este invitee?
+          && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).exists()
+          && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.inviterId == userId
         );
     }
 

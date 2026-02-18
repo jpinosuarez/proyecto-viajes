@@ -4,6 +4,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  setDoc,
   query,
   where,
   onSnapshot,
@@ -24,7 +25,6 @@ import { db } from '../../firebase';
 
 export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null, inviteeUid = null, viajeId }) => {
   const database = _db || db;
-  const invitationsRef = collection(database, 'invitations');
   const payload = {
     inviterId: inviterId || null,
     inviteeEmail: inviteeEmail || null,
@@ -33,6 +33,15 @@ export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null
     status: 'pending',
     createdAt: Date.now()
   };
+
+  // If inviteeUid is known, store the invitation under the viaje so rules can check it deterministically
+  if (inviteeUid) {
+    const ref = doc(database, `usuarios/${inviterId}/viajes/${viajeId}/invitations/${inviteeUid}`);
+    await setDoc(ref, payload, { merge: true });
+    return `${viajeId}_${inviteeUid}`;
+  }
+
+  const invitationsRef = collection(database, 'invitations');
   const docRef = await addDoc(invitationsRef, payload);
   return docRef.id;
 };
