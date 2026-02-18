@@ -39,13 +39,14 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Detectar localhost y conectar a Emuladores
-if (window.location.hostname === "localhost" && useEmulators) {
-  console.log("🔧 Conectando a Firebase Emulators...");
+// Detectar localhost/127.0.0.1 y conectar a Emuladores
+if ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && useEmulators) {
+  const EMULATOR_HOST = 'localhost';
+  console.log(`🔧 Conectando a Firebase Emulators (${EMULATOR_HOST})...`);
   // Nota: disableWarnings ayuda a limpiar la consola en desarrollo
-  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
-  connectFirestoreEmulator(db, '127.0.0.1', 8080);
-  connectStorageEmulator(storage, '127.0.0.1', 9199);
+  connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`, { disableWarnings: true });
+  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+  connectStorageEmulator(storage, EMULATOR_HOST, 9199);
 }
 
 export { auth, db, storage };
