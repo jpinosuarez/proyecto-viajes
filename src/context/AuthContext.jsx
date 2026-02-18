@@ -105,6 +105,20 @@ export const AuthProvider = ({ children }) => {
       }
     };
     window.__test_signOut = async () => signOut(auth);
+
+    // Helper to create a Firestore document from the browser (uses current auth session)
+    window.__test_createDoc = async (fullPath, documentData) => {
+      try {
+        const { db } = await import('../firebase');
+        const { doc, setDoc } = await import('firebase/firestore');
+        const ref = doc(db, fullPath);
+        await setDoc(ref, documentData, { merge: true });
+        return true;
+      } catch (err) {
+        console.error('🧪 test createDoc failed', err);
+        return false;
+      }
+    };
   }
 
   const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };

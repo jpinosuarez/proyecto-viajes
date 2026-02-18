@@ -66,40 +66,43 @@ test.describe('Invitations flow (E2E)', () => {
     const viajeId = 'trip-e2e-1';
     const invitationId = `inv-${viajeId}-${inviteeUid}`;
 
-    // create viaje document under owner
-    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
-      titulo: { stringValue: 'Viaje de prueba E2E' },
-      nombreEspanol: { stringValue: 'Ciudad Test' },
-      code: { stringValue: 'TT' },
-      sharedWith: { arrayValue: {} },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, viajeId);
-
-    // create viaje-level invitation (so rules allow sharedWith update)
-    await fetch(`${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: {
-        inviterId: { stringValue: ownerUid },
-        inviteeUid: { stringValue: inviteeUid },
-        viajeId: { stringValue: viajeId },
-        status: { stringValue: 'pending' },
-        createdAt: { timestampValue: new Date().toISOString() }
-      }})
-    });
-
-    // create top-level invitation so the useInvitations hook will surface it
-    await createFirestoreDocument('invitations', {
-      inviterId: { stringValue: ownerUid },
-      inviteeUid: { stringValue: inviteeUid },
-      viajeId: { stringValue: viajeId },
-      status: { stringValue: 'pending' },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, invitationId);
-
-    // open app and sign in as invitee using the test helper exposed by AuthContext
+    // open app so test helpers are available
     await page.goto('/');
-    // sign in through the helper (VITE_ENABLE_TEST_LOGIN must be true in webServer.env)
+
+    // sign in as owner in the browser and create viaje + viaje-level invitation + top-level invitation
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+
+    await page.evaluate(({ ownerUid, viajeId }) => {
+      return (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, {
+        titulo: 'Viaje de prueba E2E',
+        nombreEspanol: 'Ciudad Test',
+        code: 'TT',
+        sharedWith: []
+      });
+    }, { ownerUid, viajeId });
+
+    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => {
+      return (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, {
+        inviterId: ownerUid,
+        inviteeUid,
+        viajeId,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+    }, { ownerUid, viajeId, inviteeUid });
+
+    await page.evaluate(({ invitationId, ownerUid, inviteeUid, viajeId }) => {
+      return (window as any).__test_createDoc(`invitations/${invitationId}`, {
+        inviterId: ownerUid,
+        inviteeUid,
+        viajeId,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+    }, { invitationId, ownerUid, inviteeUid, viajeId });
+
+    // sign out owner and sign in as invitee to continue the flow
+    await page.evaluate(() => (window as any).__test_signOut());
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
 
     // wait for the invitations badge to appear
@@ -134,36 +137,19 @@ test.describe('Invitations flow (E2E)', () => {
     const viajeId = 'trip-e2e-2';
     const invitationId = `inv-${viajeId}-${inviteeUid}`;
 
-    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
-      titulo: { stringValue: 'Viaje declinado' },
-      nombreEspanol: { stringValue: 'Ciudad Decline' },
-      code: { stringValue: 'DC' },
-      sharedWith: { arrayValue: {} },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, viajeId);
-
-    // viaje-level invitation + top-level invitation
-    await fetch(`${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: {
-        inviterId: { stringValue: ownerUid },
-        inviteeUid: { stringValue: inviteeUid },
-        viajeId: { stringValue: viajeId },
-        status: { stringValue: 'pending' },
-        createdAt: { timestampValue: new Date().toISOString() }
-      }})
-    });
-
-    await createFirestoreDocument('invitations', {
-      inviterId: { stringValue: ownerUid },
-      inviteeUid: { stringValue: inviteeUid },
-      viajeId: { stringValue: viajeId },
-      status: { stringValue: 'pending' },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, invitationId);
-
     await page.goto('/');
+
+    // sign in as owner and create viaje + invitations via browser helper
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+
+    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje declinado', nombreEspanol: 'Ciudad Decline', code: 'DC', sharedWith: [] }), { ownerUid, viajeId });
+
+    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { ownerUid, viajeId, inviteeUid });
+
+    await page.evaluate(({ invitationId, ownerUid, inviteeUid, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeUid, viajeId });
+
+    // sign out owner and sign in as invitee
+    await page.evaluate(() => (window as any).__test_signOut());
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
     await page.waitForSelector('[data-testid="header-invitations-count"]');
     await page.click('[data-testid="header-invitations-button"]');
@@ -200,16 +186,14 @@ test.describe('Invitations flow (E2E)', () => {
     const viajeId = 'trip-e2e-3';
 
     // create viaje and mark sharedWith (invitee only)
-    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
-      titulo: { stringValue: 'Viaje privado compartido' },
-      nombreEspanol: { stringValue: 'Ciudad Secure' },
-      code: { stringValue: 'SC' },
-      sharedWith: { arrayValue: { values: [{ stringValue: inviteeUid }] } },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, viajeId);
+    await page.goto('/');
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+
+    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje privado compartido', nombreEspanol: 'Ciudad Secure', code: 'SC', sharedWith: [inviteeUid] }), { ownerUid, viajeId, inviteeUid });
+
+    await page.evaluate(() => (window as any).__test_signOut());
 
     // Sign in as attacker and assert they cannot see the viaje in bitacora
-    await page.goto('/');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: attackerEmail, password });
 
     // navigate to Bitacora
@@ -229,22 +213,13 @@ test.describe('Invitations flow (E2E)', () => {
     const viajeId = 'trip-e2e-4';
     const invitationId = `inv-${viajeId}-by-email`;
 
-    await createFirestoreDocument(`usuarios/${ownerUid}/viajes`, {
-      titulo: { stringValue: 'Viaje para invitar por email' },
-      nombreEspanol: { stringValue: 'Ciudad Email' },
-      code: { stringValue: 'EM' },
-      sharedWith: { arrayValue: {} },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, viajeId);
+    await page.goto('/');
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+
+    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje para invitar por email', nombreEspanol: 'Ciudad Email', code: 'EM', sharedWith: [] }), { ownerUid, viajeId });
 
     // create top-level invitation with inviteeEmail (simulates owner sending email invite)
-    await createFirestoreDocument('invitations', {
-      inviterId: { stringValue: ownerUid },
-      inviteeEmail: { stringValue: inviteeEmail },
-      viajeId: { stringValue: viajeId },
-      status: { stringValue: 'pending' },
-      createdAt: { timestampValue: new Date().toISOString() }
-    }, invitationId);
+    await page.evaluate(({ invitationId, ownerUid, inviteeEmail, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeEmail, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeEmail, viajeId });
 
     const invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
     expect(extractString(invDoc.fields.inviteeEmail)).toBe(inviteeEmail);
