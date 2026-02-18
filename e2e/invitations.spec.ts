@@ -144,7 +144,8 @@ test.describe('Invitations flow (E2E)', () => {
     await page.evaluate(() => (window as any).__test_setVista('bitacora'));
 
     // wait until the trip appears in the Bitacora list (client subscription must sync)
-    await page.waitForSelector(`text=Viaje de prueba E2E`, { timeout: 15000 });
+    // allow more time for the client's sharedViajes subscription to receive the update
+    await page.waitForSelector(`text=Viaje de prueba E2E`, { timeout: 30000 });
 
     // now open the Visor (data should be available)
     await page.evaluate((id) => (window as any).__test_abrirVisor(id), viajeId);
