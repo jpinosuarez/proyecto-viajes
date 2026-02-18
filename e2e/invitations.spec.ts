@@ -83,7 +83,10 @@ test.describe('Invitations flow (E2E)', () => {
         titulo: 'Viaje de prueba E2E',
         nombreEspanol: 'Ciudad Test',
         code: 'TT',
-        sharedWith: []
+        sharedWith: [],
+        vibe: ['Aventura'],
+        companions: [{ name: 'Propietario', email: 'owner@example.test', status: 'accepted' }],
+        highlights: { topFood: 'Empanadas', topView: 'Mirador Test', topTip: 'Ir temprano' }
       });
     }, { ownerUid, viajeId });
 
@@ -139,6 +142,11 @@ test.describe('Invitations flow (E2E)', () => {
 
     // then wait for the Visor title to appear
     await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 10000 });
+
+    // verify storytelling UI is visible (vibe + companions + highlights)
+    await expect(page.locator('text=Aventura')).toHaveCount(1);
+    await expect(page.locator('[title="Propietario"]')).toHaveCount(1);
+    await expect(page.locator('text=Empanadas')).toHaveCount(1);
 
     // verify viaje.sharedWith was updated in Firestore (read via browser client as owner)
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
