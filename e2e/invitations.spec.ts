@@ -14,16 +14,20 @@ async function createAuthUser(email: string, password = 'testpass') {
 }
 
 async function createFirestoreDocument(path: string, fields: any, documentId?: string) {
-  const url = documentId
-    ? `${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}?documentId=${documentId}`
-    : `${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
+  // Use emulator admin REST endpoint to bypass security rules for seeding test data
+  const base = `${FIRESTORE_EMULATOR_URL}/emulator/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
+  const url = documentId ? `${base}?documentId=${documentId}` : base;
   const body = { fields };
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to create doc ${path} (${res.status}): ${text}`);
+  }
   return res.json();
 }
 
 async function getFirestoreDocument(path: string) {
-  const url = `${FIRESTORE_EMULATOR_URL}/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
+  const url = `${FIRESTORE_EMULATOR_URL}/emulator/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
   const res = await fetch(url);
   return res.ok ? res.json() : null;
 }
