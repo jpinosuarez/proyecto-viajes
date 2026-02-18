@@ -1,9 +1,11 @@
+/** @vitest-environment jsdom */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
 import useInvitations from '../useInvitations';
 import * as invitationsService from '../../services/invitationsService';
-import { AuthContext } from '../../context/AuthContext';
+import * as AuthModule from '../../context/AuthContext';
 
 vi.mock('../../services/invitationsService');
 
@@ -31,11 +33,10 @@ describe('useInvitations (integration via component)', () => {
   }
 
   test('subscribes and exposes accept/decline', async () => {
-    render(
-      <AuthContext.Provider value={{ usuario: { uid: 'user123', email: 'a@b.com' } }}>
-        <TestComp />
-      </AuthContext.Provider>
-    );
+    // mock useAuth para inyectar usuario
+    vi.spyOn(AuthModule, 'useAuth').mockReturnValue({ usuario: { uid: 'user123', email: 'a@b.com' } });
+
+    render(<TestComp />);
 
     expect(screen.getByTestId('count').textContent).toBe('1');
 

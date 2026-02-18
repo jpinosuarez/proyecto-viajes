@@ -50,16 +50,17 @@ describe('InvitationsList', () => {
 
     render(<InvitationsList hook={fakeHook()} />);
 
+    expect(screen.getByTestId('inv-card-inv1')).toBeTruthy();
     expect(screen.getByText('userA')).toBeTruthy();
     expect(screen.getByText('viaje-1')).toBeTruthy();
 
-    await userEvent.click(screen.getByText('Aceptar'));
+    await userEvent.click(screen.getByTestId('inv-accept-inv1'));
     expect(accept).toHaveBeenCalledWith('inv1');
     expect(pushToastMock).toHaveBeenCalledWith(expect.stringContaining('Invitación aceptada'), 'success');
     expect(setVistaActivaMock).toHaveBeenCalledWith('bitacora');
     expect(abrirVisorMock).toHaveBeenCalledWith('viaje-1');
 
-    await userEvent.click(screen.getByText('Rechazar'));
+    await userEvent.click(screen.getByTestId('inv-decline-inv1'));
     expect(decline).toHaveBeenCalledWith('inv1');
     expect(pushToastMock).toHaveBeenCalledWith(expect.stringContaining('Invitación rechazada'), 'warning');
   });

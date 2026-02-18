@@ -16,14 +16,14 @@ export default function InvitationsList({ compact = false, hook = null }) {
         <Bell size={16} />
       </div>
     ) : (
-      <div className="inv-empty">No hay invitaciones pendientes.</div>
+      <div className="inv-empty" data-testid="inv-empty">No hay invitaciones pendientes.</div>
     );
   }
 
   return (
     <div className="invitations-list" style={{ minWidth: compact ? 0 : 340 }}>
       {invitations.map((inv) => (
-        <div key={inv.id} className="inv-card" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: 8, borderBottom: '1px solid #eee' }}>
+        <div key={inv.id} data-testid={`inv-card-${inv.id}`} className="inv-card" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: 8, borderBottom: '1px solid #eee' }}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontWeight: 600 }}>{inv.inviterId || 'Un usuario'}</div>
             <div style={{ fontSize: 12, color: '#6b7280' }}>{inv.viajeId}</div>
@@ -32,11 +32,13 @@ export default function InvitationsList({ compact = false, hook = null }) {
             {inv.status === 'pending' ? (
               <>
                 <button
-                  onClick={async () => {
+                  data-testid={`inv-accept-${inv.id}`}
+                  aria-label={`Aceptar invitación de ${inv.inviterId} para ${inv.viajeId}`}
+                  onClick={async (e) => {
                     const ok = await acceptInvitation(inv.id);
                     if (ok) {
+                      try { e?.currentTarget?.blur?.(); } catch(_) { /* safe fallback for tests */ }
                       pushToast('Invitación aceptada — ahora puedes ver el viaje', 'success');
-                      // cambiar a la vista de bitácora y abrir el visor para el viaje compartido
                       setVistaActiva('bitacora');
                       abrirVisor(inv.viajeId);
                     } else {
@@ -46,7 +48,12 @@ export default function InvitationsList({ compact = false, hook = null }) {
                   style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}
                 >Aceptar</button>
 
-                <button onClick={async () => { const ok = await declineInvitation(inv.id); if (ok) pushToast('Invitación rechazada', 'warning'); }} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}>Rechazar</button>
+                <button
+                  data-testid={`inv-decline-${inv.id}`}
+                  aria-label={`Rechazar invitación de ${inv.inviterId}`}
+                  onClick={async () => { const ok = await declineInvitation(inv.id); if (ok) pushToast('Invitación rechazada', 'warning'); }}
+                  style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 6 }}
+                >Rechazar</button>
               </>
             ) : (
               <div style={{ fontSize: 12, color: '#6b7280' }}>{inv.status}</div>

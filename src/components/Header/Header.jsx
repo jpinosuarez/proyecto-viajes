@@ -70,19 +70,22 @@ const Header = ({ isMobile = false }) => {
         {usuario ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
+              data-testid="header-invitations-button"
               onClick={() => setVistaActiva('invitations')}
+              aria-label={`Invitaciones (${invitations?.length || 0})`}
               title="Invitaciones"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
             >
               <Bell size={18} />
               {invitations?.length > 0 && (
-                <span style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 6px', fontSize: 11, marginLeft: 6 }}>
+                <span data-testid="header-invitations-count" aria-live="polite" style={{ background: '#ef4444', color: '#fff', borderRadius: 10, padding: '2px 6px', fontSize: 11, marginLeft: 6 }}>
                   {invitations.length}
                 </span>
               )}
             </button>
 
             <div
+              data-testid="header-avatar"
               style={{ ...styles.avatar, cursor: 'pointer' }}
               onClick={() => setVistaActiva('config')}
               title="Configurar Perfil"
@@ -104,6 +107,7 @@ const Header = ({ isMobile = false }) => {
 
             {!isMobile && (
               <button
+                data-testid="header-logout-button"
                 onClick={logout}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
                 title="Cerrar Sesion"
@@ -113,7 +117,7 @@ const Header = ({ isMobile = false }) => {
             )}
           </div>
         ) : (
-          <button onClick={login} style={{ ...styles.addButton(isMobile), backgroundColor: '#4285F4' }}>
+          <button data-testid="header-login-button" onClick={login} style={{ ...styles.addButton(isMobile), backgroundColor: '#4285F4' }}>
             Iniciar Sesion
           </button>
         )}

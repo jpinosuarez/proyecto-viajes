@@ -4,7 +4,8 @@ import {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged,
-  updateProfile 
+  updateProfile,
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
@@ -91,6 +92,20 @@ export const AuthProvider = ({ children }) => {
       unsubscribe();
     };
   }, []);
+
+  // Dev/test helpers (exposed only when VITE_ENABLE_TEST_LOGIN === 'true')
+  if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
+    window.__test_signInWithEmail = async ({ email, password }) => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        return true;
+      } catch (err) {
+        console.error('🧪 test signIn failed', err);
+        return false;
+      }
+    };
+    window.__test_signOut = async () => signOut(auth);
+  }
 
   const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };
 
