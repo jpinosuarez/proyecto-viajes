@@ -121,11 +121,11 @@ test.describe('Invitations flow (E2E)', () => {
     await page.waitForSelector(`[data-testid="inv-accept-${invitationId}"]`);
     await page.click(`[data-testid="inv-accept-${invitationId}"]`);
 
-    // wait for Firestore to reflect sharedWith update (poll)
+    // wait for Firestore to reflect sharedWith update (poll via client read)
     let viajeDoc = null;
     for (let i = 0; i < 25; i++) {
-      viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
-      if (viajeDoc && extractArray(viajeDoc.fields.sharedWith).includes(inviteeUid)) break;
+      viajeDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `usuarios/${ownerUid}/viajes/${viajeId}`);
+      if (viajeDoc && Array.isArray(viajeDoc.sharedWith) && viajeDoc.sharedWith.includes(inviteeUid)) break;
       await new Promise((r) => setTimeout(r, 200));
     }
     expect(viajeDoc).not.toBeNull();
