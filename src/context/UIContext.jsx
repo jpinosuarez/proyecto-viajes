@@ -78,6 +78,12 @@ export const UIProvider = ({ children }) => {
     ]
   );
 
+  // Dev/test helpers (exposed only when VITE_ENABLE_TEST_LOGIN === 'true')
+  if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
+    window.__test_setVista = (vista) => setVistaActiva(vista);
+    window.__test_abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
+  }
+
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 };
 
