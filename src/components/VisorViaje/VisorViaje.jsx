@@ -262,6 +262,31 @@ const VisorViaje = ({
                 : ''}
             </div>
 
+            {/* Trip summary (presupuesto, vibe, companions, highlights) */}
+            <div style={{ marginTop: 12 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {data.presupuesto && (
+                  <span style={{ padding: '6px 10px', borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.85rem' }}>{data.presupuesto}</span>
+                )}
+                {(data.vibe || []).map((v, i) => (
+                  <span key={i} style={{ padding: '6px 10px', borderRadius: 16, background: '#fff7ed', border: '1px solid #fce6c6', fontSize: '0.8rem' }}>{v}</span>
+                ))}
+
+                <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', alignItems: 'center' }}>
+                  {(data.companions || []).slice(0,4).map((c, idx) => (
+                    <div key={idx} title={c.name} style={{ width: 28, height: 28, borderRadius: 14, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', border: '1px solid #e2e8f0' }}>{(c.name || 'U').split(' ').map(s=>s[0]).slice(0,2).join('')}</div>
+                  ))}
+                  {(data.companions || []).length > 4 && <span style={{ color: '#64748b', fontSize: '0.85rem' }}>+{(data.companions || []).length - 4}</span>}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+                {data.highlights?.topFood && <div style={{ background: '#ffffff', border: '1px solid #e6edf3', padding: '8px 12px', borderRadius: 10 }}>🍽️ {data.highlights.topFood}</div>}
+                {data.highlights?.topView && <div style={{ background: '#ffffff', border: '1px solid #e6edf3', padding: '8px 12px', borderRadius: 10 }}>👀 {data.highlights.topView}</div>}
+                {data.highlights?.topTip && <div style={{ background: '#ffffff', border: '1px solid #e6edf3', padding: '8px 12px', borderRadius: 10 }}>💡 {data.highlights.topTip}</div>}
+              </div>
+            </div>
+
             {!modoEdicion && fotoMostrada && data.fotoCredito && (
               <a
                 href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
