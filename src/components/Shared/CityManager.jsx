@@ -37,7 +37,9 @@ const CityManager = ({ paradas, setParadas }) => {
       fechaSalida: '', 
       fecha: new Date().toISOString().split('T')[0], 
       paisCodigo: countryCode, 
-      flag: getFlagUrl(countryCode) // Guardar URL SVG
+      flag: getFlagUrl(countryCode), // Guardar URL SVG
+      transporte: null,
+      notaCorta: ''
     };
     setParadas([...paradas, nuevaParada]);
     setBusqueda('');
@@ -124,6 +126,20 @@ const CityManager = ({ paradas, setParadas }) => {
                     <input type="date" value={p.fechaSalida} onChange={e => actualizarDato(index, 'fechaSalida', e.target.value)} style={styles.dateInput} />
                 </div>
             </div>
+
+            <div style={styles.transportRow}>
+                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                    <button type="button" onClick={() => actualizarDato(index, 'transporte', 'avion')} style={styles.transportBtn(p.transporte === 'avion')}>✈️ Avión</button>
+                    <button type="button" onClick={() => actualizarDato(index, 'transporte', 'tren')} style={styles.transportBtn(p.transporte === 'tren')}>🚆 Tren</button>
+                    <button type="button" onClick={() => actualizarDato(index, 'transporte', 'auto')} style={styles.transportBtn(p.transporte === 'auto')}>🚗 Auto</button>
+                    <button type="button" onClick={() => actualizarDato(index, 'transporte', 'bus')} style={styles.transportBtn(p.transporte === 'bus')}>🚌 Bus</button>
+                    <button type="button" onClick={() => actualizarDato(index, 'transporte', 'otro')} style={styles.transportBtn(p.transporte === 'otro')}>🔁 Otro</button>
+                </div>
+                <div style={{flex:1, marginLeft:12}}>
+                    <label style={styles.label}>Nota</label>
+                    <input type="text" value={p.notaCorta || ''} onChange={e => actualizarDato(index, 'notaCorta', e.target.value)} placeholder="Nota corta (ej: 'Perdí el tren')" style={styles.dateInput} />
+                </div>
+            </div>
           </div>
         ))}
       </div>
@@ -147,6 +163,8 @@ const styles = {
   actionBtn: { background: '#f1f5f9', border: 'none', padding: '6px', borderRadius: '6px', cursor: 'pointer', color: '#64748b', display:'flex', alignItems:'center', justifyContent:'center' },
   datesRow: { display: 'flex', gap: '15px' },
   dateGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' },
+  transportRow: { display: 'flex', gap: '12px', alignItems: 'center', marginTop: 10 },
+  transportBtn: (active) => ({ padding: '6px 10px', borderRadius: 8, border: active ? '1px solid #3b82f6' : '1px solid #e2e8f0', background: active ? '#eff6ff' : '#fff', cursor: 'pointer' }),
   label: { fontSize: '0.7rem', textTransform:'uppercase', color:'#94a3b8', fontWeight:'700' },
   dateInput: { border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline:'none', background:'#f8fafc' }
 };

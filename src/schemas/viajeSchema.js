@@ -112,6 +112,10 @@ export const ParadaSchema = z.object({
     max: z.number().optional()
   }).optional().nullable(),
   tipo: z.enum(['place', 'city', 'landmark', 'other']).default('place'),
+  // Nuevo: transporte entre puntos (ayuda logística / storytelling)
+  transporte: z.enum(['avion','tren','auto','bus','otro']).optional(),
+  // Nota corta vinculada a la parada (micro‑momento)
+  notaCorta: z.string().max(200).optional().nullable(),
   viajeId: z.string().optional() // Referencia al viaje padre
 });
 
@@ -153,6 +157,22 @@ export const ViajeSchemaBase = z.object({
   // Nuevos campos para galería (preparados para futuro)
   fotoPortada: URLImagenSchema, // URL de la foto principal
   totalFotos: z.number().int().min(0).max(30).default(1), // Límite de 30 fotos
+  // Storytelling metadata (nuevo)
+  presupuesto: z.string().optional().nullable(), // p.ej. 'Mochilero', 'Lujo'
+  vibe: z.array(z.string()).default([]), // tags de identidad (Relax, Aventura...)
+  highlights: z.object({
+    topFood: z.string().max(120).optional().nullable(),
+    topView: z.string().max(120).optional().nullable(),
+    topTip: z.string().max(240).optional().nullable()
+  }).optional().nullable(),
+  // Companions + sharing
+  companions: z.array(z.object({
+    name: z.string(),
+    email: z.string().optional().nullable(),
+    userId: z.string().optional().nullable(),
+    status: z.enum(['pending','accepted']).default('pending')
+  })).default([]),
+  sharedWith: z.array(z.string()).default([]), // uids que aceptaron ver el viaje
   // Metadata de ubicación
   banderas: z.array(z.string().url()).default([]),
   ciudades: z.string().optional().nullable(), // CSV de ciudades

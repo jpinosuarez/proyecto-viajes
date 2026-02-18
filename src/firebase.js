@@ -40,7 +40,7 @@ const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Detectar localhost/127.0.0.1 y conectar a Emuladores
-if ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && useEmulators) {
+if (typeof window !== 'undefined' && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && useEmulators) {
   const EMULATOR_HOST = 'localhost';
   console.log(`🔧 Conectando a Firebase Emulators (${EMULATOR_HOST})...`);
   // Nota: disableWarnings ayuda a limpiar la consola en desarrollo

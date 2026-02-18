@@ -80,9 +80,9 @@ describe('viajeUtils', () => {
     expect(ciudades).toBe('Lima, Cusco');
   });
 
-  it('construye payload de parada con defaults', () => {
+  it('construye payload de parada con defaults y campos nuevos', () => {
     const payload = construirParadaPayload(
-      { nombre: 'Lima', coordenadas: [-77.04, -12.04], paisCodigo: 'PE' },
+      { nombre: 'Lima', coordenadas: [-77.04, -12.04], paisCodigo: 'PE', transporte: 'tren', notaCorta: 'Comer ceviche' },
       '2026-02-11',
       { desc: 'Nublado', max: 26, code: 4 }
     );
@@ -95,7 +95,9 @@ describe('viajeUtils', () => {
       fechaSalida: '',
       paisCodigo: 'PE',
       clima: { desc: 'Nublado', max: 26, code: 4 },
-      tipo: 'place'
+      tipo: 'place',
+      transporte: 'tren',
+      notaCorta: 'Comer ceviche'
     });
   });
 
@@ -116,6 +118,20 @@ describe('viajeUtils', () => {
     expect(payload.foto).toBe(FOTO_DEFAULT_URL);
     expect(payload.banderas).toEqual(['https://flagcdn.com/ar.svg']);
     expect(payload.ciudades).toBe('Buenos Aires');
+  });
+
+  it('construye payload de viaje incluyendo presupuesto y vibe', () => {
+    const payload = construirViajePayload({
+      datosViaje: { code: 'AR', nombreEspanol: 'Argentina', presupuesto: 'Lujo', vibe: ['Gastronómico'] },
+      titulo: 'Mi viaje',
+      banderas: ['https://flagcdn.com/ar.svg'],
+      ciudades: 'Buenos Aires',
+      foto: null,
+      fotoCredito: null
+    });
+
+    expect(payload.presupuesto).toBe('Lujo');
+    expect(payload.vibe).toEqual(['Gastronómico']);
   });
 
   it('obtiene paises visitados en ISO3 desde bitacora y paradas', () => {

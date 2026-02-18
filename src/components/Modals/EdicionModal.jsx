@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Save, Camera, Calendar, LoaderCircle, Star, Trash2 } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import { db } from '../../firebase';
+import { createInvitation as createInvitationService } from '../../services/invitationsService';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -17,7 +18,14 @@ import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
-  const { iniciarSubida } = useUpload();
+  // useUpload puede no estar disponible en tests aislados; usar fallback seguro
+  let iniciarSubida = () => {};
+  try {
+    const uploadCtx = useUpload();
+    iniciarSubida = uploadCtx?.iniciarSubida || (() => {});
+  } catch (e) {
+    iniciarSubida = () => {};
+  }
   const { isMobile } = useWindowSize(768);
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
@@ -27,6 +35,8 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [captionDrafts, setCaptionDrafts] = useState({});
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
+  const [companionDraft, setCompanionDraft] = useState('');
+  const [companionResults, setCompanionResults] = useState([]);
   const titlePulseRef = useRef(null);
   const prevViajeIdRef = useRef(null);
 
@@ -72,7 +82,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       galeria.limpiar?.();
     }
 
-    // Inicializar formData
+    // Inicializar formData (incluye nuevos campos de storytelling)
     setFormData({
       ...viaje,
       titulo: esBorrador ? (viaje.titulo || '') : (viaje.titulo || `Viaje a ${viaje.nombreEspanol}`),
@@ -82,7 +92,12 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       texto: viaje.texto || "",
       flag: viaje.flag,
       code: viaje.code,
-      nombreEspanol: viaje.nombreEspanol
+      nombreEspanol: viaje.nombreEspanol,
+      // Storytelling defaults
+      presupuesto: viaje.presupuesto || null,
+      vibe: viaje.vibe || [],
+      highlights: viaje.highlights || { topFood: '', topView: '', topTip: '' },
+      companions: viaje.companions || []
     });
 
     // Solo activar auto si es borrador Y no hay título manual existente
@@ -221,6 +236,68 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       return;
     }
     pushToast('Caption actualizado.', 'success', 1500);
+  };
+
+  // Buscar usuarios por nombre/email (autocomplete simple)
+  const handleCompanionSearch = async (q) => {
+    setCompanionDraft(q);
+    if (!q || q.length < 2) {
+      setCompanionResults([]);
+      return;
+    }
+
+    try {
+      // Intentar consulta en Firestore si está disponible
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      try {
+        const usuariosRef = collection(db, 'usuarios');
+        // Query sencilla por displayName o email (no index complex)
+        const qName = query(usuariosRef, where('displayName', '>=', q), where('displayName', '<=', q + '\uf8ff'));
+        const snap = await getDocs(qName);
+        const results = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        setCompanionResults(results.slice(0, 8));
+        return;
+      } catch (err) {
+        // si falla la query por el entorno de tests/emulator, fallback a vacío
+        setCompanionResults([]);
+        return;
+      }
+    } catch (err) {
+      // firebase/firestore no disponible en runtime del test — fallback silencioso
+      setCompanionResults([]);
+    }
+  };
+
+  const handleAddCompanionFromResult = async (user) => {
+    // Añadir companion con userId y crear invitación si el viaje ya existe
+    const next = { name: user.displayName || user.email || 'Invitado', email: user.email || null, userId: user.uid, status: 'pending' };
+    setFormData(prev => ({ ...prev, companions: [...(prev.companions || []), next] }));
+
+    if (viaje?.id && usuario?.uid) {
+      try {
+        await createInvitationService({ db, inviterId: usuario.uid, inviteeUid: user.uid, viajeId: viaje.id });
+        pushToast('Invitación enviada.', 'success');
+      } catch (err) {
+        pushToast('No se pudo crear la invitación.', 'error');
+      }
+    }
+    setCompanionResults([]);
+    setCompanionDraft('');
+  };
+
+  const handleAddCompanionFreeform = async (text) => {
+    const next = { name: text.trim(), email: null, userId: null, status: 'pending' };
+    setFormData(prev => ({ ...prev, companions: [...(prev.companions || []), next] }));
+    // crear invitation si el viaje existe y parece un email
+    if (viaje?.id && usuario?.uid && text.includes('@')) {
+      try {
+        await createInvitationService({ db, inviterId: usuario.uid, inviteeEmail: text.trim(), viajeId: viaje.id });
+        pushToast('Invitación creada.', 'info');
+      } catch (err) {
+        pushToast('No se pudo crear la invitación.', 'error');
+      }
+    }
+    setCompanionDraft('');
   };
 
   const handleFileChange = async (e) => {
@@ -415,6 +492,96 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 <span style={styles.inlineError}>Hay paradas fuera del rango de fechas del viaje.</span>
               )}
             </div>
+
+            {/* Contexto del viaje: presupuesto, vibe, companions */}
+            <div style={styles.section}>
+              <label style={styles.label}>Contexto del viaje</label>
+
+              <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
+                <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                  <label style={{fontSize:'0.75rem', color:'#94a3b8'}}>Presupuesto</label>
+                  <select
+                    value={formData.presupuesto || ''}
+                    onChange={e => setFormData({...formData, presupuesto: e.target.value || null})}
+                    style={styles.dateInput}
+                  >
+                    <option value=''>-- seleccionar --</option>
+                    <option value='Mochilero'>Mochilero</option>
+                    <option value='Económico'>Económico</option>
+                    <option value='Confort'>Confort</option>
+                    <option value='Lujo'>Lujo</option>
+                  </select>
+                </div>
+
+                <div style={{flex:1}}>
+                  <label style={{fontSize:'0.75rem', color:'#94a3b8'}}>Vibe</label>
+                  <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:6}}>
+                    {['Gastronómico','Aventura','Relax','Roadtrip','Cultural'].map(v => {
+                      const selected = (formData.vibe || []).includes(v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setFormData(prev => ({...prev, vibe: prev.vibe.includes(v) ? prev.vibe.filter(x => x !== v) : [...prev.vibe, v]}))}
+                          style={{padding:'6px 10px', borderRadius:12, border:selected ? '1px solid #f59e0b' : '1px solid #e2e8f0', background: selected ? '#fffbf0' : '#fff', cursor:'pointer'}}
+                        >
+                          {v}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{marginTop:12}}>
+                <label style={{fontSize:'0.75rem', color:'#94a3b8'}}>Compañeros</label>
+                <div style={{display:'flex', gap:8, alignItems:'center', marginTop:8}}>
+                  <input
+                    placeholder='Nombre o email'
+                    value={companionDraft || ''}
+                    onChange={e=> handleCompanionSearch(e.target.value)}
+                    style={{flex:1, padding:8, borderRadius:8, border:'1px solid #e2e8f0'}}
+                  />
+                  <button
+                    type='button'
+                    onClick={() => companionDraft && companionDraft.trim() && handleAddCompanionFreeform(companionDraft)}
+                    style={styles.saveBtn(false)}
+                  >Agregar</button>
+                </div>
+
+                {companionResults.length > 0 && (
+                  <div style={{border:'1px solid #e2e8f0', borderRadius:8, marginTop:8, maxHeight:160, overflowY:'auto', background:'#fff'}}>
+                    {companionResults.map(u => (
+                      <div key={u.uid} style={{padding:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer'}} onClick={() => handleAddCompanionFromResult(u)}>
+                        <div>
+                          <strong style={{display:'block'}}>{u.displayName || u.email}</strong>
+                          <div style={{fontSize:'0.75rem', color:'#94a3b8'}}>{u.email}</div>
+                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); handleAddCompanionFromResult(u); }} style={{padding:'6px 10px', borderRadius:8, border:'1px solid #e2e8f0', background:'#fff'}}>Agregar</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
+                  {(formData.companions || []).map((c, idx) => (
+                    <div key={idx} style={{padding:'6px 10px', borderRadius:12, background:'#f8fafc', border:'1px solid #e2e8f0', display:'flex', gap:8, alignItems:'center'}}>
+                      <span style={{fontSize:'0.9rem'}}>{c.name}</span>
+                      <button type='button' onClick={() => setFormData(prev => ({...prev, companions: prev.companions.filter((_,i)=>i!==idx)}))} style={{background:'transparent', border:'none', color:'#ef4444'}}>x</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.section}>
+              <label style={styles.label}>Highlights</label>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+                <input placeholder='🍽️ El Plato' value={(formData.highlights?.topFood) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topFood: e.target.value}}))} style={styles.dateInput} />
+                <input placeholder='👀 La Vista' value={(formData.highlights?.topView) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topView: e.target.value}}))} style={styles.dateInput} />
+                <input placeholder='💡 El Tip' value={(formData.highlights?.topTip) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topTip: e.target.value}}))} style={{gridColumn:'1 / -1', padding:8, borderRadius:8, border:'1px solid #e2e8f0'}} />
+              </div>
+            </div>
+
             <div style={styles.section}>
               <label style={styles.label}>Notas</label>
               <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder="Escribe tus recuerdos aquí..." disabled={isBusy} />

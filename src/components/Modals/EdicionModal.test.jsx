@@ -8,6 +8,10 @@ vi.mock('../../hooks/useWindowSize', () => ({ useWindowSize: () => ({ isMobile: 
 vi.mock('../../hooks/useGaleriaViaje', () => ({ useGaleriaViaje: () => ({ fotos: [], uploading: false, limpiar: vi.fn(), cambiarPortada: vi.fn(), eliminar: vi.fn(), actualizarCaption: vi.fn() }) }));
 // Mock del módulo firebase para evitar referencias a `window` durante tests
 vi.mock('../../firebase', () => ({ db: {}, storage: {} }));
+// Mock simple para UploadContext (evita necesidad de provider en tests)
+vi.mock('../../context/UploadContext', () => ({ useUpload: () => ({ iniciarSubida: vi.fn(), getEstadoViaje: () => ({}) }) }));
+// Mock simple para UploadContext (evita necesidad de provider en tests)
+vi.mock('../../context/UploadContext', () => ({ useUpload: () => ({ iniciarSubida: vi.fn(), getEstadoViaje: () => ({}) }) }));
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';

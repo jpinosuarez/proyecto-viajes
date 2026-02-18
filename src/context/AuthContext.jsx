@@ -54,9 +54,30 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let timeoutId;
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUsuario(currentUser);
       setCargando(false);
+
+      // Garantizar que exista un documento de perfil utilizable para búsquedas/autocomplete
+      // (usuarios/{uid}) — se crea/actualiza al iniciar sesión
+      if (currentUser && currentUser.uid) {
+        try {
+          // Import dinámico para evitar side-effects en tests donde firebase está mockeado
+          const { db } = await import('../firebase');
+          const { doc, setDoc } = await import('firebase/firestore');
+          const perfilRef = doc(db, 'usuarios', currentUser.uid);
+          await setDoc(perfilRef, {
+            displayName: currentUser.displayName || null,
+            email: currentUser.email || null,
+            photoURL: currentUser.photoURL || null,
+            updatedAt: new Date()
+          }, { merge: true });
+        } catch (err) {
+          // No bloquear el flujo si falla (emulator / tests pueden no tener db)
+          console.warn('No se pudo escribir perfil en Firestore:', err?.message || err);
+        }
+      }
+
       if (timeoutId) clearTimeout(timeoutId);
     });
     // Timeout de seguridad: si Firebase no responde en 5s, forzar cargando a false

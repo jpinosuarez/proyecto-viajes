@@ -35,6 +35,12 @@ export const generarTituloInteligente = (nombreBase, paradas = []) => {
   const ciudadesUnicas = [...new Set(paradas.map((p) => p.nombre).filter(Boolean))];
   const paisesUnicos = [...new Set(paradas.map((p) => p.paisCodigo).filter(Boolean))];
 
+  // Si hay exactamente 2 países distintos, priorizar ese título (ej: España y Francia)
+  if (paisesUnicos.length === 2) {
+    const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
+    if (nombresPaises.length === 2) return `Aventura entre ${nombresPaises[0]} y ${nombresPaises[1]}`;
+  }
+
   // Priorizar títulos por ciudad cuando quedan claros y cortos
   if (ciudadesUnicas.length === 1) return `Escapada a ${ciudadesUnicas[0]}`;
   if (ciudadesUnicas.length === 2) return `${ciudadesUnicas[0]} y ${ciudadesUnicas[1]}`;
@@ -46,11 +52,6 @@ export const generarTituloInteligente = (nombreBase, paradas = []) => {
   if (paisesUnicos.length === 1) {
     const nombrePais = nombresPaises[0] || nombreBase;
     return `Ruta por ${nombrePais}`; // claro y directo
-  }
-
-  if (paisesUnicos.length === 2) {
-    // Evocar movimiento/transición entre dos países
-    return `Aventura entre ${nombresPaises[0]} y ${nombresPaises[1]}`;
   }
 
   if (paisesUnicos.length === 3) {
@@ -84,7 +85,10 @@ export const construirParadaPayload = (parada, fechaUso, climaInfo) => ({
   fechaSalida: parada.fechaSalida || '',
   paisCodigo: parada.paisCodigo || '',
   clima: climaInfo,
-  tipo: 'place'
+  tipo: 'place',
+  // Nuevos campos para storytelling/logística
+  transporte: parada.transporte || null,
+  notaCorta: parada.notaCorta || null
 });
 
 export const construirViajePayload = ({
@@ -107,6 +111,11 @@ export const construirViajePayload = ({
     rating: 5,
     foto: foto || FOTO_DEFAULT_URL,
     fotoCredito: fotoCredito || null,
+    // Storytelling fields (passthrough desde formData)
+    presupuesto: datosViaje.presupuesto || null,
+    vibe: datosViaje.vibe || [],
+    highlights: datosViaje.highlights || null,
+    companions: datosViaje.companions || [],
     banderas,
     ciudades
   };
