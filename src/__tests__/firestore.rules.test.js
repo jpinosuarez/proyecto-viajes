@@ -1,19 +1,21 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import fs from 'fs';
+import { beforeAll, afterAll, beforeEach, test, expect } from 'vitest';
 
 let testEnv;
 const projectId = 'proyecto-viajes-test';
 
 beforeAll(async () => {
   const rules = fs.readFileSync('./firestore.rules', 'utf8');
+  // connect to local emulator at default ports used by this project
   testEnv = await initializeTestEnvironment({
     projectId,
-    firestore: { rules }
+    firestore: { host: '127.0.0.1', port: 8080, rules }
   });
 });
 
 afterAll(async () => {
-  await testEnv.cleanup();
+  if (testEnv) await testEnv.cleanup();
 });
 
 beforeEach(async () => {
