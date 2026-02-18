@@ -5,8 +5,8 @@ import { styles as headerStyles } from '../Header/Header.styles';
 import { useUI } from '../../context/UIContext';
 import { useToast } from '../../context/ToastContext';
 
-export default function InvitationsList({ compact = false }) {
-  const { invitations, acceptInvitation, declineInvitation } = useInvitations();
+export default function InvitationsList({ compact = false, hook = null }) {
+  const { invitations, acceptInvitation, declineInvitation } = hook || useInvitations();
   const { abrirVisor, setVistaActiva } = useUI();
   const { pushToast } = useToast();
 

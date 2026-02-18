@@ -1,47 +1,66 @@
+/** @vitest-environment jsdom */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock the hook used by the component
-vi.mock('../../../hooks/useInvitations', () => ({
-  default: () => ({
-    invitations: [{ id: 'inv1', inviterId: 'userA', viajeId: 'viaje-1', status: 'pending' }],
-    acceptInvitation: vi.fn().mockResolvedValue(true),
-    declineInvitation: vi.fn().mockResolvedValue(true)
-  })
-}));
+vi.mock('../../../hooks/useInvitations', () => {
+  const accept = vi.fn().mockResolvedValue(true);
+  const decline = vi.fn().mockResolvedValue(true);
+  return {
+    __esModule: true,
+    default: () => ({
+      invitations: [{ id: 'inv1', inviterId: 'userA', viajeId: 'viaje-1', status: 'pending' }],
+      acceptInvitation: accept,
+      declineInvitation: decline
+    }),
+    accept,
+    decline
+  };
+});
 
-// Mock UIContext and ToastContext used by the component
+// Mock AuthContext, UIContext and ToastContext used by the component
+vi.mock('../../../context/AuthContext', () => ({ useAuth: () => ({ usuario: { uid: 'user123', email: 'a@b.com' } }) }));
+const abrirVisorMock = vi.fn();
+const setVistaActivaMock = vi.fn();
 vi.mock('../../../context/UIContext', () => ({
-  useUI: () => ({ abrirVisor: vi.fn(), setVistaActiva: vi.fn() })
+  useUI: () => ({ abrirVisor: abrirVisorMock, setVistaActiva: setVistaActivaMock })
 }));
+const pushToastMock = vi.fn();
 vi.mock('../../../context/ToastContext', () => ({
-  useToast: () => ({ pushToast: vi.fn() })
+  useToast: () => ({ pushToast: pushToastMock })
 }));
 
-import InvitationsList from '../InvitationsList';
-import useInvitations from '../../../hooks/useInvitations';
+
 
 describe('InvitationsList', () => {
   it('muestra invitaciones y dispara aceptar/rechazar y abre el visor al aceptar', async () => {
-    const hook = useInvitations();
-    const ui = require('../../../context/UIContext').useUI();
-    const toast = require('../../../context/ToastContext').useToast();
+    const ui = { abrirVisor: abrirVisorMock, setVistaActiva: setVistaActivaMock };
+    const toast = { pushToast: pushToastMock };
 
-    render(<InvitationsList />);
+    // ensure module cache is clean so the hoisted mock is used
+    vi.resetModules();
+    const { default: InvitationsList } = await import('../InvitationsList');
 
-    expect(screen.getByText('userA')).toBeInTheDocument();
-    expect(screen.getByText('viaje-1')).toBeInTheDocument();
+    // inject a fake hook to avoid importing the real module
+    const accept = vi.fn().mockResolvedValue(true);
+    const decline = vi.fn().mockResolvedValue(true);
+    const fakeHook = () => ({ invitations: [{ id: 'inv1', inviterId: 'userA', viajeId: 'viaje-1', status: 'pending' }], acceptInvitation: accept, declineInvitation: decline });
+
+    render(<InvitationsList hook={fakeHook()} />);
+
+    expect(screen.getByText('userA')).toBeTruthy();
+    expect(screen.getByText('viaje-1')).toBeTruthy();
 
     await userEvent.click(screen.getByText('Aceptar'));
-    expect(hook.acceptInvitation).toHaveBeenCalledWith('inv1');
-    expect(toast.pushToast).toHaveBeenCalledWith(expect.stringContaining('Invitación aceptada'), 'success');
-    expect(ui.setVistaActiva).toHaveBeenCalledWith('bitacora');
-    expect(ui.abrirVisor).toHaveBeenCalledWith('viaje-1');
+    expect(accept).toHaveBeenCalledWith('inv1');
+    expect(pushToastMock).toHaveBeenCalledWith(expect.stringContaining('Invitación aceptada'), 'success');
+    expect(setVistaActivaMock).toHaveBeenCalledWith('bitacora');
+    expect(abrirVisorMock).toHaveBeenCalledWith('viaje-1');
 
     await userEvent.click(screen.getByText('Rechazar'));
-    expect(hook.declineInvitation).toHaveBeenCalledWith('inv1');
-    expect(toast.pushToast).toHaveBeenCalledWith(expect.stringContaining('Invitación rechazada'), 'warning');
+    expect(decline).toHaveBeenCalledWith('inv1');
+    expect(pushToastMock).toHaveBeenCalledWith(expect.stringContaining('Invitación rechazada'), 'warning');
   });
 });
