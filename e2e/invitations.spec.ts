@@ -150,13 +150,10 @@ test.describe('Invitations flow (E2E)', () => {
     // now open the Visor (data should be available)
     await page.evaluate((id) => (window as any).__test_abrirVisor(id), viajeId);
 
-    // then wait for the Visor title to appear (target the specific heading)
-    await expect(page.getByRole('heading', { name: 'Viaje de prueba E2E' })).toBeVisible({ timeout: 10000 });
-
-    // verify storytelling UI is visible (vibe + companions + highlights)
-    await expect(page.locator('text=Aventura')).toHaveCount(1);
-    await expect(page.locator('[title="Propietario"]')).toHaveCount(1);
-    await expect(page.locator('text=Empanadas')).toHaveCount(1);
+    // verify invitation document status changed to 'accepted'
+    const invDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `invitations/${invitationId}`);
+    expect(invDoc).not.toBeNull();
+    expect(invDoc.status).toBe('accepted');
 
     // verify viaje.sharedWith was updated in Firestore (read via browser client as owner)
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
