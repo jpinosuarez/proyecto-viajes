@@ -140,8 +140,8 @@ test.describe('Invitations flow (E2E)', () => {
     expect(viajeDoc).not.toBeNull();
     expect(Array.isArray(viajeDoc.sharedWith) ? viajeDoc.sharedWith : []).toContain(inviteeUid);
 
-    // then wait for the Visor title to appear
-    await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 10000 });
+    // then wait for the Visor title to appear (target the specific heading)
+    await expect(page.getByRole('heading', { name: 'Viaje de prueba E2E' })).toBeVisible({ timeout: 10000 });
 
     // verify storytelling UI is visible (vibe + companions + highlights)
     await expect(page.locator('text=Aventura')).toHaveCount(1);
