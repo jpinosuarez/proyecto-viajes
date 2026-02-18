@@ -140,6 +140,11 @@ test.describe('Invitations flow (E2E)', () => {
     expect(viajeDoc).not.toBeNull();
     expect(Array.isArray(viajeDoc.sharedWith) ? viajeDoc.sharedWith : []).toContain(inviteeUid);
 
+    // navigate to Bitacora and open the trip explicitly (more reliable than relying on abrirVisor side-effect)
+    await page.click('text=Bitacora');
+    await page.waitForSelector(`text=Viaje de prueba E2E`, { timeout: 8000 });
+    await page.click('text=Viaje de prueba E2E');
+
     // then wait for the Visor title to appear (target the specific heading)
     await expect(page.getByRole('heading', { name: 'Viaje de prueba E2E' })).toBeVisible({ timeout: 10000 });
 
