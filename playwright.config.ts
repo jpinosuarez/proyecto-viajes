@@ -8,7 +8,7 @@ export default defineConfig({
   // Retries in CI to reduce flakiness on transient failures
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: 'http://127.0.0.1:5173',
+    baseURL: 'http://localhost:5173',
     headless: true,
     viewport: { width: 1280, height: 720 },
     actionTimeout: 10000,
