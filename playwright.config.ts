@@ -8,15 +8,15 @@ export default defineConfig({
   // Retries in CI to reduce flakiness on transient failures
   retries: process.env.CI ? 2 : 0,
   use: {
-    baseURL: 'http://127.0.0.1:5174',
+    baseURL: 'http://127.0.0.1:5173',
     headless: true,
     viewport: { width: 1280, height: 720 },
     actionTimeout: 10000,
     video: 'retain-on-failure'
   },
   webServer: {
-    command: 'npm run dev',
-    port: 5174,
+    command: 'npm run dev -- --port 5173',
+    port: 5173,
     reuseExistingServer: !process.env.CI,
     env: {
       VITE_USE_EMULATORS: 'true',
