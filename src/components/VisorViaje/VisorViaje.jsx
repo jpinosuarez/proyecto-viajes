@@ -6,6 +6,7 @@ import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useUpload } from '../../context/UploadContext';
 import { styles } from './VisorViaje.styles';
 import { COLORS } from '../../theme';
 import CityManager from '../Shared/CityManager';
@@ -28,6 +29,7 @@ const VisorViaje = ({
 }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
+  const { getEstadoViaje, reintentarFoto } = useUpload();
   const { isMobile } = useWindowSize(900);
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
   const data = bitacoraData[viajeId] || viajeBase || {};
@@ -53,6 +55,20 @@ const VisorViaje = ({
 
   // Galería de fotos del viaje
   const galeria = useGaleriaViaje(viajeId);
+
+  // Estado de fotos subiendo (desde UploadContext)
+  const uploadState = getEstadoViaje(viajeId);
+  const fotosSubiendo = uploadState?.fotos || [];
+  const isUploading = uploadState?.isUploading || false;
+
+  // Recargar galería cuando se completen subidas
+  useEffect(() => {
+    // Cuando hay fotos subidas exitosamente, recargar la galería
+    const fotosExitosas = fotosSubiendo.filter(f => f.status === 'success');
+    if (fotosExitosas.length > 0 && !isUploading) {
+      galeria.recargar?.();
+    }
+  }, [fotosSubiendo, isUploading]);
 
   if (!viajeId || !data) return null;
 
@@ -286,7 +302,12 @@ const VisorViaje = ({
                 </button>
               </div>
               <p style={styles.gallerySubtitle}>Tus recuerdos, listos para contar la historia.</p>
-              <GalleryGrid fotos={galeria.fotos} isMobile={isMobile} />
+              <GalleryGrid 
+                fotos={galeria.fotos} 
+                fotosSubiendo={fotosSubiendo}
+                onReintentarFoto={(fotoTempId) => reintentarFoto(viajeId, fotoTempId)}
+                isMobile={isMobile} 
+              />
               {showGalleryTools && galeria.fotos.length > 0 && (
                 <div style={styles.galleryManageBlock}>
                   {galeria.fotos.map((f) => (

@@ -5,6 +5,7 @@ import './index.css';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
+import { UploadProvider } from './context/UploadContext.jsx';
 import { UIProvider, SearchProvider } from './context/UIContext.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -13,11 +14,13 @@ createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <AuthProvider>
         <ToastProvider>
-          <UIProvider>
-            <SearchProvider>
-              <App />
-            </SearchProvider>
-          </UIProvider>
+          <UploadProvider>
+            <UIProvider>
+              <SearchProvider>
+                <App />
+              </SearchProvider>
+            </UIProvider>
+          </UploadProvider>
         </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>

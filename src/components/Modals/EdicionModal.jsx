@@ -6,6 +6,7 @@ import { db } from '../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { useUpload } from '../../context/UploadContext';
 import { useWindowSize } from '../../hooks/useWindowSize';
 import CityManager from '../Shared/CityManager';
 import { compressImage } from '../../utils/imageUtils';
@@ -16,6 +17,7 @@ import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
+  const { iniciarSubida } = useUpload();
   const { isMobile } = useWindowSize(768);
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
@@ -178,25 +180,12 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     const savedViajeId = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
 
     if (savedViajeId) {
-      // Subir fotos pendientes al viaje guardado
+      // Iniciar subida de fotos en background (no bloquea)
       if (galleryFiles.length > 0) {
-        try {
-          // Crear instancia temporal de galeria con el ID correcto
-          const { subirFotosMultiples } = await import('../../services/viajes/galeriaService');
-          const { storage, db } = await import('../../firebase');
-          await subirFotosMultiples({
-            storage,
-            db,
-            userId: usuario.uid,
-            viajeId: savedViajeId,
-            files: galleryFiles,
-            portadaIndex: galleryPortada
-          });
-          pushToast('Fotos subidas correctamente', 'success');
-        } catch (err) {
-          console.error('Error subiendo fotos:', err);
-          pushToast('No se pudieron subir algunas fotos', 'error');
-        }
+        // iniciarSubida envía las fotos al contexto global
+        // la subida continúa incluso después de cerrar el modal
+        iniciarSubida(savedViajeId, galleryFiles, galleryPortada);
+        pushToast('Subiendo fotos en segundo plano...', 'info');
       }
       limpiarEstado();
       onClose();

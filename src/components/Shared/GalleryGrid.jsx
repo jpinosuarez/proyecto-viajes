@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Star, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS } from '../../theme';
 
 /**
@@ -58,6 +58,85 @@ function LazyImage({ src, alt, onClick, isPortada }) {
         </>
       ) : (
         <div style={styles.imagePlaceholder} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Componente para mostrar foto en proceso de subida
+ * @param {Object} props
+ * @param {string} props.preview - URL de preview (base64)
+ * @param {'pending'|'uploading'|'success'|'error'} props.status
+ * @param {boolean} props.esPortada
+ * @param {string} props.error - Mensaje de error si falló
+ * @param {Function} props.onRetry - Callback para reintentar
+ */
+function UploadingImage({ preview, status, esPortada, error, onRetry }) {
+  const isLoading = status === 'pending' || status === 'uploading';
+  const isFailed = status === 'error';
+  const isSuccess = status === 'success';
+
+  return (
+    <div style={styles.imageContainer(esPortada)}>
+      {/* Preview de la imagen */}
+      <img
+        src={preview}
+        alt="Subiendo..."
+        style={{ 
+          ...styles.image, 
+          opacity: isFailed ? 0.4 : 0.7,
+          filter: isLoading ? 'blur(2px)' : 'none'
+        }}
+      />
+
+      {/* Overlay de carga */}
+      {isLoading && (
+        <div style={styles.uploadOverlay}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            <Loader2 size={32} color="white" />
+          </motion.div>
+          <span style={styles.uploadText}>
+            {status === 'pending' ? 'En cola...' : 'Subiendo...'}
+          </span>
+        </div>
+      )}
+
+      {/* Overlay de error */}
+      {isFailed && (
+        <div style={styles.errorOverlay}>
+          <AlertCircle size={28} color={COLORS.error || '#ff4444'} />
+          <span style={styles.errorText}>{error || 'Error'}</span>
+          {onRetry && (
+            <button style={styles.retryBtn} onClick={onRetry}>
+              <RefreshCw size={16} />
+              <span>Reintentar</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Check de éxito (breve) */}
+      {isSuccess && (
+        <motion.div
+          initial={{ opacity: 1, scale: 1.2 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          style={styles.successOverlay}
+        >
+          <Star size={32} fill="white" color="white" />
+        </motion.div>
+      )}
+
+      {/* Badge de portada */}
+      {esPortada && (
+        <div style={styles.portadaBadge}>
+          <Star size={12} fill="white" color="white" />
+          <span>Portada</span>
+        </div>
       )}
     </div>
   );
@@ -154,11 +233,14 @@ function Lightbox({ foto, onClose, onPrev, onNext, hasNext, hasPrev, totalFotos,
  * 
  * @param {Object} props
  * @param {Array} props.fotos - Array de objetos foto {id, url, caption, esPortada}
+ * @param {Array} props.fotosSubiendo - Array de fotos en proceso de subida
+ * @param {Function} props.onReintentarFoto - Callback para reintentar foto fallida
  * @param {boolean} props.isMobile - Si es vista móvil
  */
-export function GalleryGrid({ fotos = [], isMobile = false }) {
+export function GalleryGrid({ fotos = [], fotosSubiendo = [], onReintentarFoto, isMobile = false }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
 
+  // Solo fotos guardadas son clickeables para lightbox
   const handleOpenLightbox = (index) => {
     setSelectedIndex(index);
   };
@@ -179,7 +261,11 @@ export function GalleryGrid({ fotos = [], isMobile = false }) {
     }
   };
 
-  if (fotos.length === 0) {
+  // Filtrar fotos que están subiendo (no completadas)
+  const fotosEnProceso = fotosSubiendo.filter(f => f.status !== 'success');
+  const totalVisible = fotos.length + fotosEnProceso.length;
+
+  if (totalVisible === 0) {
     return (
       <div style={styles.emptyState}>
         <Star size={48} color={COLORS.textSecondary} />
@@ -192,6 +278,7 @@ export function GalleryGrid({ fotos = [], isMobile = false }) {
   return (
     <>
       <div style={styles.grid(isMobile)}>
+        {/* Fotos guardadas */}
         {fotos.map((foto, index) => (
           <LazyImage
             key={foto.id}
@@ -201,9 +288,23 @@ export function GalleryGrid({ fotos = [], isMobile = false }) {
             onClick={() => handleOpenLightbox(index)}
           />
         ))}
+
+        {/* Fotos en proceso de subida */}
+        {fotosEnProceso.map((foto) => (
+          <UploadingImage
+            key={foto.id}
+            preview={foto.preview}
+            status={foto.status}
+            esPortada={foto.esPortada}
+            error={foto.error}
+            onRetry={foto.status === 'error' && onReintentarFoto 
+              ? () => onReintentarFoto(foto.id) 
+              : undefined}
+          />
+        ))}
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox - solo para fotos ya guardadas */}
       <AnimatePresence>
         {selectedIndex !== null && (
           <Lightbox
@@ -388,6 +489,77 @@ const styles = {
     cursor: 'pointer',
     backdropFilter: 'blur(10px)',
     zIndex: 10001,
+  },
+
+  // Upload overlay styles
+  uploadOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    backdropFilter: 'blur(2px)',
+  },
+  uploadText: {
+    color: 'white',
+    fontSize: '12px',
+    fontWeight: '500',
+  },
+  errorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '12px',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: '11px',
+    fontWeight: '500',
+    textAlign: 'center',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  retryBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '6px 12px',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    borderRadius: RADIUS.full,
+    color: 'white',
+    fontSize: '11px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+    marginTop: '4px',
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(76, 175, 80, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 };
 
