@@ -33,14 +33,37 @@ describe('viajeUtils', () => {
     expect(titulo).not.toBe('Base');
   });
 
-  it('genera titulo para multiples paises', () => {
+  it('genera titulo para dos paises', () => {
+    const titulo = generarTituloInteligente('Base', [
+      { nombre: 'Madrid', paisCodigo: 'ES' },
+      { nombre: 'Paris', paisCodigo: 'FR' }
+    ]);
+    expect(titulo).toBe('Aventura entre España y Francia');
+  });
+
+  it('genera titulo para multiples paises (3 paises)', () => {
     const titulo = generarTituloInteligente('Base', [
       { nombre: 'Madrid', paisCodigo: 'ES' },
       { nombre: 'Paris', paisCodigo: 'FR' },
       { nombre: 'Roma', paisCodigo: 'IT' }
     ]);
-    expect(titulo).toContain('Gran Viaje:');
-    expect(titulo).toContain(' - ');
+    expect(titulo.startsWith('Travesía por ')).toBe(true);
+    expect(titulo).toContain('España');
+    expect(titulo).toContain('Francia');
+    expect(titulo).toContain('Italia');
+  });
+
+  it('genera titulo para mas de tres paises', () => {
+    const titulo = generarTituloInteligente('Base', [
+      { nombre: 'Uno', paisCodigo: 'ES' },
+      { nombre: 'Dos', paisCodigo: 'FR' },
+      { nombre: 'Tres', paisCodigo: 'IT' },
+      { nombre: 'Cuatro', paisCodigo: 'DE' }
+    ]);
+    expect(titulo.startsWith('Gran travesía por ')).toBe(true);
+    expect(titulo).toContain('España');
+    expect(titulo).toContain('Francia');
+    expect(titulo).toContain('y 2 más');
   });
 
   it('prioriza banderas de paradas y elimina duplicados', () => {

@@ -388,6 +388,16 @@ export const useViajes = () => {
       logger.info('Eliminando viaje', { viajeId: id, userId: usuario.uid });
       
       await eliminarViaje({ db, userId: usuario.uid, viajeId: id });
+
+      // Actualizar estado local inmediatamente para reflejar la eliminación en la UI
+      // (evita que el viaje permanezca visible si la suscripción tarda en actualizarse)
+      setBitacora((prev) => prev.filter((v) => v.id !== id));
+      setBitacoraData((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setTodasLasParadas((prev) => prev.filter((p) => p.viajeId !== id));
       
       logger.info('Viaje eliminado exitosamente', { viajeId: id });
       toast.success('Eliminado correctamente');

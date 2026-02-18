@@ -32,19 +32,37 @@ export const obtenerPaisesVisitados = (bitacora = [], todasLasParadas = []) => {
 export const generarTituloInteligente = (nombreBase, paradas = []) => {
   if (!paradas || paradas.length === 0) return nombreBase || 'Nuevo Viaje';
 
-  const ciudadesUnicas = [...new Set(paradas.map((p) => p.nombre))];
+  const ciudadesUnicas = [...new Set(paradas.map((p) => p.nombre).filter(Boolean))];
   const paisesUnicos = [...new Set(paradas.map((p) => p.paisCodigo).filter(Boolean))];
 
+  // Priorizar títulos por ciudad cuando quedan claros y cortos
   if (ciudadesUnicas.length === 1) return `Escapada a ${ciudadesUnicas[0]}`;
   if (ciudadesUnicas.length === 2) return `${ciudadesUnicas[0]} y ${ciudadesUnicas[1]}`;
 
+  // Construir nombres de países legibles
+  const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
+
+  // Reglas de storytelling por país
   if (paisesUnicos.length === 1) {
-    const nombrePais = getCountryName(paisesUnicos[0]) || nombreBase;
-    return `Ruta por ${nombrePais}`;
+    const nombrePais = nombresPaises[0] || nombreBase;
+    return `Ruta por ${nombrePais}`; // claro y directo
   }
 
-  if (paisesUnicos.length > 1) {
-    return `Gran Viaje: ${paisesUnicos.map((codigo) => getCountryName(codigo)).join(' - ')}`;
+  if (paisesUnicos.length === 2) {
+    // Evocar movimiento/transición entre dos países
+    return `Aventura entre ${nombresPaises[0]} y ${nombresPaises[1]}`;
+  }
+
+  if (paisesUnicos.length === 3) {
+    // Listado evocador pero legible
+    return `Travesía por ${nombresPaises.join(', ')}`;
+  }
+
+  if (paisesUnicos.length > 3) {
+    // Mantener título corto y sugerir escala
+    const firstTwo = nombresPaises.slice(0, 2).join(', ');
+    const others = nombresPaises.length - 2;
+    return `Gran travesía por ${firstTwo} y ${others} más`;
   }
 
   return nombreBase || 'Nuevo Viaje';
