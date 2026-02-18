@@ -117,6 +117,14 @@ test.describe('Invitations flow (E2E)', () => {
 
     // after accept, Visor should open with trip title
     await page.waitForSelector('h1');
+
+    // DEBUG: if ErrorFallback appears, print error details to test log
+    const fallbackCount = await page.locator('h1', { hasText: '¡Ups! Algo salió mal' }).count();
+    if (fallbackCount > 0) {
+      const preTexts = await page.locator('pre').allInnerTexts();
+      console.log('E2E: ErrorFallback details:\n', preTexts.join('\n----\n'));
+    }
+
     await expect(page.locator('h1')).toContainText('Viaje de prueba E2E');
 
     // verify viaje.sharedWith was updated in Firestore
