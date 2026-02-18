@@ -76,6 +76,7 @@ test.describe('Invitations flow (E2E)', () => {
 
     // sign in as owner in the browser and create viaje + viaje-level invitation + top-level invitation
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
 
     await page.evaluate(({ ownerUid, viajeId }) => {
       return (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, {
@@ -120,20 +121,19 @@ test.describe('Invitations flow (E2E)', () => {
     await page.waitForSelector(`[data-testid="inv-accept-${invitationId}"]`);
     await page.click(`[data-testid="inv-accept-${invitationId}"]`);
 
-    // after accept, Visor should open with trip title
-    await page.waitForSelector('h1');
-
-    // DEBUG: if ErrorFallback appears, print error details to test log
-    const fallbackCount = await page.locator('h1', { hasText: '¡Ups! Algo salió mal' }).count();
-    if (fallbackCount > 0) {
-      const preTexts = await page.locator('pre').allInnerTexts();
-      console.log('E2E: ErrorFallback details:\n', preTexts.join('\n----\n'));
+    // wait for Firestore to reflect sharedWith update (poll)
+    let viajeDoc = null;
+    for (let i = 0; i < 25; i++) {
+      viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
+      if (viajeDoc && extractArray(viajeDoc.fields.sharedWith).includes(inviteeUid)) break;
+      await new Promise((r) => setTimeout(r, 200));
     }
+    expect(viajeDoc).not.toBeNull();
 
-    await expect(page.locator('h1')).toContainText('Viaje de prueba E2E');
+    // then wait for the Visor title to appear
+    await expect(page.locator('h1')).toContainText('Viaje de prueba E2E', { timeout: 8000 });
 
     // verify viaje.sharedWith was updated in Firestore
-    const viajeDoc = await getFirestoreDocument(`usuarios/${ownerUid}/viajes/${viajeId}`);
     const shared = extractArray(viajeDoc.fields.sharedWith);
     expect(shared).toContain(inviteeUid);
   });
@@ -154,6 +154,7 @@ test.describe('Invitations flow (E2E)', () => {
 
     // sign in as owner and create viaje + invitations via browser helper
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
 
     await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje declinado', nombreEspanol: 'Ciudad Decline', code: 'DC', sharedWith: [] }), { ownerUid, viajeId });
 
@@ -170,11 +171,17 @@ test.describe('Invitations flow (E2E)', () => {
     await page.waitForSelector(`[data-testid="inv-decline-${invitationId}"]`);
     await page.click(`[data-testid="inv-decline-${invitationId}"]`);
 
-    // wait for the invitation card to disappear from UI (or for empty state)
-    await page.waitForSelector('[data-testid="inv-empty"]');
+    // the UI shows the status text for non-pending invitations — assert it changed to 'declined'
+    await expect(page.locator(`[data-testid="inv-card-${invitationId}"]`)).toContainText('declined');
 
-    // ensure invitations doc status is 'declined'
-    const invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
+    // ensure invitations doc status is 'declined' (poll until updated)
+    let invDoc = null;
+    for (let i = 0; i < 25; i++) {
+      invDoc = await getFirestoreDocument(`invitations/${invitationId}`);
+      if (invDoc && extractString(invDoc.fields.status) === 'declined') break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    expect(invDoc).not.toBeNull();
     expect(extractString(invDoc.fields.status)).toBe('declined');
 
     // ensure viaje.sharedWith does NOT contain inviteeUid
@@ -201,6 +208,7 @@ test.describe('Invitations flow (E2E)', () => {
     // create viaje and mark sharedWith (invitee only)
     await page.goto('/');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
 
     await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje privado compartido', nombreEspanol: 'Ciudad Secure', code: 'SC', sharedWith: [inviteeUid] }), { ownerUid, viajeId, inviteeUid });
 
@@ -208,6 +216,7 @@ test.describe('Invitations flow (E2E)', () => {
 
     // Sign in as attacker and assert they cannot see the viaje in bitacora
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: attackerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
 
     // navigate to Bitacora
     await page.click('text=Bitacora');
@@ -228,6 +237,7 @@ test.describe('Invitations flow (E2E)', () => {
 
     await page.goto('/');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
 
     await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje para invitar por email', nombreEspanol: 'Ciudad Email', code: 'EM', sharedWith: [] }), { ownerUid, viajeId });
 

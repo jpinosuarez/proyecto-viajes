@@ -75,7 +75,7 @@ const VisorViaje = ({
   const iniciarEdicion = () => {
     setFormTemp({
       ...data,
-      titulo: data.titulo || viajeBase.nombreEspanol,
+      titulo: data.titulo || viajeBase?.nombreEspanol || '',
       texto: data.texto || ''
     });
     setModoEdicion(true);
@@ -251,7 +251,7 @@ const VisorViaje = ({
               </div>
             ) : (
               <h1 style={styles.titleDisplay}>
-                {data.titulo || viajeBase.nombreEspanol}
+                {data.titulo || viajeBase?.nombreEspanol || ''}
               </h1>
             )}
 
