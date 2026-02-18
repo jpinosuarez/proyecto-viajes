@@ -142,6 +142,11 @@ test.describe('Invitations flow (E2E)', () => {
 
     // navigate to Bitacora and open the Visor using test helpers (deterministic)
     await page.evaluate(() => (window as any).__test_setVista('bitacora'));
+
+    // wait until the trip appears in the Bitacora list (client subscription must sync)
+    await page.waitForSelector(`text=Viaje de prueba E2E`, { timeout: 15000 });
+
+    // now open the Visor (data should be available)
     await page.evaluate((id) => (window as any).__test_abrirVisor(id), viajeId);
 
     // then wait for the Visor title to appear (target the specific heading)
