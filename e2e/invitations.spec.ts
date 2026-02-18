@@ -5,12 +5,22 @@ const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 const FIRESTORE_EMULATOR_URL = 'http://127.0.0.1:8080';
 
 async function createAuthUser(email: string, password = 'testpass') {
-  const res = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
+  const signUpRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, returnSecureToken: true })
   });
-  return res.json();
+  const signUpJson = await signUpRes.json();
+  // If the user already exists, sign them in and return the existing localId
+  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
+    const signInRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true })
+    });
+    return signInRes.json();
+  }
+  return signUpJson;
 }
 
 async function createFirestoreDocument(path: string, fields: any, documentId?: string) {
