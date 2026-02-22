@@ -1,0 +1,113 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - button [ref=e5] [cursor=pointer]:
+          - img [ref=e6]
+        - generic [ref=e8]:
+          - img [ref=e9]
+          - heading "Keeptrip" [level=1] [ref=e12]
+        - navigation [ref=e13]:
+          - button "Inicio" [ref=e14] [cursor=pointer]:
+            - img [ref=e15]
+            - generic [ref=e20]: Inicio
+          - button "Mapa" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - generic [ref=e24]: Mapa
+          - button "Bitacora" [ref=e25] [cursor=pointer]:
+            - img [ref=e26]
+            - generic [ref=e28]: Bitacora
+          - button "Ajustes" [ref=e29] [cursor=pointer]:
+            - img [ref=e30]
+            - generic [ref=e33]: Ajustes
+        - button "Salir" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: Salir
+      - main [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e43]: Keeptrip
+            - generic [ref=e44]: /
+            - heading "Mi Bitacora" [level=2] [ref=e45]
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - img [ref=e48]
+              - textbox "Buscar en la bitacora" [ref=e51]:
+                - /placeholder: Buscar viajes, paises o ciudades...
+            - button "Anadir Viaje" [ref=e52] [cursor=pointer]:
+              - img [ref=e53]
+              - generic [ref=e54]: Anadir Viaje
+            - generic [ref=e55]:
+              - button "Invitaciones (1)" [ref=e56] [cursor=pointer]:
+                - img [ref=e57]
+                - generic [ref=e60]: "1"
+              - button "Configurar Perfil" [ref=e61] [cursor=pointer]:
+                - img [ref=e62]
+              - button "Cerrar Sesion" [ref=e65] [cursor=pointer]:
+                - img [ref=e66]
+        - generic [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]:
+              - img [ref=e75]
+              - generic [ref=e77]:
+                - paragraph [ref=e78]: Días totales de viaje
+                - paragraph [ref=e79]: "0"
+            - generic [ref=e80]:
+              - img [ref=e82]
+              - generic [ref=e85]:
+                - paragraph [ref=e86]: Ciudades registradas
+                - paragraph [ref=e87]: "0"
+            - generic [ref=e88]:
+              - img [ref=e90]
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: Viajes realizados
+                - paragraph [ref=e94]: "0"
+            - generic [ref=e95]:
+              - img [ref=e97]
+              - generic [ref=e99]:
+                - paragraph [ref=e100]: Puntaje promedio
+                - paragraph [ref=e101]: 0.0 / 5
+          - generic [ref=e103]:
+            - img [ref=e105]
+            - heading "Tu bitacora aun no tiene paradas" [level=3] [ref=e107]
+            - paragraph [ref=e108]: Guarda tu primera parada para empezar a construir recuerdos, ver estadisticas y seguir tu ruta.
+            - button "Registrar primera parada" [ref=e109] [cursor=pointer]
+    - status
+  - generic [ref=e110]:
+    - generic [ref=e111]:
+      - generic [ref=e113]:
+        - button [ref=e114] [cursor=pointer]:
+          - img [ref=e115]
+        - generic [ref=e117]:
+          - button [ref=e118] [cursor=pointer]:
+            - img [ref=e119]
+          - button "Editar" [ref=e122] [cursor=pointer]:
+            - img [ref=e123]
+            - text: Editar
+      - generic [ref=e125]:
+        - generic [ref=e127]: viaje
+        - heading [level=1]
+        - img [ref=e129]
+    - generic [ref=e132]:
+      - generic [ref=e133]:
+        - heading "Bitacora" [level=3] [ref=e134]
+        - paragraph [ref=e135]: Sin relato aun...
+        - generic [ref=e136]:
+          - generic [ref=e137]:
+            - heading "Galería de fotos" [level=3] [ref=e138]
+            - button "Editar galeria" [ref=e139] [cursor=pointer]
+          - paragraph [ref=e140]: Tus recuerdos, listos para contar la historia.
+          - generic [ref=e141]:
+            - img [ref=e142]
+            - paragraph [ref=e144]: Aun no hay fotos en la galeria
+            - paragraph [ref=e145]: Agrega momentos para darle vida a esta historia.
+        - generic [ref=e146]:
+          - heading "Ruta" [level=3] [ref=e147]
+          - region "Map" [ref=e150]
+      - generic [ref=e152]:
+        - heading "Itinerario" [level=3] [ref=e153]
+        - paragraph [ref=e155]: No hay paradas registradas.
+```
