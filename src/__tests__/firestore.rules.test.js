@@ -57,6 +57,34 @@ test('owner puede actualizar campos y otros usuarios no pueden agregar sharedWit
   await assertFails(viajeRefAttacker.update({ sharedWith: ['attackerUid'] }));
 });
 
+test('attacker sin invitación NO puede agregar su uid a sharedWith', async () => {
+  // Viaje SIN documento de invitación para attackerUid
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    const adminDb = admin.firestore();
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje2').set({ titulo: 'Solo owner', sharedWith: [] });
+  });
+
+  const attackerDb = testEnv.authenticatedContext('attackerUid').firestore();
+  const viajeRef = attackerDb.doc('usuarios/ownerUid/viajes/viaje2');
+  // No hay invitation → debe fallar
+  await assertFails(viajeRef.update({ sharedWith: ['attackerUid'] }));
+});
+
+test('invitación con inviterId falso (no coincide con owner del viaje) NO permite bypass', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    const adminDb = admin.firestore();
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje3').set({ titulo: 'Trip', sharedWith: [] });
+    // Invitación existe pero inviterId ≠ ownerUid → regla debe rechazar
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje3/invitations/evilUid').set({
+      inviterId: 'someoneElse', inviteeUid: 'evilUid', viajeId: 'viaje3', status: 'pending'
+    });
+  });
+
+  const evilDb = testEnv.authenticatedContext('evilUid').firestore();
+  const viajeRef = evilDb.doc('usuarios/ownerUid/viajes/viaje3');
+  await assertFails(viajeRef.update({ sharedWith: ['evilUid'] }));
+});
+
 test('invitations collection: solo inviter o invitee pueden leer/actualizar', async () => {
   await testEnv.withSecurityRulesDisabled(async (admin) => {
     const adminDb = admin.firestore();

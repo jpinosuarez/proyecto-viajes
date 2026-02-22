@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "preview:staging": "vite preview --mode staging",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude 'e2e/**' --exclude 'src/__tests__/firestore.rules.test.js'",
+    "test:rules": "vitest run src/__tests__/firestore.rules.test.js",
     "test:e2e": "playwright test",
     "test:ci": "vitest run && playwright test"
   },

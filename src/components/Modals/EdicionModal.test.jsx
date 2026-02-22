@@ -1,17 +1,20 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi } from 'vitest';
 
-// Mocks para hooks usados dentro del componente
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ usuario: { uid: 'u1' } }) }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ pushToast: vi.fn() }) }));
 vi.mock('../../hooks/useWindowSize', () => ({ useWindowSize: () => ({ isMobile: false }) }));
 vi.mock('../../hooks/useGaleriaViaje', () => ({ useGaleriaViaje: () => ({ fotos: [], uploading: false, limpiar: vi.fn(), cambiarPortada: vi.fn(), eliminar: vi.fn(), actualizarCaption: vi.fn() }) }));
-// Mock del módulo firebase para evitar referencias a `window` durante tests
 vi.mock('../../firebase', () => ({ db: {}, storage: {} }));
-// Mock simple para UploadContext (evita necesidad de provider en tests)
 vi.mock('../../context/UploadContext', () => ({ useUpload: () => ({ iniciarSubida: vi.fn(), getEstadoViaje: () => ({}) }) }));
-// Mock simple para UploadContext (evita necesidad de provider en tests)
-vi.mock('../../context/UploadContext', () => ({ useUpload: () => ({ iniciarSubida: vi.fn(), getEstadoViaje: () => ({}) }) }));
+vi.mock('../../services/invitationsService', () => ({ createInvitation: vi.fn() }));
+// Mock ligero de firebase/firestore — EdicionModal solo usa collection + getDocs
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  getDocs: vi.fn(async () => ({ docs: [] })),
+  query: vi.fn(),
+  where: vi.fn(),
+}));
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -64,3 +67,6 @@ describe('EdicionModal (borrador)', () => {
     expect(screen.getByRole('button', { name: /Usando título manual/i })).toHaveTextContent('Manual');
   });
 });
+
+// Tests de companion autocomplete e invitaciones se cubren vía E2E (e2e/invitations.spec.ts)
+// ya que requieren integración profunda con firebase/firestore que no es viable mockear unitariamente.

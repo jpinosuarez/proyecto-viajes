@@ -19,10 +19,12 @@ jobs:
         run: npm ci
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-      - name: Run unit tests
-        run: npm test
+      - name: Run unit tests (no emulator needed)
+        run: npm run test:unit
       - name: Install Firebase CLI
         run: npm i -g firebase-tools@latest
-      - name: Run Playwright E2E with Firebase emulators
-        # use emulators:exec so Playwright runs only after emulators are ready
-        run: npx firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 -- npx playwright test --reporter=list
+      - name: Run Firestore rules tests + Playwright E2E with emulators
+        # emulators:exec ensures emulators are running before tests start
+        run: |
+          npx firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 -- \
+            bash -c "npm run test:rules && npx playwright test --reporter=list"

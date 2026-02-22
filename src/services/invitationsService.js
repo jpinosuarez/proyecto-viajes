@@ -12,7 +12,7 @@ import {
   arrayUnion,
   orderBy
 } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db } from '../firebase';
 
 /**
  * Invitations service
