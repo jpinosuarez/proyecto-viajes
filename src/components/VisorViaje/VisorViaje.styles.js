@@ -35,14 +35,7 @@ export const styles = {
     position: 'absolute',
     inset: 0,
     borderRadius: `0 0 ${RADIUS['2xl']} ${RADIUS['2xl']}`,
-    background: `linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.08) 0%,
-      rgba(0, 0, 0, 0.02) 30%,
-      rgba(0, 0, 0, 0.25) 60%,
-      rgba(0, 0, 0, 0.7) 85%,
-      rgba(0, 0, 0, 0.85) 100%
-    )`,
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.85) 100%)',
     pointerEvents: 'none',
   },
 
@@ -61,7 +54,7 @@ export const styles = {
   },
   iconBtn: (disabled = false) => ({ 
     ...GLASS.dark,
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: RADIUS.full,
     width: '42px',
     height: '42px', 
@@ -104,7 +97,7 @@ export const styles = {
   secondaryBtn: (disabled = false) => ({
     ...GLASS.dark,
     color: 'white',
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: RADIUS.full,
     width: '42px',
     height: '42px',
@@ -150,7 +143,7 @@ export const styles = {
   titleDisplay: { 
     color: 'white',
     fontFamily: FONTS.heading,
-    fontSize: 'clamp(2rem, 5vw, 3.8rem)',
+    fontSize: 'clamp(2.5rem, 5vw, 4rem)',
     fontWeight: '900',
     margin: '4px 0',
     lineHeight: 1.05,
@@ -174,7 +167,7 @@ export const styles = {
     color: 'white',
     fontSize: '0.82rem',
     fontWeight: '600',
-    border: '1px solid rgba(255,255,255,0.1)',
+    border: '1px solid rgba(255,255,255,0.2)',
   },
   sharedBadge: {
     display: 'inline-flex',

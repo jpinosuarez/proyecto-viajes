@@ -48,12 +48,12 @@ function generateCurvedRoute(coordinates) {
 
 /**
  * Mapa interactivo de ruta para el VisorViaje — Modo Ruta.
- * Hace flyTo al cambiar activeIndex.
+ * Se centra con fitBounds al cargar; el feedback de parada activa
+ * se da únicamente con el highlight del Marker (sin flyTo).
  */
 const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const initialFitDone = useRef(false);
 
   const handleMapLoad = useCallback(() => {
     setMapLoaded(true);
@@ -76,23 +76,7 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
         maxZoom: 12,
       });
     }
-    initialFitDone.current = true;
   }, [mapLoaded, paradas]);
-
-  // ─── flyTo al cambiar parada activa ───
-  useEffect(() => {
-    if (!initialFitDone.current || !mapLoaded) return;
-    if (!mapRef.current || paradas.length === 0) return;
-    const target = paradas[activeIndex];
-    if (!target?.coordenadas) return;
-
-    mapRef.current.flyTo({
-      center: target.coordenadas,
-      zoom: 11,
-      duration: 1200,
-      essential: true,
-    });
-  }, [activeIndex, paradas, mapLoaded]);
 
   // ─── GeoJSON: ruta curvada ───
   const rutaGeoJSON = useMemo(() => {
@@ -119,6 +103,8 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
         onLoad={handleMapLoad}
+        scrollZoom={false}
+        dragRotate={false}
         reuseMaps
       >
         {/* Línea de ruta curvada */}
@@ -151,44 +137,25 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
               longitude={p.coordenadas[0]}
               latitude={p.coordenadas[1]}
               anchor="bottom"
+              style={{ zIndex: isActive ? 10 : 1 }}
             >
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                transform: isActive ? 'scale(1.15)' : 'scale(1)',
-                transition: 'transform 0.3s ease',
-                filter: isActive ? 'none' : 'brightness(0.85)',
+                transform: isActive ? 'scale(1.4)' : 'scale(1)',
+                opacity: isActive ? 1 : 0.6,
+                transition: 'all 0.3s ease',
               }}>
-                {/* Label nombre */}
-                <div style={{
-                  ...GLASS.dark,
-                  borderRadius: RADIUS.full,
-                  padding: '3px 10px',
-                  fontSize: '0.7rem',
-                  fontWeight: '700',
-                  color: 'white',
-                  whiteSpace: 'nowrap',
-                  marginBottom: '4px',
-                  border: isActive
-                    ? `2px solid ${COLORS.atomicTangerine}`
-                    : '1px solid rgba(255,255,255,0.15)',
-                  boxShadow: isActive ? SHADOWS.glow : SHADOWS.sm,
-                  maxWidth: '140px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {p.nombre}
-                </div>
                 {/* Pin */}
                 <div style={{
-                  width: isActive ? '28px' : '22px',
-                  height: isActive ? '28px' : '22px',
+                  width: isActive ? '30px' : '22px',
+                  height: isActive ? '30px' : '22px',
                   borderRadius: '50% 50% 50% 0',
                   transform: 'rotate(-45deg)',
-                  background: isActive ? COLORS.atomicTangerine : COLORS.charcoalBlue,
-                  border: '3px solid white',
-                  boxShadow: isActive ? SHADOWS.glow : SHADOWS.md,
+                  background: isActive ? COLORS.atomicTangerine : COLORS.textSecondary,
+                  border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.6)',
+                  boxShadow: isActive ? SHADOWS.glow : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
