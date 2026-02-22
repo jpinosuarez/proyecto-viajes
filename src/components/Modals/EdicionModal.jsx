@@ -344,7 +344,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
         lastModified: Date.now()
       });
 
-      setFormData((prev) => ({ ...prev, foto: dataUrl, fotoFile: optimizedFile }));
+      setFormData((prev) => ({ ...prev, foto: dataUrl, fotoFile: optimizedFile, fotoCredito: null }));
     } catch (error) {
       console.error('Error optimizando imagen:', error);
       pushToast('No se pudo optimizar la imagen seleccionada.', 'error');

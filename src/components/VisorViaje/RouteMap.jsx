@@ -51,7 +51,7 @@ function generateCurvedRoute(coordinates) {
  * Se centra con fitBounds al cargar; el feedback de parada activa
  * se da únicamente con el highlight del Marker (sin flyTo).
  */
-const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
+const RouteMap = ({ paradas, activeIndex = 0, hoveredIndex = null, onMarkerHover, onMarkerHoverEnd, onMarkerClick, isModal = false }) => {
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -92,7 +92,8 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
   }, [paradas]);
 
   const containerStyle = isModal ? s.modalContainer : s.container;
-  const activeName = paradas[activeIndex]?.nombre || '';
+  const displayIndex = hoveredIndex != null ? hoveredIndex : activeIndex;
+  const activeName = paradas[displayIndex]?.nombre || '';
 
   return (
     <div style={containerStyle}>
@@ -131,31 +132,39 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
         {paradas.map((p, i) => {
           if (!p.coordenadas) return null;
           const isActive = i === activeIndex;
+          const isHovered = i === hoveredIndex;
+          const highlighted = isActive || isHovered;
           return (
             <Marker
               key={p.id || i}
               longitude={p.coordenadas[0]}
               latitude={p.coordenadas[1]}
               anchor="bottom"
-              style={{ zIndex: isActive ? 10 : 1 }}
+              style={{ zIndex: highlighted ? 10 : 1 }}
             >
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                transform: isActive ? 'scale(1.4)' : 'scale(1)',
-                opacity: isActive ? 1 : 0.6,
-                transition: 'all 0.3s ease',
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  transform: highlighted ? 'scale(1.4)' : 'scale(1)',
+                  opacity: highlighted ? 1 : 0.6,
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={() => onMarkerHover?.(i)}
+                onMouseLeave={() => onMarkerHoverEnd?.()}
+                onClick={() => onMarkerClick?.(i)}
+              >
                 {/* Pin */}
                 <div style={{
-                  width: isActive ? '30px' : '22px',
-                  height: isActive ? '30px' : '22px',
+                  width: highlighted ? '30px' : '22px',
+                  height: highlighted ? '30px' : '22px',
                   borderRadius: '50% 50% 50% 0',
                   transform: 'rotate(-45deg)',
-                  background: isActive ? COLORS.atomicTangerine : COLORS.textSecondary,
-                  border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.6)',
-                  boxShadow: isActive ? SHADOWS.glow : 'none',
+                  background: highlighted ? COLORS.atomicTangerine : COLORS.textSecondary,
+                  border: highlighted ? '3px solid white' : '2px solid rgba(255,255,255,0.6)',
+                  boxShadow: highlighted ? SHADOWS.glow : 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -164,7 +173,7 @@ const RouteMap = ({ paradas, activeIndex = 0, isModal = false }) => {
                   <span style={{
                     transform: 'rotate(45deg)',
                     color: 'white',
-                    fontSize: isActive ? '0.7rem' : '0.6rem',
+                    fontSize: highlighted ? '0.7rem' : '0.6rem',
                     fontWeight: '800',
                     lineHeight: 1,
                   }}>

@@ -77,6 +77,7 @@ describe('EdicionModal (borrador)', () => {
   });
 
   test('cambiar a Manual al tipear en el título', async () => {
+    const user = userEvent.setup();
     const viaje = { id: 'new', nombreEspanol: 'Chile', titulo: '', fechaInicio: '2024-01-01', fechaFin: '2024-01-02' };
     render(<EdicionModal viaje={viaje} esBorrador={true} {...defaultProps} />);
 
@@ -84,12 +85,16 @@ describe('EdicionModal (borrador)', () => {
     // al inicio debe estar en Auto (badge)
     expect(screen.getByRole('button', { name: /Auto|Manual/ })).toHaveTextContent('Auto');
 
-    await userEvent.type(input, 'Mi título manual');
+    // Limpiar y escribir manualmente
+    await user.clear(input);
+    await user.type(input, 'X');
 
     // Badge debe indicar Manual (el nombre accesible viene del texto, no del title)
-    const btn = screen.getByRole('button', { name: /Manual/i });
-    expect(btn).toHaveTextContent('Manual');
-    expect(btn).toHaveAttribute('title', expect.stringMatching(/Usando título manual/i));
+    await waitFor(() => {
+      const btn = screen.getByRole('button', { name: /Manual/i });
+      expect(btn).toHaveTextContent('Manual');
+      expect(btn).toHaveAttribute('title', expect.stringMatching(/Usando título manual/i));
+    });
   });
 });
 

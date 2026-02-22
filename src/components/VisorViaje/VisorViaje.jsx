@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Edit3, Calendar, Check, X, Camera, Trash2, LoaderCircle, Star, MapPin } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, Trash2, LoaderCircle, Star, MapPin, X } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useUpload } from '../../context/UploadContext';
 import { styles } from './VisorViaje.styles';
-import { COLORS, RADIUS, SHADOWS, GLASS, FONTS } from '../../theme';
-import CityManager from '../Shared/CityManager';
+import { COLORS } from '../../theme';
 import MiniMapaRuta from '../Shared/MiniMapaRuta';
-import { compressImage } from '../../utils/imageUtils';
 import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
 import { GalleryGrid } from '../Shared/GalleryGrid';
 import { useWindowSize } from '../../hooks/useWindowSize';
 import { useActiveParada } from '../../hooks/useActiveParada';
 import RouteMap from './RouteMap';
 import ContextCard from './ContextCard';
+import EdicionModal from '../Modals/EdicionModal';
 
 const VisorViaje = ({
   viajeId,
@@ -37,13 +36,12 @@ const VisorViaje = ({
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
   const data = bitacoraData[viajeId] || viajeBase || {};
 
-  const [modoEdicion, setModoEdicion] = useState(false);
-  const [formTemp, setFormTemp] = useState({});
   const [paradas, setParadas] = useState([]);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [captionDrafts, setCaptionDrafts] = useState({});
   const [showGalleryTools, setShowGalleryTools] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   // Refs para IntersectionObserver en stop cards
   const paradaRefs = useRef([]);
@@ -57,7 +55,7 @@ const VisorViaje = ({
   const isRouteMode = paradas.length > 1;
   const { activeIndex: activeParadaIndex, setParadaRef } = useActiveParada(
     paradaRefs,
-    isRouteMode && !isMobile && !modoEdicion
+    isRouteMode && !isMobile
   );
   const isSharedTrip = data.ownerId && usuario && data.ownerId !== usuario.uid;
   const [ownerDisplayName, setOwnerDisplayName] = useState(null);
@@ -107,21 +105,6 @@ const VisorViaje = ({
 
   if (!viajeId || !data) return null;
 
-  const iniciarEdicion = () => {
-    setFormTemp({
-      ...data,
-      titulo: data.titulo || viajeBase?.nombreEspanol || '',
-      texto: data.texto || ''
-    });
-    setModoEdicion(true);
-  };
-
-  const guardarCambios = async () => {
-    if (isProcessingImage || isSaving) return;
-    const ok = await onSave(viajeId, { ...formTemp, paradasNuevas: paradas });
-    if (ok) setModoEdicion(false);
-  };
-
   const eliminarEsteViaje = () => {
     onDelete(viajeId);
   };
@@ -157,37 +140,24 @@ const VisorViaje = ({
     pushToast('Caption actualizado.', 'success', 1500);
   };
 
-  const handleReplaceImage = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ─── Callback para re-cargar paradas tras guardar desde EdicionModal ───
+  const reloadParadas = useCallback(async () => {
+    if (!viajeId || !usuario) return;
+    const ref = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
+    const snap = await getDocs(ref);
+    const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+  }, [viajeId, usuario]);
 
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      pushToast('Formato no soportado. Usa JPG o PNG.', 'error');
-      e.target.value = '';
-      return;
+  const handleEditSave = async (id, payload) => {
+    const result = await onSave(id, payload);
+    if (result) {
+      // Recargar paradas para reflejar cambios inmediatamente
+      await reloadParadas();
+      galeria.recargar?.();
+      // No cerrar aquí — EdicionModal se cierra desde su propio handleSave/onClose
     }
-
-    setIsProcessingImage(true);
-    try {
-      const { blob, dataUrl } = await compressImage(file, 1920, 0.8);
-      const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
-        type: 'image/jpeg',
-        lastModified: Date.now()
-      });
-
-      setFormTemp((prev) => ({
-        ...prev,
-        foto: dataUrl,
-        fotoFile: optimizedFile,
-        fotoCredito: null
-      }));
-    } catch (error) {
-      console.error('Error optimizando imagen en visor:', error);
-      pushToast('No se pudo optimizar la imagen seleccionada.', 'error');
-    } finally {
-      setIsProcessingImage(false);
-      e.target.value = '';
-    }
+    return result;
   };
 
   const getClimaTexto = (clima, temperatura) => {
@@ -200,30 +170,24 @@ const VisorViaje = ({
     return `${clima}, ${temp}C`;
   };
 
-  const fotoMostrada = modoEdicion
-    ? formTemp.foto
-    : (data.foto && typeof data.foto === 'string' && data.foto.trim()
-      ? data.foto
-      : (viajeBase?.foto && typeof viajeBase.foto === 'string' && viajeBase.foto.trim() ? viajeBase.foto : null));
-  const isBusy = isSaving || isDeleting || isProcessingImage;
+  const fotoMostrada = (data.foto && typeof data.foto === 'string' && data.foto.trim()
+    ? data.foto
+    : (viajeBase?.foto && typeof viajeBase.foto === 'string' && viajeBase.foto.trim() ? viajeBase.foto : null));
+  const isBusy = isSaving || isDeleting;
 
   // ========== Render helpers (reutilizados en ambos modos) ==========
 
-  const renderBitacora = () => (
-    <>
-      <h3 style={styles.sectionTitle}>Bitácora</h3>
-      {modoEdicion ? (
-        <textarea
-          style={styles.textArea}
-          value={formTemp.texto || ''}
-          onChange={(e) => setFormTemp({ ...formTemp, texto: e.target.value })}
-          placeholder="Escribe aqui tu relato..."
-        />
-      ) : (
+  const renderBitacora = () => {
+    // Estrategia dual: si hay relatos per-stop, no mostrar el bloque global
+    const hasPerStopRelato = paradas.some(p => p.relato && p.relato.trim());
+    if (hasPerStopRelato) return null; // Se mostrará inline en el timeline
+    return (
+      <>
+        <h3 style={styles.sectionTitle}>Bitácora</h3>
         <p style={styles.readText}>{data.texto || 'Sin relato aun...'}</p>
-      )}
-    </>
-  );
+      </>
+    );
+  };
 
   const renderGallery = () => (
     <div style={{ marginTop: '32px' }}>
@@ -291,58 +255,168 @@ const VisorViaje = ({
     </div>
   );
 
-  const renderEnrichedStopCard = (p, i) => (
-    <div
-      key={p.id || i}
-      ref={(node) => setParadaRef(i, node)}
-      style={{
-        ...styles.enrichedStopCard,
-        ...(activeParadaIndex === i && !isMobile ? styles.enrichedStopCardActive : {}),
-      }}
-    >
-      <div style={styles.stopCardHeader}>
-        <span style={styles.stopCardName}>{p.nombre}</span>
-        <span style={styles.stopCardDate}>
-          {p.fechaLlegada && p.fechaSalida && p.fechaLlegada !== p.fechaSalida
-            ? `${p.fechaLlegada} → ${p.fechaSalida}`
-            : p.fechaLlegada || p.fecha}
-        </span>
-      </div>
-      {p.transporte && (
-        <span style={styles.transportBadge}>{p.transporte}</span>
-      )}
-      {p.notaCorta && (
-        <p style={styles.notaCorta}>{p.notaCorta}</p>
-      )}
-      {p.clima && (
-        <div style={styles.weatherNote}>
-          {getClimaTexto(p.clima.desc, p.clima.max)}
-          <span style={styles.verifiedBadge}>Historico</span>
+  // ─── Transporte emoji map ───
+  const transporteEmoji = { avion: '✈️', tren: '🚆', auto: '🚗', bus: '🚌', otro: '🚶' };
+
+  // ─── Humanize date range ───
+  const humanizeDate = (start, end) => {
+    const fmt = (d) => {
+      const date = new Date(d + 'T12:00:00');
+      return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' }).format(date);
+    };
+    if (!start) return '';
+    if (!end || start === end) return fmt(start);
+    return `${fmt(start)} – ${fmt(end)}`;
+  };
+
+  // ─── Clima emoji ───
+  const climaEmoji = (desc) => {
+    if (!desc) return '🌡️';
+    const d = desc.toLowerCase();
+    if (d.includes('sol') || d.includes('despejado')) return '☀️';
+    if (d.includes('nub') || d.includes('parcial')) return '⛅';
+    if (d.includes('lluvia') || d.includes('llovi')) return '🌧️';
+    if (d.includes('nieve')) return '❄️';
+    if (d.includes('tormenta')) return '⚡';
+    return '🌤️';
+  };
+
+  const renderEnrichedStopCard = (p, i) => {
+    const isActive = activeParadaIndex === i && !isMobile;
+    const isHovered = hoveredIndex === i && !isMobile;
+    const highlighted = isActive || isHovered;
+
+    return (
+      <div key={p.id || i} style={styles.timelineRow}>
+        {/* Timeline column: dot + line */}
+        <div style={styles.timelineTrack}>
+          <div style={highlighted ? styles.timelineDotActive : styles.timelineDotInactive} />
+          {i < paradas.length - 1 && <div style={styles.timelineLine} />}
         </div>
-      )}
-    </div>
-  );
+
+        {/* Card */}
+        <div
+          ref={(node) => setParadaRef(i, node)}
+          style={{
+            ...styles.enrichedStopCard,
+            ...(highlighted ? styles.enrichedStopCardActive : {}),
+          }}
+          onMouseEnter={() => setHoveredIndex(i)}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          <div style={styles.stopCardHeader}>
+            <span style={styles.stopCardName}>{p.nombre}</span>
+            <span style={styles.stopCardDate}>
+              {humanizeDate(p.fechaLlegada || p.fecha, p.fechaSalida)}
+            </span>
+          </div>
+          {p.clima && (
+            <div style={styles.climaBadge}>
+              <span style={{ fontSize: '1.1rem' }}>{climaEmoji(p.clima.desc)}</span>
+              {p.clima.max != null && <span>{Math.round(p.clima.max)}°C</span>}
+              <span style={styles.verifiedBadge}>Histórico</span>
+            </div>
+          )}
+          {p.notaCorta && (
+            <p style={styles.notaCorta}>{p.notaCorta}</p>
+          )}
+          {/* Relato per-stop (bitácora fragmentada) */}
+          {p.relato && p.relato.trim() && (
+            <div style={styles.paradaRelato}>
+              <p style={styles.paradaRelatoText}>{p.relato}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Transport icon between stops */}
+        {i < paradas.length - 1 && paradas[i + 1]?.transporte && (
+          <div style={styles.transportIconOnLine}>
+            {transporteEmoji[paradas[i + 1].transporte] || '🚶'}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderItinerario = () => (
     <>
       <h3 style={styles.sectionTitle}>Itinerario</h3>
-      {modoEdicion ? (
-        <CityManager paradas={paradas} setParadas={setParadas} />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {paradas.map((p, i) => renderEnrichedStopCard(p, i))}
-        </div>
-      )}
+      <div style={styles.timelineContainer}>
+        {paradas.map((p, i) => renderEnrichedStopCard(p, i))}
+      </div>
     </>
   );
 
-  // ========== Body Layout Render ==========
+  // ========== Context Section — reutilizable en ambos modos ==========
+  const renderContextSection = () => {
+    const hasHighlights = data.highlights?.topFood || data.highlights?.topView || data.highlights?.topTip;
+    const hasCompanions = (data.companions || []).length > 0;
+    const hasVibe = (data.vibe || []).length > 0;
+    const hasContextCards = hasHighlights || hasCompanions || hasVibe || data.presupuesto;
+
+    if (!hasContextCards) return null;
+
+    // Consolidar highlights en una sola card tipo lista
+    const highlightItems = [
+      data.highlights?.topFood && { icon: '🍽️', text: data.highlights.topFood },
+      data.highlights?.topView && { icon: '👀', text: data.highlights.topView },
+      data.highlights?.topTip && { icon: '💡', text: data.highlights.topTip },
+    ].filter(Boolean);
+
+    return (
+      <div style={styles.contextGrid}>
+        {highlightItems.length > 0 && (
+          <ContextCard icon="⭐" label="Highlights">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {highlightItems.map((h, i) => (
+                <div key={i} style={styles.highlightListItem}>
+                  <span>{h.icon}</span>
+                  <span style={{ fontSize: '0.9rem', color: COLORS.textPrimary }}>{h.text}</span>
+                </div>
+              ))}
+            </div>
+          </ContextCard>
+        )}
+        {data.presupuesto && (
+          <ContextCard icon="💰" label="Presupuesto" value={data.presupuesto} />
+        )}
+        {hasVibe && (
+          <ContextCard icon="✨" label="Vibe" value={(data.vibe || []).join(', ')} />
+        )}
+        {hasCompanions && (
+          <ContextCard icon="👥" label="Compañeros">
+            <div style={styles.companionsGrid}>
+              {(data.companions || []).map((c, idx) => (
+                <div key={idx} title={c.name} style={styles.companionAvatar}>
+                  {(c.name || 'U').split(' ').map(s => s[0]).slice(0, 2).join('')}
+                </div>
+              ))}
+            </div>
+          </ContextCard>
+        )}
+      </div>
+    );
+  };
+
+  // ─── Hover / click callbacks for map ↔ timeline bidirectional ───
+  const handleMarkerHover = useCallback((i) => setHoveredIndex(i), []);
+  const handleMarkerHoverEnd = useCallback(() => setHoveredIndex(null), []);
+  const handleMarkerClick = useCallback((i) => {
+    const node = paradaRefs.current[i];
+    if (!node) return;
+    // Scroll inside scrollColumn container with offset for nav
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHoveredIndex(i);
+    // Clear hover after a short time
+    setTimeout(() => setHoveredIndex(null), 2000);
+  }, []);
 
   const renderRouteBody = () => {
     if (isMobile) {
       return (
         <>
           <div style={styles.mobileColumn}>
+            {renderContextSection()}
             {renderItinerario()}
             <div style={{ marginTop: '32px' }}>{renderBitacora()}</div>
             {renderGallery()}
@@ -358,7 +432,6 @@ const VisorViaje = ({
             <MapPin size={24} />
           </button>
 
-          {/* Modal fullscreen mapa — montaje condicional estricto para evitar bug de canvas 0px */}
           {showMapModal && (
             <div style={styles.mapModal}>
               <button
@@ -379,73 +452,43 @@ const VisorViaje = ({
     // Desktop: split layout
     return (
       <div style={styles.routeLayout}>
-        <div style={styles.scrollColumn}>
+        <div style={styles.scrollColumn} id="visor-scroll-column">
+          {renderContextSection()}
           {renderItinerario()}
           <div style={{ marginTop: '32px' }}>{renderBitacora()}</div>
           {renderGallery()}
         </div>
         <div style={styles.mapColumn}>
-          <RouteMap paradas={paradas} activeIndex={activeParadaIndex} />
+          <RouteMap
+            paradas={paradas}
+            activeIndex={activeParadaIndex}
+            hoveredIndex={hoveredIndex}
+            onMarkerHover={handleMarkerHover}
+            onMarkerHoverEnd={handleMarkerHoverEnd}
+            onMarkerClick={handleMarkerClick}
+          />
         </div>
       </div>
     );
   };
 
   const renderDestinoBody = () => {
-    const hasHighlights = data.highlights?.topFood || data.highlights?.topView || data.highlights?.topTip;
-    const hasCompanions = (data.companions || []).length > 0;
-    const hasVibe = (data.vibe || []).length > 0;
-    const hasContextCards = hasHighlights || hasCompanions || hasVibe || data.presupuesto || paradas.length === 1;
-
     return (
       <div style={styles.destinoBody}>
-        {/* Context Grid Bento — storytelling movido del header aquí */}
-        {hasContextCards && (
-          <div style={styles.contextGrid}>
-            {data.highlights?.topFood && (
-              <ContextCard icon="🍽️" label="Top Food" value={data.highlights.topFood} />
-            )}
-            {data.highlights?.topView && (
-              <ContextCard icon="👀" label="Top View" value={data.highlights.topView} />
-            )}
-            {data.highlights?.topTip && (
-              <ContextCard icon="💡" label="Top Tip" value={data.highlights.topTip} />
-            )}
-            {data.presupuesto && (
-              <ContextCard icon="💰" label="Presupuesto" value={data.presupuesto} />
-            )}
-            {hasVibe && (
-              <ContextCard icon="✨" label="Vibe" value={(data.vibe || []).join(', ')} />
-            )}
-            {hasCompanions && (
-              <ContextCard icon="👥" label="Compañeros">
-                <div style={styles.companionsGrid}>
-                  {(data.companions || []).map((c, idx) => (
-                    <div key={idx} title={c.name} style={styles.companionAvatar}>
-                      {(c.name || 'U').split(' ').map(s => s[0]).slice(0, 2).join('')}
-                    </div>
-                  ))}
-                </div>
-              </ContextCard>
-            )}
-            {paradas.length === 1 && (
-              <ContextCard icon="📍" label="Ubicación" style={{ gridColumn: 'span 2' }}>
-                <MiniMapaRuta paradas={paradas} />
-              </ContextCard>
-            )}
+        {/* Context Grid Bento */}
+        {renderContextSection()}
+
+        {/* Mini mapa para single-parada */}
+        {paradas.length === 1 && (
+          <div style={{ marginBottom: '24px' }}>
+            <ContextCard icon="📍" label="Ubicación" style={{ gridColumn: 'span 2' }}>
+              <MiniMapaRuta paradas={paradas} />
+            </ContextCard>
           </div>
         )}
 
         {renderBitacora()}
         {renderGallery()}
-
-        {/* CityManager en modo edición (Destino no muestra itinerario en lectura) */}
-        {modoEdicion && (
-          <div style={{ marginTop: '32px' }}>
-            <h3 style={styles.sectionTitle}>Itinerario</h3>
-            <CityManager paradas={paradas} setParadas={setParadas} />
-          </div>
-        )}
       </div>
     );
   };
@@ -469,144 +512,117 @@ const VisorViaje = ({
               </button>
 
               <div style={styles.navActions}>
-                {!modoEdicion ? (
-                  <>
-                    {!isSharedTrip && (
-                      <button onClick={eliminarEsteViaje} style={styles.secondaryBtn(isBusy)} disabled={isBusy}>
-                        {isDeleting ? <LoaderCircle size={16} className="spin" /> : <Trash2 size={16} color="#ff6b6b" />}
-                      </button>
-                    )}
-                    {!isSharedTrip && (
-                      <button onClick={iniciarEdicion} style={styles.primaryBtn(false, isBusy)} disabled={isBusy}>
-                        <Edit3 size={15} /> Editar
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => setModoEdicion(false)} style={styles.secondaryBtn(isBusy)} disabled={isBusy}>
-                      <X size={16} />
-                    </button>
-                    <button onClick={guardarCambios} style={styles.primaryBtn(true, isBusy)} disabled={isBusy}>
-                      {isBusy ? <LoaderCircle size={16} className="spin" /> : <Check size={16} />}
-                      {isProcessingImage ? 'Optimizando...' : (isSaving ? 'Guardando...' : 'Guardar')}
-                    </button>
-                  </>
+                {!isSharedTrip && (
+                  <button onClick={eliminarEsteViaje} style={styles.secondaryBtn(isBusy)} disabled={isBusy}>
+                    {isDeleting ? <LoaderCircle size={16} className="spin" /> : <Trash2 size={16} color="#ff6b6b" />}
+                  </button>
+                )}
+                {!isSharedTrip && (
+                  <button onClick={() => setShowEditModal(true)} style={styles.primaryBtn(false, isBusy)} disabled={isBusy}>
+                    <Edit3 size={15} /> Editar
+                  </button>
                 )}
               </div>
             </div>
 
             {/* Hero Content — anclado abajo */}
-            {modoEdicion ? (
-              <div style={styles.editOverlay}>
-                <input
-                  style={styles.titleInput}
-                  value={formTemp.titulo || ''}
-                  onChange={(e) => setFormTemp({ ...formTemp, titulo: e.target.value })}
-                  placeholder="Título del viaje"
-                />
-                <div style={styles.editActionsRow}>
-                  <label style={styles.imageReplaceBtn(isProcessingImage)}>
-                    <Camera size={14} />
-                    {isProcessingImage ? 'Optimizando...' : 'Reemplazar portada'}
-                    <input
-                      type="file"
-                      hidden
-                      onChange={handleReplaceImage}
-                      accept="image/jpeg,image/png"
-                      disabled={isProcessingImage}
-                    />
-                  </label>
-                </div>
+            <div style={styles.heroContent}>
+              {/* Flags */}
+              <div style={styles.flagRow}>
+                {data.banderas && data.banderas.length > 0 ? (
+                  data.banderas.map((b, i) => (
+                    <img key={i} src={b} alt="flag" style={styles.flagImg} />
+                  ))
+                ) : (
+                  <span style={styles.flagIcon}>✈️</span>
+                )}
               </div>
-            ) : (
-              <div style={styles.heroContent}>
-                {/* Flags */}
-                <div style={styles.flagRow}>
-                  {data.banderas && data.banderas.length > 0 ? (
-                    data.banderas.map((b, i) => (
-                      <img key={i} src={b} alt="flag" style={styles.flagImg} />
-                    ))
-                  ) : (
-                    <span style={styles.flagIcon}>✈️</span>
-                  )}
-                </div>
 
-                {/* Título grande */}
-                <h1 style={styles.titleDisplay}>
-                  {data.titulo || viajeBase?.nombreEspanol || ''}
-                </h1>
+              {/* Título grande */}
+              <h1 style={styles.titleDisplay}>
+                {data.titulo || viajeBase?.nombreEspanol || ''}
+              </h1>
 
-                {/* Meta row: fecha + shared badge */}
-                <div style={styles.metaRow}>
-                  <span style={styles.metaBadge}>
-                    <Calendar size={13} /> {data.fechaInicio}{' '}
-                    {data.fechaFin && data.fechaFin !== data.fechaInicio
-                      ? ` – ${data.fechaFin}`
-                      : ''}
+              {/* Meta row: fecha + shared badge */}
+              <div style={styles.metaRow}>
+                <span style={styles.metaBadge}>
+                  <Calendar size={13} /> {data.fechaInicio}{' '}
+                  {data.fechaFin && data.fechaFin !== data.fechaInicio
+                    ? ` – ${data.fechaFin}`
+                    : ''}
+                </span>
+
+                {isSharedTrip && (
+                  <span data-testid="visor-shared-badge" style={styles.sharedBadge}>
+                    🤝 Compartido por {ownerDisplayName || '…'}
                   </span>
+                )}
+              </div>
 
-                  {isSharedTrip && (
-                    <span data-testid="visor-shared-badge" style={styles.sharedBadge}>
-                      🤝 Compartido por {ownerDisplayName || '…'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Storytelling — solo Modo Ruta */}
-                {isRouteMode && (
-                  <div data-testid="visor-storytelling">
-                    <div style={styles.storytellingRow}>
-                      {data.presupuesto && (
-                        <span data-testid="visor-presupuesto" style={styles.storytellingChip}>
-                          💰 {data.presupuesto}
+              {/* Storytelling — solo Modo Ruta (chips en hero) */}
+              {isRouteMode && (
+                <div data-testid="visor-storytelling">
+                  <div style={styles.storytellingRow}>
+                    {data.presupuesto && (
+                      <span data-testid="visor-presupuesto" style={styles.storytellingChip}>
+                        💰 {data.presupuesto}
+                      </span>
+                    )}
+                    {(data.vibe || []).map((v, i) => (
+                      <span key={i} style={styles.storytellingVibeChip}>{v}</span>
+                    ))}
+                    <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto', alignItems: 'center' }}>
+                      {(data.companions || []).slice(0, 4).map((c, idx) => (
+                        <div key={idx} title={c.name} style={styles.companionDot}>
+                          {(c.name || 'U').split(' ').map(s => s[0]).slice(0, 2).join('')}
+                        </div>
+                      ))}
+                      {(data.companions || []).length > 4 && (
+                        <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem' }}>
+                          +{(data.companions || []).length - 4}
                         </span>
                       )}
-                      {(data.vibe || []).map((v, i) => (
-                        <span key={i} style={styles.storytellingVibeChip}>{v}</span>
-                      ))}
-                      <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto', alignItems: 'center' }}>
-                        {(data.companions || []).slice(0, 4).map((c, idx) => (
-                          <div key={idx} title={c.name} style={styles.companionDot}>
-                            {(c.name || 'U').split(' ').map(s => s[0]).slice(0, 2).join('')}
-                          </div>
-                        ))}
-                        {(data.companions || []).length > 4 && (
-                          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem' }}>
-                            +{(data.companions || []).length - 4}
-                          </span>
-                        )}
-                      </div>
                     </div>
-
-                    {(data.highlights?.topFood || data.highlights?.topView || data.highlights?.topTip) && (
-                      <div style={{ ...styles.storytellingRow, marginTop: '6px' }}>
-                        {data.highlights?.topFood && <span style={styles.highlightTag}>🍽️ {data.highlights.topFood}</span>}
-                        {data.highlights?.topView && <span style={styles.highlightTag}>👀 {data.highlights.topView}</span>}
-                        {data.highlights?.topTip && <span style={styles.highlightTag}>💡 {data.highlights.topTip}</span>}
-                      </div>
-                    )}
                   </div>
-                )}
 
-                {/* Foto crédito */}
-                {fotoMostrada && data.fotoCredito && (
-                  <a
-                    href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={styles.creditLink}
-                  >
-                    <Camera size={11} /> {data.fotoCredito.nombre} / Pexels
-                  </a>
-                )}
-              </div>
-            )}
+                  {(data.highlights?.topFood || data.highlights?.topView || data.highlights?.topTip) && (
+                    <div style={{ ...styles.storytellingRow, marginTop: '6px' }}>
+                      {data.highlights?.topFood && <span style={styles.highlightTag}>🍽️ {data.highlights.topFood}</span>}
+                      {data.highlights?.topView && <span style={styles.highlightTag}>👀 {data.highlights.topView}</span>}
+                      {data.highlights?.topTip && <span style={styles.highlightTag}>💡 {data.highlights.topTip}</span>}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Foto crédito */}
+              {fotoMostrada && data.fotoCredito && (
+                <a
+                  href={`${data.fotoCredito.link}?utm_source=keeptrip&utm_medium=referral`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={styles.creditLink}
+                >
+                  📷 {data.fotoCredito.nombre} / Pexels
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ========== Body: layout condicional ========== */}
         {isRouteMode ? renderRouteBody() : renderDestinoBody()}
+
+        {/* ========== Edición Modal ========== */}
+        {showEditModal && (
+          <EdicionModal
+            viaje={{ ...data, id: viajeId }}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleEditSave}
+            esBorrador={false}
+            isSaving={isSaving}
+          />
+        )}
       </motion.div>
     </AnimatePresence>,
     document.body

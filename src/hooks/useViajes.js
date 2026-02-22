@@ -10,6 +10,8 @@ import {
   guardarViajeConParadas,
   actualizarViaje,
   crearParada,
+  actualizarParada,
+  eliminarParada,
   eliminarViaje,
   subirFotoViaje
 } from '../services/viajes/viajesRepository';
@@ -366,6 +368,18 @@ export const useViajes = () => {
       }
 
       delete dataToSave.fotoFile;
+
+      // Limpiar campos que no deben persistir en Firestore
+      delete dataToSave.id;       // document ID, no es un campo del documento
+      delete dataToSave.ownerId;  // campo computado al cargar, no se almacena
+
+      // Firestore rechaza valores undefined en updateDoc
+      Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key] === undefined) {
+          delete dataToSave[key];
+        }
+      });
+
       await actualizarViaje({ db, userId: usuario.uid, viajeId: id, data: dataToSave });
       logger.info('Viaje actualizado exitosamente', { viajeId: id });
       toast.success('Viaje actualizado');
@@ -466,6 +480,21 @@ export const useViajes = () => {
     todasLasParadas,
     guardarNuevoViaje,
     agregarParada,
+    actualizarParada: async (paradaData, viajeId) => {
+      if (!usuario || !viajeId || !paradaData?.id) return false;
+      try {
+        const { id: paradaId, viajeId: _, ownerId: __, ...cleanData } = paradaData;
+        // Limpiar undefined
+        Object.keys(cleanData).forEach(key => {
+          if (cleanData[key] === undefined) delete cleanData[key];
+        });
+        await actualizarParada({ db, userId: usuario.uid, viajeId, paradaId, data: cleanData });
+        return true;
+      } catch (err) {
+        logger.error('Error actualizando parada', { error: err.message, viajeId, paradaId: paradaData.id });
+        return false;
+      }
+    },
     actualizarDetallesViaje,
     eliminarViaje: eliminar,
     loading,

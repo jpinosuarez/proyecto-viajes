@@ -61,6 +61,12 @@ export const actualizarViaje = ({ db, userId, viajeId, data }) =>
 export const crearParada = ({ db, userId, viajeId, data }) =>
   addDoc(collection(db, `usuarios/${userId}/viajes/${viajeId}/paradas`), data);
 
+export const actualizarParada = ({ db, userId, viajeId, paradaId, data }) =>
+  updateDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId), data);
+
+export const eliminarParada = ({ db, userId, viajeId, paradaId }) =>
+  deleteDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId));
+
 export const eliminarViaje = ({ db, userId, viajeId }) =>
   deleteDoc(doc(db, `usuarios/${userId}/viajes`, viajeId));
 

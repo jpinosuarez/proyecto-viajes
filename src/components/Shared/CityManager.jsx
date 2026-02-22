@@ -128,7 +128,7 @@ const CityManager = ({ paradas, setParadas }) => {
             </div>
 
             <div style={styles.transportRow}>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
                     <button type="button" onClick={() => actualizarDato(index, 'transporte', 'avion')} style={styles.transportBtn(p.transporte === 'avion')}>✈️ Avión</button>
                     <button type="button" onClick={() => actualizarDato(index, 'transporte', 'tren')} style={styles.transportBtn(p.transporte === 'tren')}>🚆 Tren</button>
                     <button type="button" onClick={() => actualizarDato(index, 'transporte', 'auto')} style={styles.transportBtn(p.transporte === 'auto')}>🚗 Auto</button>
@@ -139,6 +139,17 @@ const CityManager = ({ paradas, setParadas }) => {
                     <label style={styles.label}>Nota</label>
                     <input type="text" value={p.notaCorta || ''} onChange={e => actualizarDato(index, 'notaCorta', e.target.value)} placeholder="Nota corta (ej: 'Perdí el tren')" style={styles.dateInput} />
                 </div>
+            </div>
+            {/* Relato per-stop (bitácora fragmentada) */}
+            <div style={{marginTop: 10}}>
+                <label style={styles.label}>Relato de esta parada</label>
+                <textarea
+                    value={p.relato || ''}
+                    onChange={e => actualizarDato(index, 'relato', e.target.value)}
+                    placeholder="Cuenta lo que viviste en esta ciudad..."
+                    style={styles.relatoTextarea}
+                    rows={3}
+                />
             </div>
           </div>
         ))}
@@ -166,7 +177,8 @@ const styles = {
   transportRow: { display: 'flex', gap: '12px', alignItems: 'center', marginTop: 10 },
   transportBtn: (active) => ({ padding: '6px 10px', borderRadius: RADIUS.sm, border: active ? '1px solid #3b82f6' : `1px solid ${COLORS.border}`, background: active ? '#eff6ff' : COLORS.surface, cursor: 'pointer' }),
   label: { fontSize: '0.7rem', textTransform:'uppercase', color:COLORS.textSecondary, fontWeight:'700' },
-  dateInput: { border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '8px', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline:'none', background:COLORS.background }
+  dateInput: { border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '8px', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline:'none', background:COLORS.background },
+  relatoTextarea: { width: '100%', minHeight: '60px', padding: '10px', border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline: 'none', background: COLORS.background, boxShadow: SHADOWS.inner }
 };
 
 export default CityManager;

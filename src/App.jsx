@@ -38,6 +38,7 @@ function App() {
     todasLasParadas,
     guardarNuevoViaje,
     actualizarDetallesViaje,
+    actualizarParada: actualizarParadaHook,
     eliminarViaje,
     agregarParada
   } = useViajes();
@@ -179,19 +180,26 @@ function App() {
       let okParadas = true;
 
       if (paradasNuevas && paradasNuevas.length > 0) {
-        const nuevas = paradasNuevas.filter((p) => p.id && p.id.toString().startsWith('temp'));
-        for (const parada of nuevas) {
-          const okParada = await agregarParada(parada, id);
-          if (!okParada) okParadas = false;
+        for (const parada of paradasNuevas) {
+          const isNew = parada.id && parada.id.toString().startsWith('temp');
+          if (isNew) {
+            const okParada = await agregarParada(parada, id);
+            if (!okParada) okParadas = false;
+          } else if (parada.id) {
+            // Actualizar parada existente
+            const okParada = await actualizarParadaHook(parada, id);
+            if (!okParada) okParadas = false;
+          }
         }
       }
 
       if (okViaje && okParadas) {
-        return true;
+        return id;
       }
 
       if (okViaje && !okParadas) {
         pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
+        return id;
       }
       return false;
     } finally {
