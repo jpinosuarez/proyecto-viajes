@@ -14,7 +14,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+      - name: Setup Java (required by Firebase Emulators)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - name: Install dependencies
         run: npm ci
       - name: Install Playwright browsers
@@ -26,5 +31,5 @@ jobs:
       - name: Run Firestore rules tests + Playwright E2E with emulators
         # emulators:exec ensures emulators are running before tests start
         run: |
-          npx firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 -- \
+          firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 -- \
             bash -c "npm run test:rules && npx playwright test --reporter=list"
