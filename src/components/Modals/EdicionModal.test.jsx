@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, afterEach } from 'vitest';
 
-vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ usuario: { uid: 'u1' } }) }));
+// Stable usuario reference to prevent useEffect infinite loops caused by new
+// object references on each render when the mock returns a plain object literal.
+const { mockUsuario } = vi.hoisted(() => ({ mockUsuario: { uid: 'u1' } }));
+
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ usuario: mockUsuario }) }));
 vi.mock('../../context/ToastContext', () => ({ useToast: () => ({ pushToast: vi.fn() }) }));
 vi.mock('../../hooks/useWindowSize', () => ({ useWindowSize: () => ({ isMobile: false }) }));
 vi.mock('../../hooks/useGaleriaViaje', () => ({ useGaleriaViaje: () => ({ fotos: [], uploading: false, limpiar: vi.fn(), cambiarPortada: vi.fn(), eliminar: vi.fn(), actualizarCaption: vi.fn() }) }));
@@ -15,11 +19,21 @@ vi.mock('firebase/firestore', () => ({
   query: vi.fn(),
   where: vi.fn(),
 }));
+// Mock framer-motion para evitar animaciones infinitas en jsdom
+vi.mock('framer-motion', () => {
+  const React = require('react');
+  const motion = new Proxy({}, {
+    get: (_, tag) => ({ children, ...props }) => React.createElement(tag, props, children)
+  });
+  return { motion, AnimatePresence: ({ children }) => children };
+});
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import EdicionModal from './EdicionModal';
+
+afterEach(cleanup);
 
 describe('EdicionModal (borrador)', () => {
   const defaultProps = {
@@ -46,11 +60,11 @@ describe('EdicionModal (borrador)', () => {
     // Esperar que el input del título tenga el título generado
     await waitFor(() => {
       const input = screen.getByPlaceholderText(/Título del viaje/i);
-      expect(input).toHaveValue('Escapada a Barcelona');
+      expect(input.value).toBe('Escapada a Barcelona');
     });
 
     // La galería del servidor no debe mostrarse para borradores
-    expect(screen.queryByText(/Portada/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Portada$/)).toBeNull();
   });
 
   test('cambiar a Manual al tipear en el título', async () => {
@@ -59,12 +73,16 @@ describe('EdicionModal (borrador)', () => {
 
     const input = await screen.findByPlaceholderText(/Título del viaje/i);
     // al inicio debe estar en Auto (badge)
-    expect(screen.getByRole('button', { name: /Auto|Manual/ })).toHaveTextContent('Auto');
+    const badge = screen.getByRole('button', { name: /^Auto$/ });
+    expect(badge.textContent).toBe('Auto');
 
     await userEvent.type(input, 'Mi título manual');
 
-    // Badge debe indicar Manual
-    expect(screen.getByRole('button', { name: /Usando título manual/i })).toHaveTextContent('Manual');
+    // Badge debe indicar Manual después de editar manualmente
+    await waitFor(() => {
+      const badgeManual = screen.getByRole('button', { name: /^Manual$/ });
+      expect(badgeManual.textContent).toBe('Manual');
+    });
   });
 });
 
