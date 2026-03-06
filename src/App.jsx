@@ -18,6 +18,7 @@ import CuracionPage from './pages/Curacion/CuracionPage';
 import InvitationsList from './components/Invitations/InvitationsList';
 import CelebrationQueue from './components/Shared/CelebrationQueue';
 import PWAUpdatePrompt from './components/Shared/PWAUpdatePrompt';
+import OfflineBanner from './components/Shared/OfflineBanner';
 import TravelerHub from './components/TravelerHub/TravelerHub';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -430,6 +431,7 @@ function App() {
       />
 
       <PWAUpdatePrompt />
+      <OfflineBanner />
     </div>
   );
 }

@@ -99,5 +99,16 @@
   },
   "warning": {
     "companionAlreadyAdded": "Este compañero ya está agregado."
+  },
+  "gallery": {
+    "dropHere": "Suelta las fotos aquí",
+    "dragOrClick": "Arrastra fotos o haz clic para seleccionar",
+    "specs": "JPG o PNG • Máximo {{max}} fotos • Hasta {{sizeMB}}MB c/u",
+    "invalidFormat": "Se descartaron {{count}} archivo(s) por formato.",
+    "tooLarge": "Se descartaron {{count}} archivo(s) por tamaño (máx {{max}}MB).",
+    "limitReached": "Solo puedes subir {{max}} fotos. Se omitieron {{skipped}}.",
+    "optimizing": "Optimizando...",
+    "optimizingCount": "Optimizando {{count}} foto(s)...",
+    "photosSelected": "fotos seleccionadas"
   }
 }

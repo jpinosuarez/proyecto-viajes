@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Upload, X, Image as ImageIcon, Star, LoaderCircle } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '../../theme';
 import { useToast } from '../../context/ToastContext';
+import { MAX_FILE_SIZE } from '../../utils/imageUtils';
 
 /**
  * Componente para subir múltiples fotos a la galería de un viaje
@@ -26,8 +28,10 @@ export function GalleryUploader({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [previews, setPreviews] = useState([]);
+  const [optimizing, setOptimizing] = useState(0); // count of files being optimized
   const fileInputRef = useRef(null);
   const { pushToast } = useToast();
+  const { t } = useTranslation('editor');
 
   // Previews se generan localmente al seleccionar archivos (handleFileSelect).
   // No necesitamos un efecto que sincronice previews desde `files` — el padre
@@ -45,7 +49,7 @@ export function GalleryUploader({
     incoming.forEach((file) => {
       const isImage = file.type.startsWith('image/');
       const isValidFormat = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      const isValidSize = file.size <= MAX_FILE_SIZE;
 
       if (!isImage || !isValidFormat) {
         invalidTypeCount += 1;
@@ -65,15 +69,15 @@ export function GalleryUploader({
     const skippedByLimit = Math.max(0, validFiles.length - acceptedFiles.length);
 
     if (invalidTypeCount > 0) {
-      pushToast(`Se descartaron ${invalidTypeCount} archivo(s) por formato.`, 'error');
+      pushToast(t('gallery.invalidFormat', { count: invalidTypeCount }), 'error');
     }
 
     if (invalidSizeCount > 0) {
-      pushToast(`Se descartaron ${invalidSizeCount} archivo(s) por tamano (max 10MB).`, 'error');
+      pushToast(t('gallery.tooLarge', { count: invalidSizeCount, max: Math.round(MAX_FILE_SIZE / 1024 / 1024) }), 'error');
     }
 
     if (skippedByLimit > 0) {
-      pushToast(`Solo puedes subir ${maxFiles} fotos. Se omitieron ${skippedByLimit}.`, 'info');
+      pushToast(t('gallery.limitReached', { max: maxFiles, skipped: skippedByLimit }), 'info');
     }
 
     if (acceptedFiles.length === 0) return;
@@ -81,11 +85,13 @@ export function GalleryUploader({
     const updatedFiles = [...files, ...acceptedFiles];
     onChange(updatedFiles);
 
-    // Generar previews
+    // Generar previews (count them for optimizing indicator)
+    setOptimizing(prev => prev + acceptedFiles.length);
     acceptedFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviews(prev => [...prev, { file, url: e.target.result }]);
+        setOptimizing(prev => Math.max(0, prev - 1));
       };
       reader.readAsDataURL(file);
     });
@@ -149,11 +155,11 @@ export function GalleryUploader({
           <Upload size={32} color={COLORS.textSecondary} />
           <p style={styles.dropText}>
             {isDragging
-              ? 'Suelta las fotos aquí'
-              : 'Arrastra fotos o haz clic para seleccionar'}
+              ? t('gallery.dropHere')
+              : t('gallery.dragOrClick')}
           </p>
           <p style={styles.dropSubtext}>
-            JPG o PNG • Máximo {maxFiles} fotos • Hasta 10MB c/u
+            {t('gallery.specs', { max: maxFiles, sizeMB: Math.round(MAX_FILE_SIZE / 1024 / 1024) })}
           </p>
           <input
             ref={fileInputRef}
@@ -182,7 +188,8 @@ export function GalleryUploader({
                     <img src={previewUrl} alt={file.name} style={styles.img} />
                   ) : (
                     <div style={styles.loadingPlaceholder}>
-                      <ImageIcon size={24} color={COLORS.textSecondary} />
+                      <LoaderCircle size={22} color={COLORS.atomicTangerine} className="spin" />
+                      <span style={styles.optimizingLabel}>{t('gallery.optimizing')}</span>
                     </div>
                   )}
 
@@ -190,7 +197,7 @@ export function GalleryUploader({
                   {isPortada && (
                     <div style={styles.portadaBadge}>
                       <Star size={14} fill="white" color="white" />
-                      <span style={styles.portadaText}>Portada</span>
+                      <span style={styles.portadaText}>{t('labels.portada')}</span>
                     </div>
                   )}
 
@@ -230,11 +237,17 @@ export function GalleryUploader({
         </div>
       )}
 
-      {/* Contador */}
+      {/* Contador + optimizing banner */}
       {files.length > 0 && (
         <div style={styles.footer}>
+          {optimizing > 0 && (
+            <p style={styles.optimizingBanner}>
+              <LoaderCircle size={14} color={COLORS.atomicTangerine} className="spin" />
+              {t('gallery.optimizingCount', { count: optimizing })}
+            </p>
+          )}
           <p style={styles.counter}>
-            {files.length} / {maxFiles} fotos seleccionadas
+            {files.length} / {maxFiles} {t('gallery.photosSelected')}
           </p>
         </div>
       )}
@@ -298,9 +311,17 @@ const styles = {
     width: '100%',
     height: '100%',
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
     backgroundColor: COLORS.background,
+  },
+  optimizingLabel: {
+    fontSize: '10px',
+    fontWeight: 600,
+    color: COLORS.textSecondary,
+    letterSpacing: '0.3px',
   },
   overlay: (isMobile) => ({
     position: 'absolute',
@@ -370,6 +391,16 @@ const styles = {
     fontWeight: '600',
     color: COLORS.textSecondary,
     margin: 0,
+  },
+  optimizingBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    fontSize: '12px',
+    fontWeight: 600,
+    color: COLORS.atomicTangerine,
+    marginBottom: 4,
   },
 };
 

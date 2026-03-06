@@ -73,5 +73,6 @@
     "amazing": "¡Increíble! 🚀",
     "level": "Nivel",
     "levelPrefix": "Nivel: {{label}}"
-  }
+  },
+  "para-desbloquear": "para desbloquear"
 }

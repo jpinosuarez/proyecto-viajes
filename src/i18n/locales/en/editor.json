@@ -99,5 +99,16 @@
   },
   "warning": {
     "companionAlreadyAdded": "This companion is already added."
+  },
+  "gallery": {
+    "dropHere": "Drop photos here",
+    "dragOrClick": "Drag photos or click to select",
+    "specs": "JPG or PNG • Max {{max}} photos • Up to {{sizeMB}}MB each",
+    "invalidFormat": "{{count}} file(s) rejected due to format.",
+    "tooLarge": "{{count}} file(s) rejected — max {{max}}MB.",
+    "limitReached": "Max {{max}} photos. {{skipped}} skipped.",
+    "optimizing": "Optimizing...",
+    "optimizingCount": "Optimizing {{count}} photo(s)...",
+    "photosSelected": "photos selected"
   }
 }

@@ -73,5 +73,6 @@
     "amazing": "Amazing! 🚀",
     "level": "Level",
     "levelPrefix": "Level: {{label}}"
-  }
+  },
+  "para-desbloquear": "to unlock"
 }

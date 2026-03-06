@@ -26,5 +26,14 @@
     "technicalDetails": "Technical details:",
     "viewStackTrace": "View stack trace",
     "contactSupport": "If the issue persists, please contact support."
+  },
+  "offline": {
+    "disconnected": "Offline. Your changes will sync when reconnected.",
+    "reconnected": "Back online."
+  },
+  "pwa": {
+    "updateAvailable": "New version available",
+    "update": "Update",
+    "later": "Later"
   }
 }

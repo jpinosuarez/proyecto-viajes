@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';
 
 export default function PWAUpdatePrompt() {
+  const { t } = useTranslation();
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -19,13 +21,13 @@ export default function PWAUpdatePrompt() {
 
   return (
     <div style={styles.banner}>
-      <span style={styles.text}>Nueva versión disponible</span>
+      <span style={styles.text}>{t('pwa.updateAvailable')}</span>
       <div style={styles.actions}>
         <button onClick={() => updateServiceWorker(true)} style={styles.updateBtn}>
-          Actualizar
+          {t('pwa.update')}
         </button>
         <button onClick={() => setDismissed(true)} style={styles.dismissBtn}>
-          Luego
+          {t('pwa.later')}
         </button>
       </div>
     </div>

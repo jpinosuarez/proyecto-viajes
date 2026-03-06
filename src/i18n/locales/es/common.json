@@ -26,5 +26,14 @@
     "technicalDetails": "Detalles técnicos:",
     "viewStackTrace": "Ver stack trace",
     "contactSupport": "Si el problema persiste, por favor contacta al soporte."
+  },
+  "offline": {
+    "disconnected": "Sin conexión. Tus cambios se guardarán al reconectar.",
+    "reconnected": "Conexión restaurada."
+  },
+  "pwa": {
+    "updateAvailable": "Nueva versión disponible",
+    "update": "Actualizar",
+    "later": "Luego"
   }
 }

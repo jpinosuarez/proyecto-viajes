@@ -18,6 +18,7 @@
     "test:ci": "vitest run && playwright test"
   },
   "dependencies": {
+    "browser-image-compression": "^2.0.2",
     "canvas-confetti": "^1.9.4",
     "dom-to-image-more": "^3.7.2",
     "firebase": "^12.8.0",
