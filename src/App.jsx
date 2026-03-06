@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
@@ -16,8 +16,9 @@ import VisorViaje from './components/VisorViaje/VisorViaje';
 import SettingsPage from './pages/Configuracion/SettingsPage';
 import CuracionPage from './pages/Curacion/CuracionPage';
 import InvitationsList from './components/Invitations/InvitationsList';
-import LevelUpModal from './components/Shared/LevelUpModal';
+import CelebrationQueue from './components/Shared/CelebrationQueue';
 import PWAUpdatePrompt from './components/Shared/PWAUpdatePrompt';
+import TravelerHub from './components/TravelerHub/TravelerHub';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useViajes } from './hooks/useViajes';
@@ -27,7 +28,7 @@ import { useToast } from './context/ToastContext';
 import { useSearch, useUI } from './context/UIContext';
 import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
-import { checkLevelUp } from './utils/travelerLevel';
+import { useAchievements } from './hooks/useAchievements';
 
 function App() {
   const { usuario, cargando, isAdmin } = useAuth();
@@ -74,29 +75,14 @@ function App() {
   const [isSavingViewer, setIsSavingViewer] = useState(false);
   const [viajesEliminando, setViajesEliminando] = useState(new Set());
 
-  // ── Level-up detection ──
-  const [levelUpData, setLevelUpData] = useState(null);
-  const prevCountriesRef = useRef(null); // null = not yet initialized
-  const isInitialLoadRef = useRef(true);
-
-  useEffect(() => {
-    const curr = paisesVisitados.length;
-
-    // Skip the first emission (Firestore onSnapshot initial load).
-    // Without this guard, going from 0 → N on mount triggers a false level-up.
-    if (isInitialLoadRef.current) {
-      isInitialLoadRef.current = false;
-      prevCountriesRef.current = curr;
-      return;
-    }
-
-    const prev = prevCountriesRef.current;
-    if (prev !== null && prev !== curr) {
-      const { leveledUp, newLevel } = checkLevelUp(prev, curr);
-      if (leveledUp) setLevelUpData(newLevel);
-    }
-    prevCountriesRef.current = curr;
-  }, [paisesVisitados.length]);
+  // ── Gamification: achievements + level-up celebrations ──
+  const {
+    celebrations,
+    dismissCelebration,
+    dismissAll,
+    stats: achievementStats,
+    achievementsWithProgress,
+  } = useAchievements({ paisesVisitados, bitacora, todasLasParadas });
 
   const isDeletingViaje = (id) => viajesEliminando.has(id);
 
@@ -349,6 +335,17 @@ function App() {
               </motion.div>
             )}
 
+            {vistaActiva === 'hub' && (
+              <motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+                <TravelerHub
+                  paisesVisitados={paisesVisitados}
+                  bitacora={bitacora}
+                  achievementsWithProgress={achievementsWithProgress}
+                  stats={achievementStats}
+                />
+              </motion.div>
+            )}
+
             {vistaActiva === 'invitations' && (
               <motion.div key="invitations" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <ErrorBoundary>
@@ -426,10 +423,10 @@ function App() {
         isLoading={!!(confirmarEliminacion && viajesEliminando.has(confirmarEliminacion))}
       />
 
-      <LevelUpModal
-        show={!!levelUpData}
-        level={levelUpData}
-        onClose={() => setLevelUpData(null)}
+      <CelebrationQueue
+        celebrations={celebrations}
+        onDismiss={dismissCelebration}
+        onDismissAll={dismissAll}
       />
 
       <PWAUpdatePrompt />

@@ -27,7 +27,8 @@ export const UIProvider = ({ children }) => {
         return 'Ajustes';
       case 'curacion':
         return 'Curacion Fotos';      case 'invitations':
-        return 'Invitaciones';      default:
+        return 'Invitaciones';      case 'hub':
+        return 'Traveler Hub';      default:
         return 'Keeptrip';
     }
   }, [vistaActiva]);

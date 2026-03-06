@@ -20,5 +20,33 @@
     "title": "¡Nuevo nivel!",
     "message": "Tu colección de sellos crece. Seguí explorando para alcanzar el siguiente nivel.",
     "button": "¡Genial! 🎉"
+  },
+  "achievements": {
+    "unlockedTitle": "Logros Desbloqueados",
+    "lockedTitle": "Por Descubrir",
+    "nextGoals": "Próximos Objetivos",
+    "summaryTitle": "¡Resumen de Expedición!",
+    "summaryBody": "Desbloqueaste {{count}} logros de una vez:",
+    "unlocked": "¡Logro desbloqueado!",
+    "first_stamp": "Primer Sello",
+    "first_stamp_desc": "Registrá tu primer viaje",
+    "five_flags": "Cinco Banderas",
+    "five_flags_desc": "Visitá 5 países",
+    "road_warrior": "Viajero Incansable",
+    "road_warrior_desc": "Registrá 10 viajes",
+    "continent3": "Tres Continentes",
+    "continent3_desc": "Pisá 3 continentes",
+    "wanderlust": "Alma Nómada",
+    "wanderlust_desc": "Visitá 10 países",
+    "storyteller": "Cuenta Cuentos",
+    "storyteller_desc": "5 viajes con 3+ paradas",
+    "continent5": "Ciudadano del Mundo",
+    "continent5_desc": "Pisá 5 continentes",
+    "cartographer": "Cartógrafo",
+    "cartographer_desc": "Visitá 25 países",
+    "centurion": "Centenario",
+    "centurion_desc": "Registrá 25 viajes",
+    "legend": "Leyenda Viviente",
+    "legend_desc": "Visitá 50 países"
   }
 }

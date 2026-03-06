@@ -10,7 +10,8 @@ import {
   Disc,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Trophy
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
@@ -31,6 +32,7 @@ const Sidebar = ({ isMobile = false }) => {
     { id: 'home', icon: LayoutGrid, label: 'Inicio' },
     { id: 'mapa', icon: Map, label: 'Mapa' },
     { id: 'bitacora', icon: BookOpen, label: 'Bitacora' },
+    { id: 'hub', icon: Trophy, label: 'Hub' },
     { id: 'curacion', icon: Image, label: 'Curacion' },
     { id: 'config', icon: Settings, label: 'Ajustes' }
   ].filter((item) => item.id !== 'curacion' || isAdmin);
