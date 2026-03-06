@@ -47,7 +47,7 @@ export const styles = {
 
   mapCard: (isMobile) => ({
     backgroundColor: COLORS.background,
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     border: `1px solid ${COLORS.border}`,
     boxShadow: SHADOWS.md,
     overflow: 'hidden',
@@ -82,7 +82,7 @@ export const styles = {
   travelCard: {
     position: 'relative',
     height: '140px',
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     overflow: 'hidden',
     cursor: 'pointer',
     boxShadow: SHADOWS.sm,
@@ -118,7 +118,7 @@ export const styles = {
   welcomeCard: {
     width: '100%',
     minHeight: '260px',
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     border: `1px solid ${COLORS.border}`,
     boxShadow: SHADOWS.md,
     padding: '24px',
@@ -171,7 +171,7 @@ export const styles = {
   welcomeCta: {
     marginTop: '6px',
     border: 'none',
-    borderRadius: RADIUS.md,
+    borderRadius: 'var(--radius-md)',
     padding: '10px 16px',
     background: COLORS.atomicTangerine,
     color: 'white',

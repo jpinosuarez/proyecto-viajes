@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
@@ -45,7 +45,8 @@ function App() {
     actualizarDetallesViaje,
     actualizarParada: actualizarParadaHook,
     eliminarViaje,
-    agregarParada
+    agregarParada,
+    loading: loadingViajes
   } = useViajes();
 
   const {
@@ -261,9 +262,13 @@ function App() {
     }
   }, [vistaActiva, busqueda, setBusqueda]);
 
+  const prevVistaRef = useRef(vistaActiva);
   useEffect(() => {
-    if (isMobile && mobileDrawerOpen) {
-      setMobileDrawerOpen(false);
+    if (prevVistaRef.current !== vistaActiva) {
+      if (isMobile && mobileDrawerOpen) {
+        setMobileDrawerOpen(false);
+      }
+      prevVistaRef.current = vistaActiva;
     }
   }, [vistaActiva, isMobile, mobileDrawerOpen, setMobileDrawerOpen]);
 
@@ -307,6 +312,7 @@ function App() {
                   paisesVisitados={paisesVisitados}
                   bitacora={bitacora}
                   isMobile={isMobile}
+                  loading={loadingViajes}
                 />
               </motion.div>
             )}

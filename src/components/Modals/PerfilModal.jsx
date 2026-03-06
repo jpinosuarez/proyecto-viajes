@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Save } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useWindowSize } from '../../hooks/useWindowSize';
 import { COLORS, SHADOWS, RADIUS, GLASS } from '../../theme';
+import BottomSheet from '../Shared/BottomSheet';
 
 const PerfilModal = ({ isOpen, onClose }) => {
   const { usuario, actualizarPerfilUsuario } = useAuth();
+  const { isMobile } = useWindowSize(768);
   const [nombre, setNombre] = useState(usuario?.displayName || '');
   const [foto, setFoto] = useState(usuario?.photoURL || '');
   const [loading, setLoading] = useState(false);
@@ -20,13 +23,53 @@ const PerfilModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const formContent = (
+    <form onSubmit={handleSubmit} style={styles.form}>
+      <div style={styles.avatarPreview}>
+        <img src={foto || 'https://via.placeholder.com/150'} alt="Avatar" style={styles.avatarImg} />
+      </div>
+
+      <label style={styles.label}>Nombre</label>
+      <input
+        style={styles.input}
+        value={nombre}
+        onChange={e => setNombre(e.target.value)}
+      />
+
+      <label style={styles.label}>URL de Foto</label>
+      <input
+        style={styles.input}
+        value={foto}
+        onChange={e => setFoto(e.target.value)}
+        placeholder="https://..."
+      />
+
+      <button type="submit" style={styles.saveBtn} disabled={loading}>
+        <Save size={18} /> {loading ? 'Guardando...' : 'Guardar Cambios'}
+      </button>
+    </form>
+  );
+
+  // Mobile: BottomSheet
+  if (isMobile) {
+    return (
+      <BottomSheet isOpen={isOpen} onClose={onClose} zIndex={11000} disableClose={loading}>
+        <div style={{ padding: '4px 20px 8px' }}>
+          <h3 style={{ color: COLORS.charcoalBlue, fontWeight: 800, margin: '0 0 16px' }}>Editar Perfil</h3>
+          {formContent}
+        </div>
+      </BottomSheet>
+    );
+  }
+
+  // Desktop: modal centrado clásico
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         style={styles.overlay} onClick={onClose}
       >
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
           style={styles.content} onClick={e => e.stopPropagation()}
         >
@@ -34,31 +77,7 @@ const PerfilModal = ({ isOpen, onClose }) => {
             <h3>Editar Perfil</h3>
             <button onClick={onClose} style={styles.closeBtn}><X size={20}/></button>
           </div>
-          
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <div style={styles.avatarPreview}>
-              <img src={foto || 'https://via.placeholder.com/150'} alt="Avatar" style={styles.avatarImg} />
-            </div>
-            
-            <label style={styles.label}>Nombre</label>
-            <input 
-              style={styles.input} 
-              value={nombre} 
-              onChange={e => setNombre(e.target.value)} 
-            />
-
-            <label style={styles.label}>URL de Foto</label>
-            <input 
-              style={styles.input} 
-              value={foto} 
-              onChange={e => setFoto(e.target.value)} 
-              placeholder="https://..."
-            />
-
-            <button type="submit" style={styles.saveBtn} disabled={loading}>
-              <Save size={18} /> {loading ? 'Guardando...' : 'Guardar Cambios'}
-            </button>
-          </form>
+          {formContent}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -147,23 +147,18 @@ export function UploadProvider({ children }) {
     // Finalizar
     uploadingRef.current.delete(viajeId);
     
-    // Notificar resultado usando el total de fotos procesadas
-    const totalFotos = fotos.length;
-    // Obtener estado actual desde el setter para evitar stale closure
-    setUploadsByViaje(prev => {
-      const estadoFinal = prev[viajeId] || [];
-      const exitosas = estadoFinal.filter(f => f.status === 'success').length;
-      const fallidas = estadoFinal.filter(f => f.status === 'error').length;
-      
-      if (fallidas === 0 && exitosas > 0) {
-        pushToast(`${exitosas} foto${exitosas > 1 ? 's' : ''} subida${exitosas > 1 ? 's' : ''}`, 'success');
-      } else if (fallidas > 0) {
-        pushToast(`${exitosas} subida${exitosas > 1 ? 's' : ''}, ${fallidas} fallida${fallidas > 1 ? 's' : ''}`, 'error');
-      }
-      
-      logger.info('Subida completada', { viajeId, exitosas, fallidas });
-      return prev; // No modificar estado
-    });
+    // Notificar resultado
+    const estadoFinal = fotos;
+    const exitosas = estadoFinal.filter(f => f.status === 'success').length;
+    const fallidas = estadoFinal.filter(f => f.status === 'error').length;
+
+    logger.info('Subida completada', { viajeId, exitosas, fallidas });
+
+    if (fallidas === 0 && exitosas > 0) {
+      pushToast(`${exitosas} foto${exitosas > 1 ? 's' : ''} subida${exitosas > 1 ? 's' : ''}`, 'success');
+    } else if (fallidas > 0) {
+      pushToast(`${exitosas} subida${exitosas > 1 ? 's' : ''}, ${fallidas} fallida${fallidas > 1 ? 's' : ''}`, 'error');
+    }
   }, [usuario, pushToast]);
 
   /**

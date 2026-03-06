@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, LoaderCircle } from 'lucide-react';
 import { styles } from './ConfirmModal.styles';
+import { useWindowSize } from '../../hooks/useWindowSize';
+import BottomSheet from '../Shared/BottomSheet';
 
 const ConfirmModal = ({
   isOpen,
@@ -14,6 +16,8 @@ const ConfirmModal = ({
   onClose,
   isLoading = false
 }) => {
+  const { isMobile } = useWindowSize(768);
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -25,6 +29,39 @@ const ConfirmModal = ({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, isLoading, onClose]);
 
+  const content = (
+    <>
+      <div style={styles.body}>
+        <div style={styles.iconWrap}>
+          <AlertTriangle size={22} />
+        </div>
+        <h3 style={styles.title}>{title}</h3>
+        <p style={styles.message}>{message}</p>
+      </div>
+
+      <div style={isMobile ? styles.footerMobile : styles.footer}>
+        <button type="button" onClick={() => onConfirm?.()} style={styles.confirmBtn(isLoading)} disabled={isLoading}>
+          {isLoading ? <LoaderCircle size={16} className="spin" /> : <AlertTriangle size={16} />}
+          {isLoading ? 'Eliminando...' : confirmText}
+        </button>
+        <button type="button" onClick={() => onClose?.()} style={styles.cancelBtn(isLoading)} disabled={isLoading}>
+          {cancelText}
+        </button>
+      </div>
+    </>
+  );
+
+  // Mobile: BottomSheet deslizable
+  if (isMobile) {
+    return createPortal(
+      <BottomSheet isOpen={isOpen} onClose={() => !isLoading && onClose?.()} disableClose={isLoading}>
+        {content}
+      </BottomSheet>,
+      document.body
+    );
+  }
+
+  // Desktop: modal centrado clásico
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
@@ -43,23 +80,7 @@ const ConfirmModal = ({
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
           >
-            <div style={styles.body}>
-              <div style={styles.iconWrap}>
-                <AlertTriangle size={22} />
-              </div>
-              <h3 style={styles.title}>{title}</h3>
-              <p style={styles.message}>{message}</p>
-            </div>
-
-            <div style={styles.footer}>
-              <button type="button" onClick={() => onClose?.()} style={styles.cancelBtn(isLoading)} disabled={isLoading}>
-                {cancelText}
-              </button>
-              <button type="button" onClick={() => onConfirm?.()} style={styles.confirmBtn(isLoading)} disabled={isLoading}>
-                {isLoading ? <LoaderCircle size={16} className="spin" /> : <AlertTriangle size={16} />}
-                {isLoading ? 'Eliminando...' : confirmText}
-              </button>
-            </div>
+            {content}
           </motion.div>
         </motion.div>
       )}

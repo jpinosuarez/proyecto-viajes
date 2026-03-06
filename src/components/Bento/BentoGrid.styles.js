@@ -18,15 +18,8 @@ export const styles = {
     fontWeight: '700',
     fontSize: '0.85rem'
   },
-  masonryContainer: {
-    columnCount: 4,
-    columnGap: '20px',
-    padding: '20px'
-  },
   masonryItem: {
-    breakInside: 'avoid',
-    marginBottom: '20px',
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     backgroundColor: COLORS.surface,
     position: 'relative',
     overflow: 'hidden',
@@ -50,7 +43,7 @@ export const styles = {
     background: 'rgba(255,255,255,0.25)',
     border: 'none',
     borderRadius: RADIUS.full,
-    width: '28px', height: '28px',
+    width: '44px', height: '44px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: 'white',
     cursor: 'pointer',
@@ -76,7 +69,7 @@ export const styles = {
   emptyState: {
     background: COLORS.surface,
     border: `1px dashed ${COLORS.border}`,
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     padding: '32px',
     textAlign: 'center',
     color: COLORS.charcoalBlue,
@@ -86,7 +79,7 @@ export const styles = {
   emptyIcon: {
     width: '48px',
     height: '48px',
-    borderRadius: RADIUS.lg,
+    borderRadius: 'var(--radius-lg)',
     background: COLORS.background,
     display: 'inline-flex',
     alignItems: 'center',
@@ -118,7 +111,7 @@ export const styles = {
   emptyStatePrimary: {
     background: `linear-gradient(155deg, ${COLORS.linen} 0%, #ffffff 65%)`,
     border: `1px solid ${COLORS.border}`,
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     padding: '38px 26px',
     textAlign: 'center',
     color: COLORS.charcoalBlue,
@@ -128,7 +121,7 @@ export const styles = {
   emptyIconPrimary: {
     width: '72px',
     height: '72px',
-    borderRadius: RADIUS.lg,
+    borderRadius: 'var(--radius-lg)',
     background: COLORS.surface,
     display: 'inline-flex',
     alignItems: 'center',
@@ -155,7 +148,7 @@ export const styles = {
     background: COLORS.atomicTangerine,
     color: COLORS.surface,
     padding: '10px 16px',
-    borderRadius: RADIUS.md,
+    borderRadius: 'var(--radius-md)',
     fontWeight: '800',
     cursor: 'pointer',
     transition: TRANSITIONS.fast

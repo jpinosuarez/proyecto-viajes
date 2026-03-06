@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, MapPin, Trash2 } from 'lucide-react';
 import { COLORS, SHADOWS, RADIUS, GLASS, TRANSITIONS } from '../../theme';
 import { formatDateRange } from '../../utils/viajeUtils';
@@ -6,7 +6,7 @@ import { formatDateRange } from '../../utils/viajeUtils';
 const styles = {
   card: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     border: `1px solid ${COLORS.border}`,
     position: 'relative',
     overflow: 'hidden',
@@ -17,8 +17,6 @@ const styles = {
     flexDirection: 'column',
     justifyContent: 'space-between',
     minHeight: '220px',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center'
   },
   overlay: {
     position: 'absolute',
@@ -63,6 +61,41 @@ const styles = {
   }
 };
 
+/** Lazy background image via IntersectionObserver */
+function LazyBgImage({ src }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { rootMargin: '200px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <img
+      ref={ref}
+      src={visible ? src : undefined}
+      alt=""
+      loading="lazy"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.3s ease',
+      }}
+    />
+  );
+}
+
 const BentoCard = ({ viaje, onClick, manejarEliminar }) => {
   const foto = viaje.foto;
   const titulo = viaje.titulo || viaje.nombreEspanol;
@@ -75,25 +108,26 @@ const BentoCard = ({ viaje, onClick, manejarEliminar }) => {
 
   return (
     <div
+      className="tap-scale"
       onClick={onClick}
       style={{
         ...styles.card,
-        backgroundImage: foto ? `url(${foto})` : 'none',
         backgroundColor: foto ? 'transparent' : 'white'
       }}
     >
+      {foto && <LazyBgImage src={foto} />}
       {foto && <div style={styles.overlay} />}
 
       <div style={styles.content}>
         <div style={styles.topRow}>
           <div style={{ display: 'flex', gap: '5px' }}>
             {banderas.slice(0, 3).map((bandera, index) => (
-              <img key={index} src={bandera} alt="flag" style={styles.flagImg} onError={(e) => { e.target.style.display = 'none'; }} />
+              <img key={index} src={bandera} alt="flag" loading="lazy" style={styles.flagImg} onError={(e) => { e.target.style.display = 'none'; }} />
             ))}
             {banderas.length > 3 && <span style={{ color: 'white', fontWeight: 'bold', textShadow: '0 2px 2px black' }}>+{banderas.length - 3}</span>}
           </div>
 
-          <button style={styles.deleteBtn} onClick={onDelete} title="Eliminar viaje">
+          <button className="tap-icon" style={styles.deleteBtn} onClick={onDelete} title="Eliminar viaje">
             <Trash2 size={16} />
           </button>
         </div>

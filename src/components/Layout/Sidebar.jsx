@@ -215,7 +215,7 @@ const styles = {
   mobileOverlay: {
     position: 'fixed',
     inset: 0,
-    zIndex: Z_INDEX.modal - 10,
+    zIndex: 110,
     ...GLASS.overlay
   },
   mobileTopRow: {
@@ -233,8 +233,8 @@ const styles = {
     border: `1px solid ${COLORS.border}`,
     background: COLORS.surface,
     borderRadius: RADIUS.sm,
-    width: '32px',
-    height: '32px',
+    width: '44px',
+    height: '44px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -289,7 +289,7 @@ const styles = {
     overflow: 'hidden'
   },
   labelSpan: { fontWeight: '600', marginLeft: '12px', whiteSpace: 'nowrap' },
-  footer: { borderTop: `1px solid ${COLORS.background}`, padding: '20px' },
+  footer: { borderTop: `1px solid ${COLORS.background}`, padding: '20px', paddingBottom: 'max(20px, env(safe-area-inset-bottom, 0px))' },
   logoutBtn: {
     display: 'flex',
     alignItems: 'center',

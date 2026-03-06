@@ -12,7 +12,7 @@ const LandingPage = () => {
     <div style={styles.container}>
       <nav style={styles.nav}>
         <div style={styles.logo}>Keeptrip</div>
-        <button onClick={login} style={styles.loginBtn}>{t('common:login')}</button>
+        <button onClick={login} className="tap-btn" style={styles.loginBtn}>{t('common:login')}</button>
       </nav>
 
       <main style={styles.hero}>
@@ -24,7 +24,7 @@ const LandingPage = () => {
           <p style={styles.subtitle}>
             {t('landing:subtitle')}
           </p>
-          <button onClick={login} style={styles.ctaBtn}>
+          <button onClick={login} className="tap-btn" style={styles.ctaBtn}>
             {t('landing:ctaButton')}
           </button>
         </div>

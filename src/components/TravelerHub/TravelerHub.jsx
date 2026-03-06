@@ -105,7 +105,7 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
                   <div key={goal.id} style={isLast ? styles.goalRowLast : styles.goalRow}>
                     <span style={styles.goalIcon}>{goal.icon}</span>
                     <p style={styles.goalText}>
-                      {remaining} {unitMap[goal.criteria.type] || 'más'} para desbloquear
+                      {remaining} {unitMap[goal.criteria.type] || 'más'} {t('para-desbloquear')}
                     </p>
                     <span style={styles.goalProgress}>
                       {Math.round(goal.progress * 100)}%

@@ -48,7 +48,7 @@ export const styles = {
     position: 'relative'
   },
   iconBox: (isCountry) => ({
-    width: '36px', height: '36px', borderRadius: RADIUS.sm,
+    width: '44px', height: '44px', borderRadius: RADIUS.sm,
     backgroundColor: isCountry ? `${COLORS.atomicTangerine}15` : `${COLORS.mutedTeal}15`,
     color: isCountry ? COLORS.atomicTangerine : COLORS.mutedTeal,
     display: 'flex', alignItems: 'center', justifyContent: 'center'

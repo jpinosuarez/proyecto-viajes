@@ -1,0 +1,38 @@
+/* BentoGrid — CSS nativo responsivo (migrado desde BentoGrid.styles.js) */
+
+.bento-masonry {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Tablet landscape */
+@media (max-width: 1100px) {
+  .bento-masonry {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet portrait */
+@media (max-width: 768px) {
+  .bento-masonry {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .bento-masonry {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 12px;
+  }
+}
+
+/* Empty states deben copar todas las columnas */
+.bento-masonry .bento-empty {
+  grid-column: 1 / -1;
+}

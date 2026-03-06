@@ -234,7 +234,7 @@ const VisorViaje = ({
         <div style={styles.galleryManageBlock}>
           {galeria.fotos.map((f) => (
             <div key={f.id} style={styles.galleryManageCard(f.esPortada)}>
-              <img src={f.url} alt={f.caption || 'foto'} style={styles.galleryManageImg} />
+              <img src={f.url} alt={f.caption || 'foto'} loading="lazy" style={styles.galleryManageImg} />
               <input
                 type="text"
                 value={captionDrafts[f.id] ?? (f.caption || '')}
@@ -247,6 +247,7 @@ const VisorViaje = ({
               <div style={styles.galleryActionsRow}>
                 <button
                   type="button"
+                  className="tap-btn"
                   style={styles.galleryActionBtn(f.esPortada)}
                   onClick={() => handleSetPortadaExistente(f.id)}
                   disabled={isBusy}
@@ -258,6 +259,7 @@ const VisorViaje = ({
                 </button>
                 <button
                   type="button"
+                  className="tap-btn"
                   style={styles.galleryDangerBtn}
                   onClick={() => handleEliminarFoto(f.id)}
                   disabled={isBusy}
@@ -548,7 +550,7 @@ const VisorViaje = ({
 
   const renderDestinoBody = () => {
     return (
-      <div style={styles.destinoBody}>
+      <div style={styles.destinoBody(isMobile)}>
         {/* Context Grid Bento */}
         {renderContextSection()}
 
@@ -576,7 +578,7 @@ const VisorViaje = ({
       >
         {/* ========== HERO INMERSIVO ========== */}
         <div style={styles.heroWrapper}>
-          <div style={styles.heroImage(fotoMostrada)}>
+          <div style={styles.heroImage(fotoMostrada, isMobile)}>
             <div style={styles.heroGradient} />
 
             {/* Floating NavBar */}
@@ -601,12 +603,12 @@ const VisorViaje = ({
             </div>
 
             {/* Hero Content — anclado abajo */}
-            <div style={styles.heroContent}>
+            <div style={styles.heroContent(isMobile)}>
               {/* Flags */}
               <div style={styles.flagRow}>
                 {data.banderas && data.banderas.length > 0 ? (
                   data.banderas.map((b, i) => (
-                    <img key={i} src={b} alt="flag" style={styles.flagImg} />
+                    <img key={i} src={b} alt="flag" loading="lazy" style={styles.flagImg} />
                   ))
                 ) : (
                   <span style={styles.flagIcon}>✈️</span>

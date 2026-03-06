@@ -37,7 +37,7 @@ export default function PWAUpdatePrompt() {
 const styles = {
   banner: {
     position: 'fixed',
-    bottom: 16,
+    bottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
     left: '50%',
     transform: 'translateX(-50%)',
     display: 'flex',

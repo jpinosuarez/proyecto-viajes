@@ -78,8 +78,6 @@ export const subirFotoGaleria = async ({
       esPortada: esPortada || false,
       caption: metadata.caption || null,
       fechaCaptura: metadata.fechaCaptura || null,
-      width: compressed.width,
-      height: compressed.height,
       size: compressed.size,
       createdAt: Timestamp.now()
     };

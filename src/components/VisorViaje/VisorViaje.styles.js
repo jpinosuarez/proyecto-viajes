@@ -16,16 +16,18 @@ export const styles = {
     width: '100%',
     overflow: 'hidden',
   },
-  heroImage: (foto) => ({
+  heroImage: (foto, isMobile = false) => ({
     width: '100%',
-    height: foto ? '60vh' : '40vh',
-    minHeight: '320px',
+    height: foto
+      ? (isMobile ? '45vh' : '60vh')
+      : (isMobile ? '32vh' : '40vh'),
+    minHeight: isMobile ? '240px' : '320px',
     position: 'relative',
     backgroundImage: foto ? `url(${foto})` : 'none',
     backgroundColor: foto ? 'transparent' : COLORS.charcoalBlue,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    borderRadius: `0 0 ${RADIUS['2xl']} ${RADIUS['2xl']}`,
+    borderRadius: `0 0 var(--radius-2xl) var(--radius-2xl)`,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-end',
@@ -34,7 +36,7 @@ export const styles = {
   heroGradient: {
     position: 'absolute',
     inset: 0,
-    borderRadius: `0 0 ${RADIUS['2xl']} ${RADIUS['2xl']}`,
+    borderRadius: `0 0 var(--radius-2xl) var(--radius-2xl)`,
     background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.85) 100%)',
     pointerEvents: 'none',
   },
@@ -56,8 +58,8 @@ export const styles = {
     ...GLASS.dark,
     border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: RADIUS.full,
-    width: '42px',
-    height: '42px', 
+    width: '44px',
+    height: '44px', 
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -99,8 +101,8 @@ export const styles = {
     color: 'white',
     border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: RADIUS.full,
-    width: '42px',
-    height: '42px',
+    width: '44px',
+    height: '44px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -113,17 +115,17 @@ export const styles = {
   // ==========================================================
   //  HERO CONTENT — anclado abajo del hero
   // ==========================================================
-  heroContent: {
+  heroContent: (isMobile = false) => ({
     position: 'relative',
     zIndex: 10,
-    padding: '0 32px 32px',
+    padding: isMobile ? '0 16px 20px' : '0 32px 32px',
     maxWidth: '1100px',
     margin: '0 auto',
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
     gap: '10px',
-  },
+  }),
   flagRow: {
     display: 'flex',
     gap: '8px',
@@ -496,14 +498,14 @@ export const styles = {
   // ==========================================================
   mobileColumn: {
     maxWidth: '100%',
-    padding: '24px 20px 100px 20px', // bottom padding para el FAB
+    padding: '24px 20px calc(100px + env(safe-area-inset-bottom, 0px)) 20px',
     display: 'flex',
     flexDirection: 'column',
   },
   fab: {
     position: 'fixed',
-    bottom: '24px',
-    right: '24px',
+    bottom: 'max(24px, env(safe-area-inset-bottom, 0px))',
+    right: 'max(24px, env(safe-area-inset-right, 0px))',
     width: '56px',
     height: '56px',
     borderRadius: RADIUS.full,
@@ -534,8 +536,8 @@ export const styles = {
     ...GLASS.dark,
     border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: RADIUS.full,
-    width: '40px',
-    height: '40px',
+    width: '44px',
+    height: '44px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -547,13 +549,13 @@ export const styles = {
   // ==========================================================
   //  MODO DESTINO — Single column centered
   // ==========================================================
-  destinoBody: {
+  destinoBody: (isMobile = false) => ({
     maxWidth: '800px',
     margin: '0 auto',
-    padding: '40px',
+    padding: isMobile ? '20px 16px' : '40px',
     display: 'flex',
     flexDirection: 'column',
-  },
+  }),
   contextGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',

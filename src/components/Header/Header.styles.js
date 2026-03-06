@@ -27,8 +27,8 @@ export const styles = {
     textOverflow: 'ellipsis'
   }),
   menuButton: {
-    width: '38px',
-    height: '38px',
+    width: '44px',
+    height: '44px',
     borderRadius: RADIUS.md,
     border: '1px solid rgba(0,0,0,0.08)',
     backgroundColor: COLORS.surface,
@@ -57,7 +57,7 @@ export const styles = {
     minWidth: isMobile ? '0' : '280px',
     width: isMobile ? '44vw' : 'auto'
   }),
-  searchInput: { border: 'none', background: 'none', outline: 'none', fontSize: '0.85rem', color: COLORS.charcoalBlue, width: '100%' },
+  searchInput: { border: 'none', background: 'none', outline: 'none', fontSize: '1rem', color: COLORS.charcoalBlue, width: '100%' },
   clearButton: {
     border: 'none',
     background: 'transparent',
@@ -66,7 +66,8 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 0
+    padding: '8px',
+    margin: '-8px'
   },
   addButton: (isMobile) => ({
     backgroundColor: COLORS.atomicTangerine,
@@ -88,8 +89,8 @@ export const styles = {
     alignItems: 'center'
   },
   avatar: {
-    width: '40px',
-    height: '40px',
+    width: '44px',
+    height: '44px',
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.sandyBrown,
     border: `2px solid ${COLORS.surface}`,

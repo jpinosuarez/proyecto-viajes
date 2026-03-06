@@ -5,6 +5,7 @@ import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle, Map } from 'luci
 import { useSearch, useUI } from '../../context/UIContext';
 import { COLORS } from '../../theme';
 import { styles } from './BentoGrid.styles';
+import './BentoGrid.css';
 
 const BentoGrid = ({
   viajes = [],
@@ -56,7 +57,7 @@ const BentoGrid = ({
         </div>
       )}
 
-      <div style={styles.masonryContainer}>
+      <div className="bento-masonry">
         {viajesOrdenados.map((viaje) => {
           const data = bitacoraData[viaje.id] || viaje || {};
 
@@ -68,6 +69,7 @@ const BentoGrid = ({
           return (
             <div
               key={viaje.id}
+              className="tap-scale"
               style={{
                 ...styles.masonryItem,
                 ...(tieneFoto ? {
@@ -81,14 +83,15 @@ const BentoGrid = ({
               <div style={styles.topGradient}>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   {banderas.slice(0, 3).map((b, i) => (
-                    <img key={i} src={b} alt="flag" style={{ width: '28px', height: '20px', borderRadius: '3px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} onError={(e) => e.target.style.display = 'none'} />
+                    <img key={i} src={b} alt="flag" loading="lazy" style={{ width: '28px', height: '20px', borderRadius: '3px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} onError={(e) => e.target.style.display = 'none'} />
                   ))}
                   {banderas.length > 3 && <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>+{banderas.length - 3}</span>}
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <button onClick={(e) => { e.stopPropagation(); abrirEditor(viaje.id); }} style={styles.miniBtn}><Edit3 size={14} /></button>
+                  <button className="tap-icon" onClick={(e) => { e.stopPropagation(); abrirEditor(viaje.id); }} style={styles.miniBtn}><Edit3 size={14} /></button>
                   <button
+                    className="tap-icon"
                     onClick={(e) => { e.stopPropagation(); manejarEliminar(viaje.id); }}
                     style={styles.miniBtn}
                     disabled={isDeletingViaje(viaje.id)}
@@ -124,6 +127,7 @@ const BentoGrid = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             style={styles.emptyStatePrimary}
+            className="bento-empty"
           >
             <div style={styles.emptyIconPrimary}>
               <Map size={36} />
@@ -132,7 +136,7 @@ const BentoGrid = ({
             <p style={styles.emptyTextPrimary}>
               Guarda tu primera parada para empezar a construir recuerdos, ver estadisticas y seguir tu ruta.
             </p>
-            <button type="button" onClick={openBuscador} style={styles.emptyActionPrimary}>
+            <button type="button" className="tap-btn" onClick={openBuscador} style={styles.emptyActionPrimary}>
               Registrar primera parada
             </button>
           </motion.div>
@@ -144,6 +148,7 @@ const BentoGrid = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
             style={styles.emptyState}
+            className="bento-empty"
           >
             <div style={styles.emptyIcon}>
               <Search size={28} />

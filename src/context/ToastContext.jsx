@@ -83,8 +83,8 @@ export const useToast = () => {
 const styles = {
   viewport: {
     position: 'fixed',
-    bottom: '20px',
-    right: '20px',
+    bottom: 'max(20px, env(safe-area-inset-bottom, 0px))',
+    right: 'max(20px, env(safe-area-inset-right, 0px))',
     zIndex: Z_INDEX.toast,
     display: 'flex',
     flexDirection: 'column',
@@ -115,11 +115,12 @@ const styles = {
     color: 'white',
     background: 'rgba(255,255,255,0.15)',
     borderRadius: RADIUS.full,
-    width: '22px',
-    height: '22px',
+    width: '32px',
+    height: '32px',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    flexShrink: 0
   }
 };

@@ -167,7 +167,7 @@ const styles = {
   container: { display: 'flex', flexDirection: 'column', gap: '15px' },
   searchRow: { display: 'flex', gap: '10px' },
   inputWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '8px', background: COLORS.background, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, padding: '0 12px' },
-  searchInput: { border: 'none', background: 'transparent', padding: '12px 0', width: '100%', outline: 'none', fontSize: '0.9rem' },
+  searchInput: { border: 'none', background: 'transparent', padding: '12px 0', width: '100%', outline: 'none', fontSize: '1rem' },
   resultsList: { background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, overflow: 'hidden', maxHeight: '180px', overflowY: 'auto', boxShadow: SHADOWS.md },
   resultItem: { padding: '12px 15px', borderBottom: `1px solid ${COLORS.background}`, cursor: 'pointer', fontSize: '0.9rem', display:'flex', justifyContent:'space-between', alignItems:'center', ':hover': { background: COLORS.background } },
   
@@ -176,14 +176,14 @@ const styles = {
   itemHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
   cityName: { fontWeight: '700', fontSize: '0.95rem', color: COLORS.charcoalBlue },
   actions: { display: 'flex', gap: '6px' },
-  actionBtn: { background: COLORS.background, border: 'none', padding: '6px', borderRadius: RADIUS.xs, cursor: 'pointer', color: COLORS.textSecondary, display:'flex', alignItems:'center', justifyContent:'center' },
+  actionBtn: { background: COLORS.background, border: 'none', padding: '10px', borderRadius: RADIUS.xs, cursor: 'pointer', color: COLORS.textSecondary, display:'flex', alignItems:'center', justifyContent:'center' },
   datesRow: { display: 'flex', gap: '15px' },
   dateGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' },
   transportRow: { display: 'flex', gap: '12px', alignItems: 'center', marginTop: 10 },
-  transportBtn: (active) => ({ padding: '6px 10px', borderRadius: RADIUS.sm, border: active ? '1px solid #3b82f6' : `1px solid ${COLORS.border}`, background: active ? '#eff6ff' : COLORS.surface, cursor: 'pointer' }),
+  transportBtn: (active) => ({ padding: '10px 14px', borderRadius: RADIUS.sm, border: active ? '1px solid #3b82f6' : `1px solid ${COLORS.border}`, background: active ? '#eff6ff' : COLORS.surface, cursor: 'pointer' }),
   label: { fontSize: '0.7rem', textTransform:'uppercase', color:COLORS.textSecondary, fontWeight:'700' },
-  dateInput: { border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '8px', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline:'none', background:COLORS.background },
-  relatoTextarea: { width: '100%', minHeight: '60px', padding: '10px', border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, resize: 'vertical', fontFamily: 'inherit', fontSize: '0.85rem', color: COLORS.charcoalBlue, outline: 'none', background: COLORS.background, boxShadow: SHADOWS.inner }
+  dateInput: { border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '10px', fontSize: '1rem', color: COLORS.charcoalBlue, outline:'none', background:COLORS.background },
+  relatoTextarea: { width: '100%', minHeight: '60px', padding: '10px', border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, resize: 'vertical', fontFamily: 'inherit', fontSize: '1rem', color: COLORS.charcoalBlue, outline: 'none', background: COLORS.background, boxShadow: SHADOWS.inner }
 };
 
 export default CityManager;

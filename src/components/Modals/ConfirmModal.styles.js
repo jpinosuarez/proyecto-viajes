@@ -50,8 +50,15 @@ export const styles = {
   footer: {
     borderTop: `1px solid ${COLORS.border}`,
     padding: '16px 24px',
+    paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
     display: 'flex',
     justifyContent: 'flex-end',
+    gap: '10px'
+  },
+  footerMobile: {
+    padding: '16px 20px 8px',
+    display: 'flex',
+    flexDirection: 'column',
     gap: '10px'
   },
   cancelBtn: (disabled = false) => ({
@@ -60,10 +67,12 @@ export const styles = {
     color: COLORS.textSecondary,
     borderRadius: RADIUS.full,
     fontWeight: 700,
-    padding: '10px 18px',
+    padding: '14px 18px',
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.65 : 1,
-    transition: TRANSITIONS.fast
+    transition: TRANSITIONS.fast,
+    width: '100%',
+    textAlign: 'center'
   }),
   confirmBtn: (disabled = false) => ({
     border: 'none',
@@ -71,13 +80,15 @@ export const styles = {
     color: 'white',
     borderRadius: RADIUS.full,
     fontWeight: 700,
-    padding: '10px 18px',
-    display: 'inline-flex',
+    padding: '14px 18px',
+    display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '8px',
     boxShadow: SHADOWS.sm,
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.8 : 1,
-    transition: TRANSITIONS.fast
+    transition: TRANSITIONS.fast,
+    width: '100%'
   })
 };

@@ -85,7 +85,7 @@ export const styles = {
   featureCard: {
     background: COLORS.surface,
     padding: '30px',
-    borderRadius: RADIUS.xl,
+    borderRadius: 'var(--radius-xl)',
     boxShadow: SHADOWS.md,
     display: 'flex',
     flexDirection: 'column',

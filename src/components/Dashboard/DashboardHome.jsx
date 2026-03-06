@@ -9,7 +9,9 @@ import HomeMap from '../Mapa/HomeMap';
 import { getTravelerLevel, getNextLevel } from '../../utils/travelerLevel';
 import { useTranslation } from 'react-i18next';
 
-const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false }) => {
+import { SkeletonList, TripCardSkeleton } from '../Shared/Skeletons';
+
+const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false, loading = false }) => {
   const { usuario } = useAuth();
   const { setVistaActiva, abrirVisor, openBuscador } = useUI();
   const { t } = useTranslation('dashboard');
@@ -85,9 +87,12 @@ const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false }) => {
           </div>
 
           <div style={styles.cardsList} className="custom-scroll">
-            {!isNewTraveler ? recientes.map((viaje) => (
+            {loading ? (
+              <SkeletonList count={3} Component={TripCardSkeleton} />
+            ) : !isNewTraveler ? recientes.map((viaje) => (
               <div
                 key={viaje.id}
+                className="tap-scale"
                 style={styles.travelCard}
                 onClick={() => abrirVisor(viaje.id)}
               >
@@ -103,7 +108,7 @@ const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false }) => {
                 <div style={styles.cardContent}>
                   <div style={styles.cardTop}>
                     {viaje.banderas && viaje.banderas.length > 0 ? (
-                      <img src={viaje.banderas[0]} alt="flag" style={styles.flagImg} />
+                      <img src={viaje.banderas[0]} alt="flag" loading="lazy" style={styles.flagImg} />
                     ) : (
                       <Compass size={18} color="white" />
                     )}
@@ -141,7 +146,7 @@ const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false }) => {
                 <p style={styles.welcomeText}>
                   {t('firstSealMessage')}
                 </p>
-                <button type="button" style={styles.welcomeCta} onClick={openBuscador}>
+                <button type="button" className="tap-btn" style={styles.welcomeCta} onClick={openBuscador}>
                   {t('stampFirstDestination')}
                 </button>
               </motion.div>
