@@ -1,0 +1,11 @@
+{
+  "openMenu": "Abrir menú",
+  "settings": "Configurar Perfil",
+  "logout": "Cerrar Sesión",
+  "invitations": "Invitaciones ({{count}})",
+  "home": "Inicio",
+  "map": "Mapa",
+  "journal": "Bitácora",
+  "curation": "Curación",
+  "exit": "Salir"
+}

@@ -1,0 +1,30 @@
+{
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "accept": "Aceptar",
+  "reject": "Rechazar",
+  "saveChanges": "Guardar Cambios",
+  "logout": "Cerrar Sesión",
+  "clearSearch": "Limpiar búsqueda",
+  "clearFilter": "Borrar filtro",
+  "login": "Iniciar Sesión",
+  "addTrip": "Añadir Viaje",
+  "loading": "Cargando...",
+  "retry": "Reintentar",
+  "goHome": "Ir al inicio",
+  "addCaption": "Agregar caption...",
+  "confirm": {
+    "defaultTitle": "Confirmar acción",
+    "defaultMessage": "Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
+    "deleting": "Eliminando..."
+  },
+  "error": {
+    "oops": "¡Ups! Algo salió mal",
+    "unexpected": "Lo sentimos, hemos encontrado un problema inesperado. No te preocupes, tus datos están seguros.",
+    "technicalDetails": "Detalles técnicos:",
+    "viewStackTrace": "Ver stack trace",
+    "contactSupport": "Si el problema persiste, por favor contacta al soporte."
+  }
+}

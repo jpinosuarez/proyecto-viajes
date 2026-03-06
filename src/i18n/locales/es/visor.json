@@ -1,0 +1,24 @@
+{
+  "bitacora": "Bitácora",
+  "noStoryYet": "Sin relato aún...",
+  "photoGallery": "Galería de fotos",
+  "gallerySubtitle": "Tus recuerdos, listos para contar la historia.",
+  "hideEditing": "Ocultar edición",
+  "editGallery": "Editar galería",
+  "itinerary": "Itinerario",
+  "markAsCover": "Marcar como portada",
+  "makeCover": "Hacer portada",
+  "cover": "Portada",
+  "climate": {
+    "cloudy": "Cielo nublado, {{temp}}°C",
+    "sunny": "Día soleado, {{temp}}°C",
+    "rainy": "Llovió, {{temp}}°C"
+  },
+  "aria": {
+    "currentCover": "Imagen actual de portada",
+    "deletePhoto": "Eliminar foto"
+  },
+  "error": {
+    "captionSaveFailed": "No se pudo guardar el caption."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "passport": {
+    "title": "PASAPORTE",
+    "subtitle": "GLOBAL STAMP",
+    "est": "EST. 2026"
+  },
+  "biometric": {
+    "title": "PERFIL BIOMÉTRICO",
+    "holder": "TITULAR",
+    "countries": "PAÍSES",
+    "trips": "VIAJES",
+    "maxLevel": "🏆 Nivel máximo alcanzado — eres una leyenda.",
+    "progressText": "{{remaining}} país(es) → {{icon}} {{label}}"
+  },
+  "stamps": {
+    "admitted": "ADMITTED {{year}}",
+    "region": "{{region}}"
+  },
+  "levelup": {
+    "title": "¡Nuevo nivel!",
+    "message": "Tu colección de sellos crece. Seguí explorando para alcanzar el siguiente nivel.",
+    "button": "¡Genial! 🎉"
+  }
+}

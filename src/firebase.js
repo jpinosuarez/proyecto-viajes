@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Configuracion por entorno (con fallback a valores actuales).
@@ -35,7 +35,11 @@ if (missingFirebaseConfig) {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// Inicializar Firestore con caché persistente multi-tab (offline-first).
+// Usa IndexedDB para que queries funcionen sin conexión y escrituras se encolen.
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
 const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 

@@ -1,0 +1,66 @@
+{
+  "photoGallery": "Galería de fotos",
+  "optimizing": "Optimizando...",
+  "tripTitlePlaceholder": "Título del viaje",
+  "autoTitle": "Auto",
+  "manualTitle": "Manual",
+  "tooltip": {
+    "autoUpdate": "Se actualiza al agregar o quitar ciudades",
+    "manualMode": "Usando título manual. Click para volver a auto.",
+    "vibe": "Etiquetas que capturan la esencia de tu viaje. ¿Fue relajante, aventurero, cultural?",
+    "highlights": "Los momentos que no quieres olvidar: mejor comida, mejor vista, mejor consejo.",
+    "relato": "Escribe la historia de cada parada por separado. Tu viaje se narra paso a paso.",
+    "presupuesto": "Una referencia del nivel de gasto para este viaje."
+  },
+  "labels": {
+    "presupuesto": "Presupuesto",
+    "vibe": "Vibe",
+    "highlights": "Highlights",
+    "relato": "Relato de esta parada",
+    "storyPlaceholder": "Cuenta lo que viviste en esta ciudad..."
+  },
+  "search": {
+    "newDestination": "Nuevo Destino",
+    "placeholder": "Escribe un país o ciudad...",
+    "searching": "Buscando en el mapa... 🌍",
+    "popularDestinations": "DESTINOS POPULARES",
+    "country": "País",
+    "searchCountry": "Buscar país (min 3 letras)..."
+  },
+  "citymanager": {
+    "searchPlaceholder": "Buscar ciudad (min 3 letras)...",
+    "arrival": "Llegada",
+    "departure": "Salida",
+    "dateFormat": "dd/mm/aaaa",
+    "note": "Nota",
+    "notePlaceholder": "Nota corta (ej: 'Perdí el tren')",
+    "transport": {
+      "plane": "✈️ Avión",
+      "train": "🚆 Tren",
+      "car": "🚗 Auto",
+      "bus": "🚌 Bus",
+      "other": "🔁 Otro"
+    }
+  },
+  "error": {
+    "unsupportedFormat": "Formato no soportado. Usa JPG o PNG.",
+    "optimizationFailed": "No se pudo optimizar la imagen seleccionada.",
+    "saveFailed": "No se pudo guardar el viaje. Revisa los datos e intenta de nuevo.",
+    "unexpectedError": "Error inesperado al guardar. Intenta de nuevo.",
+    "coverUpdateFailed": "No se pudo actualizar la portada.",
+    "photoDeleteFailed": "No se pudo eliminar la foto.",
+    "invitationFailed": "No se pudo crear la invitación."
+  },
+  "toast": {
+    "uploadingPhotos": "Subiendo fotos en segundo plano...",
+    "invitationSent": "Invitación enviada.",
+    "invitationCreated": "Invitación creada.",
+    "captionUpdated": "Caption actualizado."
+  },
+  "confirm": {
+    "deletePhoto": "¿Eliminar esta foto de la galería?"
+  },
+  "warning": {
+    "companionAlreadyAdded": "Este compañero ya está agregado."
+  }
+}

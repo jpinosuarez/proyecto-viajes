@@ -17,6 +17,7 @@ import SettingsPage from './pages/Configuracion/SettingsPage';
 import CuracionPage from './pages/Curacion/CuracionPage';
 import InvitationsList from './components/Invitations/InvitationsList';
 import LevelUpModal from './components/Shared/LevelUpModal';
+import PWAUpdatePrompt from './components/Shared/PWAUpdatePrompt';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { useViajes } from './hooks/useViajes';
@@ -430,6 +431,8 @@ function App() {
         level={levelUpData}
         onClose={() => setLevelUpData(null)}
       />
+
+      <PWAUpdatePrompt />
     </div>
   );
 }

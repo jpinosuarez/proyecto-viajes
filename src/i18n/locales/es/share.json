@@ -1,0 +1,22 @@
+{
+  "shareTrip": "Compartir viaje",
+  "chooseStyle": "Elegí un estilo para tu Historia",
+  "variant": {
+    "classic": "Clásica",
+    "stats": "Stats",
+    "stamp": "Sello"
+  },
+  "button": "Compartir",
+  "template": {
+    "logTitle": "✈ BITÁCORA DE VIAJE",
+    "immigration": "✈ INMIGRACIÓN ✈",
+    "approved": "APROBADO"
+  },
+  "stats": {
+    "countries": "Países",
+    "stops": "Paradas",
+    "days": "Días",
+    "budget": "Presupuesto"
+  },
+  "branding": "KEEPTRIP"
+}

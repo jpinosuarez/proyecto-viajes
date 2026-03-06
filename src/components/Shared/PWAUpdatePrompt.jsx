@@ -1,0 +1,79 @@
+import { useEffect, useState } from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
+import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';
+
+export default function PWAUpdatePrompt() {
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW();
+
+  const [dismissed, setDismissed] = useState(false);
+
+  // Reset dismissed when a new update arrives
+  useEffect(() => {
+    if (needRefresh) setDismissed(false);
+  }, [needRefresh]);
+
+  if (!needRefresh || dismissed) return null;
+
+  return (
+    <div style={styles.banner}>
+      <span style={styles.text}>Nueva versión disponible</span>
+      <div style={styles.actions}>
+        <button onClick={() => updateServiceWorker(true)} style={styles.updateBtn}>
+          Actualizar
+        </button>
+        <button onClick={() => setDismissed(true)} style={styles.dismissBtn}>
+          Luego
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  banner: {
+    position: 'fixed',
+    bottom: 16,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 16px',
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.float,
+    zIndex: 600,
+    ...GLASS.medium,
+    border: `1px solid ${COLORS.border}`,
+  },
+  text: {
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    color: COLORS.textPrimary,
+  },
+  actions: {
+    display: 'flex',
+    gap: 8,
+  },
+  updateBtn: {
+    padding: '6px 14px',
+    borderRadius: RADIUS.sm,
+    border: 'none',
+    background: COLORS.atomicTangerine,
+    color: '#fff',
+    fontWeight: 600,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+  },
+  dismissBtn: {
+    padding: '6px 10px',
+    borderRadius: RADIUS.sm,
+    border: `1px solid ${COLORS.border}`,
+    background: 'transparent',
+    color: COLORS.textSecondary,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+  },
+};
