@@ -4,10 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useSearch, useUI } from '../../context/UIContext';
 import { styles } from './Header.styles';
 import { COLORS, RADIUS } from '../../theme';
-import useInvitations from '../../hooks/useInvitations';
 import { useTranslation } from 'react-i18next';
 
-const Header = ({ isMobile = false }) => {
+const Header = ({ isMobile = false, invitationsCount = 0 }) => {
   const { usuario, login, logout } = useAuth();
   const {
     tituloHeader,
@@ -18,7 +17,6 @@ const Header = ({ isMobile = false }) => {
     openMobileDrawer
   } = useUI();
   const { busqueda, setBusqueda, limpiarBusqueda } = useSearch();
-  const { invitations } = useInvitations();
   const { t } = useTranslation(['nav', 'common']);
   const [failedPhotoUrl, setFailedPhotoUrl] = useState(null);
   const iniciales = useMemo(() => usuario?.displayName?.trim()?.[0]?.toUpperCase() || '', [usuario?.displayName]);
@@ -73,14 +71,14 @@ const Header = ({ isMobile = false }) => {
             <button
               data-testid="header-invitations-button"
               onClick={() => setVistaActiva('invitations')}
-              aria-label={t('nav:invitations', { count: invitations?.length || 0 })}
+              aria-label={t('nav:invitations', { count: invitationsCount })}
               title="Invitaciones"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: COLORS.textSecondary, display: 'flex', alignItems: 'center' }}
             >
               <Bell size={18} />
-              {invitations?.length > 0 && (
+              {invitationsCount > 0 && (
                 <span data-testid="header-invitations-count" aria-live="polite" style={{ background: COLORS.danger, color: COLORS.surface, borderRadius: RADIUS.sm, padding: '2px 6px', fontSize: 11, marginLeft: 6 }}>
-                  {invitations.length}
+                  {invitationsCount}
                 </span>
               )}
             </button>

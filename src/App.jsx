@@ -30,6 +30,7 @@ import { useSearch, useUI } from './context/UIContext';
 import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 import { useAchievements } from './hooks/useAchievements';
+import useInvitations from './hooks/useInvitations';
 
 const Motion = motion;
 
@@ -86,6 +87,9 @@ function App() {
     stats: achievementStats,
     achievementsWithProgress,
   } = useAchievements({ paisesVisitados, bitacora, todasLasParadas });
+
+  // Single source of truth for invitations to avoid duplicate Firestore listeners.
+  const invitationsHook = useInvitations();
 
   const isDeletingViaje = (id) => viajesEliminando.has(id);
 
@@ -303,7 +307,10 @@ function App() {
           marginLeft: isMobile ? 0 : (sidebarCollapsed ? '80px' : '260px')
         }}
       >
-        <Header isMobile={isMobile} />
+        <Header
+          isMobile={isMobile}
+          invitationsCount={invitationsHook.invitations?.length || 0}
+        />
 
         <section style={styles.sectionWrapper(isMobile)}>
           <AnimatePresence mode="wait">
@@ -362,7 +369,7 @@ function App() {
                     <p style={{ color: '#6b7280' }}>Invitaciones recibidas para ver viajes compartidos.</p>
                     <div style={{ marginTop: 12 }}>
                       <React.Suspense fallback={<div>Cargando...</div>}>
-                        <InvitationsList />
+                        <InvitationsList hook={invitationsHook} />
                       </React.Suspense>
                     </div>
                   </div>

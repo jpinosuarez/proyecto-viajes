@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
-import { collectionGroup, query as fbQuery, where as fbWhere, onSnapshot as fbOnSnapshot, collection as fbCollection, getDocs as fbGetDocs } from 'firebase/firestore';
+import { doc as fbDoc, query as fbQuery, where as fbWhere, onSnapshot as fbOnSnapshot, collection as fbCollection } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { obtenerClimaHistoricoSeguro } from '../services/external/weatherService';
@@ -146,49 +146,123 @@ export const useViajes = () => {
       }
     });
 
-    // Suscribir a viajes compartidos donde este usuario fue agregado a sharedWith
-    const sharedQ = fbQuery(collectionGroup(db, 'viajes'), fbWhere('sharedWith', 'array-contains', usuario.uid));
-    const unsubShared = fbOnSnapshot(sharedQ, async (snap) => {
-      try {
-        const sharedViajes = snap.docs.map((d) => ({ id: d.id, ownerId: d.ref.parent.parent?.id, ...d.data() }));
-        // buscar paradas para cada viaje compartido
-        const paradasPromises = sharedViajes.map(async (v) => {
-          const paradasRef = fbCollection(db, `usuarios/${v.ownerId}/viajes/${v.id}/paradas`);
-          const psnap = await fbGetDocs(paradasRef);
-          return psnap.docs.map((p) => ({ id: p.id, viajeId: v.id, ownerId: v.ownerId, ...p.data() }));
-        });
-        const paradasCompartidas = (await Promise.all(paradasPromises)).flat();
+    const sharedTripListeners = new Map();
 
-        setBitacora((prev) => {
-          const personales = prev.filter((p) => p.ownerId === usuario.uid);
-          const merged = [...personales, ...sharedViajes];
-          // dedupe por ownerId/id
-          const mapa = {};
-          merged.forEach((v) => { mapa[`${v.ownerId}/${v.id}`] = v; });
-          return Object.values(mapa);
+    const upsertSharedViaje = ({ ownerId, viaje }) => {
+      const key = `${ownerId}/${viaje.id}`;
+      setBitacora((prev) => {
+        const personales = prev.filter((item) => item.ownerId === usuario.uid);
+        const compartidos = prev.filter((item) => item.ownerId !== usuario.uid && `${item.ownerId}/${item.id}` !== key);
+        const next = [...personales, ...compartidos, { ...viaje, ownerId }];
+        setBitacoraData(construirBitacoraData(next));
+        return next;
+      });
+    };
+
+    const removeSharedViaje = ({ ownerId, viajeId }) => {
+      const key = `${ownerId}/${viajeId}`;
+
+      setBitacora((prev) => {
+        const next = prev.filter((item) => `${item.ownerId}/${item.id}` !== key);
+        setBitacoraData(construirBitacoraData(next));
+        return next;
+      });
+
+      setTodasLasParadas((prev) => prev.filter((parada) => !(parada.ownerId === ownerId && parada.viajeId === viajeId)));
+    };
+
+    const upsertSharedParadas = ({ ownerId, viajeId, paradas }) => {
+      setTodasLasParadas((prev) => {
+        const personales = prev.filter((item) => item.ownerId === usuario.uid);
+        const otherShared = prev.filter((item) => item.ownerId !== usuario.uid && !(item.ownerId === ownerId && item.viajeId === viajeId));
+        return [...personales, ...otherShared, ...paradas];
+      });
+    };
+
+    const acceptedInvitationsQ = fbQuery(
+      fbCollection(db, 'invitations'),
+      fbWhere('inviteeUid', '==', usuario.uid)
+    );
+
+    const unsubShared = fbOnSnapshot(acceptedInvitationsQ, (snap) => {
+      const desiredKeys = new Set();
+
+      snap.docs.forEach((docSnap) => {
+        const invitation = docSnap.data() || {};
+        if (invitation.status !== 'accepted') return;
+        const ownerId = invitation.inviterId;
+        const viajeId = invitation.viajeId;
+        if (!ownerId || !viajeId || ownerId === usuario.uid) return;
+
+        const key = `${ownerId}/${viajeId}`;
+        desiredKeys.add(key);
+        if (sharedTripListeners.has(key)) return;
+
+        const viajeRef = fbDoc(db, `usuarios/${ownerId}/viajes/${viajeId}`);
+        const paradasRef = fbCollection(db, `usuarios/${ownerId}/viajes/${viajeId}/paradas`);
+
+        const unsubViaje = fbOnSnapshot(viajeRef, (viajeSnap) => {
+          if (!viajeSnap.exists()) {
+            removeSharedViaje({ ownerId, viajeId });
+            return;
+          }
+          upsertSharedViaje({ ownerId, viaje: { id: viajeSnap.id, ...viajeSnap.data() } });
+        }, (sharedViajeError) => {
+          logger.error('Error en viaje compartido', {
+            error: sharedViajeError.message,
+            ownerId,
+            viajeId,
+            userId: usuario.uid
+          });
+          removeSharedViaje({ ownerId, viajeId });
         });
 
-        setTodasLasParadas((prev) => {
-          const personales = prev.filter((p) => p.ownerId === usuario.uid);
-          const mapaP = {};
-          [...personales, ...paradasCompartidas].forEach((p) => { mapaP[`${p.ownerId}/${p.viajeId}/${p.id}`] = p; });
-          return Object.values(mapaP);
+        const unsubParadas = fbOnSnapshot(paradasRef, (paradasSnap) => {
+          const paradasCompartidas = paradasSnap.docs.map((paradaSnap) => ({
+            id: paradaSnap.id,
+            viajeId,
+            ownerId,
+            ...paradaSnap.data()
+          }));
+          upsertSharedParadas({ ownerId, viajeId, paradas: paradasCompartidas });
+        }, (sharedParadasError) => {
+          logger.error('Error en paradas de viaje compartido', {
+            error: sharedParadasError.message,
+            ownerId,
+            viajeId,
+            userId: usuario.uid
+          });
+          upsertSharedParadas({ ownerId, viajeId, paradas: [] });
         });
 
-        setBitacoraData((prevData) => {
-          // reconstruir bitacoraData simple para incluir sharedViajes
-          const combined = [...(prevData ? Object.values(prevData) : []), ...sharedViajes];
-          return construirBitacoraData(combined);
+        sharedTripListeners.set(key, () => {
+          unsubViaje();
+          unsubParadas();
+          removeSharedViaje({ ownerId, viajeId });
         });
-      } catch (err) {
-        logger.error('Error al obtener paradas de viajes compartidos', { error: err.message });
+      });
+
+      for (const [key, unsubscribeShared] of sharedTripListeners.entries()) {
+        if (!desiredKeys.has(key)) {
+          unsubscribeShared();
+          sharedTripListeners.delete(key);
+        }
       }
+    }, (sharedInvitationsError) => {
+      logger.error('Error en suscripción de invitaciones aceptadas', {
+        error: sharedInvitationsError.message,
+        userId: usuario.uid
+      });
     });
 
     return () => {
       logger.debug('Desuscribiendo de viajes del usuario');
       unsubscribe();
       unsubShared();
+      for (const unsubscribeShared of sharedTripListeners.values()) {
+        unsubscribeShared();
+      }
+      sharedTripListeners.clear();
     };
   }, [usuario]);
 

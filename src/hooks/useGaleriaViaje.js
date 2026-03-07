@@ -14,10 +14,12 @@ import {
  * Hook para gestionar la galería de fotos de un viaje
  * 
  * @param {string} viajeId - ID del viaje
+ * @param {string|null} ownerId - UID propietario del viaje (para viajes compartidos)
  * @returns {Object} Estado y funciones de la galería
  */
-export function useGaleriaViaje(viajeId) {
+export function useGaleriaViaje(viajeId, ownerId = null) {
   const { usuario } = useAuth();
+  const ownerUid = ownerId || usuario?.uid || null;
   const [fotos, setFotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -27,7 +29,7 @@ export function useGaleriaViaje(viajeId) {
    * Carga las fotos del viaje desde Firestore
    */
   const cargarFotos = useCallback(async () => {
-    if (!usuario || !viajeId) {
+    if (!ownerUid || !viajeId) {
       setFotos([]);
       return;
     }
@@ -40,7 +42,7 @@ export function useGaleriaViaje(viajeId) {
       
       const fotosData = await obtenerFotosViaje({
         db,
-        userId: usuario.uid,
+        userId: ownerUid,
         viajeId
       });
 
@@ -59,13 +61,13 @@ export function useGaleriaViaje(viajeId) {
     } finally {
       setLoading(false);
     }
-  }, [usuario, viajeId]);
+  }, [ownerUid, viajeId]);
 
   /**
    * Sube múltiples fotos a la galería
    */
   const subirFotos = async (files, portadaIndex = 0) => {
-    if (!usuario || !viajeId || files.length === 0) {
+    if (!ownerUid || !viajeId || files.length === 0) {
       return false;
     }
 
@@ -81,7 +83,7 @@ export function useGaleriaViaje(viajeId) {
       const fotosIds = await subirFotosMultiples({
         storage,
         db,
-        userId: usuario.uid,
+        userId: ownerUid,
         viajeId,
         files,
         portadaIndex
@@ -116,7 +118,7 @@ export function useGaleriaViaje(viajeId) {
    * Elimina una foto de la galería
    */
   const eliminar = async (fotoId) => {
-    if (!usuario || !viajeId) return false;
+    if (!ownerUid || !viajeId) return false;
 
     try {
       logger.info('Eliminando foto de galería', { viajeId, fotoId });
@@ -124,7 +126,7 @@ export function useGaleriaViaje(viajeId) {
       const success = await eliminarFoto({
         storage,
         db,
-        userId: usuario.uid,
+        userId: ownerUid,
         viajeId,
         fotoId
       });
@@ -152,14 +154,14 @@ export function useGaleriaViaje(viajeId) {
    * Cambia la foto de portada
    */
   const cambiarPortada = async (fotoId) => {
-    if (!usuario || !viajeId) return false;
+    if (!ownerUid || !viajeId) return false;
 
     try {
       logger.info('Cambiando portada', { viajeId, fotoId });
 
       const success = await actualizarPortada({
         db,
-        userId: usuario.uid,
+        userId: ownerUid,
         viajeId,
         fotoId
       });
@@ -190,12 +192,12 @@ export function useGaleriaViaje(viajeId) {
    * Actualiza el caption de una foto
    */
   const actualizarCaption = async (fotoId, caption) => {
-    if (!usuario || !viajeId) return false;
+    if (!ownerUid || !viajeId) return false;
 
     try {
       const success = await actualizarCaptionFoto({
         db,
-        userId: usuario.uid,
+        userId: ownerUid,
         viajeId,
         fotoId,
         caption

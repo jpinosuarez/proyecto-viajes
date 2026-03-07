@@ -37,6 +37,7 @@ const VisorViaje = ({
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
   const hasViajeData = Boolean(viajeId && (bitacoraData[viajeId] || viajeBase));
   const data = bitacoraData[viajeId] || viajeBase || {};
+  const ownerUid = data.ownerId || usuario?.uid || null;
 
   const [paradas, setParadas] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -70,19 +71,19 @@ const VisorViaje = ({
   }, [isSharedTrip, data.ownerId]);
 
   useEffect(() => {
-    if (viajeId && usuario) {
+    if (viajeId && ownerUid) {
       const fetchParadas = async () => {
-        const ref = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
+        const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
         const snap = await getDocs(ref);
         const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
       };
       fetchParadas();
     }
-  }, [viajeId, usuario]);
+  }, [viajeId, ownerUid]);
 
   // Galería de fotos del viaje
-  const galeria = useGaleriaViaje(viajeId);
+  const galeria = useGaleriaViaje(viajeId, ownerUid);
 
   // Estado de fotos subiendo (desde UploadContext)
   const uploadState = getEstadoViaje(viajeId);
@@ -135,12 +136,12 @@ const VisorViaje = ({
 
   // ─── Callback para re-cargar paradas tras guardar desde EdicionModal ───
   const reloadParadas = useCallback(async () => {
-    if (!viajeId || !usuario) return;
-    const ref = collection(db, `usuarios/${usuario.uid}/viajes/${viajeId}/paradas`);
+    if (!viajeId || !ownerUid) return;
+    const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
     const snap = await getDocs(ref);
     const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
-  }, [viajeId, usuario]);
+  }, [viajeId, ownerUid]);
 
   const handleEditSave = async (id, payload) => {
     const result = await onSave(id, payload);
@@ -290,6 +291,7 @@ const VisorViaje = ({
     return (
       <Motion.div
         key={p.id || i}
+        data-testid={`visor-stop-card-${p.id || i}`}
         style={styles.timelineRow}
         variants={cardVariants}
         initial="hidden"
@@ -313,7 +315,7 @@ const VisorViaje = ({
           onMouseLeave={() => setHoveredIndex(null)}
         >
           <div style={styles.stopCardHeader}>
-            <span style={styles.stopCardName}>{p.nombre}</span>
+            <span data-testid={`visor-stop-name-${p.id || i}`} style={styles.stopCardName}>{p.nombre}</span>
             <span style={styles.stopCardDate}>
               {formatDateRange(p.fechaLlegada || p.fecha, p.fechaSalida)}
             </span>

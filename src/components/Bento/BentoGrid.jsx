@@ -69,6 +69,7 @@ const BentoGrid = ({
           return (
             <div
               key={viaje.id}
+              data-testid={`bitacora-card-${viaje.id}`}
               className="tap-scale"
               style={{
                 ...styles.masonryItem,
@@ -103,7 +104,7 @@ const BentoGrid = ({
               </div>
 
               <div style={tieneFoto ? styles.bottomContentGlass : styles.bottomContentSolid(COLORS.mutedTeal)}>
-                <h3 style={{ margin: '4px 0 8px', color: tieneFoto ? 'white' : COLORS.charcoalBlue, fontSize: '1.1rem', fontWeight: '800', lineHeight: 1.2 }}>
+                <h3 data-testid={`bitacora-card-title-${viaje.id}`} style={{ margin: '4px 0 8px', color: tieneFoto ? 'white' : COLORS.charcoalBlue, fontSize: '1.1rem', fontWeight: '800', lineHeight: 1.2 }}>
                   {data.titulo || viaje.nombreEspanol}
                 </h3>
                 <div style={styles.metaRow(tieneFoto)}>

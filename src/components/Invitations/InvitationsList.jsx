@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -13,32 +13,63 @@ import { COLORS, RADIUS } from '../../theme';
  */
 function useInvitationMetadata(invitations) {
   const [meta, setMeta] = useState({}); // { [invId]: { inviterName, tripTitle } }
+  const inviterNameCacheRef = useRef(new Map());
+  const tripTitleCacheRef = useRef(new Map());
 
   useEffect(() => {
-    if (!invitations || invitations.length === 0) return;
+    if (!invitations || invitations.length === 0) {
+      setMeta({});
+      return;
+    }
+
     let cancelled = false;
-    const cache = {};
 
     (async () => {
+      const missingInviters = [...new Set(invitations.map((inv) => inv.inviterId).filter(Boolean))]
+        .filter((inviterId) => !inviterNameCacheRef.current.has(inviterId));
+
+      const missingTrips = [...new Set(
+        invitations
+          .filter((inv) => inv.inviterId && inv.viajeId)
+          .map((inv) => `${inv.inviterId}/${inv.viajeId}`)
+      )].filter((tripKey) => !tripTitleCacheRef.current.has(tripKey));
+
+      await Promise.all([
+        Promise.all(missingInviters.map(async (inviterId) => {
+          try {
+            const perfilSnap = await getDoc(doc(db, 'usuarios', inviterId));
+            const inviterName = perfilSnap.exists() ? (perfilSnap.data().displayName || inviterId) : inviterId;
+            inviterNameCacheRef.current.set(inviterId, inviterName);
+          } catch {
+            inviterNameCacheRef.current.set(inviterId, inviterId);
+          }
+        })),
+        Promise.all(missingTrips.map(async (tripKey) => {
+          const [ownerUid, viajeId] = tripKey.split('/');
+          try {
+            const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${viajeId}`));
+            const tripTitle = viajeSnap.exists()
+              ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || viajeId)
+              : viajeId;
+            tripTitleCacheRef.current.set(tripKey, tripTitle);
+          } catch {
+            tripTitleCacheRef.current.set(tripKey, viajeId);
+          }
+        }))
+      ]);
+
+      if (cancelled) return;
+
+      const nextMeta = {};
       for (const inv of invitations) {
-        if (cancelled) break;
-        const entry = { inviterName: null, tripTitle: null };
-        try {
-          // Resolver nombre del inviter desde su perfil público
-          const perfilSnap = await getDoc(doc(db, 'usuarios', inv.inviterId));
-          entry.inviterName = perfilSnap.exists() ? (perfilSnap.data().displayName || inv.inviterId) : inv.inviterId;
-        } catch { entry.inviterName = inv.inviterId; }
-
-        try {
-          // Resolver titulo del viaje — la invitación suele tener ownerUid + viajeId
-          const ownerUid = inv.inviterId; // owner es quien invita
-          const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${inv.viajeId}`));
-          entry.tripTitle = viajeSnap.exists() ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || inv.viajeId) : inv.viajeId;
-        } catch { entry.tripTitle = inv.viajeId; }
-
-        cache[inv.id] = entry;
+        const tripKey = inv.inviterId && inv.viajeId ? `${inv.inviterId}/${inv.viajeId}` : null;
+        nextMeta[inv.id] = {
+          inviterName: inviterNameCacheRef.current.get(inv.inviterId) || inv.inviterId || 'Un usuario',
+          tripTitle: (tripKey ? tripTitleCacheRef.current.get(tripKey) : null) || inv.viajeId
+        };
       }
-      if (!cancelled) setMeta({ ...cache });
+
+      setMeta(nextMeta);
     })();
 
     return () => { cancelled = true; };
