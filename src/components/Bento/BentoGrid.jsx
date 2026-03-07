@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { motion as Motion } from 'framer-motion';
 import StatsBitacora from '../Dashboard/StatsBitacora';
 import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle, Map } from 'lucide-react';
 import { useSearch, useUI } from '../../context/UIContext';
@@ -121,7 +122,7 @@ const BentoGrid = ({
         })}
 
         {hasNoTrips && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -138,11 +139,11 @@ const BentoGrid = ({
             <button type="button" className="tap-btn" onClick={openBuscador} style={styles.emptyActionPrimary}>
               Registrar primera parada
             </button>
-          </motion.div>
+          </Motion.div>
         )}
 
         {hasNoSearchResults && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -159,7 +160,7 @@ const BentoGrid = ({
             <button type="button" onClick={limpiarBusqueda} style={styles.emptyAction}>
               Borrar filtro
             </button>
-          </motion.div>
+          </Motion.div>
         )}
       </div>
     </div>

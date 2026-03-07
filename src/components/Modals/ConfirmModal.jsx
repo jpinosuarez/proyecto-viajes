@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, LoaderCircle } from 'lucide-react';
 import { styles } from './ConfirmModal.styles';
 import { useWindowSize } from '../../hooks/useWindowSize';
@@ -65,14 +65,14 @@ const ConfirmModal = ({
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+        <Motion.div
           style={styles.overlay}
           onClick={() => !isLoading && onClose?.()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.div
+          <Motion.div
             style={styles.modal}
             onClick={(event) => event.stopPropagation()}
             initial={{ opacity: 0, y: 28, scale: 0.98 }}
@@ -81,8 +81,8 @@ const ConfirmModal = ({
             transition={{ duration: 0.2, ease: 'easeOut' }}
           >
             {content}
-          </motion.div>
-        </motion.div>
+          </Motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

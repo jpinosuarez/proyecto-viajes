@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Header/Header';
@@ -30,6 +30,8 @@ import { useSearch, useUI } from './context/UIContext';
 import { styles } from './App.styles';
 import { COUNTRIES_DATA, getFlagUrl } from './utils/countryUtils';
 import { useAchievements } from './hooks/useAchievements';
+
+const Motion = motion;
 
 function App() {
   const { usuario, cargando, isAdmin } = useAuth();
@@ -295,7 +297,7 @@ function App() {
     <div style={styles.appWrapper}>
       <Sidebar isMobile={isMobile} />
 
-      <motion.main
+      <Motion.main
         style={{
           ...styles.mainContent(isMobile),
           marginLeft: isMobile ? 0 : (sidebarCollapsed ? '80px' : '260px')
@@ -306,25 +308,25 @@ function App() {
         <section style={styles.sectionWrapper(isMobile)}>
           <AnimatePresence mode="wait">
             {vistaActiva === 'home' && (
-              <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <DashboardHome
                   paisesVisitados={paisesVisitados}
                   bitacora={bitacora}
                   isMobile={isMobile}
                   loading={loadingViajes}
                 />
-              </motion.div>
+              </Motion.div>
             )}
             {vistaActiva === 'mapa' && (
-              <motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle(isMobile)}>
+              <Motion.div key="mapa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.containerMapaStyle(isMobile)}>
                 <div style={styles.mapStatsOverlay(isMobile)}><StatsMapa bitacora={bitacora} paisesVisitados={paisesVisitados} /></div>
                 <ErrorBoundary>
                   <MapaViajes paises={paisesVisitados} paradas={todasLasParadas} />
                 </ErrorBoundary>
-              </motion.div>
+              </Motion.div>
             )}
             {vistaActiva === 'bitacora' && (
-              <motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <ErrorBoundary>
                   <BentoGrid
                     viajes={bitacora}
@@ -333,27 +335,27 @@ function App() {
                     isDeletingViaje={isDeletingViaje}
                   />
                 </ErrorBoundary>
-              </motion.div>
+              </Motion.div>
             )}
             {vistaActiva === 'config' && (
-              <motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <SettingsPage />
-              </motion.div>
+              </Motion.div>
             )}
 
             {vistaActiva === 'hub' && (
-              <motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="hub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <TravelerHub
                   paisesVisitados={paisesVisitados}
                   bitacora={bitacora}
                   achievementsWithProgress={achievementsWithProgress}
                   stats={achievementStats}
                 />
-              </motion.div>
+              </Motion.div>
             )}
 
             {vistaActiva === 'invitations' && (
-              <motion.div key="invitations" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="invitations" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <ErrorBoundary>
                   <div style={{ padding: 20 }}>
                     <h3>Invitaciones</h3>
@@ -365,16 +367,16 @@ function App() {
                     </div>
                   </div>
                 </ErrorBoundary>
-              </motion.div>
+              </Motion.div>
             )}
             {vistaActiva === 'curacion' && isAdmin && (
-              <motion.div key="curacion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
+              <Motion.div key="curacion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
                 <CuracionPage />
-              </motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
         </section>
-      </motion.main>
+      </Motion.main>
 
       <BuscadorModal
         isOpen={mostrarBuscador}

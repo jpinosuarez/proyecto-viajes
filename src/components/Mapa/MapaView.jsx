@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';
@@ -99,7 +99,7 @@ function MapaView({ paises = [], paradas = [] }) {
 
       <AnimatePresence>
         {isEmptyMap && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -125,7 +125,7 @@ function MapaView({ paises = [], paradas = [] }) {
             }}
           >
             Pulsa el boton (+) para marcar tu primer pais en el mapa
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

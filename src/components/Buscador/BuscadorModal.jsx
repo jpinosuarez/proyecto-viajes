@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { Search, X, MapPin, Plus, TrendingUp, Globe } from "lucide-react";
 import { COLORS } from "../../theme";
 import { styles } from "./BuscadorModal.styles";
@@ -135,14 +135,14 @@ const BuscadorModal = ({
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         style={styles.modalOverlay(isMobile)}
         onClick={onClose}
       >
-        <motion.div
+        <Motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
@@ -245,8 +245,8 @@ const BuscadorModal = ({
               );
             })}
           </div>
-        </motion.div>
-      </motion.div>
+        </Motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion as Motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { COLORS, SHADOWS, RADIUS, FONTS, TRANSITIONS } from '../../theme';
 import { TIER_COLORS } from '../../engines/achievementDefinitions';
@@ -20,7 +21,7 @@ const AchievementCard = ({ achievement, isMobile = false }) => {
   const progressPct = Math.round(progress * 100);
 
   return (
-    <motion.div
+    <Motion.div
       whileHover={unlocked ? { scale: 1.04, y: -2 } : { scale: 1.01 }}
       transition={{ duration: 0.2 }}
       style={{
@@ -67,7 +68,7 @@ const AchievementCard = ({ achievement, isMobile = false }) => {
           {/* Progress bar */}
           <div style={styles.progressContainer}>
             <div style={styles.progressTrack}>
-              <motion.div
+              <Motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPct}%` }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -80,7 +81,7 @@ const AchievementCard = ({ achievement, isMobile = false }) => {
           </div>
         </>
       )}
-    </motion.div>
+    </Motion.div>
   );
 };
 

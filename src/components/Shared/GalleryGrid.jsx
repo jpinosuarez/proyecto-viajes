@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Star, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS, TRANSITIONS } from '../../theme';
 
@@ -93,12 +93,12 @@ function UploadingImage({ preview, status, esPortada, error, onRetry }) {
       {/* Overlay de carga */}
       {isLoading && (
         <div style={styles.uploadOverlay}>
-          <motion.div
+          <Motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           >
             <Loader2 size={32} color="white" />
-          </motion.div>
+          </Motion.div>
           <span style={styles.uploadText}>
             {status === 'pending' ? 'En cola...' : 'Subiendo...'}
           </span>
@@ -121,14 +121,14 @@ function UploadingImage({ preview, status, esPortada, error, onRetry }) {
 
       {/* Check de éxito (breve) */}
       {isSuccess && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 1, scale: 1.2 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
           style={styles.successOverlay}
         >
           <Star size={32} fill="white" color="white" />
-        </motion.div>
+        </Motion.div>
       )}
 
       {/* Badge de portada */}
@@ -164,7 +164,7 @@ function Lightbox({ foto, onClose, onPrev, onNext, hasNext, hasPrev, totalFotos,
   }, [onClose, onPrev, onNext, hasNext, hasPrev]);
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -208,7 +208,7 @@ function Lightbox({ foto, onClose, onPrev, onNext, hasNext, hasPrev, totalFotos,
       )}
 
       {/* Imagen */}
-      <motion.div
+      <Motion.div
         key={foto.id}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -223,8 +223,8 @@ function Lightbox({ foto, onClose, onPrev, onNext, hasNext, hasPrev, totalFotos,
             <p style={styles.captionText}>{foto.caption}</p>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </Motion.div>
+    </Motion.div>
   );
 }
 

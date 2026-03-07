@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion as Motion } from 'framer-motion';
 import { Compass, Calendar, Flag, TrendingUp, MapPin, ArrowRight, Trophy, Sparkles, Stamp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
@@ -129,7 +130,7 @@ const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false, loading = 
                 </div>
               </div>
             )) : (
-              <motion.div
+              <Motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -148,7 +149,7 @@ const DashboardHome = ({ paisesVisitados, bitacora, isMobile = false, loading = 
                 <button type="button" className="tap-btn" style={styles.welcomeCta} onClick={openBuscador}>
                   {t('stampFirstDestination')}
                 </button>
-              </motion.div>
+              </Motion.div>
             )}
           </div>
         </div>

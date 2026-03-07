@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid,
   Map,
@@ -71,14 +71,14 @@ const Sidebar = ({ isMobile = false }) => {
             <Disc size={32} color={COLORS.atomicTangerine} />
             <AnimatePresence>
               {!sidebarCollapsed && (
-                <motion.h1
+                <Motion.h1
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10, transition: { duration: 0.1 } }}
                   style={styles.logoText}
                 >
                   Keeptrip
-                </motion.h1>
+                </Motion.h1>
               )}
             </AnimatePresence>
           </div>
@@ -89,7 +89,7 @@ const Sidebar = ({ isMobile = false }) => {
         {menuItems.map((item) => {
           const isActive = vistaActiva === item.id;
           return (
-            <motion.button
+            <Motion.button
               key={item.id}
               onClick={() => handleSelect(item.id)}
               whileHover={{ backgroundColor: isActive ? COLORS.charcoalBlue : '#f1f5f9' }}
@@ -107,17 +107,17 @@ const Sidebar = ({ isMobile = false }) => {
 
               <AnimatePresence>
                 {(isMobile || !sidebarCollapsed) && (
-                  <motion.span
+                  <Motion.span
                     initial={{ opacity: 0, width: 0 }}
                     animate={{ opacity: 1, width: 'auto' }}
                     exit={{ opacity: 0, width: 0 }}
                     style={styles.labelSpan}
                   >
                     {item.label}
-                  </motion.span>
+                  </Motion.span>
                 )}
               </AnimatePresence>
-            </motion.button>
+            </Motion.button>
           );
         })}
       </nav>
@@ -130,14 +130,14 @@ const Sidebar = ({ isMobile = false }) => {
           <LogOut size={20} />
           <AnimatePresence>
             {(isMobile || !sidebarCollapsed) && (
-              <motion.span
+              <Motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
                 style={{ marginLeft: '10px', whiteSpace: 'nowrap' }}
               >
                 {t('exit')}
-              </motion.span>
+              </Motion.span>
             )}
           </AnimatePresence>
         </button>
@@ -150,7 +150,7 @@ const Sidebar = ({ isMobile = false }) => {
       <AnimatePresence>
         {mobileDrawerOpen && (
           <>
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -159,7 +159,7 @@ const Sidebar = ({ isMobile = false }) => {
               onClick={() => setMobileDrawerOpen(false)}
             />
 
-            <motion.aside
+            <Motion.aside
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -167,7 +167,7 @@ const Sidebar = ({ isMobile = false }) => {
               style={styles.mobileSidebar}
             >
               {sidebarContent}
-            </motion.aside>
+            </Motion.aside>
           </>
         )}
       </AnimatePresence>
@@ -175,7 +175,7 @@ const Sidebar = ({ isMobile = false }) => {
   }
 
   return (
-    <motion.aside
+    <Motion.aside
       initial={false}
       animate={{
         width: sidebarCollapsed ? '80px' : '260px'
@@ -184,7 +184,7 @@ const Sidebar = ({ isMobile = false }) => {
       style={styles.sidebar}
     >
       {sidebarContent}
-    </motion.aside>
+    </Motion.aside>
   );
 };
 

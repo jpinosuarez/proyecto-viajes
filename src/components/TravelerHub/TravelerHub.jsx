@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { motion as Motion } from 'framer-motion';
 import { Trophy, Target, Compass, Flag, Globe } from 'lucide-react';
 import { getTravelerLevel, getNextLevel } from '../../utils/travelerLevel';
 import { useWindowSize } from '../../hooks/useWindowSize';
@@ -35,7 +36,7 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
     <div style={styles.container(isMobile)}>
       <div style={styles.scrollArea} className="custom-scroll">
         {/* ── Hero Card ── */}
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -54,7 +55,7 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
             </p>
             {next.level && (
               <div style={styles.heroProgressOuter}>
-                <motion.div
+                <Motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.round(next.progress * 100)}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -78,11 +79,11 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
               <span style={styles.heroStatLabel}>{t('stats.continents')}</span>
             </div>
           </div>
-        </motion.div>
+        </Motion.div>
 
         {/* ── Next Goals ── */}
         {nextGoals.length > 0 && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
@@ -113,12 +114,12 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
                 );
               })}
             </div>
-          </motion.div>
+          </Motion.div>
         )}
 
         {/* ── Unlocked Achievements ── */}
         {unlockedCount > 0 && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 }}
@@ -132,12 +133,12 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
                 <AchievementCard key={a.id} achievement={a} isMobile={isMobile} />
               ))}
             </div>
-          </motion.div>
+          </Motion.div>
         )}
 
         {/* ── Locked Achievements ── */}
         {locked.length > 0 && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.2 }}
@@ -152,7 +153,7 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
                 <AchievementCard key={a.id} achievement={a} isMobile={isMobile} />
               ))}
             </div>
-          </motion.div>
+          </Motion.div>
         )}
       </div>
     </div>
