@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const UIContext = createContext(null);
 const SearchContext = createContext(null);
@@ -79,11 +80,19 @@ export const UIProvider = ({ children }) => {
     ]
   );
 
-  // Dev/test helpers (exposed only when VITE_ENABLE_TEST_LOGIN === 'true')
-  if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
+  useEffect(() => {
+    if (typeof window === 'undefined' || import.meta.env.VITE_ENABLE_TEST_LOGIN !== 'true') {
+      return undefined;
+    }
+
     window.__test_setVista = (vista) => setVistaActiva(vista);
     window.__test_abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
-  }
+
+    return () => {
+      delete window.__test_setVista;
+      delete window.__test_abrirVisor;
+    };
+  }, [setVistaActiva, setViajeExpandidoId]);
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 };

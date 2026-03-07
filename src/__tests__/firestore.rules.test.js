@@ -1,6 +1,6 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import fs from 'fs';
-import { beforeAll, afterAll, beforeEach, test, expect } from 'vitest';
+import { beforeAll, afterAll, beforeEach, test } from 'vitest';
 
 let testEnv;
 const projectId = 'proyecto-viajes-test';

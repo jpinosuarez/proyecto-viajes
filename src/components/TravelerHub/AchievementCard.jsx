@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { COLORS, SHADOWS, RADIUS, FONTS, TRANSITIONS } from '../../theme';
 import { TIER_COLORS } from '../../engines/achievementDefinitions';

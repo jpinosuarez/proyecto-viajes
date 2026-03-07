@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX } from '../../theme';
 
@@ -52,7 +52,7 @@ const LevelUpModal = ({ show, level, onClose }) => {
   return (
     <AnimatePresence>
       {show && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -67,7 +67,7 @@ const LevelUpModal = ({ show, level, onClose }) => {
             cursor: 'pointer',
           }}
         >
-          <motion.div
+          <Motion.div
             initial={{ scale: 0.5, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -120,8 +120,8 @@ const LevelUpModal = ({ show, level, onClose }) => {
             >
               ¡Genial! 🎉
             </button>
-          </motion.div>
-        </motion.div>
+          </Motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

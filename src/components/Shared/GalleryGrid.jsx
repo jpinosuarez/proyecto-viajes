@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Star, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS, TRANSITIONS } from '../../theme';
 

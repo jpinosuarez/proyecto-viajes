@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { COLORS, SHADOWS, RADIUS, GLASS } from '../../theme';
 
 /**
@@ -25,7 +25,7 @@ const BottomSheet = ({ isOpen, onClose, children, zIndex = 12000, disableClose =
       {isOpen && (
         <>
           {/* Overlay */}
-          <motion.div
+          <Motion.div
             key="bs-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -36,7 +36,7 @@ const BottomSheet = ({ isOpen, onClose, children, zIndex = 12000, disableClose =
           />
 
           {/* Sheet */}
-          <motion.div
+          <Motion.div
             key="bs-sheet"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -54,7 +54,7 @@ const BottomSheet = ({ isOpen, onClose, children, zIndex = 12000, disableClose =
             </div>
 
             {children}
-          </motion.div>
+          </Motion.div>
         </>
       )}
     </AnimatePresence>

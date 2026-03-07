@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { User } from 'lucide-react';
 import { COLORS, SHADOWS, RADIUS, FONTS, TRANSITIONS } from '../../theme';
 import { getTravelerLevel, getNextLevel } from '../../utils/travelerLevel';
@@ -8,17 +8,16 @@ import { getTravelerLevel, getNextLevel } from '../../utils/travelerLevel';
  * Perfil biométrico del pasaporte — ahora dinámico.
  * @param {{ displayName: string, email: string, photoURL: string|null, countriesCount: number, tripsCount: number }} props
  */
-const PerfilBiometrico = ({ displayName, email, photoURL, countriesCount = 0, tripsCount = 0 }) => {
+const PerfilBiometrico = ({ displayName, photoURL, countriesCount = 0, tripsCount = 0 }) => {
   const level = getTravelerLevel(countriesCount);
   const next = getNextLevel(countriesCount);
 
   const nombre = displayName || 'Viajero';
-  const correo = email || '';
   // Línea MRZ estilo pasaporte: P<PAIS<NOMBRE<<NIVEL<<PAISES
   const mrzLine = `P<KTP<${nombre.toUpperCase().replace(/\s+/g, '<')}<${level.label.toUpperCase().replace(/\s+/g, '<')}<${countriesCount}<<<`;
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
@@ -84,7 +83,7 @@ const PerfilBiometrico = ({ displayName, email, photoURL, countriesCount = 0, tr
           <div style={{
             height: '8px', borderRadius: RADIUS.full, backgroundColor: COLORS.border, overflow: 'hidden'
           }}>
-            <motion.div
+            <Motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.round(next.progress * 100)}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -113,7 +112,7 @@ const PerfilBiometrico = ({ displayName, email, photoURL, countriesCount = 0, tr
       }}>
         {mrzLine}
       </div>
-    </motion.div>
+    </Motion.div>
   );
 };
 

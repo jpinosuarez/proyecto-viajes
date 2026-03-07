@@ -36,22 +36,6 @@ function getTimestamp() {
 }
 
 /**
- * Obtiene información del navegador/entorno
- */
-function getEnvironmentInfo() {
-  if (typeof window === 'undefined') return { runtime: 'server' };
-  
-  return {
-    userAgent: navigator.userAgent,
-    url: window.location.href,
-    viewport: {
-      width: window.innerWidth,
-      height: window.innerHeight
-    }
-  };
-}
-
-/**
  * Sanitiza el contexto para evitar logs excesivamente grandes
  */
 function sanitizeContext(context, depth = 0) {
@@ -127,7 +111,7 @@ class Logger {
 
     // Enviar a servicio remoto (Sentry, etc.)
     if (config.enableRemote) {
-      this.logToRemote(level, logEntry);
+      this.logToRemote();
     }
 
     return logEntry;
@@ -174,7 +158,7 @@ class Logger {
    * Envío a servicio remoto (Sentry, Datadog, etc.)
    * Preparado para futura integración
    */
-  logToRemote(level, logEntry) {
+  logToRemote() {
     // TODO: Integrar con Sentry
     // if (window.Sentry && level >= LOG_LEVELS.ERROR) {
     //   window.Sentry.captureException(

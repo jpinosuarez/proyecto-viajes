@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import StatsBitacora from '../Dashboard/StatsBitacora';
 import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle, Map } from 'lucide-react';
 import { useSearch, useUI } from '../../context/UIContext';

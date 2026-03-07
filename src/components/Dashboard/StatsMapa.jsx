@@ -9,22 +9,6 @@ const StatsMapa = ({ bitacora = [], paisesVisitados = [] }) => {
   const countPaises = paisesVisitados.length;
   const porcentajeMundo = ((countPaises / totalPaisesMundo) * 100).toFixed(1);
   const continentesUnicos = [...new Set(bitacora.map(v => v.continente))].filter(Boolean).length;
-  
-  const obtenerUltimaAventura = () => {
-    if (bitacora.length === 0) return "---";
-    // Ordenamos descendente para sacar la más reciente
-    // Suponemos que bitacora ya viene ordenada, pero por seguridad:
-    const sorted = [...bitacora].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    const ultima = new Date(sorted[0].fecha);
-    const hoy = new Date();
-    
-    // Diferencia en meses
-    const difMeses = (hoy.getFullYear() - ultima.getFullYear()) * 12 + (hoy.getMonth() - ultima.getMonth());
-    
-    if (difMeses === 0) return t('stats.thisMonth');
-    if (difMeses < 12) return t('stats.monthsAgo', { count: difMeses });
-    return t('stats.yearsAgo', { count: Math.floor(difMeses/12) });
-  };
 
   const obtenerRegionPredominante = () => {
     if (bitacora.length === 0) return "---";

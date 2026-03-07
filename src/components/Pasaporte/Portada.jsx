@@ -1,10 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { Navigation2 } from 'lucide-react';
 import { RADIUS } from '../../theme';
 
 const Portada = () => (
-  <motion.div 
+  <Motion.div 
     initial={{ opacity: 0 }} 
     animate={{ opacity: 1 }} 
     exit={{ opacity: 0 }}
@@ -63,7 +63,7 @@ const Portada = () => (
     }}>
       EST. 2026
     </div>
-  </motion.div>
+  </Motion.div>
 );
 
 export default Portada;

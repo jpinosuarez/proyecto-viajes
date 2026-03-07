@@ -1,32 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Hook que observa un array de refs (stop cards) con IntersectionObserver
  * y devuelve el índice de la parada actualmente visible en el viewport.
  *
- * @param {React.MutableRefObject<HTMLElement[]>} paradaRefs - ref cuyo .current es un array de DOM nodes
  * @param {boolean} enabled - false para desactivar (ej. mobile sin mapa visible, o modo edición)
  * @returns {{ activeIndex: number }}
  */
-export function useActiveParada(paradaRefs, enabled = true) {
+export function useActiveParada(enabled = true) {
   const [activeIndex, setActiveIndex] = useState(0);
-
-  // Resetear al índice 0 cuando se desactiva (por ej. al salir de edición)
-  useEffect(() => {
-    if (!enabled) setActiveIndex(0);
-  }, [enabled]);
+  const nodesRef = useRef([]);
 
   // Callback estable para asignar refs en el .map()
   const setParadaRef = useCallback((index, node) => {
-    if (paradaRefs.current) {
-      paradaRefs.current[index] = node;
-    }
-  }, [paradaRefs]);
+    nodesRef.current[index] = node || null;
+  }, []);
+
+  const getParadaNode = useCallback((index) => nodesRef.current[index] || null, []);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const refs = paradaRefs.current;
+    const refs = nodesRef.current;
     if (!refs || refs.length === 0) return;
 
     const observer = new IntersectionObserver(
@@ -61,7 +56,7 @@ export function useActiveParada(paradaRefs, enabled = true) {
     return () => {
       observer.disconnect();
     };
-  }, [paradaRefs, enabled]);
+  }, [enabled]);
 
-  return { activeIndex, setParadaRef };
+  return { activeIndex: enabled ? activeIndex : 0, setParadaRef, getParadaNode };
 }

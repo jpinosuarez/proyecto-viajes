@@ -70,7 +70,7 @@ const CuratedCoverPicker = ({ paisCode, ciudades = [], onSelect, disabled = fals
         if (!isActive) return;
         const data = snap.exists() ? snap.data() : null;
         setCurated(data?.curated || null);
-      } catch (err) {
+      } catch {
         if (!isActive) return;
         setError('No se pudo cargar el curado.');
         setCurated(null);

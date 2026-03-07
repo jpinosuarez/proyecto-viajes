@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { storage, db } from '../firebase';
 import { useAuth } from './AuthContext';
@@ -87,6 +88,7 @@ export function UploadProvider({ children }) {
 
     // Iniciar subida secuencial (evita saturar la red)
     procesarCola(viajeId, fotosConPreview);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario, generarPreview]);
 
   /**

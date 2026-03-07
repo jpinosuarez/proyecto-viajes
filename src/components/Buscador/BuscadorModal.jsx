@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { Search, X, MapPin, Plus, TrendingUp, Globe } from "lucide-react";
 import { COLORS } from "../../theme";
 import { styles } from "./BuscadorModal.styles";
@@ -98,7 +98,7 @@ const BuscadorModal = ({
         setCargando(false);
       }
     }, 300);
-  }, [filtro, onSearchError, onNoResults]);
+  }, [filtro, onSearchError, onNoResults, i18n.language]);
 
   const seleccionarPopular = (destino) => {
     if (destino.esCiudad) {

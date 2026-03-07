@@ -36,9 +36,6 @@ vi.mock('../../../context/ToastContext', () => ({
 
 describe('InvitationsList', () => {
   it('muestra invitaciones y dispara aceptar/rechazar y abre el visor al aceptar', async () => {
-    const ui = { abrirVisor: abrirVisorMock, setVistaActiva: setVistaActivaMock };
-    const toast = { pushToast: pushToastMock };
-
     // ensure module cache is clean so the hoisted mock is used
     vi.resetModules();
     const { default: InvitationsList } = await import('../InvitationsList');

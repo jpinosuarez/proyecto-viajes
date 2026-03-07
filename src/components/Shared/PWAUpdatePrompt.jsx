@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';
@@ -6,18 +5,11 @@ import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';
 export default function PWAUpdatePrompt() {
   const { t } = useTranslation();
   const {
-    needRefresh: [needRefresh],
+    needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW();
 
-  const [dismissed, setDismissed] = useState(false);
-
-  // Reset dismissed when a new update arrives
-  useEffect(() => {
-    if (needRefresh) setDismissed(false);
-  }, [needRefresh]);
-
-  if (!needRefresh || dismissed) return null;
+  if (!needRefresh) return null;
 
   return (
     <div style={styles.banner}>
@@ -26,7 +18,7 @@ export default function PWAUpdatePrompt() {
         <button onClick={() => updateServiceWorker(true)} style={styles.updateBtn}>
           {t('pwa.update')}
         </button>
-        <button onClick={() => setDismissed(true)} style={styles.dismissBtn}>
+        <button onClick={() => setNeedRefresh(false)} style={styles.dismissBtn}>
           {t('pwa.later')}
         </button>
       </div>

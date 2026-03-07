@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Search, Plus, LogOut, User, X, Menu, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSearch, useUI } from '../../context/UIContext';
@@ -20,12 +20,10 @@ const Header = ({ isMobile = false }) => {
   const { busqueda, setBusqueda, limpiarBusqueda } = useSearch();
   const { invitations } = useInvitations();
   const { t } = useTranslation(['nav', 'common']);
-  const [avatarError, setAvatarError] = useState(false);
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState(null);
   const iniciales = useMemo(() => usuario?.displayName?.trim()?.[0]?.toUpperCase() || '', [usuario?.displayName]);
-
-  useEffect(() => {
-    setAvatarError(false);
-  }, [usuario?.photoURL]);
+  const avatarPhotoUrl = usuario?.photoURL || null;
+  const canShowAvatarPhoto = Boolean(avatarPhotoUrl && failedPhotoUrl !== avatarPhotoUrl);
 
   return (
     <header style={styles.header(isMobile)}>
@@ -94,12 +92,12 @@ const Header = ({ isMobile = false }) => {
               title={t('nav:settings')}
               role="button"
             >
-              {usuario.photoURL && !avatarError ? (
+              {canShowAvatarPhoto ? (
                 <img
-                  src={usuario.photoURL}
+                  src={avatarPhotoUrl}
                   alt={`Foto de ${usuario.displayName || 'usuario'}`}
                   style={{ width: '100%', height: '100%', borderRadius: RADIUS.full, objectFit: 'cover' }}
-                  onError={() => setAvatarError(true)}
+                  onError={() => setFailedPhotoUrl(avatarPhotoUrl)}
                 />
               ) : iniciales ? (
                 <span style={styles.avatarInitials}>{iniciales}</span>

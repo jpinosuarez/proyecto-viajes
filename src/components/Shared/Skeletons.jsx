@@ -32,5 +32,5 @@ export function BentoCardSkeleton() {
 
 /** Renders n skeleton cards */
 export function SkeletonList({ count = 3, Component = TripCardSkeleton }) {
-  return Array.from({ length: count }, (_, i) => <Component key={i} />);
+  return Array.from({ length: count }, (_, i) => React.createElement(Component, { key: i }));
 }

@@ -13,7 +13,6 @@ const CityManager = ({ paradas, setParadas }) => {
   // Búsqueda reactiva (3 chars)
   useEffect(() => {
     if (busqueda.length < 3) {
-        setResultados([]);
         return;
     }
     const timer = setTimeout(async () => {
@@ -29,9 +28,10 @@ const CityManager = ({ paradas, setParadas }) => {
   const agregarCiudad = (feature) => {
     const contextCountry = feature.context?.find(c => c.id.startsWith('country'));
     const countryCode = contextCountry?.short_code?.toUpperCase();
+    const tempId = feature.id || `${feature.text}-${feature.center?.[0]}-${feature.center?.[1]}`;
 
     const nuevaParada = {
-      id: `temp-${Date.now()}`,
+      id: `temp-${tempId}`,
       nombre: feature.text,
       coordenadas: feature.center,
       fechaLlegada: '', 
@@ -78,7 +78,11 @@ const CityManager = ({ paradas, setParadas }) => {
           <Search size={16} color={COLORS.textSecondary} />
           <input 
             value={busqueda}
-            onChange={e => setBusqueda(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setBusqueda(value);
+              if (value.length < 3) setResultados([]);
+            }}
             placeholder="Buscar ciudad (min 3 letras)..."
             style={styles.searchInput}
           />

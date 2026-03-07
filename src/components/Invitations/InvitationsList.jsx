@@ -3,7 +3,6 @@ import { Bell } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import useInvitations from '../../hooks/useInvitations';
-import { styles as headerStyles } from '../Header/Header.styles';
 import { useUI } from '../../context/UIContext';
 import { useToast } from '../../context/ToastContext';
 import { COLORS, RADIUS } from '../../theme';
@@ -28,14 +27,14 @@ function useInvitationMetadata(invitations) {
           // Resolver nombre del inviter desde su perfil público
           const perfilSnap = await getDoc(doc(db, 'usuarios', inv.inviterId));
           entry.inviterName = perfilSnap.exists() ? (perfilSnap.data().displayName || inv.inviterId) : inv.inviterId;
-        } catch (_) { entry.inviterName = inv.inviterId; }
+        } catch { entry.inviterName = inv.inviterId; }
 
         try {
           // Resolver titulo del viaje — la invitación suele tener ownerUid + viajeId
           const ownerUid = inv.inviterId; // owner es quien invita
           const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${inv.viajeId}`));
           entry.tripTitle = viajeSnap.exists() ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || inv.viajeId) : inv.viajeId;
-        } catch (_) { entry.tripTitle = inv.viajeId; }
+        } catch { entry.tripTitle = inv.viajeId; }
 
         cache[inv.id] = entry;
       }
@@ -49,7 +48,8 @@ function useInvitationMetadata(invitations) {
 }
 
 export default function InvitationsList({ compact = false, hook = null }) {
-  const { invitations, acceptInvitation, declineInvitation } = hook || useInvitations();
+  const defaultInvitationsHook = useInvitations();
+  const { invitations, acceptInvitation, declineInvitation } = hook || defaultInvitationsHook;
   const { abrirVisor, setVistaActiva } = useUI();
   const { pushToast } = useToast();
   const metadata = useInvitationMetadata(invitations);
@@ -85,7 +85,7 @@ export default function InvitationsList({ compact = false, hook = null }) {
                   onClick={async (e) => {
                     const ok = await acceptInvitation(inv.id);
                     if (ok) {
-                      try { e?.currentTarget?.blur?.(); } catch(_) { /* safe fallback for tests */ }
+                      try { e?.currentTarget?.blur?.(); } catch { /* safe fallback for tests */ }
                       pushToast('Invitación aceptada — ahora puedes ver el viaje', 'success');
                       setVistaActiva('bitacora');
                       abrirVisor(inv.viajeId);

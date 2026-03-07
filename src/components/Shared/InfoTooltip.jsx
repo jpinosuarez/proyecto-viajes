@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS } from '../../theme';
 
@@ -73,7 +73,7 @@ export default function InfoTooltip({ text, textKey, size = 15 }) {
 
       <AnimatePresence>
         {open && displayText && (
-          <motion.div
+          <Motion.div
             ref={tooltipRef}
             role="tooltip"
             initial={{ opacity: 0, scale: 0.92, y: above ? 4 : -4 }}
@@ -87,7 +87,7 @@ export default function InfoTooltip({ text, textKey, size = 15 }) {
           >
             <span style={styles.arrow(above)} />
             <span style={styles.text}>{displayText}</span>
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </span>

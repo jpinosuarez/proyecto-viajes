@@ -1,5 +1,5 @@
-import React, { useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX } from '../../theme';
 import { TIER_COLORS } from '../../engines/achievementDefinitions';
@@ -21,7 +21,7 @@ const fireConfetti = (color) => {
 };
 
 const LevelUpCard = ({ level, onNext, isLast, t }) => (
-  <motion.div
+  <Motion.div
     initial={{ scale: 0.5, opacity: 0, y: 30 }}
     animate={{ scale: 1, opacity: 1, y: 0 }}
     exit={{ scale: 0.8, opacity: 0 }}
@@ -40,13 +40,13 @@ const LevelUpCard = ({ level, onNext, isLast, t }) => (
     <button type="button" onClick={onNext} style={{ ...cardStyles.btn, background: level.color, boxShadow: `0 4px 14px ${level.color}40` }}>
       {isLast ? t('hub:celebration.great') : t('hub:celebration.next')}
     </button>
-  </motion.div>
+  </Motion.div>
 );
 
 const AchievementUnlockCard = ({ achievement, onNext, isLast, t }) => {
   const tierColor = TIER_COLORS[achievement.tier] || COLORS.atomicTangerine;
   return (
-    <motion.div
+    <Motion.div
       initial={{ scale: 0.5, opacity: 0, y: 30 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       exit={{ scale: 0.8, opacity: 0 }}
@@ -54,13 +54,13 @@ const AchievementUnlockCard = ({ achievement, onNext, isLast, t }) => {
       onClick={(e) => e.stopPropagation()}
       style={cardStyles.card}
     >
-      <motion.div
+      <Motion.div
         animate={{ rotate: [0, -10, 10, -5, 5, 0] }}
         transition={{ duration: 0.6, delay: 0.3 }}
         style={{ fontSize: '3.5rem', marginBottom: '12px', lineHeight: 1 }}
       >
         {achievement.icon}
-      </motion.div>
+      </Motion.div>
       <h2 style={cardStyles.title}>{t('hub:achievements.unlocked')}</h2>
       <p style={{ ...cardStyles.highlight, color: tierColor }}>{achievement.id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</p>
       <div style={{ ...cardStyles.tierBadge, background: `${tierColor}18`, border: `1px solid ${tierColor}40`, color: tierColor }}>
@@ -69,12 +69,12 @@ const AchievementUnlockCard = ({ achievement, onNext, isLast, t }) => {
       <button type="button" onClick={onNext} style={{ ...cardStyles.btn, background: tierColor, boxShadow: `0 4px 14px ${tierColor}40` }}>
         {isLast ? t('hub:celebration.great') : t('hub:celebration.next')}
       </button>
-    </motion.div>
+    </Motion.div>
   );
 };
 
 const SummaryCard = ({ celebrations, onDismiss, t }) => (
-  <motion.div
+  <Motion.div
     initial={{ scale: 0.5, opacity: 0, y: 30 }}
     animate={{ scale: 1, opacity: 1, y: 0 }}
     exit={{ scale: 0.8, opacity: 0 }}
@@ -114,7 +114,7 @@ const SummaryCard = ({ celebrations, onDismiss, t }) => (
     <button type="button" onClick={onDismiss} style={{ ...cardStyles.btn, background: COLORS.atomicTangerine, boxShadow: SHADOWS.glow }}>
       {t('hub:celebration.amazing')}
     </button>
-  </motion.div>
+  </Motion.div>
 );
 
 /**
@@ -140,7 +140,7 @@ const CelebrationQueue = ({ celebrations, onDismiss, onDismissAll }) => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -162,7 +162,7 @@ const CelebrationQueue = ({ celebrations, onDismiss, onDismissAll }) => {
         ) : (
           <AchievementUnlockCard achievement={current.data} onNext={onDismiss} isLast={isLast} t={t} />
         )}
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 };

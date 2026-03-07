@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Compass, Calendar, Flag, TrendingUp, MapPin, ArrowRight, Trophy, Sparkles, Stamp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { COLORS, RADIUS, FONTS } from '../../theme';
 
@@ -20,7 +20,7 @@ const PaginaSellos = ({ region, paises, sellosMap, manejarEliminar }) => {
   const colorTinta = obtenerColorTinta(region);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <h3 className="titulo-region">
         {region.toUpperCase()}
       </h3>
@@ -37,7 +37,7 @@ const PaginaSellos = ({ region, paises, sellosMap, manejarEliminar }) => {
           const randomRotate = (p.code.charCodeAt(0) % 12) - 6;
 
           return (
-            <motion.div 
+            <Motion.div 
               key={p.code}
               initial={{ scale: 0 }} 
               animate={{ scale: 1, rotate: randomRotate }}
@@ -101,11 +101,11 @@ const PaginaSellos = ({ region, paises, sellosMap, manejarEliminar }) => {
                 }} 
                 onClick={() => manejarEliminar(p.code)} 
               />
-            </motion.div>
+            </Motion.div>
           );
         })}
       </div>
-    </motion.div>
+    </Motion.div>
   );
 };
 

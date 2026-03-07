@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { db, storage } from '../firebase';
-import { collectionGroup, query as fbQuery, where as fbWhere, onSnapshot as fbOnSnapshot, collection as fbCollection, getDocs as fbGetDocs, orderBy as fbOrderBy } from 'firebase/firestore';
+import { collectionGroup, query as fbQuery, where as fbWhere, onSnapshot as fbOnSnapshot, collection as fbCollection, getDocs as fbGetDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { obtenerClimaHistoricoSeguro } from '../services/external/weatherService';
@@ -11,7 +11,6 @@ import {
   actualizarViaje,
   crearParada,
   actualizarParada,
-  eliminarParada,
   eliminarViaje,
   subirFotoViaje
 } from '../services/viajes/viajesRepository';
@@ -31,18 +30,6 @@ import { logger } from '../utils/logger';
 
 const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
-
-const parseDateSafe = (value) => {
-  if (!isNonEmptyString(value)) return null;
-  const time = Date.parse(value);
-  if (Number.isNaN(time)) return null;
-  return new Date(time);
-};
-
-const sonCoordenadasValidas = (coordenadas) =>
-  Array.isArray(coordenadas) &&
-  coordenadas.length === 2 &&
-  coordenadas.every((value) => typeof value === 'number' && Number.isFinite(value));
 
 const obtenerCoordenadasViaje = ({ datosViaje = {}, viajeActual = null, paradas = [] }) => {
   const primeraParadaConCoords = paradas.find((parada) => Array.isArray(parada?.coordenadas))?.coordenadas;

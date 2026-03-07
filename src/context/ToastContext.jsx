@@ -1,5 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion as Motion } from 'framer-motion';
 import { CheckCircle2, CircleAlert, Info, X } from 'lucide-react';
 import { SHADOWS, RADIUS, Z_INDEX } from '../theme';
 
@@ -41,7 +42,7 @@ export const ToastProvider = ({ children }) => {
             const palette = TOAST_COLORS[toast.type] || TOAST_COLORS.info;
             const Icon = palette.icon;
             return (
-              <motion.div
+              <Motion.div
                 key={toast.id}
                 initial={{ opacity: 0, y: 16, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -63,7 +64,7 @@ export const ToastProvider = ({ children }) => {
                 >
                   <X size={14} />
                 </button>
-              </motion.div>
+              </Motion.div>
             );
           })}
         </AnimatePresence>

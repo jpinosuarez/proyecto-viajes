@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { X, Save } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWindowSize } from '../../hooks/useWindowSize';
@@ -65,11 +65,11 @@ const PerfilModal = ({ isOpen, onClose }) => {
   // Desktop: modal centrado clásico
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         style={styles.overlay} onClick={onClose}
       >
-        <motion.div
+        <Motion.div
           initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
           style={styles.content} onClick={e => e.stopPropagation()}
         >
@@ -78,8 +78,8 @@ const PerfilModal = ({ isOpen, onClose }) => {
             <button onClick={onClose} style={styles.closeBtn}><X size={20}/></button>
           </div>
           {formContent}
-        </motion.div>
-      </motion.div>
+        </Motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 };

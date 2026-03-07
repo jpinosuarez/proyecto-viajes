@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Header/Header';
@@ -66,7 +66,6 @@ function App() {
     setCiudadInicialBorrador,
     confirmarEliminacion,
     setConfirmarEliminacion,
-    abrirEditor,
     abrirVisor,
     setVistaActiva
   } = useUI();
@@ -180,7 +179,7 @@ function App() {
         return id; // Retornar el ID aunque haya error parcial
       }
       return null;
-    } catch (err) {
+    } catch {
       pushToast('Error al guardar el viaje', 'error');
       return null;
     } finally {
@@ -410,7 +409,6 @@ function App() {
             bitacoraLista={bitacora}
             bitacoraData={bitacoraData}
             onClose={() => setViajeExpandidoId(null)}
-            onEdit={abrirEditor}
             onSave={handleGuardarDesdeVisor}
             onDelete={solicitarEliminarViaje}
             isSaving={isSavingViewer}

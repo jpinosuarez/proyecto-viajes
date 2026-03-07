@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { Trophy, Target, Compass, Flag, Globe } from 'lucide-react';
 import { getTravelerLevel, getNextLevel } from '../../utils/travelerLevel';
 import { useWindowSize } from '../../hooks/useWindowSize';

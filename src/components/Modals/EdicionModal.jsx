@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Save, Camera, Calendar, LoaderCircle, Star, Trash2 } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
 import { COLORS, RADIUS } from '../../theme';
@@ -28,7 +28,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   try {
     const uploadCtx = useUpload();
     iniciarSubida = uploadCtx?.iniciarSubida || (() => {});
-  } catch (e) {
+  } catch {
     iniciarSubida = () => {};
   }
   const { isMobile } = useWindowSize(768);
@@ -62,7 +62,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       galeria.limpiar?.();
       prevViajeIdRef.current = currentViajeId;
     }
-  }, [viaje?.id]);
+  }, [viaje?.id, galeria]);
 
 
   // Inicialización de estado al abrir modal
@@ -125,7 +125,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
           const snap = await getDocs(paradasRef);
           const loaded = snap.docs.map(d => ({id: d.id, ...d.data()}));
           setParadas(loaded.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)));
-        } catch (e) {
+        } catch {
           setParadas([]);
         }
       };
@@ -133,7 +133,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     } else {
       setParadas([]); 
     }
-  }, [viaje, esBorrador, ciudadInicial, usuario]);
+  }, [viaje, esBorrador, ciudadInicial, usuario, galeria]);
 
   // Limpieza de estado al cerrar modal
   useEffect(() => {
@@ -227,7 +227,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       } else {
         pushToast(t('error.saveFailed'), 'error');
       }
-    } catch (err) {
+    } catch {
       pushToast(t('error.unexpectedError'), 'error');
     }
   };
@@ -282,11 +282,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
         const results = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
         setCompanionResults(results.slice(0, 8));
         return;
-      } catch (err) {
+      } catch {
         setCompanionResults([]);
         return;
       }
-    } catch (err) {
+    } catch {
       setCompanionResults([]);
     }
   };
@@ -315,7 +315,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       try {
         await createInvitationService({ db, inviterId: usuario.uid, inviteeUid: user.uid, viajeId: viaje.id });
         pushToast(t('toast.invitationSent'), 'success');
-      } catch (err) {
+      } catch {
         pushToast(t('error.invitationFailed'), 'error');
       }
     }
@@ -339,7 +339,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       try {
         await createInvitationService({ db, inviterId: usuario.uid, inviteeEmail: trimmed, viajeId: viaje.id });
         pushToast(t('toast.invitationCreated'), 'info');
-      } catch (err) {
+      } catch {
         pushToast(t('error.invitationFailed'), 'error');
       }
     }
@@ -386,8 +386,8 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
 
   return (
     <AnimatePresence>
-      <motion.div style={styles.overlay(isMobile)} onClick={isBusy ? undefined : onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-        <motion.div style={styles.modal(isMobile)} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
+      <Motion.div style={styles.overlay(isMobile)} onClick={isBusy ? undefined : onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+        <Motion.div style={styles.modal(isMobile)} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
           <div style={styles.header(formData.foto, isMobile)}>
             <div style={styles.headerOverlay} />
             <div style={styles.headerContent}>
@@ -625,8 +625,8 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 </button>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </Motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 };

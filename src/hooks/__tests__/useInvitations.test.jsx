@@ -18,7 +18,7 @@ describe('useInvitations (integration via component)', () => {
       return () => {};
     });
     invitationsService.acceptInvitation.mockResolvedValue(true);
-    invitationsService.declineInvitation = vi.fn().mockResolvedValue(true);
+    invitationsService.declineInvitation.mockResolvedValue(true);
   });
 
   function TestComp() {

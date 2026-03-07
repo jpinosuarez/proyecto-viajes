@@ -323,7 +323,7 @@ const styles = {
     color: COLORS.textSecondary,
     letterSpacing: '0.3px',
   },
-  overlay: (isMobile) => ({
+  overlay: () => ({
     position: 'absolute',
     top: 0,
     right: 0,

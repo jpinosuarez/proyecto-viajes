@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '../../theme';

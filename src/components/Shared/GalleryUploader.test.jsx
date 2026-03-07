@@ -1,7 +1,7 @@
 import React from 'react';
 // @vitest-environment jsdom
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GalleryUploader } from './GalleryUploader';
 import { ToastProvider } from '../../context/ToastContext';

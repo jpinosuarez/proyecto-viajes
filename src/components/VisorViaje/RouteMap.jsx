@@ -2,51 +2,14 @@ import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, NavigationControl, Marker } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS } from '../../theme';
 import { setMapLanguage } from '../../utils/mapLanguage';
+import { generateCurvedRoute } from '../../utils/mapRoutes';
 import { routeMapStyles as s } from './RouteMap.styles';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-
-// ─── Genera una curva bezier cuadrática entre cada par de puntos ───
-function generateCurvedRoute(coordinates) {
-  if (coordinates.length < 2) return coordinates;
-
-  const result = [];
-  for (let i = 0; i < coordinates.length - 1; i++) {
-    const start = coordinates[i];
-    const end = coordinates[i + 1];
-
-    const dx = end[0] - start[0];
-    const dy = end[1] - start[1];
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < 0.01) {
-      // Puntos casi idénticos — línea directa
-      result.push(start);
-      continue;
-    }
-
-    // Control point perpendicular al midpoint (15% offset)
-    const midX = (start[0] + end[0]) / 2;
-    const midY = (start[1] + end[1]) / 2;
-    const offset = dist * 0.15;
-    const cpX = midX - (dy / dist) * offset;
-    const cpY = midY + (dx / dist) * offset;
-
-    // Interpolar puntos de la curva
-    const steps = Math.max(30, Math.round(dist * 4));
-    for (let t = 0; t <= 1; t += 1 / steps) {
-      const x = (1 - t) * (1 - t) * start[0] + 2 * (1 - t) * t * cpX + t * t * end[0];
-      const y = (1 - t) * (1 - t) * start[1] + 2 * (1 - t) * t * cpY + t * t * end[1];
-      result.push([x, y]);
-    }
-  }
-  result.push(coordinates[coordinates.length - 1]);
-  return result;
-}
 
 /**
  * Mapa interactivo de ruta para el VisorViaje — Modo Ruta.
@@ -206,7 +169,7 @@ const RouteMap = ({ paradas, activeIndex = 0, hoveredIndex = null, onMarkerHover
       {/* Label de parada activa */}
       <AnimatePresence mode="wait">
         {activeName && (
-          <motion.div
+          <Motion.div
             key={activeName}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -215,7 +178,7 @@ const RouteMap = ({ paradas, activeIndex = 0, hoveredIndex = null, onMarkerHover
             style={s.activeLabel}
           >
             📍 {activeName}
-          </motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

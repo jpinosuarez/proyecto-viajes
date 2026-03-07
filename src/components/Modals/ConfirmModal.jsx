@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { AlertTriangle, LoaderCircle } from 'lucide-react';
 import { styles } from './ConfirmModal.styles';
 import { useWindowSize } from '../../hooks/useWindowSize';

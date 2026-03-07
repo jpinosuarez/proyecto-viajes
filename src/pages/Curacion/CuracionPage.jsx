@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { Globe, Image, LoaderCircle, MapPin, Save, Search, Trash2, X } from 'lucide-react';
@@ -59,14 +59,17 @@ const CuracionPage = () => {
     return code ? code.toUpperCase() : '';
   };
 
-  const buildCountryResults = (features = []) =>
-    features
-      .map((feature) => ({
-        id: feature.id,
-        nombre: feature.text,
-        codigo: getCountryCodeFromFeature(feature)
-      }))
-      .filter((item) => item.codigo);
+  const buildCountryResults = useCallback(
+    (features = []) =>
+      features
+        .map((feature) => ({
+          id: feature.id,
+          nombre: feature.text,
+          codigo: getCountryCodeFromFeature(feature)
+        }))
+        .filter((item) => item.codigo),
+    []
+  );
 
   const buildCityResults = (features = []) =>
     features.map((feature) => {
@@ -92,7 +95,7 @@ const CuracionPage = () => {
         const res = await fetch(endpoint);
         const data = await res.json();
         setCountryResults(buildCountryResults(data.features || []));
-      } catch (err) {
+      } catch {
         setCountryResults([]);
       } finally {
         setIsCountryLoading(false);
@@ -102,7 +105,7 @@ const CuracionPage = () => {
     return () => {
       if (countryDebounceRef.current) clearTimeout(countryDebounceRef.current);
     };
-  }, [countryQuery]);
+  }, [countryQuery, buildCountryResults]);
 
   useEffect(() => {
     if (!paisCode) {
@@ -123,7 +126,7 @@ const CuracionPage = () => {
         const res = await fetch(endpoint);
         const data = await res.json();
         setCityResults(buildCityResults(data.features || []));
-      } catch (err) {
+      } catch {
         setCityResults([]);
       } finally {
         setIsCityLoading(false);
@@ -151,7 +154,7 @@ const CuracionPage = () => {
         if (!isActive) return;
         const data = snap.exists() ? snap.data() : null;
         setCurated(data?.curated || null);
-      } catch (err) {
+      } catch {
         if (isActive) {
           setCurated(null);
           setMessage('No se pudo cargar el curado.');
@@ -214,8 +217,8 @@ const CuracionPage = () => {
       const downloadUrl = await getDownloadURL(storageRef);
       setUrl(downloadUrl);
       setMessage('Imagen subida y lista para guardar.');
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       setMessage('No se pudo subir la imagen.');
     } finally {
       setIsUploading(false);
@@ -278,7 +281,7 @@ const CuracionPage = () => {
       setCreditName('');
       setCreditLink('');
       setMessage('Curado actualizado.');
-    } catch (err) {
+    } catch {
       setMessage('No se pudo guardar el curado.');
     } finally {
       setIsSaving(false);
@@ -304,7 +307,7 @@ const CuracionPage = () => {
     try {
       await setDoc(doc(db, 'paises_info', paisCode), { curated: next }, { merge: true });
       setCurated(next);
-    } catch (err) {
+    } catch {
       setMessage('No se pudo eliminar la foto.');
     } finally {
       setIsSaving(false);

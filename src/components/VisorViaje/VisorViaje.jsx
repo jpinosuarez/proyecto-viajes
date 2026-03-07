@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Edit3, Calendar, Trash2, LoaderCircle, Star, MapPin, X } from 'lucide-react';
 import { db } from '../../firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -25,7 +25,6 @@ const VisorViaje = ({
   bitacoraData,
   bitacoraLista,
   onClose,
-  onEdit,
   onSave,
   onDelete,
   isSaving = false,
@@ -36,6 +35,7 @@ const VisorViaje = ({
   const { getEstadoViaje, reintentarFoto } = useUpload();
   const { isMobile } = useWindowSize(900);
   const viajeBase = bitacoraLista.find((v) => v.id === viajeId);
+  const hasViajeData = Boolean(viajeId && (bitacoraData[viajeId] || viajeBase));
   const data = bitacoraData[viajeId] || viajeBase || {};
 
   const [paradas, setParadas] = useState([]);
@@ -45,25 +45,18 @@ const VisorViaje = ({
   const [showMapModal, setShowMapModal] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
-  // Refs para IntersectionObserver en stop cards
-  const paradaRefs = useRef([]);
-
-  // Limpiar refs cuando paradas mutan (ej. salir de edición)
-  useEffect(() => {
-    paradaRefs.current = paradaRefs.current.slice(0, paradas.length);
-  }, [paradas]);
-
   // Derivados del layout
   const isRouteMode = paradas.length > 1;
-  const { activeIndex: activeParadaIndex, setParadaRef } = useActiveParada(
-    paradaRefs,
-    isRouteMode && !isMobile
-  );
+  const {
+    activeIndex: activeParadaIndex,
+    setParadaRef,
+    getParadaNode,
+  } = useActiveParada(isRouteMode && !isMobile);
   const isSharedTrip = data.ownerId && usuario && data.ownerId !== usuario.uid;
   const [ownerDisplayName, setOwnerDisplayName] = useState(null);
 
   useEffect(() => {
-    if (!isSharedTrip) { setOwnerDisplayName(null); return; }
+    if (!isSharedTrip) return;
     let cancelled = false;
     (async () => {
       try {
@@ -71,7 +64,7 @@ const VisorViaje = ({
         if (!cancelled && perfilSnap.exists()) {
           setOwnerDisplayName(perfilSnap.data().displayName || data.ownerId);
         }
-      } catch (_) { /* no bloquear */ }
+      } catch { /* no bloquear */ }
     })();
     return () => { cancelled = true; };
   }, [isSharedTrip, data.ownerId]);
@@ -93,19 +86,17 @@ const VisorViaje = ({
 
   // Estado de fotos subiendo (desde UploadContext)
   const uploadState = getEstadoViaje(viajeId);
-  const fotosSubiendo = uploadState?.fotos || [];
-  const isUploading = uploadState?.isUploading || false;
+  const fotosSubiendo = uploadState?.fotos;
+  const isUploading = Boolean(uploadState?.isUploading);
 
   // Recargar galería cuando se completen subidas
   useEffect(() => {
     // Cuando hay fotos subidas exitosamente, recargar la galería
-    const fotosExitosas = fotosSubiendo.filter(f => f.status === 'success');
+    const fotosExitosas = (fotosSubiendo || []).filter((f) => f.status === 'success');
     if (fotosExitosas.length > 0 && !isUploading) {
       galeria.recargar?.();
     }
-  }, [fotosSubiendo, isUploading]);
-
-  if (!viajeId || !data) return null;
+  }, [fotosSubiendo, isUploading, galeria]);
 
   const eliminarEsteViaje = () => {
     onDelete(viajeId);
@@ -160,16 +151,6 @@ const VisorViaje = ({
       // No cerrar aquí — EdicionModal se cierra desde su propio handleSave/onClose
     }
     return result;
-  };
-
-  const getClimaTexto = (clima, temperatura) => {
-    if (!clima) return null;
-    const desc = clima.toLowerCase();
-    const temp = Math.round(temperatura);
-    if (desc.includes('despejado') || desc.includes('sol')) return `Dia soleado, ${temp}C`;
-    if (desc.includes('nublado') || desc.includes('nubes')) return `Cielo nublado, ${temp}C`;
-    if (desc.includes('lluvia')) return `Llovio, ${temp}C`;
-    return `${clima}, ${temp}C`;
   };
 
   const fotoMostrada = (data.foto && typeof data.foto === 'string' && data.foto.trim()
@@ -307,7 +288,7 @@ const VisorViaje = ({
     };
 
     return (
-      <motion.div
+      <Motion.div
         key={p.id || i}
         style={styles.timelineRow}
         variants={cardVariants}
@@ -361,7 +342,7 @@ const VisorViaje = ({
             {transporteEmoji[paradas[i + 1].transporte] || '🚶'}
           </div>
         )}
-      </motion.div>
+      </Motion.div>
     );
   };
 
@@ -478,14 +459,14 @@ const VisorViaje = ({
   const handleMarkerHover = useCallback((i) => setHoveredIndex(i), []);
   const handleMarkerHoverEnd = useCallback(() => setHoveredIndex(null), []);
   const handleMarkerClick = useCallback((i) => {
-    const node = paradaRefs.current[i];
+    const node = getParadaNode(i);
     if (!node) return;
     // Scroll inside scrollColumn container with offset for nav
     node.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setHoveredIndex(i);
     // Clear hover after a short time
     setTimeout(() => setHoveredIndex(null), 2000);
-  }, []);
+  }, [getParadaNode]);
 
   const renderRouteBody = () => {
     if (isMobile) {
@@ -569,9 +550,11 @@ const VisorViaje = ({
     );
   };
 
+  if (!hasViajeData) return null;
+
   return createPortal(
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25 }}
         style={styles.expandedOverlay}
@@ -697,7 +680,7 @@ const VisorViaje = ({
             isSaving={isSaving}
           />
         )}
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>,
     document.body
   );
