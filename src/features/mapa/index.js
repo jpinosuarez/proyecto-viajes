@@ -1,1 +1,1 @@
-// Public API for mapa feature (foundation phase).
+export { HomeMap, MapaView } from './ui';
