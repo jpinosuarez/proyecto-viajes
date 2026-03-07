@@ -377,4 +377,5 @@ test.describe('Invitations flow (E2E)', () => {
     expect(invDoc).not.toBeNull();
     expect(invDoc.inviteeEmail).toBe(inviteeEmail);
   });
+
 });

@@ -95,13 +95,16 @@ export function UploadProvider({ children }) {
    * Procesa la cola de uploads para un viaje
    */
   const procesarCola = useCallback(async (viajeId, fotos) => {
+    let exitosas = 0;
+    let fallidas = 0;
+
     for (let i = 0; i < fotos.length; i++) {
       const foto = fotos[i];
       
       // Actualizar estado a "uploading"
       setUploadsByViaje(prev => ({
         ...prev,
-        [viajeId]: prev[viajeId].map(f => 
+        [viajeId]: (prev[viajeId] || fotos).map(f => 
           f.id === foto.id ? { ...f, status: 'uploading' } : f
         )
       }));
@@ -119,27 +122,30 @@ export function UploadProvider({ children }) {
         });
 
         if (fotoId) {
+          exitosas += 1;
           // Éxito
           setUploadsByViaje(prev => ({
             ...prev,
-            [viajeId]: prev[viajeId].map(f => 
+            [viajeId]: (prev[viajeId] || fotos).map(f => 
               f.id === foto.id ? { ...f, status: 'success', fotoId } : f
             )
           }));
         } else {
+          fallidas += 1;
           // Fallo
           setUploadsByViaje(prev => ({
             ...prev,
-            [viajeId]: prev[viajeId].map(f => 
+            [viajeId]: (prev[viajeId] || fotos).map(f => 
               f.id === foto.id ? { ...f, status: 'error', error: 'No se pudo subir' } : f
             )
           }));
         }
       } catch (error) {
+        fallidas += 1;
         logger.error('Error subiendo foto', { error: error.message, fotoId: foto.id });
         setUploadsByViaje(prev => ({
           ...prev,
-          [viajeId]: prev[viajeId].map(f => 
+          [viajeId]: (prev[viajeId] || fotos).map(f => 
             f.id === foto.id ? { ...f, status: 'error', error: error.message } : f
           )
         }));
@@ -150,10 +156,6 @@ export function UploadProvider({ children }) {
     uploadingRef.current.delete(viajeId);
     
     // Notificar resultado
-    const estadoFinal = fotos;
-    const exitosas = estadoFinal.filter(f => f.status === 'success').length;
-    const fallidas = estadoFinal.filter(f => f.status === 'error').length;
-
     logger.info('Subida completada', { viajeId, exitosas, fallidas });
 
     if (fallidas === 0 && exitosas > 0) {

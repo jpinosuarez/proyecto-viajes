@@ -6,36 +6,54 @@ export function useLugarSelectionDraft({
   setFiltro,
   setViajeBorrador,
   setCiudadInicialBorrador,
+  setViajeEnEdicionId,
+  setViajeExpandidoId,
 }) {
   return useCallback((lugar) => {
     let datosPais = null;
     let ciudad = null;
+    const coordenadasLugar = Array.isArray(lugar.coordenadas) ? lugar.coordenadas : null;
 
     if (lugar.esPais) {
-      const paisInfo = COUNTRIES_DATA.find((c) => c.code === lugar.code);
+      const codigoPais = (lugar.code || lugar.paisCodigo || '').toUpperCase();
+      const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
-        code: lugar.code,
+        code: codigoPais,
         nombreEspanol: paisInfo ? paisInfo.name : lugar.nombre,
-        flag: getFlagUrl(lugar.code),
+        flag: getFlagUrl(codigoPais),
         continente: 'Mundo',
-        latlng: lugar.coordenadas
+        latlng: coordenadasLugar,
+        coordenadas: coordenadasLugar,
+      };
+
+      ciudad = {
+        nombre: datosPais.nombreEspanol,
+        coordenadas: coordenadasLugar || [0, 0],
+        fecha: new Date().toISOString().split('T')[0],
+        paisCodigo: codigoPais,
+        flag: getFlagUrl(codigoPais),
       };
     } else {
-      const paisInfo = COUNTRIES_DATA.find((c) => c.code === lugar.paisCodigo);
+      const codigoPais = (lugar.paisCodigo || lugar.code || '').toUpperCase();
+      const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
-        code: lugar.paisCodigo,
-        nombreEspanol: paisInfo ? paisInfo.name : lugar.paisNombre,
-        flag: getFlagUrl(lugar.paisCodigo)
+        code: codigoPais,
+        nombreEspanol: paisInfo ? paisInfo.name : (lugar.paisNombre || lugar.nombre),
+        flag: getFlagUrl(codigoPais),
+        latlng: coordenadasLugar,
+        coordenadas: coordenadasLugar,
       };
       ciudad = {
         nombre: lugar.nombre,
-        coordenadas: lugar.coordenadas,
+        coordenadas: coordenadasLugar,
         fecha: new Date().toISOString().split('T')[0],
-        paisCodigo: lugar.paisCodigo,
-        flag: getFlagUrl(lugar.paisCodigo)
+        paisCodigo: codigoPais,
+        flag: getFlagUrl(codigoPais)
       };
     }
 
+    setViajeEnEdicionId?.(null);
+    setViajeExpandidoId?.(null);
     closeBuscador();
     setFiltro('');
 
@@ -48,10 +66,19 @@ export function useLugarSelectionDraft({
       titulo: '',
       fechaInicio: new Date().toISOString().split('T')[0],
       fechaFin: new Date().toISOString().split('T')[0],
-      foto: null
+      foto: null,
+      latlng: datosPais.latlng || null,
+      coordenadas: datosPais.coordenadas || null,
     };
 
     setViajeBorrador(nuevoBorrador);
     setCiudadInicialBorrador(ciudad);
-  }, [closeBuscador, setFiltro, setViajeBorrador, setCiudadInicialBorrador]);
+  }, [
+    closeBuscador,
+    setFiltro,
+    setViajeBorrador,
+    setCiudadInicialBorrador,
+    setViajeEnEdicionId,
+    setViajeExpandidoId,
+  ]);
 }

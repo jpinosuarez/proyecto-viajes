@@ -9,12 +9,16 @@ describe('useLugarSelectionDraft', () => {
     const setFiltro = vi.fn();
     const setViajeBorrador = vi.fn();
     const setCiudadInicialBorrador = vi.fn();
+    const setViajeEnEdicionId = vi.fn();
+    const setViajeExpandidoId = vi.fn();
 
     const { result } = renderHook(() => useLugarSelectionDraft({
       closeBuscador,
       setFiltro,
       setViajeBorrador,
       setCiudadInicialBorrador,
+      setViajeEnEdicionId,
+      setViajeExpandidoId,
     }));
 
     act(() => {
@@ -34,8 +38,14 @@ describe('useLugarSelectionDraft', () => {
       code: 'US',
       continente: 'Mundo',
       foto: null,
+      latlng: [37.0902, -95.7129],
     });
-    expect(setCiudadInicialBorrador).toHaveBeenCalledWith(null);
+    expect(setViajeEnEdicionId).toHaveBeenCalledWith(null);
+    expect(setViajeExpandidoId).toHaveBeenCalledWith(null);
+    expect(setCiudadInicialBorrador).toHaveBeenCalledWith(expect.objectContaining({
+      nombre: 'Estados Unidos',
+      paisCodigo: 'US',
+    }));
   });
 
   test('crea borrador de ciudad con ciudad inicial', () => {
@@ -43,12 +53,16 @@ describe('useLugarSelectionDraft', () => {
     const setFiltro = vi.fn();
     const setViajeBorrador = vi.fn();
     const setCiudadInicialBorrador = vi.fn();
+    const setViajeEnEdicionId = vi.fn();
+    const setViajeExpandidoId = vi.fn();
 
     const { result } = renderHook(() => useLugarSelectionDraft({
       closeBuscador,
       setFiltro,
       setViajeBorrador,
       setCiudadInicialBorrador,
+      setViajeEnEdicionId,
+      setViajeExpandidoId,
     }));
 
     act(() => {
@@ -64,6 +78,7 @@ describe('useLugarSelectionDraft', () => {
     expect(setViajeBorrador).toHaveBeenCalledWith(expect.objectContaining({
       id: 'new',
       code: 'ES',
+      coordenadas: [40.4168, -3.7038],
     }));
 
     expect(setCiudadInicialBorrador).toHaveBeenCalledWith(expect.objectContaining({

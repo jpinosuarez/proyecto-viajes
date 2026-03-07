@@ -81,6 +81,8 @@ export function useAppShellComposition({
     setFiltro,
     setViajeBorrador,
     setCiudadInicialBorrador,
+    setViajeEnEdicionId,
+    setViajeExpandidoId,
   });
 
   useAppViewGuards({

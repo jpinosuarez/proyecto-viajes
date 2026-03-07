@@ -1,23 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { Save, Camera, Calendar, LoaderCircle, Star, Trash2 } from 'lucide-react';
+import { Save, LoaderCircle } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
-import { COLORS, RADIUS } from '../../theme';
-import { db } from '../../firebase';
-import { createInvitation as createInvitationService } from '../../services/invitationsService';
-import { collection, getDocs } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useUpload } from '../../context/UploadContext';
 import { useWindowSize } from '../../hooks/useWindowSize';
-import CityManager from '../Shared/CityManager';
-import InfoTooltip from '../Shared/InfoTooltip';
 import { compressImage } from '../../utils/imageUtils';
-import { generarTituloInteligente } from '../../utils/viajeUtils';
 import { useTranslation } from 'react-i18next';
-import { parseFlexibleDate, formatDateRange } from '../../utils/viajeUtils';
-import { GalleryUploader } from '../Shared/GalleryUploader';
+import { formatDateRange } from '../../utils/viajeUtils';
 import { useGaleriaViaje } from '../../hooks/useGaleriaViaje';
+import { useEdicionModalSave } from './hooks/useEdicionModalSave';
+import { useEdicionCompanions } from './hooks/useEdicionCompanions';
+import { useEdicionGalleryManager } from './hooks/useEdicionGalleryManager';
+import { useEdicionModalLifecycle } from './hooks/useEdicionModalLifecycle';
+import EdicionContextSection from './components/EdicionContextSection';
+import EdicionHighlightsSection from './components/EdicionHighlightsSection';
+import EdicionNotesSection from './components/EdicionNotesSection';
+import EdicionGallerySection from './components/EdicionGallerySection';
+import EdicionParadasSection from './components/EdicionParadasSection';
+import EdicionHeaderSection from './components/EdicionHeaderSection';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false }) => {
   const { usuario } = useAuth();
@@ -25,326 +27,93 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const { t } = useTranslation('editor');
   // useUpload puede no estar disponible en tests aislados; usar fallback seguro
   let iniciarSubida = () => {};
+  let hasUploadContext = false;
   try {
     const uploadCtx = useUpload();
     iniciarSubida = uploadCtx?.iniciarSubida || (() => {});
+    hasUploadContext = typeof uploadCtx?.iniciarSubida === 'function';
   } catch {
     iniciarSubida = () => {};
+    hasUploadContext = false;
   }
   const { isMobile } = useWindowSize(768);
+  const usuarioUid = usuario?.uid || null;
   const [formData, setFormData] = useState({});
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [galleryPortada, setGalleryPortada] = useState(0);
   const [captionDrafts, setCaptionDrafts] = useState({});
-  const [isTituloAuto, setIsTituloAuto] = useState(true);
-  const [titlePulse, setTitlePulse] = useState(false);
-  const [companionDraft, setCompanionDraft] = useState('');
-  const [companionResults, setCompanionResults] = useState([]);
-  const titlePulseRef = useRef(null);
-  const prevViajeIdRef = useRef(null);
 
   // Hook de galería: no cargar para borradores (id 'new') — solo cuando es un viaje guardado
   const galeria = useGaleriaViaje(!esBorrador && viaje?.id ? viaje.id : null);
 
-  // Limpieza total cuando cambia el viaje o se abre para nuevo registro
-  useEffect(() => {
-    const currentViajeId = viaje?.id || null;
-    const prevViajeId = prevViajeIdRef.current;
+  const {
+    isTituloAuto,
+    setIsTituloAuto,
+    titlePulse,
+    limpiarEstado,
+    handleTituloChange,
+  } = useEdicionModalLifecycle({
+    viaje,
+    esBorrador,
+    ciudadInicial,
+    usuarioUid,
+    galeria,
+    formData,
+    setFormData,
+    paradas,
+    setParadas,
+    setGalleryFiles,
+    setGalleryPortada,
+    setCaptionDrafts,
+  });
 
-    // Si cambió el viajeId, limpiar todo (no dependemos de la referencia de `galeria`)
-    if (prevViajeId !== currentViajeId) {
-      setGalleryFiles([]);
-      setGalleryPortada(0);
-      setCaptionDrafts({});
-      // llamar a limpiar si está disponible
-      galeria.limpiar?.();
-      prevViajeIdRef.current = currentViajeId;
-    }
-  }, [viaje?.id, galeria]);
+  const handleSave = useEdicionModalSave({
+    isProcessingImage,
+    isSaving,
+    formData,
+    viaje,
+    ciudadInicial,
+    paradas,
+    onSave,
+    galleryFiles,
+    galleryPortada,
+    hasUploadContext,
+    iniciarSubida,
+    pushToast,
+    t,
+    limpiarEstado,
+    onClose,
+  });
 
+  const {
+    handleSetPortadaExistente,
+    handleEliminarFoto,
+    handleCaptionChange,
+    handleCaptionSave,
+  } = useEdicionGalleryManager({
+    galeria,
+    captionDrafts,
+    setCaptionDrafts,
+    pushToast,
+    t,
+  });
 
-  // Inicialización de estado al abrir modal
-  useEffect(() => {
-    if (!viaje) {
-      // Sin viaje: limpiar todo
-      setFormData({});
-      setParadas([]);
-      setGalleryFiles([]);
-      setGalleryPortada(0);
-      setCaptionDrafts({});
-      setIsTituloAuto(true);
-      galeria.limpiar?.();
-      return;
-    }
-
-    // Nuevo viaje (borrador): limpiar archivos locales
-    if (esBorrador) {
-      setGalleryFiles([]);
-      setGalleryPortada(0);
-      setCaptionDrafts({});
-      galeria.limpiar?.();
-    }
-
-    // Inicializar formData (incluye nuevos campos de storytelling)
-    setFormData({
-      ...viaje,
-      titulo: esBorrador ? (viaje.titulo || '') : (viaje.titulo || `Viaje a ${viaje.nombreEspanol}`),
-      fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
-      fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
-      foto: viaje.foto,
-      texto: viaje.texto || "",
-      flag: viaje.flag,
-      code: viaje.code,
-      nombreEspanol: viaje.nombreEspanol,
-      // Storytelling defaults
-      presupuesto: viaje.presupuesto || null,
-      vibe: viaje.vibe || [],
-      highlights: viaje.highlights || { topFood: '', topView: '', topTip: '' },
-      companions: viaje.companions || []
-    });
-
-    // Solo activar auto si es borrador Y no hay título manual existente
-    setIsTituloAuto(esBorrador && (!viaje.titulo || viaje.titulo.trim() === ''));
-
-    // Paradas
-    if (esBorrador && ciudadInicial) {
-      setParadas([{ 
-        id: 'init', 
-        nombre: ciudadInicial.nombre, 
-        coordenadas: ciudadInicial.coordenadas,
-        fecha: viaje.fechaInicio || new Date().toISOString().split('T')[0],
-        paisCodigo: ciudadInicial.paisCodigo,
-        flag: viaje.flag 
-      }]);
-    } else if (!esBorrador && usuario && viaje.id) {
-      const cargarParadas = async () => {
-        try {
-          const paradasRef = collection(db, `usuarios/${usuario.uid}/viajes/${viaje.id}/paradas`);
-          const snap = await getDocs(paradasRef);
-          const loaded = snap.docs.map(d => ({id: d.id, ...d.data()}));
-          setParadas(loaded.sort((a,b) => new Date(a.fecha) - new Date(b.fecha)));
-        } catch {
-          setParadas([]);
-        }
-      };
-      cargarParadas();
-    } else {
-      setParadas([]); 
-    }
-  }, [viaje, esBorrador, ciudadInicial, usuario, galeria]);
-
-  // Limpieza de estado al cerrar modal
-  useEffect(() => {
-    return () => {
-      setFormData({});
-      setParadas([]);
-      setGalleryFiles([]);
-      setGalleryPortada(0);
-      setCaptionDrafts({});
-      setIsTituloAuto(true);
-    };
-  }, []);
-
-  // Actualiza el título automáticamente solo si isTituloAuto está activo
-  useEffect(() => {
-    if (!esBorrador || !isTituloAuto) return;
-    const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
-    if (tituloAuto !== formData.titulo) {
-      setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
-      setTitlePulse(true);
-      if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
-      titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
-    }
-    // eslint-disable-next-line
-  }, [esBorrador, isTituloAuto, paradas, formData.nombreEspanol]);
-
-  // Si el usuario cambia de manual a auto, regenerar el título inmediatamente
-  useEffect(() => {
-    if (!esBorrador) return;
-    if (isTituloAuto) {
-      const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
-      setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
-      setTitlePulse(true);
-      if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
-      titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
-    }
-    // eslint-disable-next-line
-  }, [isTituloAuto]);
-
-  useEffect(() => () => {
-    if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
-  }, []);
-
-  // Auto-derivar fechas del viaje a partir de las paradas
-  useEffect(() => {
-    if (paradas.length === 0) return;
-    const fechasIso = paradas
-      .map(p => parseFlexibleDate(p.fechaLlegada) || p.fecha)
-      .filter(Boolean)
-      .sort();
-    const fechasSalidaIso = paradas
-      .map(p => parseFlexibleDate(p.fechaSalida))
-      .filter(Boolean);
-    const allDates = [...fechasIso, ...fechasSalidaIso].filter(Boolean).sort();
-    if (allDates.length > 0) {
-      const inicio = allDates[0];
-      const fin = allDates[allDates.length - 1];
-      setFormData(prev => ({
-        ...prev,
-        fechaInicio: inicio,
-        fechaFin: fin >= inicio ? fin : inicio,
-      }));
-    }
-  }, [paradas]);
-
-  const limpiarEstado = () => {
-    setFormData({});
-    setParadas([]);
-    setGalleryFiles([]);
-    setGalleryPortada(0);
-    setCaptionDrafts({});
-    setIsTituloAuto(true);
-    galeria.limpiar?.();
-  };
-
-  const handleSave = async () => {
-    if (!formData.nombreEspanol || isProcessingImage || isSaving) return;
-
-    try {
-      // Guardar viaje (retorna el viajeId o null)
-      const savedViajeId = await onSave(viaje.id, { ...formData, paradasNuevas: paradas });
-
-      if (savedViajeId) {
-        // Iniciar subida de fotos en background (no bloquea)
-        if (galleryFiles.length > 0) {
-          iniciarSubida(savedViajeId, galleryFiles, galleryPortada);
-          pushToast(t('toast.uploadingPhotos'), 'info');
-        }
-        limpiarEstado();
-        onClose();
-      } else {
-        pushToast(t('error.saveFailed'), 'error');
-      }
-    } catch {
-      pushToast(t('error.unexpectedError'), 'error');
-    }
-  };
-
-  const handleSetPortadaExistente = async (fotoId) => {
-    const ok = await galeria.cambiarPortada(fotoId);
-    if (!ok) pushToast(t('error.coverUpdateFailed'), 'error');
-  };
-
-  const handleEliminarFoto = async (fotoId) => {
-    const confirm = window.confirm(t('confirm.deletePhoto'));
-    if (!confirm) return;
-    const ok = await galeria.eliminar(fotoId);
-    if (!ok) pushToast(t('error.photoDeleteFailed'), 'error');
-  };
-
-  const handleCaptionChange = (fotoId, value) => {
-    setCaptionDrafts((prev) => ({ ...prev, [fotoId]: value }));
-  };
-
-  const handleCaptionSave = async (foto) => {
-    const draft = captionDrafts[foto.id];
-    if (draft === undefined) return;
-    const normalized = draft.trim();
-    const nextCaption = normalized.length ? normalized : null;
-    const currentCaption = foto.caption || null;
-    if (currentCaption === nextCaption) return;
-    const ok = await galeria.actualizarCaption(foto.id, nextCaption);
-    if (!ok) {
-      pushToast(t('error.captionSaveFailed'), 'error');
-      return;
-    }
-    pushToast(t('toast.captionUpdated'), 'success', 1500);
-  };
-
-  // Buscar usuarios por nombre/email (autocomplete simple) — con debounce
-  const searchTimerRef = useRef(null);
-  useEffect(() => () => clearTimeout(searchTimerRef.current), []);
-
-  const performCompanionQuery = async (q) => {
-    if (!q || q.length < 2) {
-      setCompanionResults([]);
-      return;
-    }
-
-    try {
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      try {
-        const usuariosRef = collection(db, 'usuarios');
-        const qName = query(usuariosRef, where('displayName', '>=', q), where('displayName', '<=', q + '\uf8ff'));
-        const snap = await getDocs(qName);
-        const results = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-        setCompanionResults(results.slice(0, 8));
-        return;
-      } catch {
-        setCompanionResults([]);
-        return;
-      }
-    } catch {
-      setCompanionResults([]);
-    }
-  };
-
-  const handleCompanionSearch = (q) => {
-    setCompanionDraft(q);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    // Debounce 250ms
-    searchTimerRef.current = setTimeout(() => performCompanionQuery(q), 250);
-  };
-
-  const handleAddCompanionFromResult = async (user) => {
-    // Evitar duplicados por userId o email
-    const exists = (formData.companions || []).some(c => c.userId === user.uid || (c.email && user.email && c.email === user.email));
-    if (exists) {
-      pushToast(t('warning.companionAlreadyAdded'), 'warning');
-      setCompanionResults([]);
-      setCompanionDraft('');
-      return;
-    }
-
-    const next = { name: user.displayName || user.email || 'Invitado', email: user.email || null, userId: user.uid, status: 'pending' };
-    setFormData(prev => ({ ...prev, companions: [...(prev.companions || []), next] }));
-
-    if (viaje?.id && usuario?.uid) {
-      try {
-        await createInvitationService({ db, inviterId: usuario.uid, inviteeUid: user.uid, viajeId: viaje.id });
-        pushToast(t('toast.invitationSent'), 'success');
-      } catch {
-        pushToast(t('error.invitationFailed'), 'error');
-      }
-    }
-    setCompanionResults([]);
-    setCompanionDraft('');
-  };
-
-  const handleAddCompanionFreeform = async (text) => {
-    const trimmed = text.trim();
-    const exists = (formData.companions || []).some(c => (c.email && c.email === trimmed) || (c.name && c.name === trimmed));
-    if (exists) {
-      pushToast(t('warning.companionAlreadyAdded'), 'warning');
-      return setCompanionDraft('');
-    }
-
-    const next = { name: trimmed, email: trimmed.includes('@') ? trimmed : null, userId: null, status: 'pending' };
-    setFormData(prev => ({ ...prev, companions: [...(prev.companions || []), next] }));
-
-    // crear invitation si el viaje existe y parece un email
-    if (viaje?.id && usuario?.uid && trimmed.includes('@')) {
-      try {
-        await createInvitationService({ db, inviterId: usuario.uid, inviteeEmail: trimmed, viajeId: viaje.id });
-        pushToast(t('toast.invitationCreated'), 'info');
-      } catch {
-        pushToast(t('error.invitationFailed'), 'error');
-      }
-    }
-    setCompanionDraft('');
-  };
+  const {
+    companionDraft,
+    companionResults,
+    handleCompanionSearch,
+    handleAddCompanionFromResult,
+    handleAddCompanionFreeform,
+  } = useEdicionCompanions({
+    formData,
+    setFormData,
+    viaje,
+    usuario,
+    pushToast,
+    t,
+  });
 
   const handleFileChange = async (e) => {
     setIsProcessingImage(true);
@@ -388,235 +157,77 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     <AnimatePresence>
       <Motion.div style={styles.overlay(isMobile)} onClick={isBusy ? undefined : onClose} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
         <Motion.div style={styles.modal(isMobile)} onClick={e => e.stopPropagation()} initial={{y:50}} animate={{y:0}} exit={{y:50}}>
-          <div style={styles.header(formData.foto, isMobile)}>
-            <div style={styles.headerOverlay} />
-            <div style={styles.headerContent}>
-                {formData.flag ? (
-                    <img src={formData.flag} alt="Bandera" style={styles.flagImg} onError={(e) => e.target.style.display = 'none'}/>
-                ) : <span style={{fontSize:'3rem'}}>🌍</span>}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <input
-                      name="titulo"
-                      value={formData.titulo || ''}
-                      onChange={e => {
-                        setFormData(prev => ({...prev, titulo: e.target.value}));
-                        // Solo desactivar auto si estaba en auto y el valor cambia manualmente
-                        if (esBorrador && isTituloAuto) setIsTituloAuto(false);
-                      }}
-                      style={titlePulse ? styles.titleInputAutoPulse : styles.titleInput}
-                      placeholder={t('tripTitlePlaceholder')}
-                      disabled={isBusy}
-                    />
-                    {esBorrador && (
-                      <button
-                        type="button"
-                        style={styles.autoBadge(isTituloAuto)}
-                        title={isTituloAuto
-                          ? t('tooltip.autoUpdate')
-                          : t('tooltip.manualMode')}
-                        onClick={() => {
-                          // Si pasa de manual a auto, regenerar el título
-                          setIsTituloAuto((prev) => !prev);
-                        }}
-                        disabled={isBusy}
-                      >
-                        {isTituloAuto ? t('autoTitle') : t('manualTitle')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-            </div>
-            {isProcessingImage && (
-              <div style={styles.processingBadge}>
-                <LoaderCircle size={14} className="spin" />
-                {t('optimizing')}
-              </div>
-            )}
-            <label style={styles.cameraBtn(isBusy)}>
-              <Camera size={18} />
-              <input type="file" hidden onChange={handleFileChange} accept="image/jpeg,image/png" disabled={isBusy} />
-            </label>
-          </div>
+          <EdicionHeaderSection
+            styles={styles}
+            t={t}
+            formData={formData}
+            isMobile={isMobile}
+            isBusy={isBusy}
+            esBorrador={esBorrador}
+            isTituloAuto={isTituloAuto}
+            titlePulse={titlePulse}
+            isProcessingImage={isProcessingImage}
+            onTituloChange={handleTituloChange}
+            onToggleTituloAuto={() => setIsTituloAuto((prev) => !prev)}
+            onFileChange={handleFileChange}
+          />
 
           <div style={styles.body} className="custom-scroll">
-            {/* Galería de fotos (siempre disponible) */}
-            <div style={styles.section}>
-              <label style={styles.label}>{t('labels.gallery')}</label>
-              <GalleryUploader
-                files={galleryFiles}
-                onChange={setGalleryFiles}
-                portadaIndex={galleryPortada}
-                onPortadaChange={setGalleryPortada}
-                maxFiles={10}
-                disabled={isBusy || galeria.uploading}
-                isMobile={isMobile}
-              />
-              {galeria.uploading && <span style={styles.inlineInfo}>Subiendo fotos...</span>}
-              {/* Mostrar galería solo si el viaje tiene id */}
-              {/* Mostrar galería del servidor SOLO para viajes guardados (no para borradores) */}
-              {!esBorrador && viaje?.id && galeria.fotos.length > 0 && (
-                <div style={styles.galleryManageBlock}>
-                  <div style={styles.galleryManageGrid}>
-                    {galeria.fotos.map((f) => (
-                      <div key={f.id} style={styles.galleryManageCard(f.esPortada)}>
-                        <img src={f.url} alt={f.caption || 'foto'} style={styles.galleryManageImg} />
-                        <input
-                          type="text"
-                          value={captionDrafts[f.id] ?? (f.caption || '')}
-                          onChange={(e) => handleCaptionChange(f.id, e.target.value)}
-                          onBlur={() => handleCaptionSave(f)}
-                          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                          placeholder="Caption"
-                          style={styles.captionInput}
-                          aria-label="Editar caption"
-                        />
-                        <div style={styles.galleryActionsRow}>
-                          <button
-                            type="button"
-                            style={styles.galleryActionBtn(f.esPortada)}
-                            onClick={() => handleSetPortadaExistente(f.id)}
-                            disabled={isBusy}
-                            title="Marcar como portada"
-                            aria-label={f.esPortada ? 'Imagen actual de portada' : 'Marcar como portada'}
-                          >
-                            <Star size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            style={styles.galleryDangerBtn}
-                            onClick={() => handleEliminarFoto(f.id)}
-                            disabled={isBusy}
-                            title="Eliminar foto"
-                            aria-label="Eliminar foto"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                        {f.esPortada && <span style={styles.portadaBadgeMini}>{t('labels.portada')}</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Paradas — fechas se derivan automáticamente */}
-            <div style={styles.section}>
-              <label style={styles.label}><Calendar size={14}/> {t('labels.paradas')}</label>
-              {fechaRangoDisplay && (
-                <span style={{fontSize:'0.82rem', color:COLORS.textSecondary, marginBottom:6, display:'block'}}>
-                  📅 {fechaRangoDisplay}
-                </span>
-              )}
-              <CityManager paradas={paradas} setParadas={setParadas} />
-              {sinParadas && (
-                <span style={styles.inlineError}>{t('labels.addCityWarning')}</span>
-              )}
-            </div>
+            <EdicionGallerySection
+              styles={styles}
+              t={t}
+              files={galleryFiles}
+              onFilesChange={setGalleryFiles}
+              portadaIndex={galleryPortada}
+              onPortadaChange={setGalleryPortada}
+              isBusy={isBusy}
+              isMobile={isMobile}
+              galeria={galeria}
+              esBorrador={esBorrador}
+              viajeId={viaje?.id}
+              captionDrafts={captionDrafts}
+              onCaptionChange={handleCaptionChange}
+              onCaptionSave={handleCaptionSave}
+              onSetPortadaExistente={handleSetPortadaExistente}
+              onEliminarFoto={handleEliminarFoto}
+            />
+
+            <EdicionParadasSection
+              styles={styles}
+              t={t}
+              paradas={paradas}
+              setParadas={setParadas}
+              fechaRangoDisplay={fechaRangoDisplay}
+              sinParadas={sinParadas}
+            />
 
             {/* Contexto del viaje: presupuesto, vibe, companions */}
-            <div style={styles.section}>
-              <label style={styles.label}>{t('labels.contexto')}</label>
+            <EdicionContextSection
+              styles={styles}
+              t={t}
+              formData={formData}
+              setFormData={setFormData}
+              companionDraft={companionDraft}
+              companionResults={companionResults}
+              onCompanionSearch={handleCompanionSearch}
+              onAddCompanionFreeform={handleAddCompanionFreeform}
+              onAddCompanionFromResult={handleAddCompanionFromResult}
+            />
 
-              <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
-                <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                  <label style={{fontSize:'0.75rem', color:COLORS.textSecondary}}>{t('labels.presupuesto')} <InfoTooltip textKey="editor:tooltip.presupuesto" size={13} /></label>
-                  <select
-                    value={formData.presupuesto || ''}
-                    onChange={e => setFormData({...formData, presupuesto: e.target.value || null})}
-                    style={styles.dateInput}
-                  >
-                    <option value=''>-- {t('labels.selectDefault')} --</option>
-                    <option value='Mochilero'>{t('budget.mochilero')}</option>
-                    <option value='Económico'>{t('budget.economico')}</option>
-                    <option value='Confort'>{t('budget.confort')}</option>
-                    <option value='Lujo'>{t('budget.lujo')}</option>
-                  </select>
-                </div>
+            <EdicionHighlightsSection
+              styles={styles}
+              t={t}
+              formData={formData}
+              setFormData={setFormData}
+            />
 
-                <div style={{flex:1}}>
-                  <label style={{fontSize:'0.75rem', color:COLORS.textSecondary}}>{t('labels.vibe')} <InfoTooltip textKey="editor:tooltip.vibe" size={13} /></label>
-                  <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:6}}>
-                    {['Gastronómico','Aventura','Relax','Roadtrip','Cultural'].map(v => {
-                      const selected = (formData.vibe || []).includes(v);
-                      const vibeKeyMap = { 'Gastronómico': 'gastronomico', 'Aventura': 'aventura', 'Relax': 'relax', 'Roadtrip': 'roadtrip', 'Cultural': 'cultural' };
-                      return (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setFormData(prev => ({...prev, vibe: prev.vibe.includes(v) ? prev.vibe.filter(x => x !== v) : [...prev.vibe, v]}))}
-                          style={{padding:'6px 10px', borderRadius:RADIUS.md, border:selected ? '1px solid #f59e0b' : `1px solid ${COLORS.border}`, background: selected ? '#fffbf0' : COLORS.surface, cursor:'pointer'}}
-                        >
-                          {t(`vibes.${vibeKeyMap[v]}`)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{marginTop:12}}>
-                <label style={{fontSize:'0.75rem', color:COLORS.textSecondary}}>{t('labels.companions')}</label>
-                <div style={{display:'flex', gap:8, alignItems:'center', marginTop:8}}>
-                  <input
-                    placeholder={t('labels.nameOrEmail')}
-                    value={companionDraft || ''}
-                    onChange={e=> handleCompanionSearch(e.target.value)}
-                    style={{flex:1, padding:8, borderRadius:RADIUS.sm, border:`1px solid ${COLORS.border}`}}
-                  />
-                  <button
-                    type='button'
-                    onClick={() => companionDraft && companionDraft.trim() && handleAddCompanionFreeform(companionDraft)}
-                    style={styles.saveBtn(false)}
-                  >{t('labels.addCompanion')}</button>
-                </div>
-
-                {companionResults.length > 0 && (
-                  <div style={{border:`1px solid ${COLORS.border}`, borderRadius:RADIUS.sm, marginTop:8, maxHeight:160, overflowY:'auto', background:COLORS.surface}}>
-                    {companionResults.map(u => (
-                      <div key={u.uid} style={{padding:8, display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer'}} onClick={() => handleAddCompanionFromResult(u)}>
-                        <div>
-                          <strong style={{display:'block'}}>{u.displayName || u.email}</strong>
-                          <div style={{fontSize:'0.75rem', color:COLORS.textSecondary}}>{u.email}</div>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); handleAddCompanionFromResult(u); }} style={{padding:'6px 10px', borderRadius:RADIUS.sm, border:`1px solid ${COLORS.border}`, background:COLORS.surface}}>{t('labels.addCompanion')}</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Si no hay resultados y el usuario escribió un email, ofrecer invitar */}
-                {companionResults.length === 0 && companionDraft && companionDraft.includes('@') && (
-                  <div style={{marginTop:8}}>
-                    <button type="button" style={{padding:'8px 12px', borderRadius:RADIUS.sm, border:`1px dashed ${COLORS.textSecondary}`, background:COLORS.surface}} onClick={() => handleAddCompanionFreeform(companionDraft)}>
-                      {t('labels.inviteByEmail', { email: companionDraft })}
-                    </button>
-                  </div>
-                )}
-                <div style={{display:'flex', gap:8, marginTop:8, flexWrap:'wrap'}}>
-                  {(formData.companions || []).map((c, idx) => (
-                    <div key={idx} style={{padding:'6px 10px', borderRadius:RADIUS.md, background:COLORS.background, border:`1px solid ${COLORS.border}`, display:'flex', gap:8, alignItems:'center'}}>
-                      <span style={{fontSize:'0.9rem'}}>{c.name}</span>
-                      <button type='button' onClick={() => setFormData(prev => ({...prev, companions: prev.companions.filter((_,i)=>i!==idx)}))} style={{background:'transparent', border:'none', color:COLORS.danger}}>x</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.section}>
-              <label style={styles.label}>{t('labels.highlights')} <InfoTooltip textKey="editor:tooltip.highlights" size={13} /></label>
-              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
-                <input placeholder={t('highlightPlaceholders.topFood')} value={(formData.highlights?.topFood) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topFood: e.target.value}}))} style={styles.dateInput} />
-                <input placeholder={t('highlightPlaceholders.topView')} value={(formData.highlights?.topView) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topView: e.target.value}}))} style={styles.dateInput} />
-                <input placeholder={t('highlightPlaceholders.topTip')} value={(formData.highlights?.topTip) || ''} onChange={e => setFormData(prev => ({...prev, highlights: {...(prev.highlights||{}), topTip: e.target.value}}))} style={{gridColumn:'1 / -1', padding:8, borderRadius:RADIUS.sm, border:`1px solid ${COLORS.border}`}} />
-              </div>
-            </div>
-
-            <div style={styles.section}>
-              <label style={styles.label}>{t('labels.notas')} <InfoTooltip textKey="editor:tooltip.relato" size={13} /></label>
-              <textarea value={formData.texto || ''} onChange={e => setFormData({...formData, texto: e.target.value})} style={styles.textarea} placeholder={t('labels.notesPlaceholder')} disabled={isBusy} />
-            </div>
+            <EdicionNotesSection
+              styles={styles}
+              t={t}
+              texto={formData.texto}
+              onChange={(texto) => setFormData((prev) => ({ ...prev, texto }))}
+              isBusy={isBusy}
+            />
             <div style={styles.footer}>
                 <button onClick={onClose} style={styles.cancelBtn(isBusy)} disabled={isBusy}>{t('button.cancel')}</button>
                 <button onClick={handleSave} style={styles.saveBtn(isBusy)} disabled={isBusy}>

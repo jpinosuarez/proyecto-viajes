@@ -39,10 +39,11 @@ vi.mock('firebase/firestore', () => ({
 import React from 'react';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import EdicionModal from './EdicionModal';
 
 afterEach(() => cleanup());
+beforeEach(() => vi.clearAllMocks());
 
 describe('EdicionModal (borrador)', () => {
   const defaultProps = {
@@ -94,6 +95,153 @@ describe('EdicionModal (borrador)', () => {
       const btn = screen.getByRole('button', { name: /manualTitle/i });
       expect(btn).toHaveTextContent('manualTitle');
       expect(btn).toHaveAttribute('title', expect.stringMatching(/tooltip\.manualMode/i));
+    });
+  });
+
+  test('al crear viaje con fotos de galeria inicia subida en background con el viajeId guardado', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => 'viaje-nuevo-123');
+    const onClose = vi.fn();
+
+    const viaje = {
+      id: 'new',
+      nombreEspanol: 'Argentina',
+      titulo: '',
+      fechaInicio: '2024-02-01',
+      fechaFin: '2024-02-02',
+      foto: null,
+      flag: null,
+    };
+
+    const { container } = render(
+      <EdicionModal
+        viaje={viaje}
+        esBorrador={true}
+        onClose={onClose}
+        onSave={onSave}
+        isSaving={false}
+      />
+    );
+
+    const galleryInput = container.querySelector('input[type="file"][multiple]');
+    expect(galleryInput).not.toBeNull();
+
+    const foto = new File(['fake image'], 'foto.jpg', { type: 'image/jpeg' });
+    await user.upload(galleryInput, foto);
+
+    const saveBtn = screen
+      .getAllByRole('button')
+      .find((btn) => /button\.createTrip/i.test(btn.textContent || ''));
+    expect(saveBtn).toBeTruthy();
+    saveBtn.click();
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalled();
+      expect(mockUpload.iniciarSubida).toHaveBeenCalledTimes(1);
+      expect(mockUpload.iniciarSubida).toHaveBeenCalledWith(
+        'viaje-nuevo-123',
+        expect.arrayContaining([expect.any(File)]),
+        0
+      );
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  test('re-inicializa borrador cuando cambia el pais seleccionado con id new y permite guardar', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn(async () => 'new-id');
+
+    const { rerender } = render(
+      <EdicionModal
+        viaje={{ id: 'new', nombreEspanol: 'Chile', code: 'CL', titulo: '', fechaInicio: '2024-03-01', fechaFin: '2024-03-02' }}
+        esBorrador={true}
+        onClose={vi.fn()}
+        onSave={onSave}
+        isSaving={false}
+      />
+    );
+
+    const saveBtn1 = screen
+      .getAllByRole('button')
+      .find((btn) => /button\.createTrip/i.test(btn.textContent || ''));
+    expect(saveBtn1).toBeTruthy();
+    saveBtn1.click();
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenNthCalledWith(
+        1,
+        'new',
+        expect.objectContaining({ nombreEspanol: 'Chile', code: 'CL' })
+      );
+    });
+
+    rerender(
+      <EdicionModal
+        viaje={{ id: 'new', nombreEspanol: 'Argentina', code: 'AR', titulo: '', fechaInicio: '2024-04-01', fechaFin: '2024-04-03' }}
+        esBorrador={true}
+        onClose={vi.fn()}
+        onSave={onSave}
+        isSaving={false}
+      />
+    );
+
+    const saveBtn2 = screen
+      .getAllByRole('button')
+      .find((btn) => /button\.createTrip/i.test(btn.textContent || ''));
+    expect(saveBtn2).toBeTruthy();
+    saveBtn2.click();
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledTimes(2);
+      expect(onSave).toHaveBeenNthCalledWith(
+        2,
+        'new',
+        expect.objectContaining({ nombreEspanol: 'Argentina', code: 'AR' })
+      );
+    });
+
+    await user.click(document.body);
+  });
+
+  test('borrador de pais (sin ciudad inicial) permite crear viaje', async () => {
+    const onSave = vi.fn(async () => 'pais-new-id');
+
+    render(
+      <EdicionModal
+        viaje={{
+          id: 'new',
+          nombreEspanol: 'Argentina',
+          code: 'AR',
+          titulo: '',
+          fechaInicio: '2024-05-01',
+          fechaFin: '2024-05-02',
+          latlng: [0, 0],
+          coordenadas: [0, 0],
+        }}
+        esBorrador={true}
+        onClose={vi.fn()}
+        onSave={onSave}
+        isSaving={false}
+      />
+    );
+
+    const createBtn = screen
+      .getAllByRole('button')
+      .find((btn) => /button\.createTrip/i.test(btn.textContent || ''));
+    expect(createBtn).toBeTruthy();
+    createBtn.click();
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledTimes(1);
+      expect(onSave).toHaveBeenCalledWith(
+        'new',
+        expect.objectContaining({
+          nombreEspanol: 'Argentina',
+          code: 'AR',
+          latlng: [0, 0],
+        })
+      );
     });
   });
 });

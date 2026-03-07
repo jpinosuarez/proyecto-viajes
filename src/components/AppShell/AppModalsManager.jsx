@@ -25,6 +25,7 @@ function AppModalsManager({
     viajeBorrador,
     setViajeBorrador,
     ciudadInicialBorrador,
+    setCiudadInicialBorrador,
     confirmarEliminacion,
     setConfirmarEliminacion,
   } = modalController;
@@ -63,7 +64,7 @@ function AppModalsManager({
           <EdicionModal
             viaje={viajeParaEditar}
             bitacoraData={bitacoraData}
-            onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); }}
+            onClose={() => { setViajeEnEdicionId(null); setViajeBorrador(null); setCiudadInicialBorrador(null); }}
             onSave={handleGuardarModal}
             isSaving={isSavingModal}
             esBorrador={!!viajeBorrador}
