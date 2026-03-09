@@ -4,7 +4,7 @@ import { X, Save } from 'lucide-react';
 import { useAuth } from '@app/providers/AuthContext';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { COLORS, SHADOWS, RADIUS, GLASS } from '@shared/config';
-import BottomSheet from '../Shared/BottomSheet';
+import BottomSheet from '@shared/ui/components/BottomSheet';
 
 const PerfilModal = ({ isOpen, onClose }) => {
   const { usuario, actualizarPerfilUsuario } = useAuth();

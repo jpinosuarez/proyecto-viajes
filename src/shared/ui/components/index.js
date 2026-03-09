@@ -1,4 +1,5 @@
 export { default as BottomSheet } from './BottomSheet';
+export { BottomSheetHeader, BottomSheetContent } from './BottomSheet';
 export { default as CelebrationQueue } from './CelebrationQueue';
 export { default as CityManager } from './CityManager';
 export { default as CuratedCoverPicker } from './CuratedCoverPicker';

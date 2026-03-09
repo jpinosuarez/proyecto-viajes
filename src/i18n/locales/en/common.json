@@ -21,17 +21,24 @@
     "deleting": "Deleting..."
   },
   "error": {
-    "oops": "Oops! Something went wrong",
-    "unexpected": "Sorry, we encountered an unexpected issue. Don't worry, your data is safe.",
-    "technicalDetails": "Technical details:",
-    "viewStackTrace": "View stack trace",
-    "contactSupport": "If the issue persists, please contact support."
+    "title": "Something went wrong",
+    "description": "Sorry, we encountered an unexpected problem. Don't worry, your data is safe.",
+    "detailsTitle": "Technical details:",
+    "stackTrace": "View stack trace",
+    "retry": "Retry",
+    "goHome": "Go to home",
+    "support": "If the problem persists, please contact support."
   },
   "offline": {
-    "disconnected": "Offline. Your changes will sync when reconnected.",
-    "reconnected": "Back online."
+    "message": "You are currently offline.",
+    "reconnected": "Back online!"
   },
   "pwa": {
+    "updateAvailable": "New version available",
+    "update": "Update",
+    "later": "Later"
+  },
+  "pwaUpdate": {
     "updateAvailable": "New version available",
     "update": "Update",
     "later": "Later"

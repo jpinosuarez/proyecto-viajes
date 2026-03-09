@@ -9,7 +9,7 @@ import SettingsPage from '../../pages/Configuracion/SettingsPage';
 import CuracionPage from '../../pages/Curacion/CuracionPage';
 import { InvitationsList } from '@features/invitations';
 import { TravelerHub } from '@features/gamification';
-import { ErrorBoundary } from '@shared/ui/legacy_components/ErrorBoundary';
+import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
 import { styles } from './App.styles';
 
 const Motion = motion;

@@ -3,7 +3,7 @@ import React from 'react';
 import BuscadorModal from '@shared/ui/legacy_components/Buscador/BuscadorModal';
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import { EdicionModal, VisorViaje } from '@features/viajes';
-import { ErrorBoundary } from '@shared/ui/legacy_components/ErrorBoundary';
+import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
 
 function AppModalsManager({
   modalController,
