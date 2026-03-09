@@ -1,0 +1,13 @@
+{
+  "title": "New destination",
+  "close": "Close",
+  "inputPlaceholder": "Type a country or city...",
+  "inputAria": "Search destinations",
+  "clear": "Clear search",
+  "popularTitle": "POPULAR DESTINATIONS",
+  "loading": "Searching the map... 🌍",
+  "noResults": "We couldn't find '{{term}}'. Try searching for countries, cities or popular destinations.",
+  "emptyHelp": "You can search by name, country or city.",
+  "country": "Country",
+  "add": "Add"
+}

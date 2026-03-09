@@ -23,14 +23,29 @@ export const styles = {
     flexDirection: 'column'
   }),
   header: { padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  titulo: { margin: 0, fontSize: '1.1rem', color: COLORS.charcoalBlue, fontWeight: '800' },
+  title: { margin: 0, fontSize: '1.1rem', color: COLORS.charcoalBlue, fontWeight: '800' },
 
   searchBox: {
     margin: '0 20px 10px', padding: '12px 16px',
     backgroundColor: COLORS.background, borderRadius: RADIUS.md, border: `1px solid ${COLORS.border}`,
     display: 'flex', alignItems: 'center', gap: '10px'
   },
-  inputStyle: { border: 'none', background: 'transparent', fontSize: '1rem', width: '100%', outline: 'none', color: COLORS.charcoalBlue },
+  inputStyle: { border: 'none', background: 'transparent', fontSize: '1rem', width: '100%', outline: 'none', color: COLORS.charcoalBlue, minHeight: '44px' },
+
+  clearButton: {
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    color: COLORS.textSecondary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '44px',
+    height: '44px',
+    padding: 0,
+    marginLeft: '8px',
+    flexShrink: 0
+  },
 
   listaContainer: (isMobile) => ({ maxHeight: isMobile ? 'none' : '300px', overflowY: 'auto', flex: 1 }),
 
@@ -53,12 +68,22 @@ export const styles = {
     color: isCountry ? COLORS.atomicTangerine : COLORS.mutedTeal,
     display: 'flex', alignItems: 'center', justifyContent: 'center'
   }),
-  nombrePais: { fontWeight: '700', color: COLORS.charcoalBlue, display: 'block' },
+  countryName: { fontWeight: '700', color: COLORS.charcoalBlue, display: 'block' },
   subtext: { fontSize: '0.8rem', color: COLORS.textSecondary },
 
   addLabel: {
     position: 'absolute', right: '20px',
     fontSize: '0.8rem', fontWeight: '700', color: COLORS.mutedTeal,
     display: 'none', alignItems: 'center', gap: '4px'
+  },
+
+  emptyState: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '40px 0', color: COLORS.textSecondary
+  },
+  emptyIcon: {
+    width: '44px', height: '44px', color: COLORS.mutedTeal
+  },
+  emptyText: {
+    fontSize: '1rem', fontWeight: '600', textAlign: 'center', color: COLORS.mutedTeal
   }
 };

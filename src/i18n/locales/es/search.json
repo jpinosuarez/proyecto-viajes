@@ -1,0 +1,13 @@
+{
+  "title": "Nuevo destino",
+  "close": "Cerrar",
+  "inputPlaceholder": "Escribe un país o ciudad...",
+  "inputAria": "Buscar destinos",
+  "clear": "Limpiar búsqueda",
+  "popularTitle": "DESTINOS POPULARES",
+  "loading": "Buscando en el mapa... 🌍",
+  "noResults": "No pudimos encontrar '{{term}}'. Intenta buscar países, ciudades o destinos populares.",
+  "emptyHelp": "Puedes buscar por nombre, país o ciudad.",
+  "country": "País",
+  "add": "Añadir"
+}

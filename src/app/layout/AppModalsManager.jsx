@@ -1,6 +1,6 @@
 import React from 'react';
 
-import BuscadorModal from '@shared/ui/legacy_components/Buscador/BuscadorModal';
+import { SearchModal } from '@features/search/ui/SearchModal';
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import { EdicionModal, VisorViaje } from '@features/viajes';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
@@ -48,14 +48,14 @@ function AppModalsManager({
 
   return (
     <>
-      <BuscadorModal
+      <SearchModal
         isOpen={mostrarBuscador}
         onClose={closeBuscador}
-        filtro={filtro}
-        setFiltro={setFiltro}
-        seleccionarLugar={onLugarSeleccionado}
-        onSearchError={() => pushToast('Error de conexion al buscar ciudad', 'error')}
-        onNoResults={(query) => pushToast(`Sin resultados para "${query}"`, 'info', 2500)}
+        query={filtro}
+        setQuery={setFiltro}
+        selectPlace={onLugarSeleccionado}
+        onSearchError={() => pushToast('Connection error while searching', 'error')}
+        onNoResults={(query) => pushToast(`No results for "${query}"`, 'info', 2500)}
       />
 
       {viajeParaEditar && (

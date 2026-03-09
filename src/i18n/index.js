@@ -25,6 +25,8 @@ import landingEN from './locales/en/landing.json';
 import galleryEN from './locales/en/gallery.json';
 import shareEN from './locales/en/share.json';
 import navEN from './locales/en/nav.json';
+import searchES from './locales/es/search.json';
+import searchEN from './locales/en/search.json';
 
 i18n
   .use(LanguageDetector)
@@ -42,6 +44,7 @@ i18n
         gallery: galleryES,
         share: shareES,
         nav: navES,
+        search: searchES,
       },
       en: {
         common: commonEN,
@@ -54,6 +57,7 @@ i18n
         gallery: galleryEN,
         share: shareEN,
         nav: navEN,
+        search: searchEN,
       },
     },
     fallbackLng: 'es',
