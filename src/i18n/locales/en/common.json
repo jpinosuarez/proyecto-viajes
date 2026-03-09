@@ -42,5 +42,17 @@
     "updateAvailable": "New version available",
     "update": "Update",
     "later": "Later"
+  },
+  "profile": {
+    "editTitle": "Edit Profile",
+    "close": "Close",
+    "avatarAlt": "User avatar",
+    "avatarFallback": "U",
+    "nameLabel": "Name",
+    "namePlaceholder": "Enter your name",
+    "photoLabel": "Photo URL",
+    "photoPlaceholder": "Paste image URL",
+    "save": "Save Changes",
+    "saving": "Saving..."
   }
 }
