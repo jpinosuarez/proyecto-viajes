@@ -7,6 +7,7 @@
     "stamp": "Stamp"
   },
   "button": "Share",
+  "generating": "Generating your story...",
   "template": {
     "logTitle": "✈ TRAVEL LOGBOOK",
     "immigration": "✈ IMMIGRATION ✈",

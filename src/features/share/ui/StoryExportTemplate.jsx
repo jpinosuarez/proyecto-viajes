@@ -1,15 +1,16 @@
 import React, { forwardRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { COLORS, FONTS, RADIUS } from '@shared/config';
 
 /**
- * Plantilla oculta para exportar como imagen IG Story (1080 × 1920).
+ * Hidden template for exporting as IG Story image (1080 × 1920).
  *
- * Variantes:
- *  - "classic"  → Foto hero + título + fechas + banderas
- *  - "stats"    → Mapa mental con estadísticas del viaje
- *  - "stamp"    → Sello de pasaporte estilo vintage
+ * Variants:
+ *  - "classic"  → Hero photo + title + dates + flags
+ *  - "stats"    → Mind map with trip statistics
+ *  - "stamp"    → Vintage passport stamp style
  *
- * Se renderiza fuera de pantalla y se captura con dom-to-image-more.
+ * Rendered off-screen and captured with dom-to-image-more.
  *
  * @param {{ variant: 'classic'|'stats'|'stamp', data: object }} props
  */
@@ -86,7 +87,7 @@ const ClassicStory = ({ data }) => (
 );
 
 // ── Stats Variant ──
-const StatsStory = ({ data }) => (
+const StatsStory = ({ data, t }) => (
   <div style={{
     ...base,
     background: `linear-gradient(160deg, ${COLORS.charcoalBlue} 0%, #1a365d 50%, #0f766e 100%)`,
@@ -98,7 +99,7 @@ const StatsStory = ({ data }) => (
     boxSizing: 'border-box',
   }}>
     <p style={{ fontSize: '28px', fontWeight: '600', opacity: 0.6, margin: '0 0 12px 0', letterSpacing: '4px', textTransform: 'uppercase' }}>
-      ✈ BITÁCORA DE VIAJE
+      {t('template.logTitle')}
     </p>
     <h1 style={{ fontSize: '64px', fontWeight: '900', margin: '0 0 60px 0', lineHeight: 1.1 }}>
       {data.titulo || 'Destino'}
@@ -107,10 +108,10 @@ const StatsStory = ({ data }) => (
     {/* Stats grid */}
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '60px' }}>
       {[
-        { icon: '🌍', label: 'Países', value: data.paisesCount || '—' },
-        { icon: '📍', label: 'Paradas', value: data.paradasCount || '—' },
-        { icon: '📅', label: 'Días', value: data.diasCount || '—' },
-        { icon: '💰', label: 'Presupuesto', value: data.presupuesto || '—' },
+        { icon: '🌍', label: t('stats.countries'), value: data.paisesCount || '—' },
+        { icon: '📍', label: t('stats.stops'), value: data.paradasCount || '—' },
+        { icon: '📅', label: t('stats.days'), value: data.diasCount || '—' },
+        { icon: '💰', label: t('stats.budget'), value: data.presupuesto || '—' },
       ].map((stat, i) => (
         <div key={i} style={{
           background: 'rgba(255,255,255,0.08)',
@@ -143,13 +144,13 @@ const StatsStory = ({ data }) => (
 
     {/* Branding */}
     <div style={{ marginTop: 'auto', opacity: 0.5, fontSize: '24px', fontWeight: '800', letterSpacing: '3px' }}>
-      KEEPTRIP
+      {t('branding')}
     </div>
   </div>
 );
 
 // ── Passport Stamp Variant ──
-const StampStory = ({ data }) => (
+const StampStory = ({ data, t }) => (
   <div style={{
     ...base,
     backgroundColor: '#F4EDE4',
@@ -195,7 +196,7 @@ const StampStory = ({ data }) => (
         textAlign: 'center',
         opacity: 0.7,
       }}>
-        ✈ INMIGRACIÓN ✈
+        {t('template.immigration')}
       </p>
 
       {/* Flags */}
@@ -234,7 +235,7 @@ const StampStory = ({ data }) => (
         color: COLORS.atomicTangerine,
         margin: '12px 0 0 0',
       }}>
-        APROBADO
+        {t('template.approved')}
       </p>
     </div>
 
@@ -247,7 +248,7 @@ const StampStory = ({ data }) => (
       color: COLORS.charcoalBlue,
       letterSpacing: '4px',
     }}>
-      KEEPTRIP
+      {t('branding')}
     </div>
   </div>
 );
@@ -259,10 +260,11 @@ const VARIANTS = {
 };
 
 const StoryExportTemplate = forwardRef(({ variant = 'classic', data = {} }, ref) => {
+  const { t } = useTranslation('share');
   const Component = VARIANTS[variant] || ClassicStory;
   return (
     <div ref={ref} aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
-      <Component data={data} />
+      <Component data={data} t={t} />
     </div>
   );
 });

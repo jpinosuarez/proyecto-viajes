@@ -1,24 +1,26 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Share2, Download, Instagram, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import StoryExportTemplate from './StoryExportTemplate';
 import { captureNodeAsPng, shareImage, downloadBlob } from '@shared/lib/utils/shareUtils';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX, TRANSITIONS } from '@shared/config';
 
 const VARIANTS = [
-  { id: 'classic', label: 'Clásica', icon: '📸' },
-  { id: 'stats', label: 'Stats', icon: '📊' },
-  { id: 'stamp', label: 'Sello', icon: '📮' },
+  { id: 'classic', labelKey: 'share.variant.classic', icon: '📸' },
+  { id: 'stats', labelKey: 'share.variant.stats', icon: '📊' },
+  { id: 'stamp', labelKey: 'share.variant.stamp', icon: '📮' },
 ];
 
 /**
- * Botón + panel de compartir como IG Story.
- * Renderiza 3 variantes de StoryExportTemplate fuera de pantalla,
- * captura la elegida y usa Web Share o descarga.
+ * Button + panel to share as IG Story.
+ * Renders 3 variants of StoryExportTemplate off-screen,
+ * captures the selected one and uses Web Share or downloads.
  *
  * @param {{ data: object, style?: object }} props
  *   data: { titulo, fechas, foto, banderas, paisesCount, paradasCount, diasCount, presupuesto, vibes }
  */
 const ShareStoryButton = ({ data, style = {} }) => {
+  const { t } = useTranslation('share');
   const [open, setOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState('classic');
   const [isExporting, setIsExporting] = useState(false);
@@ -60,7 +62,7 @@ const ShareStoryButton = ({ data, style = {} }) => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        title="Compartir como IG Story"
+        title={t('shareTrip')}
         style={{
           ...btnBase,
           ...style,
@@ -84,10 +86,10 @@ const ShareStoryButton = ({ data, style = {} }) => {
             </button>
 
             <h3 style={{ fontFamily: FONTS.heading, fontWeight: '900', fontSize: '1.15rem', color: COLORS.charcoalBlue, margin: '0 0 4px 0' }}>
-              Compartir viaje
+              {t('shareTrip')}
             </h3>
             <p style={{ fontFamily: FONTS.body, fontSize: '0.85rem', color: COLORS.textSecondary, margin: '0 0 20px 0' }}>
-              Elegí un estilo para tu Historia
+              {t('chooseStyle')}
             </p>
 
             {/* Variant selector */}
@@ -111,7 +113,7 @@ const ShareStoryButton = ({ data, style = {} }) => {
                       border: `1.5px solid ${selectedVariant === v.id ? COLORS.charcoalBlue : COLORS.border}`,
                     }}
                   >
-                    {v.icon} {v.label}
+                    {v.icon} {t(v.labelKey)}
                   </button>
                 ))}
               </div>
@@ -134,10 +136,13 @@ const ShareStoryButton = ({ data, style = {} }) => {
                 }}
               >
                 {isExporting ? (
-                  <Loader2 size={16} className="spin" />
+                  <>
+                    <Loader2 size={16} className="spin" />
+                    {t('generating')}
+                  </>
                 ) : (
                   <>
-                    <Instagram size={16} /> Compartir
+                    <Instagram size={16} /> {t('button')}
                   </>
                 )}
               </button>
