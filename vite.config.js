@@ -52,7 +52,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB — bundle pesado por Firebase + Mapbox
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB — vendor-map (mapbox-gl ~2.5MB raw) necesita margen
         runtimeCaching: [
           {
             // Mapbox tiles
@@ -108,6 +108,43 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        /**
+         * Divide las dependencias de terceros en chunks cacheables independientemente.
+         * vendor-map (~2.5MB) solo se descarga cuando el usuario abre el mapa o VisorViaje.
+         * vendor-firebase y vendor-motion se separan para que un cambio en el código de la
+         * app no invalide la caché de estas librerías estables.
+         */
+        manualChunks(id) {
+          if (
+            id.includes('/node_modules/mapbox-gl') ||
+            id.includes('/node_modules/react-map-gl')
+          ) {
+            return 'vendor-map';
+          }
+          if (id.includes('/node_modules/firebase')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('/node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/react-router') ||
+            id.includes('/node_modules/scheduler/')
+          ) {
+            return 'vendor-react';
+          }
+          if (id.includes('/node_modules/')) {
+            return 'vendor-misc';
+          }
+        },
+      },
+    },
+  },
   resolve: {
     alias: process.env.VITEST
       ? {

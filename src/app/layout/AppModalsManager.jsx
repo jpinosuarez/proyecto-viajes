@@ -1,11 +1,43 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
-import { SearchModal } from '@features/search/ui/SearchModal';
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
-import { EdicionModal, VisorViaje } from '@features/viajes';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
+import { BentoCardSkeleton } from '@shared/ui/components';
+
+// ── Lazy-loaded heavy components ───────────────────────────────────────────────
+// Cada uno genera su propio chunk de Rolldown y solo se descarga cuando el
+// usuario abre la funcionalidad por primera vez. Las visitas siguientes usan
+// la caché del SW de Workbox.
+const SearchModal  = lazy(() => import('@features/search/ui/SearchModal/SearchModal'));
+const EdicionModal = lazy(() => import('@features/viajes/editor/ui/EdicionModal'));
+const VisorViaje   = lazy(() => import('@features/viajes/viewer/VisorViaje'));
+
+/**
+ * Skeleton de pantalla completa para la carga inicial de VisorViaje.
+ * Usa createPortal para renderizar en el mismo layer visual que el viewer
+ * (z-index 9999), evitando flashes en el contenido subyacente.
+ */
+function VisorViajeFallback() {
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.85)',
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <BentoCardSkeleton />
+    </div>,
+    document.body
+  );
+}
 
 function AppModalsManager({
   modalController,
@@ -75,28 +107,32 @@ function AppModalsManager({
 
   return (
     <>
-      <SearchModal
-        isOpen={mostrarBuscador}
-        onClose={closeBuscador}
-        query={filtro}
-        setQuery={setFiltro}
-        selectPlace={onLugarSeleccionado}
-        onSearchError={() => pushToast('Connection error while searching', 'error')}
-        onNoResults={(query) => pushToast(`No results for "${query}"`, 'info', 2500)}
-      />
+      <Suspense fallback={null}>
+        <SearchModal
+          isOpen={mostrarBuscador}
+          onClose={closeBuscador}
+          query={filtro}
+          setQuery={setFiltro}
+          selectPlace={onLugarSeleccionado}
+          onSearchError={() => pushToast('Connection error while searching', 'error')}
+          onNoResults={(query) => pushToast(`No results for "${query}"`, 'info', 2500)}
+        />
+      </Suspense>
 
       {viajeParaEditar && (
         <ErrorBoundary>
-          <EdicionModal
-            viaje={viajeParaEditar}
-            bitacoraData={bitacoraData}
-            onClose={closeEditor}
-            onSave={handleGuardarModal}
-            isSaving={isSavingModal}
-            esBorrador={esBorrador}
-            ciudadInicial={ciudadInicialBorrador}
-            onAfterSave={handleAfterSave}
-          />
+          <Suspense fallback={null}>
+            <EdicionModal
+              viaje={viajeParaEditar}
+              bitacoraData={bitacoraData}
+              onClose={closeEditor}
+              onSave={handleGuardarModal}
+              isSaving={isSavingModal}
+              esBorrador={esBorrador}
+              ciudadInicial={ciudadInicialBorrador}
+              onAfterSave={handleAfterSave}
+            />
+          </Suspense>
         </ErrorBoundary>
       )}
 
@@ -107,17 +143,19 @@ function AppModalsManager({
       <ErrorBoundary>
         <AnimatePresence>
           {tripId && (
-            <VisorViaje
-              key={tripId}
-              viajeId={tripId}
-              bitacoraLista={bitacora}
-              bitacoraData={bitacoraData}
-              onClose={() => navigate('/trips')}
-              onSave={handleGuardarDesdeVisor}
-              onDelete={solicitarEliminarViaje}
-              isSaving={isSavingViewer}
-              isDeleting={!!(tripId && viajesEliminando.has(tripId))}
-            />
+            <Suspense fallback={<VisorViajeFallback />}>
+              <VisorViaje
+                key={tripId}
+                viajeId={tripId}
+                bitacoraLista={bitacora}
+                bitacoraData={bitacoraData}
+                onClose={() => navigate('/trips')}
+                onSave={handleGuardarDesdeVisor}
+                onDelete={solicitarEliminarViaje}
+                isSaving={isSavingViewer}
+                isDeleting={!!(tripId && viajesEliminando.has(tripId))}
+              />
+            </Suspense>
           )}
         </AnimatePresence>
       </ErrorBoundary>
