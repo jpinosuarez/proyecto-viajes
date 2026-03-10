@@ -12,14 +12,14 @@ export function useLugarSelectionDraft({
   return useCallback((lugar) => {
     let datosPais = null;
     let ciudad = null;
-    const coordenadasLugar = Array.isArray(lugar.coordenadas) ? lugar.coordenadas : null;
+    const coordenadasLugar = Array.isArray(lugar.coordinates) ? lugar.coordinates : null;
 
-    if (lugar.esPais) {
-      const codigoPais = (lugar.code || lugar.paisCodigo || '').toUpperCase();
+    if (lugar.isCountry) {
+      const codigoPais = (lugar.code || lugar.countryCode || '').toUpperCase();
       const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
         code: codigoPais,
-        nombreEspanol: paisInfo ? paisInfo.name : lugar.nombre,
+        nombreEspanol: paisInfo ? paisInfo.name : lugar.name,
         flag: getFlagUrl(codigoPais),
         continente: 'Mundo',
         latlng: coordenadasLugar,
@@ -34,17 +34,17 @@ export function useLugarSelectionDraft({
         flag: getFlagUrl(codigoPais),
       };
     } else {
-      const codigoPais = (lugar.paisCodigo || lugar.code || '').toUpperCase();
+      const codigoPais = (lugar.countryCode || lugar.code || '').toUpperCase();
       const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
         code: codigoPais,
-        nombreEspanol: paisInfo ? paisInfo.name : (lugar.paisNombre || lugar.nombre),
+        nombreEspanol: paisInfo ? paisInfo.name : (lugar.countryName || lugar.name),
         flag: getFlagUrl(codigoPais),
         latlng: coordenadasLugar,
         coordenadas: coordenadasLugar,
       };
       ciudad = {
-        nombre: lugar.nombre,
+        nombre: lugar.name,
         coordenadas: coordenadasLugar,
         fecha: new Date().toISOString().split('T')[0],
         paisCodigo: codigoPais,
@@ -69,6 +69,11 @@ export function useLugarSelectionDraft({
       foto: null,
       latlng: datosPais.latlng || null,
       coordenadas: datosPais.coordenadas || null,
+      vibe: [],
+      highlights: { topFood: '', topView: '', topTip: '' },
+      companions: [],
+      texto: '',
+      presupuesto: null,
     };
 
     setViajeBorrador(nuevoBorrador);

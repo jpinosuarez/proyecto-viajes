@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DashboardPage from '@pages/dashboard/ui/DashboardPage';
 import MapStats from '../../pages/dashboard/ui/components/MapStats';
 import { MapaView as MapaViajes } from '@features/mapa';
-import BentoGrid from '@shared/ui/legacy_components/Bento/BentoGrid';
+import TripGrid from '@widgets/tripGrid';
 import SettingsPage from '../../pages/Configuracion/SettingsPage';
 import CuracionPage from '../../pages/Curacion/CuracionPage';
 import { InvitationsList } from '@features/invitations';
@@ -50,11 +50,11 @@ function AppActiveView({
       {vistaActiva === 'bitacora' && (
         <Motion.div key="bitacora" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.scrollableContent} className="custom-scroll">
           <ErrorBoundary>
-            <BentoGrid
-              viajes={bitacora}
-              bitacoraData={bitacoraData}
-              manejarEliminar={solicitarEliminarViaje}
-              isDeletingViaje={isDeletingViaje}
+            <TripGrid
+              trips={bitacora}
+              tripData={bitacoraData}
+              handleDelete={solicitarEliminarViaje}
+              isDeletingTrip={isDeletingViaje}
             />
           </ErrorBoundary>
         </Motion.div>

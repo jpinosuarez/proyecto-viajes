@@ -24,5 +24,16 @@
     "awaitingFirstCountry": "You haven't registered any country yet.",
     "awaitingFirstStop": "You have no trips registered yet.",
     "awaitingProgress": "Start exploring to see your progress!"
-  }
+  },
+  "showingResults": "Showing {{shown}} of {{total}} trips",
+  "clearSearch": "Clear search",
+  "stops": "stops",
+  "deleting": "Deleting...",
+  "deleteTrip": "Delete trip",
+  "emptyLogbook": "Your logbook is empty!",
+  "emptyLogbookMessage": "Start your adventure by registering your first trip. Every destination tells a unique story.",
+  "registerFirstStop": "Register first trip",
+  "noResults": "No results found",
+  "noResultsMessage": "No trips match your search. Try different terms.",
+  "clearFilter": "Clear filter"
 }

@@ -42,7 +42,8 @@ export function useViajeCrudHandlers({
 
         setViajeBorrador(null);
         setCiudadInicialBorrador(null);
-        setTimeout(() => abrirVisor(nuevoId), 500);
+        // Don't auto-open viewer for new trips created from search modal
+        // setTimeout(() => abrirVisor(nuevoId), 500);
         return nuevoId;
       }
 

@@ -87,6 +87,7 @@ export const UIProvider = ({ children }) => {
 
     window.__test_setVista = (vista) => setVistaActiva(vista);
     window.__test_abrirVisor = (viajeId) => setViajeExpandidoId(viajeId);
+    window.__test_abrirBuscador = () => setMostrarBuscador(true);
 
     return () => {
       delete window.__test_setVista;

@@ -108,6 +108,7 @@ export function useAppShellComposition({
     viajeBorrador,
     setViajeBorrador,
     ciudadInicialBorrador,
+    setCiudadInicialBorrador,
     confirmarEliminacion,
     setConfirmarEliminacion,
   };

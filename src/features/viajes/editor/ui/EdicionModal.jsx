@@ -38,7 +38,13 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   }
   const { isMobile } = useWindowSize(768);
   const usuarioUid = usuario?.uid || null;
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    vibe: [],
+    highlights: { topFood: '', topView: '', topTip: '' },
+    companions: [],
+    texto: '',
+    presupuesto: null,
+  });
   const [paradas, setParadas] = useState([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [galleryFiles, setGalleryFiles] = useState([]);

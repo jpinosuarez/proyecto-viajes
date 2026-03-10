@@ -58,7 +58,7 @@ const EdicionContextSection = ({
                   onClick={() =>
                     setFormData((prev) => ({
                       ...prev,
-                      vibe: prev.vibe.includes(v) ? prev.vibe.filter((x) => x !== v) : [...prev.vibe, v],
+                      vibe: (prev.vibe || []).includes(v) ? (prev.vibe || []).filter((x) => x !== v) : [...(prev.vibe || []), v],
                     }))
                   }
                   style={{

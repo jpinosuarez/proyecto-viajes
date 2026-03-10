@@ -24,5 +24,16 @@
     "awaitingFirstCountry": "Aún no has registrado ningún país.",
     "awaitingFirstStop": "Aún no tienes viajes registrados.",
     "awaitingProgress": "¡Comienza a explorar para ver tu progreso!"
-  }
+  },
+  "showingResults": "Mostrando {{shown}} de {{total}} viajes",
+  "clearSearch": "Limpiar búsqueda",
+  "stops": "paradas",
+  "deleting": "Eliminando...",
+  "deleteTrip": "Eliminar viaje",
+  "emptyLogbook": "¡Tu bitácora está vacía!",
+  "emptyLogbookMessage": "Comienza tu aventura registrando tu primer viaje. Cada destino cuenta una historia única.",
+  "registerFirstStop": "Registrar primer viaje",
+  "noResults": "No se encontraron resultados",
+  "noResultsMessage": "No hay viajes que coincidan con tu búsqueda. Intenta con otros términos.",
+  "clearFilter": "Limpiar filtro"
 }
