@@ -5,6 +5,7 @@ import { useAuth } from '@app/providers/AuthContext';
 import { useToast } from '@app/providers/ToastContext';
 import { useUpload } from '@app/providers/UploadContext';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { styles } from './VisorViaje.styles';
 import EdicionModal from '@features/viajes/editor/ui/EdicionModal';
 import { useVisorViajeData } from './hooks/useVisorViajeData';
@@ -44,6 +45,9 @@ const VisorViaje = ({
   const { viajeBase, hasViajeData, data, ownerUid, paradas, isSharedTrip, ownerDisplayName, reloadParadas } = dataVM;
   const isRouteMode = paradas.length > 1;
   const isBusy = isSaving || isDeleting;
+
+  // Título dinámico: se actualiza cuando carga el nombre del viaje
+  useDocumentTitle(viajeBase?.titulo);
 
   const galleryVM = useVisorViajeGallery({
     viajeId,

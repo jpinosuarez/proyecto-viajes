@@ -6,6 +6,7 @@ import AchievementsGrid from './AchievementsGrid';
 import { styles } from './TravelerHub.styles';
 import { COLORS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 
 /**
  * TravelerHub — the gamification hub with a Bento-style layout.
@@ -14,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stats }) => {
   const { isMobile } = useWindowSize(768);
   const { t } = useTranslation('hub');
+  const { t: tNav } = useTranslation('nav');
+  useDocumentTitle(tNav('hub'));
 
   const countryCount = paisesVisitados.length;
   const level = getTravelerLevel(countryCount);

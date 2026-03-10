@@ -5,11 +5,13 @@ import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
 import { setMapLanguage } from '@shared/lib/geo';
+import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 function MapaView({ paises = [], paradas = [] }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation('nav');
+  useDocumentTitle(t('map'));
   const mapRef = useRef(null);
   const [viewState, setViewState] = useState({ longitude: 20, latitude: 20, zoom: 1.5 });
 
