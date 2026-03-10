@@ -1,6 +1,6 @@
 .trip-masonry {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
   gap: 16px;
   width: 100%;
 }
@@ -11,11 +11,12 @@
 
 .tap-scale {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
 }
 
 .tap-scale:hover {
   transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
 
 .tap-scale:active {
@@ -72,14 +73,14 @@
 
 @media (max-width: 768px) {
   .trip-masonry {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+    gap: 16px;
   }
 }
 
 @media (max-width: 480px) {
   .trip-masonry {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
 }

@@ -34,10 +34,9 @@ export const styles = {
     overflow: 'hidden',
     position: 'relative',
     cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    backgroundColor: COLORS.white,
-    marginBottom: '16px'
+    backgroundColor: COLORS.white
   },
   topGradient: {
     position: 'absolute',
@@ -49,7 +48,7 @@ export const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: '12px',
+    padding: '16px',
     zIndex: 2
   },
   miniBtn: {
@@ -73,13 +72,13 @@ export const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    padding: '12px',
+    padding: '16px',
     background: 'linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
     backdropFilter: 'blur(8px)',
     zIndex: 1
   },
   bottomContentSolid: (bgColor) => ({
-    padding: '12px',
+    padding: '16px',
     backgroundColor: bgColor,
     color: COLORS.white
   }),
@@ -102,13 +101,24 @@ export const styles = {
     textAlign: 'center',
     backgroundColor: COLORS.white,
     borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
     marginBottom: '16px'
   },
-  emptyIconPrimary: {
-    color: COLORS.mutedTeal,
-    marginBottom: '16px'
-  },
+  emptyIconContainer: (variant) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '88px',
+    height: '88px',
+    borderRadius: '50%',
+    marginBottom: '24px',
+    background: variant === 'primary'
+      ? `linear-gradient(135deg, rgba(255,107,53,0.12) 0%, rgba(69,176,168,0.08) 100%)`
+      : 'rgba(248,250,252,0.9)',
+    border: variant === 'primary'
+      ? '1px solid rgba(255,107,53,0.15)'
+      : '1px solid rgba(44,62,80,0.08)'
+  }),
   emptyTitlePrimary: {
     fontSize: '1.25rem',
     fontWeight: '700',
@@ -126,12 +136,17 @@ export const styles = {
     color: COLORS.white,
     border: 'none',
     borderRadius: '12px',
-    padding: '12px 24px',
+    padding: '14px 28px',
     fontSize: '0.875rem',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
-    minHeight: '44px'
+    minHeight: '44px',
+    minWidth: '240px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px'
   },
   emptyState: {
     gridColumn: '1 / -1',
@@ -143,12 +158,8 @@ export const styles = {
     textAlign: 'center',
     backgroundColor: COLORS.white,
     borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
     marginBottom: '16px'
-  },
-  emptyIcon: {
-    color: COLORS.slate500,
-    marginBottom: '12px'
   },
   emptyTitle: {
     fontSize: '1rem',
@@ -173,5 +184,44 @@ export const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
     minHeight: '44px'
+  },
+  gridWrapper: {
+    width: '100%',
+    paddingBottom: '56px'
+  },
+  flagsRow: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center'
+  },
+  flagImage: {
+    width: '28px',
+    height: '20px',
+    borderRadius: '4px',
+    objectFit: 'cover',
+    border: '1px solid rgba(255,255,255,0.3)',
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+  },
+  flagOverflow: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: '0.75rem',
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+  },
+  actionButtons: {
+    display: 'flex',
+    gap: '8px'
+  },
+  cardTitle: (isPhoto) => ({
+    margin: '0 0 8px',
+    color: isPhoto ? 'white' : COLORS.charcoalBlue,
+    fontSize: '1.125rem',
+    fontWeight: '800',
+    lineHeight: 1.2
+  }),
+  metaRowItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
   }
 };

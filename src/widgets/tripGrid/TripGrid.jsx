@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import LogStats from '@pages/dashboard/ui/components/LogStats';
-import { Trash2, Edit3, Calendar, MapPin, Search, LoaderCircle, Map } from 'lucide-react';
+import { Trash2, Edit3, Calendar, MapPin, LoaderCircle, Globe, Telescope, ArrowRight } from 'lucide-react';
 import { useSearch, useUI } from '@app/providers/UIContext';
 import { COLORS } from '@shared/config';
 import { styles } from './TripGrid.styles';
@@ -47,14 +47,14 @@ const TripGrid = ({
   const hasNoSearchResults = !hasNoTrips && searchTerm && sortedTrips.length === 0;
 
   return (
-    <div style={{ width: '100%', paddingBottom: '50px' }}>
+    <div style={styles.gridWrapper}>
       <LogStats log={filteredTrips} logData={tripData} />
       {searchTerm && !hasNoTrips && (
         <div style={styles.searchMeta}>
           <span>
             {t('bentogrid.searchResults', { count: sortedTrips.length, total: trips.length })}
           </span>
-          <button type="button" onClick={clearSearch} style={styles.clearSearchButton}>
+          <button type="button" onClick={limpiarBusqueda} style={styles.clearSearchButton}>
             {t('bentogrid.clearSearch')}
           </button>
         </div>
@@ -85,14 +85,14 @@ const TripGrid = ({
               onClick={() => abrirVisor(trip.id)}
             >
               <div style={styles.topGradient}>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={styles.flagsRow}>
                   {flags.slice(0, 3).map((flag, i) => (
-                    <img key={i} src={flag} alt="flag" loading="lazy" style={{ width: '28px', height: '20px', borderRadius: '3px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} onError={(e) => e.target.style.display = 'none'} />
+                    <img key={i} src={flag} alt="flag" loading="lazy" style={styles.flagImage} onError={(e) => e.target.style.display = 'none'} />
                   ))}
-                  {flags.length > 3 && <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>+{flags.length - 3}</span>}
+                  {flags.length > 3 && <span style={styles.flagOverflow}>+{flags.length - 3}</span>}
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={styles.actionButtons}>
                   <button className="tap-icon" onClick={(e) => { e.stopPropagation(); abrirEditor(trip.id); }} style={styles.miniBtn}><Edit3 size={14} /></button>
                   <button
                     className="tap-icon"
@@ -107,15 +107,15 @@ const TripGrid = ({
               </div>
 
               <div style={hasPhoto ? styles.bottomContentGlass : styles.bottomContentSolid(COLORS.mutedTeal)}>
-                <h3 data-testid={`trip-card-title-${trip.id}`} style={{ margin: '4px 0 8px', color: hasPhoto ? 'white' : COLORS.charcoalBlue, fontSize: '1.1rem', fontWeight: '800', lineHeight: 1.2 }}>
+                <h3 data-testid={`trip-card-title-${trip.id}`} style={styles.cardTitle(hasPhoto)}>
                   {data.titulo || trip.nameSpanish}
                 </h3>
                 <div style={styles.metaRow(hasPhoto)}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={styles.metaRowItem}>
                     <Calendar size={12} /> <span>{data.startDate?.split('-')[0]}</span>
                   </div>
                   {data.cities && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={styles.metaRowItem}>
                       <MapPin size={12} /> <span>{data.cities.split(',').length} {t('bentogrid.stops')}</span>
                     </div>
                   )}
@@ -133,8 +133,8 @@ const TripGrid = ({
             style={styles.emptyStatePrimary}
             className="trip-empty"
           >
-            <div style={styles.emptyIconPrimary}>
-              <Map size={36} />
+            <div style={styles.emptyIconContainer('primary')}>
+              <Globe size={36} color={COLORS.orangeAtomic} strokeWidth={1.5} />
             </div>
             <h3 style={styles.emptyTitlePrimary}>{t('bentogrid.emptyTitle')}</h3>
             <p style={styles.emptyTextPrimary}>
@@ -142,6 +142,7 @@ const TripGrid = ({
             </p>
             <button type="button" className="tap-btn" onClick={openBuscador} style={styles.emptyActionPrimary}>
               {t('bentogrid.registerFirstStop')}
+              <ArrowRight size={16} />
             </button>
           </Motion.div>
         )}
@@ -154,8 +155,8 @@ const TripGrid = ({
             style={styles.emptyState}
             className="trip-empty"
           >
-            <div style={styles.emptyIcon}>
-              <Search size={28} />
+            <div style={styles.emptyIconContainer('secondary')}>
+              <Telescope size={28} color={COLORS.charcoalBlue} strokeWidth={1.5} />
             </div>
             <h3 style={styles.emptyTitle}>{t('bentogrid.noResultsTitle')}</h3>
             <p style={styles.emptyText}>

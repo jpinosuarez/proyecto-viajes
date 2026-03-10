@@ -9,7 +9,7 @@ import CelebrationQueue from '@shared/ui/components/CelebrationQueue';
 import PWAUpdatePrompt from '@shared/ui/components/PWAUpdatePrompt';
 import OfflineBanner from '@shared/ui/components/OfflineBanner';
 
-import { useViajes } from '@shared/lib/hooks/useViajes';
+import { useViajes } from '@features/viajes';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { useAppShellComposition } from '@shared/lib/hooks/useAppShellComposition';
 import { useAuth, useToast, useSearch, useUI } from '@app/providers';

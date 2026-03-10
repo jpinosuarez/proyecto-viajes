@@ -13,7 +13,7 @@ import {
   actualizarParada,
   eliminarViaje,
   subirFotoViaje
-} from '@shared/api/services/viajes/viajesRepository';
+} from '../../api/viajesRepository';
 import {
   FOTO_DEFAULT_URL,
   construirBitacoraData,
@@ -25,7 +25,7 @@ import {
   construirViajePayload,
   getTodayIsoDate
 } from '@shared/lib/utils/viajeUtils';
-import { validarViaje, validarCoordenadas } from '../../../schemas/viajeSchema';
+import { validarViaje, validarCoordenadas } from '../../../../schemas/viajeSchema';
 import { logger } from '@shared/lib/utils/logger';
 
 const PEXELS_ACCESS_KEY = import.meta.env.VITE_PEXELS_ACCESS_KEY || '';
