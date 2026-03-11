@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLogStats } from '@pages/dashboard/model/useLogStats';
 import LogStats from '@pages/dashboard/ui/components/LogStats';
 import { Trash2, Edit3, Calendar, MapPin, LoaderCircle, Globe, Telescope, ArrowRight } from 'lucide-react';
 import { useSearch, useUI } from '@app/providers/UIContext';
@@ -16,6 +17,7 @@ const TripGrid = ({
   isDeletingTrip = () => false
 }) => {
   const { t } = useTranslation('gallery');
+  const { t: tDashboard } = useTranslation('dashboard');
   const { busqueda, limpiarBusqueda } = useSearch();
   const { openBuscador } = useUI();
   const navigate = useNavigate();
@@ -45,12 +47,29 @@ const TripGrid = ({
     });
   }, [filteredTrips, tripData]);
 
+  const logStats = useLogStats(filteredTrips, tripData);
+
+  const statItems = useMemo(() => {
+    if (logStats.tripCount === 0) {
+      return [];
+    }
+
+    return [
+      { value: logStats.tripCount, label: tDashboard('stats.tripsCompleted') },
+      { value: logStats.totalDays, label: tDashboard('stats.totalDays') },
+      { value: logStats.totalCities, label: tDashboard('stats.registeredCities') },
+      ...(logStats.averageRating
+        ? [{ value: `${logStats.averageRating}\u2605`, label: tDashboard('stats.averageRating'), accent: true }]
+        : []),
+    ];
+  }, [logStats, tDashboard]);
+
   const hasNoTrips = trips.length === 0;
   const hasNoSearchResults = !hasNoTrips && searchTerm && sortedTrips.length === 0;
 
   return (
     <div style={styles.gridWrapper}>
-      <LogStats log={filteredTrips} logData={tripData} />
+      <LogStats stats={statItems} ariaLabel={tDashboard('stats.tripSummary', 'Resumen de viajes')} />
       {searchTerm && !hasNoTrips && (
         <div style={styles.searchMeta}>
           <span>

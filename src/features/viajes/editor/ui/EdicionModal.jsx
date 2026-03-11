@@ -200,32 +200,61 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
             onFileChange={handleFileChange}
           />
           <div style={styles.body} className="custom-scroll">
-            <EdicionGallerySection
-              styles={styles}
-              t={t}
-              files={galleryFiles}
-              onFilesChange={setGalleryFiles}
-              portadaIndex={galleryPortada}
-              onPortadaChange={setGalleryPortada}
-              isBusy={isBusy}
-              isMobile={isMobile}
-              galeria={galeria}
-              esBorrador={esBorrador}
-              viajeId={viaje?.id}
-              captionDrafts={captionDrafts}
-              onCaptionChange={handleCaptionChange}
-              onCaptionSave={handleCaptionSave}
-              onSetPortadaExistente={handleSetPortadaExistente}
-              onEliminarFoto={handleEliminarFoto}
-            />
-          <EdicionParadasSection
-              styles={styles}
-              t={t}
-              paradas={paradas}
-              setParadas={setParadas}
-              fechaRangoDisplay={fechaRangoDisplay}
-              sinParadas={sinParadas && hasTried}
-            />
+            {esBorrador ? (
+              <>
+                <EdicionParadasSection
+                  styles={styles}
+                  t={t}
+                  paradas={paradas}
+                  setParadas={setParadas}
+                  fechaRangoDisplay={fechaRangoDisplay}
+                  sinParadas={sinParadas && hasTried}
+                />
+                <EdicionGallerySection
+                  styles={styles}
+                  t={t}
+                  files={galleryFiles}
+                  onFilesChange={setGalleryFiles}
+                  portadaIndex={galleryPortada}
+                  onPortadaChange={setGalleryPortada}
+                  isBusy={isBusy}
+                  isMobile={isMobile}
+                  galeria={galeria}
+                  captionDrafts={captionDrafts}
+                  onCaptionChange={handleCaptionChange}
+                  onCaptionSave={handleCaptionSave}
+                  onSetPortadaExistente={handleSetPortadaExistente}
+                  onEliminarFoto={handleEliminarFoto}
+                />
+              </>
+            ) : (
+              <>
+                <EdicionGallerySection
+                  styles={styles}
+                  t={t}
+                  files={galleryFiles}
+                  onFilesChange={setGalleryFiles}
+                  portadaIndex={galleryPortada}
+                  onPortadaChange={setGalleryPortada}
+                  isBusy={isBusy}
+                  isMobile={isMobile}
+                  galeria={galeria}
+                  captionDrafts={captionDrafts}
+                  onCaptionChange={handleCaptionChange}
+                  onCaptionSave={handleCaptionSave}
+                  onSetPortadaExistente={handleSetPortadaExistente}
+                  onEliminarFoto={handleEliminarFoto}
+                />
+                <EdicionParadasSection
+                  styles={styles}
+                  t={t}
+                  paradas={paradas}
+                  setParadas={setParadas}
+                  fechaRangoDisplay={fechaRangoDisplay}
+                  sinParadas={sinParadas && hasTried}
+                />
+              </>
+            )}
             {/* Secciones secundarias agrupadas en acordeón */}
             <AccordionSection title={t('accordion.details')} badge={contextBadge}>
               <EdicionContextSection

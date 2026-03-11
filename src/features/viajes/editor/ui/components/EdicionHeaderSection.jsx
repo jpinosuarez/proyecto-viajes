@@ -15,6 +15,8 @@ const EdicionHeaderSection = ({
   onToggleTituloAuto,
   onFileChange,
 }) => {
+  const coverId = React.useId();
+
   return (
     <div style={styles.header(formData.foto, isMobile)}>
       <div style={styles.headerOverlay} />
@@ -49,6 +51,19 @@ const EdicionHeaderSection = ({
           </div>
         </div>
       </div>
+
+      {/* Delight: empty state — cuando no hay foto, el área completa invita a agregar una */}
+      {!formData.foto && !isBusy && (
+        <label
+          htmlFor={coverId}
+          style={styles.coverHint}
+          aria-label={t('labels.addCoverHint')}
+        >
+          <Camera size={28} />
+          <span style={styles.coverHintText}>{t('labels.addCoverHint')}</span>
+        </label>
+      )}
+
       {isProcessingImage && (
         <div style={styles.processingBadge}>
           <LoaderCircle size={14} className="spin" />
@@ -57,7 +72,7 @@ const EdicionHeaderSection = ({
       )}
       <label style={styles.cameraBtn(isBusy)}>
         <Camera size={18} />
-        <input type="file" hidden onChange={onFileChange} accept="image/jpeg,image/png" disabled={isBusy} />
+        <input id={coverId} type="file" hidden onChange={onFileChange} accept="image/jpeg,image/png" disabled={isBusy} />
       </label>
     </div>
   );

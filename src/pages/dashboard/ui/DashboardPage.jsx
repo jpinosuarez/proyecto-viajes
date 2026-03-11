@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { Compass, Calendar, Globe, MapPin, ArrowRight, Sparkles, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +12,7 @@ import { getTravelerLevel, getNextLevel } from '@features/gamification';
 import { SkeletonList, TripCardSkeleton } from '@shared/ui/components/Skeletons';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 
-const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, isMobile = false, loading = false }) => {
+const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, loading = false }) => {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const { openBuscador } = useUI();
@@ -21,7 +21,10 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, isMobile
   useDocumentTitle(tNav('home'));
 
   const name = usuario?.displayName ? usuario.displayName.split(' ')[0] : t('fallbackName', 'Explorer');
-  const recentTrips = [...log].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio));
+  const recentTrips = useMemo(
+    () => [...log].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio)),
+    [log]
+  );
   const isNewTraveler = log.length === 0;
 
   const visitedCount = countriesVisited.length;

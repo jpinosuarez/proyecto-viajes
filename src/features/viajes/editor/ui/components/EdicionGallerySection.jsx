@@ -12,9 +12,6 @@ const EdicionGallerySection = ({
   isBusy,
   isMobile,
   galeria,
-  // esBorrador y viajeId ya no gatean la visibilidad — las fotos aparecen cuando existen
-  esBorrador: _esBorrador,
-  viajeId: _viajeId,
   captionDrafts,
   onCaptionChange,
   onCaptionSave,

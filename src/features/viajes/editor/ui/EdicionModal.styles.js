@@ -1,4 +1,4 @@
-import { COLORS, SHADOWS, RADIUS, GLASS, TRANSITIONS, FONTS, SPACING } from '@shared/config';
+import { COLORS, SHADOWS, RADIUS, GLASS, TRANSITIONS, FONTS } from '@shared/config';
 
 export const styles = {
   overlay: (isMobile) => ({
@@ -89,6 +89,31 @@ export const styles = {
     display: 'flex', alignItems: 'center', gap: '6px',
     border: '1px solid rgba(255,255,255,0.1)',
   },
+  // Delight: empty state del header — invita a agregar foto de portada
+  coverHint: {
+    position: 'absolute', top: '50%', left: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: 3,
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    gap: '8px',
+    cursor: 'pointer',
+    padding: '16px 24px',
+    borderRadius: RADIUS.md,
+    border: '1.5px dashed rgba(255,255,255,0.3)',
+    color: 'rgba(255,255,255,0.7)',
+    transition: TRANSITIONS.fast,
+    textAlign: 'center',
+    minHeight: '44px',
+  },
+  coverHintText: {
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    fontFamily: FONTS.heading,
+    color: 'rgba(255,255,255,0.8)',
+    letterSpacing: '0.01em',
+    lineHeight: '1.4',
+    maxWidth: '150px',
+  },
   body: {
     padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column',
     gap: '16px', flex: 1, // Polish: gap múltiplo de 8
@@ -96,7 +121,7 @@ export const styles = {
   section: {
     display: 'flex', flexDirection: 'column', gap: '8px',
     background: COLORS.background,
-    padding: '16px', // Polish: padding múltiplo de 8
+    padding: '16px',
     borderRadius: RADIUS.lg,
     border: `1px solid ${COLORS.border}`,
   },
@@ -128,9 +153,6 @@ export const styles = {
   },
   inlineInfo: {
     fontSize: '0.8rem', fontWeight: '600', color: COLORS.mutedTeal
-  },
-  labelSecundario: {
-    fontSize: '0.75rem', fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase'
   },
   galleryManageBlock: {
     marginTop: '8px',
@@ -247,7 +269,7 @@ export const styles = {
     cursor: 'pointer',
     transition: TRANSITIONS.fast,
     whiteSpace: 'nowrap',
-    minHeight: '36px',
+    minHeight: '44px',
     display: 'inline-flex',
     alignItems: 'center',
   },
