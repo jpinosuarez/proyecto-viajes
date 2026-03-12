@@ -149,6 +149,25 @@ describe('TripGrid', () => {
     expect(screen.queryByTestId('trip-card-trip-1')).not.toBeInTheDocument();
   });
 
+  it('renders delete button styled with danger color and triggers handleDelete on click', () => {
+    const mockDelete = vi.fn();
+    render(
+      <TripGrid
+        trips={trips}
+        tripData={tripData}
+        handleDelete={mockDelete}
+      />
+    );
+
+    const deleteButtons = screen.getAllByRole('button', { name: 'delete trip' });
+    expect(deleteButtons.length).toBeGreaterThan(0);
+    // check style color token applied
+    expect(deleteButtons[0]).toHaveStyle({ color: expect.stringContaining('EF4444') });
+
+    userEvent.click(deleteButtons[0]);
+    expect(mockDelete).toHaveBeenCalledWith('trip-1');
+  });
+
   it('calls clear search from the search meta action', async () => {
     mockSearchState = {
       busqueda: 'rome',
@@ -166,5 +185,23 @@ describe('TripGrid', () => {
     await userEvent.click(screen.getByRole('button', { name: 'bentogrid.clearSearch' }));
 
     expect(mockClearSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows emotional empty state and plus button when there are no trips', async () => {
+    render(
+      <TripGrid
+        trips={[]}
+        tripData={{}}
+        handleDelete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/bitácora espera aventuras/i)).toBeInTheDocument();
+
+    const ctaButton = screen.getByRole('button', { name: /registrar aventura/i });
+    expect(ctaButton).toBeInTheDocument();
+
+    await userEvent.click(ctaButton);
+    expect(mockOpenBuscador).toHaveBeenCalled();
   });
 });

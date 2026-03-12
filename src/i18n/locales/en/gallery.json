@@ -19,6 +19,11 @@
     "emptyTitle": "Your story is waiting",
     "emptyDescription": "Every great adventure starts with a destination. Where are we headed today, Explorer?",
     "registerFirstStop": "Explore my first destination",
+    "emptyState": {
+      "title": "Your logbook awaits adventures!",
+      "subtitle": "Record your first trip and start collecting memories, stamps, and achievements.",
+      "cta": "Log adventure"
+    },
     "noResultsTitle": "No destinations on the radar",
     "noResultsDescription": "Try a different country, city, or route name.",
     "clearFilter": "Clear search",

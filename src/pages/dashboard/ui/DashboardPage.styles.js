@@ -32,8 +32,13 @@ export const styles = {
     fontWeight: '500',
     color: COLORS.textSecondary,
     lineHeight: 1.5,
+  },  statsBanner: {
+    marginTop: '16px',
+    padding: '12px 16px',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    boxShadow: SHADOWS.sm,
   },
-
   levelLine: {
     margin: '6px 0 0',
     fontSize: '0.875rem',

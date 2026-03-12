@@ -19,6 +19,11 @@
     "emptyTitle": "Tu historia está esperando",
     "emptyDescription": "Cada gran aventura empieza con un destino. ¿A dónde vamos hoy, Explorador?",
     "registerFirstStop": "Explorar mi primer destino",
+    "emptyState": {
+      "title": "¡Tu bitácora espera aventuras!",
+      "subtitle": "Registra tu primer viaje y comienza a coleccionar recuerdos, sellos y logros.",
+      "cta": "Registrar aventura"
+    },
     "noResultsTitle": "Sin destinos en el radar",
     "noResultsDescription": "Intenta con otro país, ciudad o nombre de tu ruta.",
     "clearFilter": "Limpiar búsqueda",

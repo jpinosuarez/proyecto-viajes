@@ -20,6 +20,8 @@ import { COLORS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 import { styles } from './Sidebar.styles';
 
+const SHELL_EASE_OUT = [0.22, 1, 0.36, 1];
+
 // Mapeo de item id → URL de React Router
 const URL_MAP = {
   home:     '/dashboard',
@@ -111,9 +113,9 @@ const Sidebar = ({ isMobile = false }) => {
             <AnimatePresence>
               {!collapsed && (
                 <Motion.h1
-                  initial={{ opacity: 0, x: -10 }}
+                  initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10, transition: { duration: 0.1 } }}
+                  exit={{ opacity: 0, x: -8, transition: { duration: 0.1 } }}
                   style={styles.logoText}
                 >
                   Keeptrip
@@ -133,15 +135,15 @@ const Sidebar = ({ isMobile = false }) => {
               key={item.id}
               type="button"
               onClick={() => handleSelect(item.id)}
-              whileHover={{ backgroundColor: isActive ? COLORS.charcoalBlue : '#f1f5f9' }}
+              whileHover={{ backgroundColor: isActive ? COLORS.charcoalBlue : COLORS.background }}
               whileTap={{ scale: 0.98 }}
               aria-current={isActive ? 'page' : undefined}
               style={{
                 ...styles.navItem,
                 backgroundColor: isActive ? COLORS.charcoalBlue : 'transparent',
-                color: isActive ? 'white' : '#64748b',
+                color: isActive ? COLORS.surface : COLORS.textSecondary,
                 justifyContent: isMobile || !collapsed ? 'flex-start' : 'center',
-                padding: isMobile || !collapsed ? '12px 16px' : '12px'
+                padding: isMobile || !collapsed ? '12px 16px' : '12px 8px'
               }}
               title={!isMobile && collapsed ? item.label : ''}
             >
@@ -179,7 +181,7 @@ const Sidebar = ({ isMobile = false }) => {
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
-                style={{ marginLeft: '10px', whiteSpace: 'nowrap' }}
+                style={{ marginLeft: '8px', whiteSpace: 'nowrap' }}
               >
                 {t('exit')}
               </Motion.span>
@@ -210,10 +212,11 @@ const Sidebar = ({ isMobile = false }) => {
               role="dialog"
               aria-modal="true"
               aria-label={t('navLabel')}
+              className="app-shell-focus"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={{ duration: 0.3, ease: SHELL_EASE_OUT }}
               style={styles.mobileSidebar}
             >
               {sidebarContent}
@@ -226,9 +229,10 @@ const Sidebar = ({ isMobile = false }) => {
 
   return (
     <Motion.aside
+      className="app-shell-focus"
       initial={false}
-      animate={{ width: collapsed ? '80px' : '260px' }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      animate={{ x: collapsed ? -180 : 0 }}
+      transition={{ duration: 0.3, ease: SHELL_EASE_OUT }}
       style={styles.sidebar}
     >
       {sidebarContent}

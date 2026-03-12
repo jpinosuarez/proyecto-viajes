@@ -41,8 +41,13 @@
   "stats": {
     "countries": "Countries",
     "trips": "Trips",
-    "continents": "Continents"
+    "continents": "Continents",
+    "longestTrip": "Longest trip (days)",
+    "photos": "Photos",
+    "overview": "Stats overview"
   },
+  "share": "Share profile",
+  "shareCopied": "Link copied to clipboard",
   "goals": {
     "remaining": "{{count}} {{unit}} to unlock",
     "units": {

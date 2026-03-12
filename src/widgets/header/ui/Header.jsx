@@ -7,15 +7,15 @@ import { styles } from './Header.styles';
 import { COLORS, RADIUS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 
-// Título de página derivado de la URL
+// Route-to-translation mapping for current page title.
 const PAGE_TITLES = {
-  '/dashboard':      'Inicio',
-  '/trips':          'Mis Viajes',
-  '/map':            'Mapa Mundial',
-  '/explorer':       'Traveler Hub',
-  '/invitations':    'Invitaciones',
-  '/settings':       'Ajustes',
-  '/admin/curacion': 'Curación de fotos',
+  '/dashboard':      'pageTitle.home',
+  '/trips':          'pageTitle.journal',
+  '/map':            'pageTitle.worldMap',
+  '/explorer':       'pageTitle.hub',
+  '/invitations':    'pageTitle.invitations',
+  '/settings':       'pageTitle.settings',
+  '/admin/curacion': 'pageTitle.curation',
 };
 
 const Header = ({ isMobile = false, invitationsCount = 0 }) => {
@@ -28,14 +28,24 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
   const { busqueda: query, setBusqueda: setQuery, limpiarBusqueda: clearQuery } = useSearch();
   const { t } = useTranslation(['nav', 'common']);
   const [failedPhoto, setFailedPhoto] = useState(null);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  // Título y visibilidad de buscador derivados de la ruta actual
-  const headerTitle = PAGE_TITLES[pathname] ?? (pathname.startsWith('/trips/') ? 'Mis Viajes' : 'Keeptrip');
+  // Page title and search visibility are derived from route.
+  const pageTitleKey = PAGE_TITLES[pathname] ?? (pathname.startsWith('/trips/') ? 'pageTitle.journal' : null);
+  const headerTitle = pageTitleKey ? t(`nav:${pageTitleKey}`) : 'Keeptrip';
   const showSearch  = pathname === '/trips' || pathname.startsWith('/trips/');
-  const searchPlaceholder = t('nav:searchJournal', 'Buscar en tus viajes...');
+  const searchPlaceholder = t('nav:searchJournal');
+
+  const handleSearchIconClick = () => {
+    setIsMobileSearchOpen((open) => !open);
+  };
+
+  const handleMobileSearchClose = () => {
+    setIsMobileSearchOpen(false);
+  };
 
   const initials = useMemo(
     () => user?.displayName?.trim()?.[0]?.toUpperCase() || '',
@@ -45,7 +55,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
   const canShowPhoto = Boolean(photoUrl && failedPhoto !== photoUrl);
 
   return (
-    <header role="banner" style={styles.header(isMobile)}>
+    <header role="banner" style={styles.header(isMobile)} className="app-shell-focus">
       <div style={styles.leftSide}>
         {isMobile && (
           <button
@@ -65,7 +75,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
       </div>
 
       <div style={styles.rightSide(isMobile)}>
-        {showSearch && (
+        {!isMobile && showSearch && (
           <div style={styles.searchContainer(isMobile)}>
             <Search size={16} color={COLORS.textSecondary} />
             <input
@@ -89,13 +99,38 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
           </div>
         )}
 
+        {isMobile && showSearch && (
+          <button
+            type="button"
+            onClick={handleSearchIconClick}
+            aria-label={isMobileSearchOpen ? t('nav:closeSearch') : t('nav:openSearch')}
+            aria-expanded={isMobileSearchOpen}
+            aria-controls="mobile-header-search"
+            style={{
+              background: COLORS.surface,
+              border: `1px solid ${COLORS.border}`,
+              color: COLORS.textSecondary,
+              width: '44px',
+              height: '44px',
+              borderRadius: RADIUS.md,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            {isMobileSearchOpen ? <X size={18} /> : <Search size={18} />}
+          </button>
+        )}
+
         <button type="button" style={styles.addButton(isMobile)} onClick={openTripSearch}>
           <Plus size={18} />
           {!isMobile && <span style={styles.addButtonLabel}>{t('nav:addTrip')}</span>}
         </button>
 
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
               type="button"
               data-testid="header-invitations-button"
@@ -110,6 +145,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
                 alignItems: 'center',
                 minWidth: '44px',
                 minHeight: '44px',
+                borderRadius: RADIUS.md,
                 justifyContent: 'center'
               }}
             >
@@ -122,9 +158,9 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
                     background: COLORS.danger,
                     color: COLORS.surface,
                     borderRadius: RADIUS.sm,
-                    padding: '2px 6px',
-                    fontSize: 11,
-                    marginLeft: 6
+                    padding: '4px 8px',
+                    fontSize: 12,
+                    marginLeft: 8
                   }}
                 >
                   {invitationsCount}
@@ -132,14 +168,13 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
               )}
             </button>
 
-            <div
+            <button
+              type="button"
               data-testid="header-avatar"
               style={{ ...styles.avatar, cursor: 'pointer' }}
               onClick={() => navigate('/settings')}
               title={t('nav:settings')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate('/settings')}
+              aria-label={t('nav:settings')}
             >
               {canShowPhoto ? (
                 <img
@@ -153,7 +188,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
               ) : (
                 <User size={20} />
               )}
-            </div>
+            </button>
 
             {!isMobile && (
               <button
@@ -172,12 +207,48 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
             type="button"
             data-testid="header-login-button"
             onClick={login}
-            style={{ ...styles.addButton(isMobile), backgroundColor: '#4285F4' }}
+            style={{ ...styles.addButton(isMobile), backgroundColor: COLORS.mutedTeal }}
           >
             {t('common:login')}
           </button>
         )}
       </div>
+
+      {isMobile && showSearch && isMobileSearchOpen && (
+        <div id="mobile-header-search" style={styles.mobileSearchPanel}>
+          <div style={styles.searchContainer(true)}>
+            <Search size={16} color={COLORS.textSecondary} />
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              aria-label={t('nav:searchJournal')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={styles.searchInput}
+              autoFocus
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={clearQuery}
+                style={styles.clearButton}
+                aria-label={t('nav:clearSearch')}
+              >
+                <X size={14} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleMobileSearchClose}
+                style={styles.clearButton}
+                aria-label={t('nav:closeSearch')}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

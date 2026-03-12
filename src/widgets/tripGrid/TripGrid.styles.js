@@ -1,4 +1,4 @@
-import { COLORS, RADIUS, SHADOWS } from '@shared/config';
+import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 
 export const styles = {
   searchMeta: {
@@ -36,7 +36,13 @@ export const styles = {
     cursor: 'pointer',
     boxShadow: SHADOWS.md,
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    backgroundColor: COLORS.surface
+    backgroundColor: COLORS.surface,
+    aspectRatio: '4/5', // Cinematográfico
+    minWidth: '180px',
+    maxWidth: '320px',
+    flex: '1 1 220px',
+    display: 'flex',
+    flexDirection: 'column',
   },
   topGradient: {
     position: 'absolute',
@@ -44,12 +50,25 @@ export const styles = {
     left: 0,
     right: 0,
     height: '120px',
-    background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 70%, transparent 100%)',
+    background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: '16px',
     zIndex: 2
+  },
+  bottomGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '40%',
+    background: 'linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)',
+    zIndex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    padding: '16px',
   },
   miniBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -106,7 +125,10 @@ export const styles = {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     boxShadow: SHADOWS.md,
-    marginBottom: '16px'
+    marginBottom: '16px',
+    maxWidth: '100%',
+    width: 'min(360px, 100%)',
+    /* remove strict aspect ratio to avoid overflow on narrow devices */
   },
   emptyIconContainer: (variant) => ({
     display: 'flex',
@@ -197,6 +219,30 @@ export const styles = {
     display: 'flex',
     gap: '8px',
     alignItems: 'center'
+  },
+  cardActions: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    display: 'flex',
+    gap: '4px',
+    zIndex: 3,
+  },
+  actionBtn: {
+    color: COLORS.danger,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    border: 'none',
+    borderRadius: RADIUS.full,
+    minWidth: '44px',
+    minHeight: '44px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: TRANSITIONS.fast,
+  },
+  actionBtnHover: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   flagImage: {
     width: '28px',

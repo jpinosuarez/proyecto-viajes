@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { getTravelerLevel, getNextLevel } from '../model/travelerLevel';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import AchievementsGrid from './AchievementsGrid';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 import { styles } from './TravelerHub.styles';
 import { COLORS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
+import { Globe, Calendar, MapPin, Image, Share } from 'lucide-react';
+import { useToast } from '@app/providers';
 
 /**
  * TravelerHub — the gamification hub with a Bento-style layout.
@@ -21,6 +24,31 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
   const countryCount = paisesVisitados.length;
   const level = getTravelerLevel(countryCount);
   const next = getNextLevel(countryCount);
+  const { pushToast } = useToast();
+
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: tNav('hub'), url });
+      } catch {}
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(url);
+        pushToast(t('shareCopied'), 'success');
+      } catch (e) {
+        // fallback silently
+      }
+    }
+  }, [pushToast, tNav, t]);
+
+  // compute additional derived stats for hub
+  const statsArray = [];
+  statsArray.push({ value: countryCount, label: t('stats.countries'), icon: <Globe size={16} /> });
+  statsArray.push({ value: bitacora.length, label: t('stats.trips'), icon: <Calendar size={16} /> });
+  statsArray.push({ value: stats.continents, label: t('stats.continents'), icon: <MapPin size={16} /> });
+  if (stats.longestTrip) statsArray.push({ value: stats.longestTrip, label: t('stats.longestTrip'), icon: <Calendar size={16} /> });
+  if (stats.totalPhotos) statsArray.push({ value: stats.totalPhotos, label: t('stats.photos'), icon: <Image size={16} /> });
 
   return (
     <div style={styles.container(isMobile)}>
@@ -56,20 +84,25 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
           </div>
 
           <div style={styles.heroRight}>
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatValue}>{countryCount}</span>
-              <span style={styles.heroStatLabel}>{t('stats.countries')}</span>
-            </div>
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatValue}>{bitacora.length}</span>
-              <span style={styles.heroStatLabel}>{t('stats.trips')}</span>
-            </div>
-            <div style={styles.heroStat}>
-              <span style={styles.heroStatValue}>{stats.continents}</span>
-              <span style={styles.heroStatLabel}>{t('stats.continents')}</span>
-            </div>
+            {/* botón compartir perfil con micro‑animación */}
+            <Motion.button
+              type="button"
+              onClick={handleShare}
+              style={styles.shareBtn}
+              aria-label={t('share')}
+              title={t('share')}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <Share size={20} />
+            </Motion.button>
           </div>
         </Motion.div>
+
+        {/* ── Global stats widget below hero (full variant) ── */}
+        <div style={{ marginTop: '24px', padding: '0 16px' }}>
+          <TravelStatsWidget stats={statsArray} ariaLabel={t('stats.overview')} variant="full" />
+        </div>
 
         {/* ── Achievements (goals + unlocked + locked) ── */}
         <AchievementsGrid achievementsWithProgress={achievementsWithProgress} isMobile={isMobile} />

@@ -9,6 +9,8 @@ import { COLORS } from '@shared/config';
 import { styles } from './DashboardPage.styles';
 import { HomeMap } from '@features/mapa';
 import { getTravelerLevel, getNextLevel } from '@features/gamification';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
+import { useLogStats } from '@pages/dashboard/model/useLogStats';
 import { SkeletonList, TripCardSkeleton } from '@shared/ui/components/Skeletons';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 
@@ -26,6 +28,17 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
     [log]
   );
   const isNewTraveler = log.length === 0;
+
+  // dashboard stats
+  const tripDataMap = useMemo(() => {
+    const m = {};
+    log.forEach((t) => {
+      if (t.id) m[t.id] = t;
+    });
+    return m;
+  }, [log]);
+
+  const logStatsDashboard = useLogStats(log, tripDataMap);
 
   const visitedCount = countriesVisited.length;
   const worldPercent = visitedCount > 0 ? ((visitedCount / 195) * 100).toFixed(0) : '0';
@@ -52,6 +65,22 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
               </span>
             )}
           </p>
+          {/* dashboard-wide stats widget */}
+          {!isNewTraveler && (
+            <div style={styles.statsBanner}>
+              <TravelStatsWidget
+                stats={[
+                  { value: logStatsDashboard.tripCount, label: t('stats.tripsCompleted') },
+                  { value: logStatsDashboard.totalDays, label: t('stats.totalDays') },
+                  { value: logStatsDashboard.totalCities, label: t('stats.registeredCities') },
+                  { value: logStatsDashboard.continents, label: t('stats.continents') },
+                  { value: logStatsDashboard.longestTrip, label: t('stats.longestTrip') },
+                  { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
+                ]}
+                ariaLabel={t('stats.tripSummary')}
+              />
+            </div>
+          )}
         </div>
 
         {!isMobile && !isNewTraveler && (

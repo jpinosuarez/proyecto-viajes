@@ -12,8 +12,19 @@
   "adjust": "Ajustes",
   "addTrip": "Añadir Viaje",
   "searchJournal": "Buscar en tus viajes",
+  "openSearch": "Abrir búsqueda",
+  "closeSearch": "Cerrar búsqueda",
   "clearSearch": "Limpiar búsqueda",
   "avatarAlt": "Foto de {{name}}",
   "navLabel": "Menú principal",
-  "closeMenu": "Cerrar menú"
+  "closeMenu": "Cerrar menú",
+  "pageTitle": {
+    "home": "Inicio",
+    "journal": "Mis Viajes",
+    "worldMap": "Mapa Mundial",
+    "hub": "Traveler Hub",
+    "invitations": "Invitaciones",
+    "settings": "Ajustes",
+    "curation": "Curación de fotos"
+  }
 }

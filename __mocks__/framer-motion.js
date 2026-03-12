@@ -32,11 +32,27 @@ function filterMotionProps(props) {
   return filtered;
 }
 
+function maybeUnwrapChild(child) {
+  if (child && typeof child === 'object' && typeof child.get === 'function') {
+    return child.get();
+  }
+  return child;
+}
+
 const handler = {
   get(_target, tag) {
     if (tag === '__esModule') return true;
     const MotionComponent = React.forwardRef(function MotionStub(props, ref) {
-      return React.createElement(tag, { ...filterMotionProps(props), ref });
+      const filtered = filterMotionProps(props);
+      if (filtered.children) {
+        // if single MotionValue passed directly, unwrap it first
+        if (filtered.children && typeof filtered.children === 'object' && typeof filtered.children.get === 'function') {
+          filtered.children = filtered.children.get();
+        } else {
+          filtered.children = React.Children.map(filtered.children, maybeUnwrapChild);
+        }
+      }
+      return React.createElement(tag, { ...filtered, ref });
     });
     MotionComponent.displayName = `motion.${tag}`;
     return MotionComponent;

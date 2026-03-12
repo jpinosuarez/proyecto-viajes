@@ -3,10 +3,10 @@ import { motion as Motion } from 'framer-motion';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogStats } from '@pages/dashboard/model/useLogStats';
-import LogStats from '@pages/dashboard/ui/components/LogStats';
-import { Trash2, Edit3, Calendar, MapPin, LoaderCircle, Globe, Telescope, ArrowRight } from 'lucide-react';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
+import { Trash2, Edit3, Calendar, MapPin, LoaderCircle, Globe, Telescope, ArrowRight, Plus } from 'lucide-react';
 import { useSearch, useUI } from '@app/providers/UIContext';
-import { COLORS } from '@shared/config';
+import { COLORS, SHADOWS } from '@shared/config';
 import { styles } from './TripGrid.styles';
 import './TripGrid.css';
 
@@ -30,7 +30,7 @@ const TripGrid = ({
       const fields = [
         data.titulo,
         trip.nameSpanish,
-        data.cities
+        data.cities,
       ]
         .filter(Boolean)
         .join(' ')
@@ -50,14 +50,14 @@ const TripGrid = ({
   const logStats = useLogStats(filteredTrips, tripData);
 
   const statItems = useMemo(() => {
-    if (logStats.tripCount === 0) {
-      return [];
-    }
-
+    if (logStats.tripCount === 0) return [];
     return [
       { value: logStats.tripCount, label: tDashboard('stats.tripsCompleted') },
       { value: logStats.totalDays, label: tDashboard('stats.totalDays') },
       { value: logStats.totalCities, label: tDashboard('stats.registeredCities') },
+      { value: logStats.continents, label: tDashboard('stats.continents') },
+      { value: logStats.longestTrip, label: tDashboard('stats.longestTrip') },
+      { value: logStats.totalPhotos, label: tDashboard('stats.photos') },
       ...(logStats.averageRating
         ? [{ value: `${logStats.averageRating}\u2605`, label: tDashboard('stats.averageRating'), accent: true }]
         : []),
@@ -69,7 +69,7 @@ const TripGrid = ({
 
   return (
     <div style={styles.gridWrapper}>
-      <LogStats stats={statItems} ariaLabel={tDashboard('stats.tripSummary', 'Resumen de viajes')} />
+      <TravelStatsWidget stats={statItems} ariaLabel={tDashboard('stats.tripSummary', 'Resumen de viajes')} variant="compact" />
       {searchTerm && !hasNoTrips && (
         <div style={styles.searchMeta}>
           <span>
@@ -82,120 +82,139 @@ const TripGrid = ({
       )}
 
       <div className="trip-masonry">
-        {sortedTrips.map((trip) => {
-          const data = tripData[trip.id] || trip || {};
-
-          if (!data.nameSpanish && !data.titulo) return null;
-
-          const hasPhoto = !!(data.photo && typeof data.photo === 'string' && data.photo.startsWith('http'));
-          const flags = data.flags && data.flags.length > 0 ? data.flags : (trip.flag ? [trip.flag] : []);
-
-          return (
-            <div
-              key={trip.id}
-              data-testid={`trip-card-${trip.id}`}
-              className="tap-scale"
+        {hasNoTrips ? (
+          <div style={styles.emptyStatePrimary}>
+            <div style={styles.emptyIconContainer('primary')}>
+              <Globe size={56} color={COLORS.atomicTangerine} />
+            </div>
+            <h2 style={{ fontWeight: 900, fontSize: '2rem', color: COLORS.charcoalBlue, marginBottom: 12 }}>
+              {t('emptyState.title', '¡Tu bitácora espera aventuras!')}
+            </h2>
+            <p style={{ color: COLORS.textSecondary, fontSize: '1rem', marginBottom: 24 }}>
+              {t('emptyState.subtitle', 'Registra tu primer viaje y comienza a coleccionar recuerdos, sellos y logros.')}
+            </p>
+            <Motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
               style={{
-                ...styles.masonryItem,
-                ...(hasPhoto ? {
-                  backgroundImage: `url('${data.photo}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                } : {})
+                background: COLORS.atomicTangerine,
+                color: '#fff',
+                border: 'none',
+                borderRadius: '999px',
+                minWidth: '44px',
+                minHeight: '44px',
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                boxShadow: SHADOWS.md,
+                padding: '12px 32px',
+                marginTop: 8,
+                cursor: 'pointer',
               }}
-              onClick={() => navigate('/trips/' + trip.id)}
+              onClick={openBuscador}
+              aria-label={t('bentogrid.emptyState.cta', 'Registrar aventura')}
             >
-              <div style={styles.topGradient}>
-                <div style={styles.flagsRow}>
-                  {flags.slice(0, 3).map((flag, i) => (
-                    <img
-                      key={i}
-                      src={flag}
-                      alt={i === 0 ? `Bandera de ${data.nombreEspanol || data.titulo || 'destino visitado'}` : 'Bandera de destino visitado'}
-                      loading="lazy"
-                      style={styles.flagImage}
-                      onError={(e) => e.target.style.display = 'none'}
-                    />
-                  ))}
-                  {flags.length > 3 && <span style={styles.flagOverflow}>+{flags.length - 3}</span>}
-                </div>
-
-                <div style={styles.actionButtons}>
-                  <button className="tap-icon" onClick={(e) => { e.stopPropagation(); navigate('?editing=' + trip.id); }} style={styles.miniBtn}><Edit3 size={14} /></button>
-                  <button
-                    className="tap-icon"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(trip.id); }}
-                    style={styles.miniBtn}
-                    disabled={isDeletingTrip(trip.id)}
-                    title={isDeletingTrip(trip.id) ? t('bentogrid.deleting') : t('bentogrid.deleteTrip')}
-                  >
-                    {isDeletingTrip(trip.id) ? <LoaderCircle size={14} className="spin" /> : <Trash2 size={14} />}
-                  </button>
-                </div>
-              </div>
-
-              <div style={hasPhoto ? styles.bottomContentGlass : styles.bottomContentSolid(COLORS.mutedTeal)}>
-                <h3 data-testid={`trip-card-title-${trip.id}`} style={styles.cardTitle(hasPhoto)}>
-                  {data.titulo || trip.nameSpanish}
-                </h3>
-                <div style={styles.metaRow(hasPhoto)}>
-                  <div style={styles.metaRowItem}>
-                    <Calendar size={12} /> <span>{data.startDate?.split('-')[0]}</span>
+              <Plus size={20} style={{ marginRight: 8 }} />
+              {t('bentogrid.emptyState.cta', 'Registrar aventura')}
+            </Motion.button>
+          </div>
+        ) : (
+          sortedTrips.map((trip) => {
+            const data = tripData[trip.id] || trip || {};
+            if (!data.nameSpanish && !data.titulo) return null;
+            // trips may store cover photo under "foto" either on data or the trip object
+            const coverUrl = data.foto || trip.foto || '';
+            const hasPhoto = !!(coverUrl && typeof coverUrl === 'string' && coverUrl.startsWith('http'));
+            const flags = data.flags && data.flags.length > 0 ? data.flags : trip.flag ? [trip.flag] : [];
+            return (
+              <Motion.div
+                key={trip.id}
+                data-testid={`trip-card-${trip.id}`}
+                className="tap-scale"
+                style={{
+                  ...styles.masonryItem,
+                  ...(hasPhoto
+                    ? {
+                        backgroundImage: `url('${coverUrl}')`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : {}),
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/trips/' + trip.id)}
+              >
+                <div style={styles.topGradient}>
+                  <div style={styles.flagsRow}>
+                    {flags.slice(0, 3).map((flag, i) => (
+                      <img
+                        key={i}
+                        src={flag}
+                        alt={
+                          i === 0
+                            ? `Bandera de ${data.nombreEspanol || data.titulo || 'destino visitado'}`
+                            : 'Bandera de destino visitado'
+                        }
+                        loading="lazy"
+                        style={styles.flagImage}
+                        onError={(e) => (e.target.style.display = 'none')}
+                      />
+                    ))}
+                    {flags.length > 3 && <span style={styles.flagOverflow}>+{flags.length - 3}</span>}
                   </div>
-                  {data.cities && (
-                    <div style={styles.metaRowItem}>
-                      <MapPin size={12} /> <span>{data.cities.split(',').length} {t('bentogrid.stops')}</span>
+                  {/* quick action buttons */}
+                  {handleDelete && (
+                    <div style={styles.cardActions}>
+                      <button
+                        className="tap-icon"
+                        style={styles.actionBtn}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.35)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(trip.id);
+                        }}
+                        aria-label={t('bentogrid.deleteTrip')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {hasNoTrips && (
-          <Motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            style={styles.emptyStatePrimary}
-            className="trip-empty"
-          >
-            <div style={styles.emptyIconContainer('primary')}>
-              <Globe size={36} color={COLORS.atomicTangerine} strokeWidth={1.5} />
-            </div>
-            <h3 style={styles.emptyTitlePrimary}>{t('bentogrid.emptyTitle')}</h3>
-            <p style={styles.emptyTextPrimary}>
-              {t('bentogrid.emptyDescription')}
-            </p>
-            <button type="button" className="tap-btn" onClick={openBuscador} style={styles.emptyActionPrimary}>
-              {t('bentogrid.registerFirstStop')}
-              <ArrowRight size={16} />
-            </button>
-          </Motion.div>
-        )}
-
-        {hasNoSearchResults && (
-          <Motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            style={styles.emptyState}
-            className="trip-empty"
-          >
-            <div style={styles.emptyIconContainer('secondary')}>
-              <Telescope size={28} color={COLORS.charcoalBlue} strokeWidth={1.5} />
-            </div>
-            <h3 style={styles.emptyTitle}>{t('bentogrid.noResultsTitle')}</h3>
-            <p style={styles.emptyText}>
-              {t('bentogrid.noResultsDescription')}
-            </p>
-            <button type="button" onClick={limpiarBusqueda} style={styles.emptyAction}>
-              {t('bentogrid.clearFilter')}
-            </button>
-          </Motion.div>
+                <div style={styles.bottomGradient}>
+                  <h3 style={{ color: '#fff', fontWeight: 900, fontSize: '1.2rem', marginBottom: 4, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                    {data.titulo || data.nameSpanish}
+                  </h3>
+                  <div style={{ color: '#fff', fontSize: '0.9rem', opacity: 0.85 }}>
+                    {data.startDate ? t('card.date', { date: data.startDate }) : ''}
+                  </div>
+                </div>
+              </Motion.div>
+            );
+          })
         )}
       </div>
+
+
+      {hasNoSearchResults && (
+        <Motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          style={styles.emptyState}
+          className="trip-empty"
+        >
+          <div style={styles.emptyIconContainer('secondary')}>
+            <Telescope size={28} color={COLORS.charcoalBlue} strokeWidth={1.5} />
+          </div>
+          <h3 style={styles.emptyTitle}>{t('bentogrid.noResultsTitle')}</h3>
+          <p style={styles.emptyText}>{t('bentogrid.noResultsDescription')}</p>
+          <button type="button" onClick={limpiarBusqueda} style={styles.emptyAction}>
+            {t('bentogrid.clearFilter')}
+          </button>
+        </Motion.div>
+      )}
+
       {/* Outlet para rutas anidadas /trips/:id */}
       <Outlet />
     </div>

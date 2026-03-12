@@ -39,12 +39,28 @@ export const buildStats = (countryCodes, bitacora, todasLasParadas) => {
     if (count >= 3) detailedTrips++;
   }
 
+  // longest trip and total photos
+  let longestDays = 0;
+  let totalPhotos = 0;
+  for (const t of bitacora) {
+    if (t.startDate && t.endDate) {
+      const a = new Date(t.startDate);
+      const b = new Date(t.endDate);
+      const diff = Math.ceil((b - a) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > longestDays) longestDays = diff;
+    }
+    if (Array.isArray(t.gallery)) totalPhotos += t.gallery.length;
+    else if (Array.isArray(t.fotos)) totalPhotos += t.fotos.length;
+  }
+
   return {
     countries: countryCodes.length,
     trips: bitacora.length,
     continents: continents.size,
     detailedTrips,
     continentNames: continents,
+    longestTrip: longestDays,
+    totalPhotos,
   };
 };
 

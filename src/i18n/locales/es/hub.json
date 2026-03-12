@@ -41,8 +41,13 @@
   "stats": {
     "countries": "Países",
     "trips": "Viajes",
-    "continents": "Continentes"
+    "continents": "Continentes",
+    "longestTrip": "Mayor viaje (días)",
+    "photos": "Fotos",
+    "overview": "Resumen de estadísticas"
   },
+  "share": "Compartir perfil",
+  "shareCopied": "Enlace copiado al portapapeles",
   "goals": {
     "remaining": "{{count}} {{unit}} para desbloquear",
     "units": {

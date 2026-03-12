@@ -12,8 +12,19 @@
   "adjust": "Settings",
   "addTrip": "Add Trip",
   "searchJournal": "Search the logbook",
+  "openSearch": "Open search",
+  "closeSearch": "Close search",
   "clearSearch": "Clear search",
   "avatarAlt": "Photo of {{name}}",
   "navLabel": "Main navigation",
-  "closeMenu": "Close menu"
+  "closeMenu": "Close menu",
+  "pageTitle": {
+    "home": "Home",
+    "journal": "Logbook",
+    "worldMap": "World map",
+    "hub": "Traveler Hub",
+    "invitations": "Invitations",
+    "settings": "Settings",
+    "curation": "Photo curation"
+  }
 }

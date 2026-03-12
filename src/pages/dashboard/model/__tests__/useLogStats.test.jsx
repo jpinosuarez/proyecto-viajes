@@ -12,6 +12,9 @@ describe('useLogStats', () => {
       totalDays: 0,
       totalCities: 0,
       averageRating: null,
+      continents: 0,
+      longestTrip: 0,
+      totalPhotos: 0,
     });
   });
 
@@ -23,6 +26,9 @@ describe('useLogStats', () => {
       totalDays: 0,
       totalCities: 0,
       averageRating: null,
+      continents: 0,
+      longestTrip: 0,
+      totalPhotos: 0,
     });
   });
 
@@ -50,6 +56,9 @@ describe('useLogStats', () => {
       totalDays: 6,
       totalCities: 5,
       averageRating: '4.5',
+      continents: 0, // no country codes provided
+      longestTrip: 3,
+      totalPhotos: 0,
     });
   });
 

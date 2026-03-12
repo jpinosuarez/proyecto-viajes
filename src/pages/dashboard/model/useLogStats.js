@@ -43,6 +43,9 @@ export const useLogStats = (trips = [], tripData = {}) => {
         totalDays: 0,
         totalCities: 0,
         averageRating: null,
+        continents: 0,
+        longestTrip: 0,
+        totalPhotos: 0,
       };
     }
 
@@ -50,11 +53,17 @@ export const useLogStats = (trips = [], tripData = {}) => {
     let totalCities = 0;
     let ratingSum = 0;
     let ratedTripCount = 0;
+    let longestDays = 0;
+    let totalPhotos = 0;
+    const continentCodes = new Set();
 
     safeTrips.forEach((trip) => {
       const tripDetails = safeTripData[trip.id];
 
-      totalDays += getTripDuration(tripDetails);
+      const duration = getTripDuration(tripDetails);
+      totalDays += duration;
+      if (duration > longestDays) longestDays = duration;
+
       totalCities += countTripCities(tripDetails);
 
       const rating = Number(tripDetails?.rating);
@@ -62,15 +71,40 @@ export const useLogStats = (trips = [], tripData = {}) => {
         ratingSum += rating;
         ratedTripCount += 1;
       }
+
+      // gather country codes for continents lookup
+      if (tripDetails?.code) {
+        continentCodes.add(tripDetails.code);
+      } else if (trip.code) {
+        continentCodes.add(trip.code);
+      }
+
+      // count photos if present in trip record itself or details
+      if (Array.isArray(tripDetails?.gallery)) totalPhotos += tripDetails.gallery.length;
+      else if (Array.isArray(tripDetails?.fotos)) totalPhotos += tripDetails.fotos.length;
+      else if (Array.isArray(trip.gallery)) totalPhotos += trip.gallery.length;
+      else if (Array.isArray(trip.fotos)) totalPhotos += trip.fotos.length;
     });
 
     const averageRating = ratedTripCount > 0 ? ratingSum / ratedTripCount : 0;
+
+    // convert continent codes to count via achievementsEngine helper
+    let continents = 0;
+    try {
+      const { getContinents } = require('@features/gamification/model/achievementsEngine');
+      continents = getContinents([...continentCodes]).size;
+    } catch {
+      continents = continentCodes.size;
+    }
 
     return {
       tripCount: safeTrips.length,
       totalDays,
       totalCities,
       averageRating: averageRating > 0 ? averageRating.toFixed(1) : null,
+      continents,
+      longestTrip: longestDays,
+      totalPhotos,
     };
   }, [safeTrips, safeTripData]);
 };

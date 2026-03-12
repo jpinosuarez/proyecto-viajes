@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { COLORS, SHADOWS, RADIUS, GLASS } from '@shared/config';
 import BottomSheetHeader from './BottomSheetHeader.jsx';
@@ -21,25 +21,17 @@ const OVERLAY_VARIANTS = {
   visible: { opacity: 1 },
 };
 
+const SHELL_EASE_OUT = [0.22, 1, 0.36, 1];
+
 const SHEET_VARIANTS = {
   hidden: { y: '100%' },
   visible: {
     y: 0,
-    transition: {
-      type: 'spring',
-      damping: 30,
-      stiffness: 320,
-      mass: 0.9,
-    },
+    transition: { duration: 0.3, ease: SHELL_EASE_OUT },
   },
   exit: {
     y: '100%',
-    transition: {
-      type: 'spring',
-      damping: 32,
-      stiffness: 360,
-      mass: 0.7,
-    },
+    transition: { duration: 0.3, ease: SHELL_EASE_OUT },
   },
 };
 
@@ -49,8 +41,11 @@ const BottomSheet = ({
   children,
   zIndex = 12000,
   disableClose = false,
+  ariaLabel = 'Bottom sheet',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const sheetRef = useRef(null);
+  const prevFocusRef = useRef(null);
 
   const handleClose = useCallback(() => {
     if (!disableClose) onClose();
@@ -60,6 +55,26 @@ const BottomSheet = ({
     onClose: handleClose,
     disabled: disableClose,
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    prevFocusRef.current = document.activeElement;
+    sheetRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        handleClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      prevFocusRef.current?.focus?.();
+    };
+  }, [handleClose, isOpen]);
 
   return (
     <AnimatePresence>
@@ -72,7 +87,7 @@ const BottomSheet = ({
             initial="hidden"
             animate="visible"
             exit="hidden"
-            transition={{ duration: 0.22 }}
+            transition={{ duration: 0.2, ease: SHELL_EASE_OUT }}
             onClick={handleClose}
             style={{
               position: 'fixed',
@@ -90,6 +105,12 @@ const BottomSheet = ({
             initial="hidden"
             animate="visible"
             exit="exit"
+            className="app-shell-focus"
+            ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={ariaLabel}
+            tabIndex={-1}
             {...dragProps}
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(e, info) => {

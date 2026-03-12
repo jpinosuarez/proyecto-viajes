@@ -1,18 +1,19 @@
-import { COLORS, SHADOWS, RADIUS, TRANSITIONS } from '@shared/config';
+import { COLORS, SHADOWS, RADIUS, TRANSITIONS, Z_INDEX } from '@shared/config';
 
 export const styles = {
   header: (isMobile) => ({
-    minHeight: '70px',
+    minHeight: '72px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: isMobile ? '0 10px' : '0 30px',
+    padding: isMobile ? '0 16px' : '0 32px',
     gap: isMobile ? '8px' : '16px',
     backgroundColor: 'transparent',
-    zIndex: 100,
+    zIndex: Z_INDEX.dropdown,
+    position: 'relative',
     transition: TRANSITIONS.normal
   }),
-  leftSide: { display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 },
+  leftSide: { display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 },
   breadcrumb: { color: COLORS.textSecondary, fontSize: '0.85rem', fontWeight: '500' },
   separator: { color: COLORS.textSecondary, opacity: 0.5 },
   titulo: (isMobile) => ({
@@ -29,7 +30,7 @@ export const styles = {
     width: '44px',
     height: '44px',
     borderRadius: RADIUS.md,
-    border: '1px solid rgba(0,0,0,0.08)',
+    border: `1px solid ${COLORS.borderLight}`,
     backgroundColor: COLORS.surface,
     color: COLORS.charcoalBlue,
     display: 'flex',
@@ -42,24 +43,29 @@ export const styles = {
   rightSide: (isMobile) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: isMobile ? '8px' : '20px',
+    gap: isMobile ? '8px' : '16px',
     minWidth: 0
   }),
   searchContainer: (isMobile) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    backgroundColor: 'rgba(0,0,0,0.04)',
-    padding: '8px 12px',
+    gap: '8px',
+    backgroundColor: COLORS.surface,
+    padding: '8px 16px',
     borderRadius: RADIUS.md,
-    border: '1px solid rgba(0,0,0,0.02)',
+    border: `1px solid ${COLORS.border}`,
     minWidth: isMobile ? '0' : '280px',
-    width: isMobile ? '44vw' : 'auto'
+    width: isMobile ? 'min(92vw, 360px)' : 'auto',
+    boxShadow: SHADOWS.sm
   }),
+  mobileSearchPanel: {
+    position: 'absolute',
+    top: '64px',
+    right: '16px'
+  },
   searchInput: {
     border: 'none',
     background: 'none',
-    outline: 'none',
     fontSize: '1rem',
     color: COLORS.charcoalBlue,
     width: '100%'
@@ -72,14 +78,15 @@ export const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '8px',
-    margin: '-8px'
+    width: '32px',
+    height: '32px',
+    borderRadius: RADIUS.sm
   },
   addButton: (isMobile) => ({
     backgroundColor: COLORS.atomicTangerine,
     color: COLORS.linen,
     border: 'none',
-    padding: isMobile ? '10px' : '10px 20px',
+    padding: isMobile ? '12px' : '12px 24px',
     borderRadius: RADIUS.md,
     fontWeight: '800',
     cursor: 'pointer',
@@ -99,13 +106,13 @@ export const styles = {
     width: '44px',
     height: '44px',
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.sandyBrown,
+    backgroundColor: COLORS.mutedTeal,
     border: `2px solid ${COLORS.surface}`,
     boxShadow: SHADOWS.sm,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'white',
+    color: COLORS.surface,
     fontWeight: 'bold',
     fontSize: '0.9rem',
     flexShrink: 0

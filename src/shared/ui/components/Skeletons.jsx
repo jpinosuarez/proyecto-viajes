@@ -9,10 +9,17 @@ import React from 'react';
 export function TripCardSkeleton() {
   return (
     <div
-      className="skeleton"
+      className="skeleton skeleton-poster"
       style={{
-        height: '140px',
-        flexShrink: 0,
+        aspectRatio: '4/5',
+        minWidth: '180px',
+        maxWidth: '320px',
+        flex: '1 1 220px',
+        borderRadius: '24px',
+        /* keep gradient overlay to hint at image area */
+        background: 'linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)',
+        boxShadow: '0 10px 24px rgba(44,62,80,0.06)',
+        marginBottom: '16px',
       }}
     />
   );

@@ -60,7 +60,11 @@ html, body, #root {
   display: none;
 }
 
-/* Utilidad para inputs sin estilo */
-input:focus, textarea:focus, button:focus {
-  outline: none;
+/* App shell: focus-visible ring for keyboard navigation */
+.app-shell-focus button:focus-visible,
+.app-shell-focus [role="button"]:focus-visible,
+.app-shell-focus input:focus-visible,
+.app-shell-focus [role="dialog"]:focus-visible {
+  outline: 2px solid #45b0a8;
+  outline-offset: 2px;
 }

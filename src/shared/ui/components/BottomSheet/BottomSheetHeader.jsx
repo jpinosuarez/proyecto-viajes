@@ -14,7 +14,7 @@ const BottomSheetHeader = ({ isDragging = false }) => (
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '44px', // Touch target
-      padding: '14px 0 6px',
+      padding: '16px 0 8px',
       cursor: isDragging ? 'grabbing' : 'grab',
       userSelect: 'none',
       touchAction: 'none',
