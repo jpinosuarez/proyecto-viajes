@@ -7,13 +7,49 @@ import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
 import { setMapLanguage } from '@shared/lib/geo';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 
+import TravelerHud from './components/TravelerHud';
+import MapFabGroup from './components/MapFabGroup';
+import TripSlideOver from './components/TripSlideOver';
+
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-function MapaView({ paises = [], paradas = [] }) {
-  const { i18n, t } = useTranslation('nav');
-  useDocumentTitle(t('map'));
+function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
+  const { i18n, t } = useTranslation('dashboard');
+  useDocumentTitle(t('map', 'Mapa 3D'));
   const mapRef = useRef(null);
   const [viewState, setViewState] = useState({ longitude: 20, latitude: 20, zoom: 1.5 });
+  
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
+
+  const handleLocateMe = React.useCallback(() => {
+    mapRef.current?.flyTo({
+      center: [20, 20],
+      zoom: 1.5,
+      duration: 1500,
+      essential: true,
+    });
+  }, []);
+
+  const onMapClick = React.useCallback((event) => {
+    const feature = event.features && event.features[0];
+    if (feature && feature.layer.id === 'unclustered-point') {
+      const tripId = feature.properties.id;
+      const trip = trips.find(t => t.id === tripId);
+      
+      if (trip) {
+        setSelectedTrip(trip);
+        setIsSlideOverOpen(true);
+        
+        mapRef.current?.flyTo({
+          center: feature.geometry.coordinates,
+          zoom: 5.5,
+          duration: 1800,
+          essential: true
+        });
+      }
+    }
+  }, [trips]);
 
   const paradasUnicas = useMemo(() => {
     const vistas = new Set();
@@ -43,6 +79,8 @@ function MapaView({ paises = [], paradas = [] }) {
         ref={mapRef}
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
+        onClick={onMapClick}
+        interactiveLayerIds={['unclustered-point']}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="globe"
@@ -99,37 +137,53 @@ function MapaView({ paises = [], paradas = [] }) {
         <NavigationControl position="top-right" />
       </Map>
 
+      {/* OVERLAY LAYER (HUD & FABS) */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
+        {!isEmptyMap && (
+          <TravelerHud paises={paises} trips={trips} tripData={tripData} />
+        )}
+        <MapFabGroup onLocateMe={handleLocateMe} />
+      </div>
+
       <AnimatePresence>
         {isEmptyMap && (
           <Motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ 
+              y: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+              opacity: { duration: 0.3 }
+            }}
             style={{
               position: 'absolute',
-              left: '50%',
-              bottom: '18px',
-              transform: 'translateX(-50%)',
+              right: '24px',
+              bottom: '100px',
               ...GLASS.dark,
+              backgroundColor: 'rgba(30, 41, 59, 0.85)',
               color: '#fff',
               border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: RADIUS.full,
-              padding: '10px 16px',
+              borderRadius: RADIUS.lg,
+              padding: '12px 18px',
               fontSize: '0.86rem',
               fontWeight: '700',
               boxShadow: SHADOWS.lg,
               pointerEvents: 'none',
               zIndex: 3,
-              whiteSpace: 'nowrap',
-              maxWidth: 'calc(100% - 24px)',
-              textAlign: 'center'
+              maxWidth: '220px',
+              textAlign: 'right'
             }}
           >
-            Pulsa el boton (+) para marcar tu primer pais en el mapa
+            {t('welcome.emptyStateDescription', 'El globo está en blanco. Planta tu primera bandera.')}
           </Motion.div>
         )}
       </AnimatePresence>
+      
+      <TripSlideOver 
+        isOpen={isSlideOverOpen} 
+        onClose={() => setIsSlideOverOpen(false)} 
+        trip={selectedTrip} 
+      />
     </div>
   );
 }

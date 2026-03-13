@@ -124,10 +124,12 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
           </button>
         )}
 
-        <button type="button" style={styles.addButton(isMobile)} onClick={openTripSearch}>
-          <Plus size={18} />
-          {!isMobile && <span style={styles.addButtonLabel}>{t('nav:addTrip')}</span>}
-        </button>
+        {!isMobile && (
+          <button type="button" style={styles.addButton(isMobile)} onClick={openTripSearch}>
+            <Plus size={18} />
+            <span style={styles.addButtonLabel}>{t('nav:addTrip')}</span>
+          </button>
+        )}
 
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

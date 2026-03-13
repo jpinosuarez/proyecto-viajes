@@ -29,6 +29,12 @@
     "awaitingFirstStop": "Aún no tienes viajes registrados.",
     "awaitingProgress": "¡Comienza a explorar para ver tu progreso!"
   },
+  "welcome": {
+    "emptyStateTitle": "El Comienzo de tu Legado",
+    "emptyStateSubtitle": "Comienza a explorar el mundo",
+    "emptyStateDescription": "Aún no tienes destinos guardados. El mapa espera por tus historias.",
+    "emptyStateCTA": "Registrar Primera Aventura"
+  },
   "showingResults": "Mostrando {{shown}} de {{total}} viajes",
   "clearSearch": "Limpiar búsqueda",
   "stops": "paradas",

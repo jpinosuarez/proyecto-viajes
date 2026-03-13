@@ -30,12 +30,11 @@ const LandingPage = lazy(() => import('@pages/landing'));
 
 // ── Protected pages (lazy) ─────────────────────────────────────────────────────
 const DashboardPage  = lazy(() => import('@pages/dashboard/ui/DashboardPage'));
-const TripGrid       = lazy(() => import('@widgets/tripGrid'));
+const TripsPage      = lazy(() => import('@pages/trips/ui/TripsPage'));
 const MapaView       = lazy(() => import('@features/mapa/ui/MapaView'));
 const TravelerHub    = lazy(() => import('@features/gamification/ui/TravelerHub'));
 const InvitationsList = lazy(() => import('@features/invitations/ui/InvitationsList'));
 const SettingsPage   = lazy(() => import('@pages/Configuracion/SettingsPage'));
-const CuracionPage   = lazy(() => import('@pages/Curacion/CuracionPage'));
 
 // ── Raíz pública/autenticada ───────────────────────────────────────────────────
 function RootRoute() {
@@ -70,15 +69,9 @@ function DashboardRoute() {
 }
 
 function TripsRoute() {
-  const { data, crud } = useOutletContext();
   return (
     <Suspense fallback={null}>
-      <TripGrid
-        trips={data.bitacora}
-        tripData={data.bitacoraData}
-        handleDelete={crud.solicitarEliminarViaje}
-        isDeletingTrip={crud.isDeletingViaje}
-      />
+      <TripsPage />
     </Suspense>
   );
 }
@@ -90,6 +83,8 @@ function MapRoute() {
       <MapaView
         paises={data.paisesVisitados}
         paradas={data.todasLasParadas}
+        trips={data.bitacora}
+        tripData={data.bitacoraData}
       />
     </Suspense>
   );
@@ -142,10 +137,7 @@ function AppRouter() {
           <Route path="invitations" element={<InvitationsRoute />} />
           <Route path="settings"   element={<SettingsPage />} />
 
-          {/* Rutas de administrador */}
-          <Route element={<AdminGuard />}>
-            <Route path="admin/curacion" element={<CuracionPage />} />
-          </Route>
+          {/* Rutas de administrador (Deprecated/Removed) */}
 
         </Route>
       </Route>

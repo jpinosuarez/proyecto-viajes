@@ -29,7 +29,6 @@ const URL_MAP = {
   bitacora: '/trips',
   hub:      '/explorer',
   config:   '/settings',
-  curacion: '/admin/curacion',
 };
 
 const Sidebar = ({ isMobile = false }) => {
@@ -71,9 +70,8 @@ const Sidebar = ({ isMobile = false }) => {
     { id: 'mapa', icon: Map, label: t('map') },
     { id: 'bitacora', icon: BookOpen, label: t('journal') },
     { id: 'hub', icon: Trophy, label: t('hub') },
-    { id: 'curacion', icon: Image, label: t('curation') },
     { id: 'config', icon: Settings, label: t('adjust') }
-  ].filter((item) => item.id !== 'curacion' || isAdmin);
+  ];
 
   const handleSelect = (id) => {
     navigate(URL_MAP[id] || '/dashboard');

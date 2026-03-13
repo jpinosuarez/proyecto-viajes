@@ -1,0 +1,44 @@
+import React from 'react';
+import { motion as Motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
+import { COLORS, SHADOWS } from '@shared/config';
+import { useUI } from '@app/providers/UIContext';
+import { useTranslation } from 'react-i18next';
+
+const MobileCreateFab = () => {
+  const { openBuscador } = useUI();
+  const { t } = useTranslation('nav');
+
+  return (
+    <Motion.button
+      type="button"
+      whileTap={{ scale: 0.95 }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
+      onClick={openBuscador}
+      aria-label={t('nav:addTrip')}
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        width: '56px',
+        height: '56px',
+        borderRadius: '50%',
+        backgroundColor: COLORS.atomicTangerine,
+        color: '#fff',
+        border: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: `0 8px 24px ${COLORS.atomicTangerine}60, 0 4px 12px rgba(0,0,0,0.2)`,
+        zIndex: 1000, 
+        cursor: 'pointer',
+      }}
+    >
+      <Plus size={26} strokeWidth={2.5} />
+    </Motion.button>
+  );
+};
+
+export default React.memo(MobileCreateFab);

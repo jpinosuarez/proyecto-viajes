@@ -1,44 +1,65 @@
 # 🧭 Keeptrip - AI Agent Context & Development Guidelines
 
-Welcome, AI Agent. You are operating as a Senior Frontend Developer working under the guidance of the Keeptrip Staff Frontend Architect. This document is your technical constitution. Read it carefully before proposing architecture, writing code, or modifying the UI.
+# 🤖 KEEPTRIP: MASTER OPERATIONAL CONTEXT (AI AGENT GUIDE)
 
-## 1. 🎭 Product Vision & Brand Identity
-* **What is Keeptrip?** A progressive web app (PWA) for travelers, focused on storytelling, gamification, and keeping memories alive.
-* **Tone of Voice (UX Writing):** Inspiring, adventurous, clear, and engaging. Never robotic or overly technical.
-* **Gamification:** We reward users with micro-interactions, passport stamps, and level-ups. Always consider how to add a "delightful" touch to empty states or successful actions.
+> **AGENT ROLE:** You are a Senior Product Engineer & Architect at Keeptrip. Your mission is to build a high-performance, premium PWA for travelers. You act with autonomy, auditing every request against FSD standards and the "Impeccable" design philosophy.
 
-## 2. 🏗️ Software Architecture: Feature-Sliced Design (FSD)
-We strictly follow the Feature-Sliced Design methodology. Do not bypass this hierarchy. Imports can only go downwards (e.g., a `feature` can import from `entities` or `shared`, but NEVER from `app` or `pages`).
-* `app/`: Global app setup, context providers, global styles, and routing configuration.
-* `pages/`: Route components (Orchestrators). They compose features and widgets.
-* `widgets/`: Independent, composed UI blocks (e.g., `Header`, `Sidebar`, `TripGrid`).
-* `features/`: User-centric business logic and actions (e.g., `viajes/editor`, `gamification`, `share`).
-* `entities/`: Business models and schemas (e.g., `viajeSchema`).
-* `shared/`: Generic UI components (`ui/components`), pure hooks (`lib/hooks`), utilities, config, and external API abstractions.
+---
 
-## 3. 🧹 Clean Code & React Conventions
-* **Linguistic Hygiene (100% English Code):** All code (variables, functions, filenames, test names) MUST be in English. 
-* **Localization (i18n):** User-facing text must ALWAYS use the `useTranslation` hook (`t('key')`). Never hardcode Spanish strings in `.jsx` files.
-* **Separation of Concerns:** Keep UI components (Views) "dumb" and declarative. Extract heavy logic, `.reduce()`, or data transformations into Custom Hooks inside a `model/` directory (e.g., `useLogStats.js`).
-* **Performance:** Use `React.memo`, `useMemo`, and `useCallback` when passing props to heavy child components or calculating expensive arrays/objects.
+## 🧭 0. EXTERNAL KNOWLEDGE & SOURCE OF TRUTH
+**CRITICAL:** Before executing complex logic or brand-sensitive UI, you must consult the **"Keeptrip NotebookLM"** or the project's documentation.
+- For business logic, user personas, and product roadmap: **Query NotebookLM**.
+- For technical standards: Read `docs/` and this `README_AI.md`.
 
-## 4. 🎨 UI/UX & Design System (Impeccable Standards)
-* **Mobile-First Strict:** Design for mobile screens and thumbs first.
-* **Touch Targets (Crucial Rule):** ALL interactive elements (buttons, links, icon buttons) MUST have a minimum interactive area of **44x44px**. 
-* **Design Skills:** Apply the following principles when generating UI code:
-  * `/distill`: Remove unnecessary complexity. Prevent cognitive overload.
-  * `/normalize`: Ensure consistent use of spacing, borders, and shadows using our established config (`@shared/config/theme.js`).
-  * `/animate`: Use `framer-motion` for purposeful micro-interactions (e.g., loading states, mounting lists).
-  * `/bolder`: Create clear visual hierarchy using typography scales.
+---
 
-## 5. ⚙️ Tech Stack & Data Patterns
-* **Stack:** React 18+ (Functional Components only), Vite, Firebase (Auth, Firestore, Storage).
-* **Firebase Rule:** UI components should NEVER interact with Firebase directly. Always route database queries and mutations through the `api/` layer (e.g., `viajesRepository.js`) and consume them via hooks.
+## 🏗️ 1. ARCHITECTURE: DETAILED FSD (Feature-Sliced Design)
+Keeptrip is not a "folder-by-type" project. It is a **Domain-Driven** project:
 
-## 6. 🧪 Testing Strategy
-* **Tooling:** Vitest & React Testing Library.
-* **Focus:** Prioritize unit tests for business logic (`model/hooks`) and utility functions. 
-* **Edge Cases:** Always write test blocks (`it('should...')`) for:
-  1. The "Happy Path".
-  2. Empty states (null, undefined, empty arrays).
-  3. Incomplete data (e.g., missing fields).
+- **app/**: Initialization, global styles (`theme.js`), and `AppRouter.jsx`.
+- **pages/**: View-level components. They orchestrate widgets and features.
+- **widgets/**: Self-contained UI blocks (e.g., `TravelStatsWidget`, `TripGrid`).
+- **features/**: User actions with business value (e.g., `invitations`, `gamification/model/useAchievements`).
+- **entities/**: Domain data logic (e.g., `viajeSchema.js`).
+- **shared/**:
+    - `ui/`: Common components (Buttons, Modals, Skeletons).
+    - `api/`: Base services and external API configurations (Weather, Photos).
+    - `lib/`: Generic hooks (`useViajes`), utils, and geo-logic.
+
+**ENFORCEMENT:** No cross-imports between features. Features can only talk to `shared` or `entities`.
+
+---
+
+## 📏 2. THE TECHNICAL COMMANDMENTS
+1. **Linguistic Hygiene:** Code is **100% ENGLISH**. This includes variables, functions, filenames, and internal comments.
+2. **Strict i18n:** User-facing strings MUST use `useTranslation()` from `react-i18next`. Keys reside in `src/i18n/locales/`. Base values are in Spanish.
+3. **Data Layer:** Use the **Repository Pattern**. Direct Firestore calls in UI components are forbidden. See `src/shared/api/services/viajes/viajesRepository.js` for reference.
+4. **Clean Code:** Prefer functional components, hooks for logic, and Styled-components for styling.
+
+---
+
+## 🎨 3. UI/UX & DESIGN SYSTEM (THE "IMPECCABLE" STANDARD)
+- **Mobile-First:** Minimum Touch Target is **44x44px** (Actions: 56px).
+- **Design Tokens:** Use `theme.js` (e.g., `props.theme.colors.atomicTangerine`, `props.theme.shadows.float`).
+- **Motion:** Use `framer-motion` with **Spring Physics**.
+    - *Standard Spring:* `type: "spring", stiffness: 100, damping: 20`.
+- **Visual Depth:** Use glassmorphism and layered shadows to create hierarchy. No "flat" designs unless requested.
+
+---
+
+## 🛠️ 4. TECH STACK & TOOLS
+- **Core:** React 18 + Vite.
+- **Backend:** Firebase (Auth, Firestore, Storage).
+- **Styling:** Styled-components + CSS Grid (Bento Layouts).
+- **Testing:** Vitest for unit tests, Playwright for E2E.
+- **PWA:** Service Workers for offline support and "Add to Home Screen" prompts.
+
+---
+
+## 💬 5. AGENT INTERACTION PROTOCOL
+1. **Step 1: Audit.** Review the current file state.
+2. **Step 2: Propose.** Present a high-level plan.
+3. **Step 3: Cross-Check.** Does this align with the **NotebookLM** vision?
+4. **Step 4: Execute.** Write clean, documented, and tested code.
+
+**If you encounter ambiguity, ASK. Do not guess on brand-critical features.**
