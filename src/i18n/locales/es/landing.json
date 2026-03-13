@@ -3,13 +3,19 @@
   "titleTop": "Tus viajes merecen",
   "titleHighlight": "ser recordados.",
   "subtitle": "Deja de perder tus recuerdos en galerías infinitas. Keeptrip transforma tus rutas, fotos y fechas en un pasaporte digital vivo que cuenta tu historia.",
-  "ctaButton": "Comenzar mi aventura",
+  "ctaButton": "Crear mi Pasaporte",
+  "peek": {
+    "passportLabel": "Tu Pasaporte Digital",
+    "level": "Nivel: Explorador",
+    "progress": "62% hacia Viajero Experto",
+    "chipText": "Buenos Aires conquistada"
+  },
   "feature": {
-    "map": "Mapa Interactivo",
-    "mapDesc": "Visualiza tu conquista del mundo coloreando cada país visitado.",
-    "journal": "Historias de Viaje",
-    "journalDesc": "Registra ciudades, clima y sensaciones de cada parada.",
-    "security": "Privado y Seguro",
-    "securityDesc": "Tus recuerdos son tuyos. Almacenamiento seguro en la nube."
+    "map": "Tu Mapa de Vida",
+    "mapDesc": "Visualiza todos los países y ciudades que has conquistado.",
+    "journal": "Pasaporte Digital",
+    "journalDesc": "Gana sellos y sube de nivel con cada nueva aventura.",
+    "security": "Memorias Intactas",
+    "securityDesc": "Guarda bitácoras, fotos y rutas sin depender de redes sociales."
   }
 }

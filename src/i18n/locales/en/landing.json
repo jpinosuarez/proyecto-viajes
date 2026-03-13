@@ -3,13 +3,19 @@
   "titleTop": "Your travels deserve",
   "titleHighlight": "to be remembered.",
   "subtitle": "Stop losing your memories in endless galleries. Keeptrip transforms your routes, photos, and dates into a living digital passport that tells your story.",
-  "ctaButton": "Start My Logbook",
+  "ctaButton": "Create my Passport",
+  "peek": {
+    "passportLabel": "Your Digital Passport",
+    "level": "Level: Explorer",
+    "progress": "62% to Expert Traveler",
+    "chipText": "Buenos Aires unlocked"
+  },
   "feature": {
-    "map": "Interactive Map",
-    "mapDesc": "Visualize your conquest of the world by coloring each country visited.",
-    "journal": "Detailed Logbook",
-    "journalDesc": "Record cities, weather, and feelings from each stop.",
-    "security": "Private and Secure",
-    "securityDesc": "Your memories are yours. Secure cloud storage."
+    "map": "Your Life Map",
+    "mapDesc": "See every country and city you've conquered.",
+    "journal": "Digital Passport",
+    "journalDesc": "Earn stamps and level up with each new adventure.",
+    "security": "Memories Intact",
+    "securityDesc": "Save logs, photos, and routes without relying on social media."
   }
 }

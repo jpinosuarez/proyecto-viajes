@@ -16,6 +16,9 @@ const baseAliases = {
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    include: ['react-simple-maps', 'prop-types', 'topojson-client'],
+  },
   plugins: [
     react(),
     VitePWA({
