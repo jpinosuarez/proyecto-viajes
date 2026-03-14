@@ -19,43 +19,60 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
   useEffect(() => {
     if (!isSharedTrip) return;
 
-    let cancelled = false;
+    let mounted = true;
 
     (async () => {
       try {
         const perfilSnap = await getDoc(doc(db, 'usuarios', data.ownerId));
-        if (!cancelled && perfilSnap.exists()) {
-          setOwnerDisplayName(perfilSnap.data().displayName || data.ownerId);
-        }
-      } catch {
+        if (!mounted) return;
+        if (!perfilSnap.exists()) return;
+        setOwnerDisplayName(perfilSnap.data().displayName || data.ownerId);
+      } catch (err) {
         // No bloquear el render del visor por fallas de perfil.
+        console.warn('Failed to load owner profile for shared trip', err);
       }
     })();
 
     return () => {
-      cancelled = true;
+      mounted = false;
     };
   }, [isSharedTrip, data.ownerId]);
 
   const reloadParadas = useCallback(async () => {
     if (!viajeId || !ownerUid) return;
-    const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
-    const snap = await getDocs(ref);
-    const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+    try {
+      const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
+      const snap = await getDocs(ref);
+      const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+    } catch (err) {
+      console.warn('Error reloading paradas:', err);
+    }
   }, [viajeId, ownerUid]);
 
   useEffect(() => {
     if (!viajeId || !ownerUid) return;
 
+    let mounted = true;
+
     const fetchParadas = async () => {
-      const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
-      const snap = await getDocs(ref);
-      const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+      try {
+        const ref = collection(db, `usuarios/${ownerUid}/viajes/${viajeId}/paradas`);
+        const snap = await getDocs(ref);
+        if (!mounted) return;
+        const loaded = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+      } catch (err) {
+        if (!mounted) return;
+        console.warn('Error loading paradas:', err);
+      }
     };
 
     fetchParadas();
+
+    return () => {
+      mounted = false;
+    };
   }, [viajeId, ownerUid]);
 
   return {

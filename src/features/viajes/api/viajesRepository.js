@@ -13,12 +13,16 @@ import {
 import { getDownloadURL, ref, uploadBytes, uploadString } from 'firebase/storage';
 
 export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
+  let latestSnapshotId = 0;
+
   const viajesRef = collection(db, `usuarios/${userId}/viajes`);
   const q = query(viajesRef, orderBy('fechaInicio', 'desc'));
 
   return onSnapshot(
     q,
     async (snapshot) => {
+      const snapshotId = ++latestSnapshotId;
+
       try {
         const viajes = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
         const paradasPromises = viajes.map(async (viaje) => {
@@ -32,6 +36,7 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
         });
 
         const paradasPorViaje = await Promise.all(paradasPromises);
+        if (snapshotId !== latestSnapshotId) return;
         onData({ viajes, paradas: paradasPorViaje.flat() });
       } catch (error) {
         onError?.(error);

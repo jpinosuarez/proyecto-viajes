@@ -106,6 +106,8 @@ export const useViajes = () => {
       return;
     }
 
+    let mounted = true;
+
     // Configurar userId en el logger para contexto global
     logger.setUserId(usuario.uid);
     logger.info('Suscribiendo a viajes del usuario', { userId: usuario.uid });
@@ -260,6 +262,7 @@ export const useViajes = () => {
     });
 
     return () => {
+      mounted = false;
       logger.debug('Desuscribiendo de viajes del usuario');
       unsubscribe();
       unsubShared();

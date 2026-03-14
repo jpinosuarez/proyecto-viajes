@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import { storage, db } from '@shared/firebase';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
@@ -257,13 +257,13 @@ export function UploadProvider({ children }) {
     return fotos.some(f => f.status === 'pending' || f.status === 'uploading');
   }, [uploadsByViaje]);
 
-  const value = {
+  const value = useMemo(() => ({
     iniciarSubida,
     getEstadoViaje,
     reintentarFoto,
     limpiarUploads,
     tieneUploadsPendientes
-  };
+  }), [iniciarSubida, getEstadoViaje, reintentarFoto, limpiarUploads, tieneUploadsPendientes]);
 
   return (
     <UploadContext.Provider value={value}>

@@ -99,6 +99,31 @@ const EditorFocusPanel = ({
     1500 // 1.5s debounce
   );
 
+  const isClosingRef = React.useRef(false);
+
+  const handleClose = useCallback(async () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
+    // Ensure pending edits are saved before closing
+    await forceSave();
+
+    onClose();
+  }, [forceSave, onClose]);
+
+  // Prevent background scroll while the panel is open (iOS-friendly)
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevTouch = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouch;
+    };
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     if (!isOpen) return;
@@ -107,7 +132,7 @@ const EditorFocusPanel = ({
       // Escape closes panel
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        handleClose();
         return;
       }
 
@@ -120,7 +145,7 @@ const EditorFocusPanel = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, forceSave]);
+  }, [isOpen, handleClose, forceSave]);
 
   // Show save status briefly
   useEffect(() => {
@@ -171,7 +196,7 @@ const EditorFocusPanel = ({
         animate="visible"
         exit="exit"
         transition={{ duration: 0.2 }}
-        onClick={!isBusy ? onClose : undefined}
+        onClick={handleClose}
       />
 
       {/* Panel */}
@@ -209,8 +234,7 @@ const EditorFocusPanel = ({
             )}
             <button
               style={styles.closeBtn}
-              onClick={onClose}
-              disabled={isBusy}
+              onClick={handleClose}
               title="Close (Esc)"
             >
               <X size={20} />
@@ -303,8 +327,7 @@ const EditorFocusPanel = ({
         <div style={styles.stickyFooter}>
           <button
             style={styles.closeFooterBtn}
-            onClick={onClose}
-            disabled={isBusy}
+            onClick={handleClose}
           >
             {t('button.close', 'Close')}
           </button>

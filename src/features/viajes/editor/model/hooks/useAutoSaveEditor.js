@@ -9,7 +9,25 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 export function useAutoSaveEditor(formData, viajeId, onSave, debounceMs = 1500) {
   const [saveStatus, setStatus] = useState('unsaved'); // unsaved | saving | saved | error
   const debounceTimer = useRef(null);
+  const isMountedRef = useRef(true);
   const lastSavedData = useRef(null);
+
+  const safeSetStatus = useCallback((status) => {
+    if (isMountedRef.current) setStatus(status);
+  }, []);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Reset auto-save state when editing a different trip
+    lastSavedData.current = null;
+    safeSetStatus('unsaved');
+  }, [viajeId]);
 
   // Trigger auto-save with debounce
   const triggerAutoSave = useCallback(async () => {
@@ -18,25 +36,25 @@ export function useAutoSaveEditor(formData, viajeId, onSave, debounceMs = 1500) 
       return;
     }
 
-    setStatus('saving');
+    safeSetStatus('saving');
 
     try {
       const result = await onSave(viajeId, formData);
       
       if (result === true || (typeof result === 'object' && result?.success)) {
         lastSavedData.current = { ...formData };
-        setStatus('saved');
+        safeSetStatus('saved');
         
         // Auto-clear "saved" badge after 2s
         setTimeout(() => {
-          setStatus('unsaved');
+          safeSetStatus('unsaved');
         }, 2000);
       } else {
         throw new Error('Save failed');
       }
     } catch (error) {
       console.error('Auto-save error:', error);
-      setStatus('error');
+      safeSetStatus('error');
       
       // Retry on error after 1s
       setTimeout(() => {
@@ -53,7 +71,7 @@ export function useAutoSaveEditor(formData, viajeId, onSave, debounceMs = 1500) 
     }
 
     // Set new timer
-    setStatus('unsaved');
+    safeSetStatus('unsaved');
     debounceTimer.current = setTimeout(() => {
       triggerAutoSave();
     }, debounceMs);

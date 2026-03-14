@@ -20,6 +20,7 @@ const SearchPalette = ({
   const { t, i18n } = useTranslation(['search', 'common']);
   const { isMobile } = useWindowSize(768);
   const inputRef = useRef(null);
+  const abortControllerRef = useRef(null);
   
   const [query, setQuery] = useState('');
   const [mapboxResults, setMapboxResults] = useState([]);
@@ -43,13 +44,19 @@ const SearchPalette = ({
     }
 
     setLoading(true);
+
+    // Cancel any previous request to avoid race conditions
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     (async () => {
       try {
         const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
           debouncedQuery
         )}.json?types=country,place,locality&language=${i18n.language}&access_token=${MAPBOX_TOKEN}`;
 
-        const res = await fetch(endpoint);
+        const res = await fetch(endpoint, { signal: controller.signal });
         const data = await res.json();
 
         const processed = (data.features || []).map((feat) => {
@@ -77,12 +84,17 @@ const SearchPalette = ({
 
         setMapboxResults(processed);
       } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error('Mapbox search error:', error);
         setMapboxResults([]);
       } finally {
         setLoading(false);
       }
     })();
+
+    return () => {
+      controller.abort();
+    };
   }, [debouncedQuery, i18n.language]);
 
   // Combine and group results
@@ -163,27 +175,6 @@ const SearchPalette = ({
     [onSelectPlace, onSelectTrip, onClose]
   );
 
-  // Global Cmd+K listener
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      // Don't trigger if user is typing in an input (but not search palette input)
-      const isTypingInFormField =
-        document.activeElement?.tagName === 'INPUT' &&
-        document.activeElement !== inputRef.current;
-      const isTypingInTextarea = document.activeElement?.tagName === 'TEXTAREA';
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !isTypingInFormField && !isTypingInTextarea) {
-        e.preventDefault();
-        if (!isOpen) {
-          // Open palette (this should be handled by UIContext)
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isOpen]);
-
   // Focus input when palette opens
   useEffect(() => {
     if (isOpen && inputRef.current && !isMobile) {
@@ -201,7 +192,7 @@ const SearchPalette = ({
       right: 0,
       bottom: 0,
       ...GLASS.overlay,
-      zIndex: 3000,
+      zIndex: 10001,
       display: 'flex',
       alignItems: isMobile ? 'stretch' : 'flex-start',
       justifyContent: 'center',
@@ -210,7 +201,8 @@ const SearchPalette = ({
     },
     container: {
       width: isMobile ? '100%' : 'min(600px, 90vw)',
-      maxHeight: isMobile ? '100dvh' : '70vh',
+      maxHeight: isMobile ? '100%' : '70vh',
+      height: isMobile ? '100%' : undefined,
       backgroundColor: COLORS.surface,
       borderRadius: isMobile ? 0 : RADIUS.xl,
       boxShadow: SHADOWS.float,

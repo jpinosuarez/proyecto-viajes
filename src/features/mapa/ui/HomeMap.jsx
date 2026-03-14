@@ -31,6 +31,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
+        reuseMaps
         minZoom={-2}
         scrollZoom={false}
         dragPan={false}

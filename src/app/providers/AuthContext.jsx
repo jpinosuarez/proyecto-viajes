@@ -53,27 +53,12 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
   };
-
-  // useRef garantiza que el timer de seguridad sobreviva el doble-invoke de
-  // React 18 Strict Mode (cleanup del primer mount cancela el let, pero no el ref).
-  const authTimeoutRef = useRef(null);
-
   useEffect(() => {
-    // Crear el timer de seguridad solo si no existe ya (evita duplicados en Strict Mode).
-    if (!authTimeoutRef.current) {
-      authTimeoutRef.current = setTimeout(() => {
-        authTimeoutRef.current = null;
-        setCargando(false);
-        console.warn('⏰ Timeout de autenticación: Firebase no respondió en 5s. Forzando cargando=false (¿emuladores apagados?)');
-      }, 5000);
-    }
+    let mounted = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      // Cancelar el timer INMEDIATAMENTE (síncrono), antes de cualquier await.
-      if (authTimeoutRef.current) {
-        clearTimeout(authTimeoutRef.current);
-        authTimeoutRef.current = null;
-      }
+      if (!mounted) return;
+
       setUsuario(currentUser);
       setCargando(false);
 
@@ -99,11 +84,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => {
-      // Solo cancelar el suscriptor de auth; el timer ref NO se cancela aquí para
-      // que siga activo aunque Strict Mode haga cleanup del primer mount.
+      mounted = false;
       unsubscribe();
     };
   }, []);
+
 
   // Dev/test helpers (exposed only when VITE_ENABLE_TEST_LOGIN === 'true')
   if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
@@ -147,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     };
   }
 
-  const value = { usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin };
+  const value = useMemo(() => ({ usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin }), [usuario, login, logout, actualizarPerfilUsuario, cargando, isAdmin]);
 
   return (
     <AuthContext.Provider value={value}>
