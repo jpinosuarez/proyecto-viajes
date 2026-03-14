@@ -13,6 +13,8 @@
   "loading": "Cargando...",
   "retry": "Reintentar",
   "goHome": "Ir al inicio",
+  "add": "Agregar",
+  "open": "Abrir",
   "addCaption": "Agregar caption...",
   "confirm": {
     "defaultTitle": "Confirmar acción",

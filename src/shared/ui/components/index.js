@@ -10,4 +10,5 @@ export { default as LevelUpModal } from './LevelUpModal';
 export { default as MiniMapaRuta } from './MiniMapaRuta';
 export { default as OfflineBanner } from './OfflineBanner';
 export { default as PWAUpdatePrompt } from './PWAUpdatePrompt';
+
 export { TripCardSkeleton, BentoCardSkeleton, SkeletonList } from './Skeletons';

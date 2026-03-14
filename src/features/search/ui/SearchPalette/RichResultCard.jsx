@@ -1,5 +1,6 @@
 import React from 'react';
 import { Globe, MapPin, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
@@ -15,6 +16,7 @@ const RichResultCard = ({
   type = 'place', // 'place' | 'trip'
   onClick 
 }) => {
+  const { t } = useTranslation(['search', 'common']);
   const isTrip = type === 'trip';
   
   // Mapbox place: { name, fullName, countryCode, type, ... }
@@ -34,7 +36,7 @@ const RichResultCard = ({
     ? item.foto 
     : (item.countryCode ? getFlagUrl(item.countryCode) : null);
   
-  const badgeLabel = isTrip ? '→ Open' : '+ Add';
+  const badgeLabel = isTrip ? t('common.open', 'Open') : t('common.add', 'Add');
   
   const styles = {
     container: {
@@ -53,14 +55,14 @@ const RichResultCard = ({
       },
     },
     thumbnail: {
-      width: '56px',
-      height: '44px',
-      borderRadius: RADIUS.sm,
+      width: '32px',
+      height: '32px',
+      borderRadius: '50%',
       objectFit: 'cover',
       backgroundColor: COLORS.charcoalBlue,
       flexShrink: 0,
       boxShadow: SHADOWS.sm,
-      border: `1px solid rgba(255,255,255,0.1)`,
+      border: 'none',
     },
     defaultIcon: {
       width: '56px',
@@ -106,18 +108,20 @@ const RichResultCard = ({
       textOverflow: 'ellipsis',
     },
     badgeContainer: {
-      display: 'flex',
+      display: 'inline-flex',
       alignItems: 'center',
-      gap: '4px',
+      gap: '6px',
       fontSize: '0.75rem',
       fontWeight: '700',
       color: COLORS.atomicTangerine,
-      padding: '4px 8px',
-      borderRadius: RADIUS.sm,
-      backgroundColor: 'rgba(255, 107, 53, 0.1)',
-      border: `1px solid rgba(255, 107, 53, 0.3)`,
+      padding: '6px 12px',
+      borderRadius: RADIUS.full,
+      backgroundColor: 'transparent',
+      border: `1.5px solid ${COLORS.atomicTangerine}`,
       flexShrink: 0,
       letterSpacing: '0.3px',
+      cursor: 'pointer',
+      transition: TRANSITIONS.fast,
     },
   };
 

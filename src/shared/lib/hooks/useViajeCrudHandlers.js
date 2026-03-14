@@ -1,5 +1,15 @@
 import { useCallback, useState } from 'react';
 
+
+function isDraftMeaningful(data, paradas = []) {
+  const title = String(data?.titulo || '').trim();
+  const hasTitle = title.length > 0;
+  const hasLocation = Array.isArray(data?.coordenadas) && data.coordenadas.some(Boolean);
+  const hasParadas = Array.isArray(paradas) && paradas.length > 0;
+  const hasText = String(data?.texto || '').trim().length > 0;
+  return hasTitle || hasLocation || hasParadas || hasText;
+}
+
 export function useViajeCrudHandlers({
   guardarNuevoViaje,
   actualizarDetallesViaje,
@@ -20,9 +30,8 @@ export function useViajeCrudHandlers({
 
   const isDeletingViaje = useCallback((id) => viajesEliminando.has(id), [viajesEliminando]);
 
-  const handleGuardarModal = useCallback(async (id, datosCombinados) => {
-    if (isSavingModal) return null;
-    setIsSavingModal(true);
+  // PHASE 1: Pure database persistence (no UI side-effects)
+  const saveTripToDb = useCallback(async (id, datosCombinados) => {
     const { paradasNuevas, ...datosViaje } = datosCombinados;
 
     try {
@@ -33,16 +42,13 @@ export function useViajeCrudHandlers({
           if (!yaExiste) todasLasParadasLocal.unshift(ciudadInicialBorrador);
         }
 
-        const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
-        if (!nuevoId) {
+        // Pre-flight: don't persist an empty draft (title + stops absent)
+        if (!isDraftMeaningful(datosViaje, todasLasParadasLocal)) {
           return null;
         }
 
-        setViajeBorrador(null);
-        setCiudadInicialBorrador(null);
-        // Don't auto-open viewer for new trips created from search modal
-        // setTimeout(() => abrirVisor(nuevoId), 500);
-        return nuevoId;
+        const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
+        return nuevoId || null;
       }
 
       const okViaje = await actualizarDetallesViaje(id, datosViaje);
@@ -68,19 +74,30 @@ export function useViajeCrudHandlers({
     } catch {
       pushToast('Error al guardar el viaje', 'error');
       return null;
-    } finally {
-      setIsSavingModal(false);
     }
-  }, [
-    isSavingModal,
-    ciudadInicialBorrador,
-    guardarNuevoViaje,
-    setViajeBorrador,
-    setCiudadInicialBorrador,
-    actualizarDetallesViaje,
-    agregarParada,
-    pushToast,
-  ]);
+  }, [ciudadInicialBorrador, guardarNuevoViaje, actualizarDetallesViaje, agregarParada, pushToast]);
+
+  // PHASE 1: Explicit UI cleanup (only called by user close action)
+  const closeTripEditor = useCallback(() => {
+    setViajeBorrador(null);
+    setCiudadInicialBorrador(null);
+  }, [setViajeBorrador, setCiudadInicialBorrador]);
+
+  const handleGuardarModal = useCallback(
+    async (id, datosCombinados) => {
+      if (isSavingModal) return null;
+      setIsSavingModal(true);
+
+      try {
+        // PHASE 1: Delegate to pure DB function, no UI cleanup here
+        const result = await saveTripToDb(id, datosCombinados);
+        return result;
+      } finally {
+        setIsSavingModal(false);
+      }
+    },
+    [isSavingModal, saveTripToDb]
+  );
 
   const handleGuardarDesdeVisor = useCallback(async (id, datosCombinados) => {
     if (isSavingViewer) return false;
@@ -159,6 +176,8 @@ export function useViajeCrudHandlers({
     isSavingViewer,
     viajesEliminando,
     isDeletingViaje,
+    saveTripToDb,
+    closeTripEditor,
     handleGuardarModal,
     handleGuardarDesdeVisor,
     solicitarEliminarViaje,

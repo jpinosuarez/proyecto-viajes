@@ -30,6 +30,8 @@ export function useLugarSelectionDraft({
         fecha: new Date().toISOString().split('T')[0],
         paisCodigo: codigoPais,
         flag: getFlagUrl(codigoPais),
+        // Selection token ensures editor resets even if the same city is picked again
+        _selectionId: `${Date.now()}`,
       };
     } else {
       const codigoPais = (lugar.countryCode || lugar.code || '').toUpperCase();
@@ -46,7 +48,9 @@ export function useLugarSelectionDraft({
         coordenadas: coordenadasLugar,
         fecha: new Date().toISOString().split('T')[0],
         paisCodigo: codigoPais,
-        flag: getFlagUrl(codigoPais)
+        flag: getFlagUrl(codigoPais),
+        // Selection token ensures editor resets even if the same city is picked again
+        _selectionId: `${Date.now()}`,
       };
     }
 

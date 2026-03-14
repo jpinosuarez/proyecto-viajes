@@ -13,6 +13,8 @@
     "presupuesto": "Tu nivel de gasto aproximado."
   },
   "labels": {
+    "draft": "Borrador",
+    "editing": "Editando",
     "presupuesto": "Presupuesto",
     "vibe": "Vibe",
     "highlights": "Highlights",
@@ -33,6 +35,20 @@
     "captionPlaceholder": "Describe este momento...",
     "addCoverHint": "Dale vida con una foto",
     "portada": "Portada"
+  },
+  "unsavedChanges": {
+    "title": "¿Descartar cambios?",
+    "message": "Tienes cambios sin guardar en tu viaje. ¿Seguro que quieres cerrar?",
+    "discard": "Descartar",
+    "keepEditing": "Seguir editando"
+  },
+  "button": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "createTrip": "Crear Viaje",
+    "processing": "Preparando...",
+    "saving": "Guardando...",
+    "add": "Agregar"
   },
   "budget": {
     "mochilero": "Mochilero",

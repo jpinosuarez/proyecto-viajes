@@ -2,6 +2,8 @@ import React from 'react';
 import { Star, Trash2 } from 'lucide-react';
 import { GalleryUploader } from '@shared/ui/components/GalleryUploader';
 
+import { useEffect, useRef } from 'react';
+
 const EdicionGallerySection = ({
   styles,
   t,
@@ -17,7 +19,22 @@ const EdicionGallerySection = ({
   onCaptionSave,
   onSetPortadaExistente,
   onEliminarFoto,
+  portadaUrl, // NUEVO: url actual de portada
 }) => {
+  // Auto-cover: si no hay portada y se sube la primera foto, asignarla automáticamente
+  const prevFotosCount = useRef(galeria.fotos.length);
+  useEffect(() => {
+    if (
+      galeria.fotos.length === 1 &&
+      prevFotosCount.current === 0 &&
+      galeria.fotos[0]?.url &&
+      !portadaUrl
+    ) {
+      onPortadaChange(galeria.fotos[0].url);
+    }
+    prevFotosCount.current = galeria.fotos.length;
+  }, [galeria.fotos.length, galeria.fotos, portadaUrl, onPortadaChange]);
+
   return (
     <div style={styles.section}>
       <label style={styles.label}>{t('labels.gallery')}</label>

@@ -27,8 +27,8 @@ const EdicionContextSection = ({
     <div style={styles.section}>
       <label style={styles.label}>{t('labels.contexto')}</label>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: 16 }}>
+        <div style={{ minWidth: 160 }}>
           <label style={{ fontSize: '0.75rem', color: COLORS.textSecondary }}>
             {t('labels.presupuesto')} <InfoTooltip textKey="editor:tooltip.presupuesto" size={13} />
           </label>
@@ -44,41 +44,41 @@ const EdicionContextSection = ({
             <option value="Lujo">{t('budget.lujo')}</option>
           </select>
         </div>
+      </div>
 
-        <div style={{ flex: 1 }}>
-          <label style={{ fontSize: '0.75rem', color: COLORS.textSecondary }}>
-            {t('labels.vibe')} <InfoTooltip textKey="editor:tooltip.vibe" size={13} />
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-            {VIBES.map((v) => {
-              const selected = (formData.vibe || []).includes(v);
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      vibe: (prev.vibe || []).includes(v) ? (prev.vibe || []).filter((x) => x !== v) : [...(prev.vibe || []), v],
-                    }))
-                  }
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: RADIUS.md,
-                    border: selected ? `1px solid ${COLORS.atomicTangerine}` : `1px solid ${COLORS.border}`,
-                    background: selected ? `${COLORS.atomicTangerine}12` : COLORS.surface,
-                    cursor: 'pointer',
-                    color: selected ? COLORS.atomicTangerine : COLORS.textPrimary,
-                    fontWeight: selected ? '700' : '400',
-                    fontSize: '0.875rem',
-                    transition: TRANSITIONS.fast,
-                  }}
-                >
-                  {t(`vibes.${VIBE_KEY_MAP[v]}`)}
-                </button>
-              );
-            })}
-          </div>
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: '0.75rem', color: COLORS.textSecondary }}>
+          {t('labels.vibe')} <InfoTooltip textKey="editor:tooltip.vibe" size={13} />
+        </label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+          {VIBES.map((v) => {
+            const selected = (formData.vibe || []).includes(v);
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    vibe: (prev.vibe || []).includes(v) ? (prev.vibe || []).filter((x) => x !== v) : [...(prev.vibe || []), v],
+                  }))
+                }
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: RADIUS.md,
+                  border: selected ? `1px solid ${COLORS.atomicTangerine}` : `1px solid ${COLORS.border}`,
+                  background: selected ? `${COLORS.atomicTangerine}12` : COLORS.surface,
+                  cursor: 'pointer',
+                  color: selected ? COLORS.atomicTangerine : COLORS.textPrimary,
+                  fontWeight: selected ? '700' : '400',
+                  fontSize: '0.875rem',
+                  transition: TRANSITIONS.fast,
+                }}
+              >
+                {t(`vibes.${VIBE_KEY_MAP[v]}`)}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowUp, ArrowDown, Plus, Search, Trash2 } from 'lucide-react';
-import { COLORS, RADIUS, SHADOWS } from '@shared/config';
+import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { parseFlexibleDate, formatDateSlash } from '@shared/lib/utils/viajeUtils';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-/**
- * Light input mask: auto-inserts `/` separators while typing DD/MM/YYYY.
- * Strips non-digit characters and limits output to 10 chars.
- */
-const maskDateInput = (raw) => {
-  const digits = raw.replace(/\D/g, '').slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
 
-const CityManager = ({ paradas, setParadas }) => {
+
+const CityManager = ({ t, paradas, setParadas }) => {
   const [busqueda, setBusqueda] = useState('');
   const [resultados, setResultados] = useState([]);
   
@@ -87,14 +78,14 @@ const CityManager = ({ paradas, setParadas }) => {
       <div style={styles.searchRow}>
         <div style={styles.inputWrapper}>
           <Search size={16} color={COLORS.textSecondary} />
-          <input 
+          <input
             value={busqueda}
             onChange={(e) => {
               const value = e.target.value;
               setBusqueda(value);
               if (value.length < 3) setResultados([]);
             }}
-            placeholder="Buscar ciudad (min 3 letras)..."
+            placeholder={t('citymanager.searchPlaceholder') || 'Type the city name...'}
             style={styles.searchInput}
           />
         </div>
@@ -109,13 +100,38 @@ const CityManager = ({ paradas, setParadas }) => {
             const flag = getFlagUrl(code);
 
             return (
-                <div key={res.id} style={styles.resultItem} onClick={() => agregarCiudad(res)}>
+                <div key={res.id} style={styles.resultItem}>
                 <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                    {flag ? <img src={flag} alt="flag" style={{width:'20px', borderRadius:RADIUS.xs}}/> : <MapPin size={14} />}
-                    <span>{res.text}, <span style={{color:COLORS.textSecondary, fontSize:'0.8rem'}}>{contextCountry?.text}</span></span>
+                    {flag ? (
+                      <img
+                        src={flag}
+                        alt="flag"
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: RADIUS.full,
+                          objectFit: 'cover',
+                          boxShadow: SHADOWS.sm,
+                        }}
+                      />
+                    ) : (
+                      <MapPin size={16} color={COLORS.textSecondary} />
+                    )}
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      {res.text},{' '}
+                      <span style={{ color: COLORS.textSecondary, fontSize: '0.8rem' }}>
+                        {contextCountry?.text}
+                      </span>
+                    </span>
                 </div>
-                <Plus size={14} color={COLORS.atomicTangerine}/>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => agregarCiudad(res)}
+                  style={styles.addButton}
+                >
+                  {t('button.add') || 'Add'}
+                </button>
+              </div>
             );
           })}
         </div>
@@ -138,12 +154,42 @@ const CityManager = ({ paradas, setParadas }) => {
             
             <div style={styles.datesRow}>
                 <div style={styles.dateGroup}>
-                    <label style={styles.label}>Llegada</label>
-                    <input type="text" value={p.fechaLlegada} onChange={e => actualizarDato(index, 'fechaLlegada', maskDateInput(e.target.value))} onBlur={e => { const iso = parseFlexibleDate(e.target.value); if (iso) actualizarDato(index, 'fechaLlegada', formatDateSlash(iso)); }} placeholder="dd/mm/aaaa" maxLength={10} style={styles.dateInput} />
+                    <label style={styles.label}>{t('citymanager.arrival') || 'Arrival'}</label>
+                    <input
+                      type="date"
+                      value={p.fechaLlegada ? p.fechaLlegada.split('/').reverse().join('-') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          actualizarDato(index, 'fechaLlegada', '');
+                        } else {
+                          const [year, month, day] = val.split('-');
+                          const formatted = `${day}/${month}/${year}`;
+                          actualizarDato(index, 'fechaLlegada', formatted);
+                        }
+                      }}
+                      style={styles.nativeDateInput}
+                      disabled={false}
+                    />
                 </div>
                 <div style={styles.dateGroup}>
-                    <label style={styles.label}>Salida</label>
-                    <input type="text" value={p.fechaSalida} onChange={e => actualizarDato(index, 'fechaSalida', maskDateInput(e.target.value))} onBlur={e => { const iso = parseFlexibleDate(e.target.value); if (iso) actualizarDato(index, 'fechaSalida', formatDateSlash(iso)); }} placeholder="dd/mm/aaaa" maxLength={10} style={styles.dateInput} />
+                    <label style={styles.label}>{t('citymanager.departure') || 'Departure'}</label>
+                    <input
+                      type="date"
+                      value={p.fechaSalida ? p.fechaSalida.split('/').reverse().join('-') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          actualizarDato(index, 'fechaSalida', '');
+                        } else {
+                          const [year, month, day] = val.split('-');
+                          const formatted = `${day}/${month}/${year}`;
+                          actualizarDato(index, 'fechaSalida', formatted);
+                        }
+                      }}
+                      style={styles.nativeDateInput}
+                      disabled={false}
+                    />
                 </div>
             </div>
 
@@ -185,6 +231,7 @@ const styles = {
   searchInput: { border: 'none', background: 'transparent', padding: '12px 0', width: '100%', outline: 'none', fontSize: '1rem' },
   resultsList: { background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, overflow: 'hidden', maxHeight: '180px', overflowY: 'auto', boxShadow: SHADOWS.md },
   resultItem: { padding: '12px 15px', borderBottom: `1px solid ${COLORS.background}`, cursor: 'pointer', fontSize: '0.9rem', display:'flex', justifyContent:'space-between', alignItems:'center', ':hover': { background: COLORS.background } },
+  addButton: { background: 'transparent', border: `1.5px solid ${COLORS.atomicTangerine}`, borderRadius: RADIUS.full, padding: '6px 12px', color: COLORS.atomicTangerine, fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', transition: TRANSITIONS.fast, outline: 'none', display: 'flex', alignItems: 'center', gap: '6px', '&:hover': { background: 'rgba(255, 107, 53, 0.05)', }, '&:active': { transform: 'translateY(1px)' } },
   
   list: { display: 'flex', flexDirection: 'column', gap: '10px' },
   item: { background: COLORS.surface, border: `1px solid ${COLORS.border}`, padding: '15px', borderRadius: RADIUS.md, boxShadow: SHADOWS.sm },
@@ -193,11 +240,30 @@ const styles = {
   actions: { display: 'flex', gap: '6px' },
   actionBtn: { background: COLORS.background, border: 'none', padding: '10px', borderRadius: RADIUS.xs, cursor: 'pointer', color: COLORS.textSecondary, display:'flex', alignItems:'center', justifyContent:'center' },
   datesRow: { display: 'flex', gap: '15px' },
-  dateGroup: { flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' },
+  dateGroup: { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' },
   transportRow: { display: 'flex', gap: '12px', alignItems: 'center', marginTop: 10 },
   transportBtn: (active) => ({ padding: '10px 14px', borderRadius: RADIUS.sm, border: active ? '1px solid #3b82f6' : `1px solid ${COLORS.border}`, background: active ? '#eff6ff' : COLORS.surface, cursor: 'pointer' }),
   label: { fontSize: '0.7rem', textTransform:'uppercase', color:COLORS.textSecondary, fontWeight:'700' },
-  dateInput: { border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '10px', fontSize: '1rem', color: COLORS.charcoalBlue, outline:'none', background:COLORS.background },
+  dateInput: { width: '100%', boxSizing: 'border-box', border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, padding: '10px', fontSize: '1rem', color: COLORS.charcoalBlue, outline: 'none', background: COLORS.background },
+  nativeDateInput: {
+    width: '100%',
+    boxSizing: 'border-box',
+    minHeight: '48px',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: RADIUS.md,
+    padding: '12px 14px',
+    fontSize: '1rem',
+    fontFamily: 'inherit',
+    color: COLORS.charcoalBlue,
+    backgroundColor: COLORS.background,
+    outline: 'none',
+    cursor: 'pointer',
+    transition: TRANSITIONS.fast,
+    boxShadow: SHADOWS.sm,
+  },
   relatoTextarea: { width: '100%', minHeight: '60px', padding: '10px', border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.sm, resize: 'vertical', fontFamily: 'inherit', fontSize: '1rem', color: COLORS.charcoalBlue, outline: 'none', background: COLORS.background, boxShadow: SHADOWS.inner }
 };
 

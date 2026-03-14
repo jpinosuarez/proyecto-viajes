@@ -69,7 +69,7 @@ const VisorHero = ({
             )}
           </div>
 
-          <h1 style={styles.titleDisplay}>{data.titulo || viajeBase?.nombreEspanol || ''}</h1>
+          <h1 data-testid="visor-title" style={styles.titleDisplay}>{data.titulo || viajeBase?.nombreEspanol || ''}</h1>
 
           <div style={styles.metaRow}>
             <span style={styles.metaBadge}>

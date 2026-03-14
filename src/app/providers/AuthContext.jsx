@@ -90,8 +90,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
 
-  // Dev/test helpers (exposed only when VITE_ENABLE_TEST_LOGIN === 'true')
-  if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
+  // Dev/test helpers (exposed in dev mode or when VITE_ENABLE_TEST_LOGIN === 'true')
+  const enableTestHelpers =
+    typeof window !== 'undefined' &&
+    (import.meta.env.DEV || import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true');
+
+  if (enableTestHelpers) {
     window.__test_signInWithEmail = async ({ email, password }) => {
       try {
         await signInWithEmailAndPassword(auth, email, password);

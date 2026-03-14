@@ -48,6 +48,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
 
   return (
     <Motion.div
+      data-testid={`trip-card-${trip.id}`}
       ref={cardRef}
       role="button"
       tabIndex={0}

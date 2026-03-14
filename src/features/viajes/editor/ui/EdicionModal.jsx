@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Save, LoaderCircle } from 'lucide-react';
 import { styles } from './EdicionModal.styles';
@@ -21,6 +21,7 @@ import EdicionNotesSection from './components/EdicionNotesSection';
 import EdicionGallerySection from './components/EdicionGallerySection';
 import EdicionParadasSection from './components/EdicionParadasSection';
 import EdicionHeaderSection from './components/EdicionHeaderSection';
+import CoverPickerModal from './components/CoverPickerModal';
 import AccordionSection from './components/AccordionSection';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false, onAfterSave }) => {
@@ -53,6 +54,8 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [galleryPortada, setGalleryPortada] = useState(0);
   const [captionDrafts, setCaptionDrafts] = useState({});
   const [hasTried, setHasTried] = useState(false);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
+  const previousGalleryLengthRef = useRef(0);
 
   // Hook de galería: no cargar para borradores (id 'new') — solo cuando es un viaje guardado
   const galeria = useGaleriaViaje(!esBorrador && viaje?.id ? viaje.id : null);
@@ -157,6 +160,25 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     }
   };
 
+  // Auto-set first photo as cover when gallery goes from 0→1 photos
+  useEffect(() => {
+    const currentGalleryLength = galeria?.fotos?.length || 0;
+    const prevLength = previousGalleryLengthRef.current;
+
+    // Transition from 0→1+ photos: auto-set first photo as portada
+    if (prevLength === 0 && currentGalleryLength > 0 && !formData.portadaUrl) {
+      const firstPhotoUrl = galeria.fotos[0]?.url;
+      if (firstPhotoUrl) {
+        setFormData((prev) => ({
+          ...prev,
+          portadaUrl: firstPhotoUrl,
+        }));
+      }
+    }
+
+    previousGalleryLengthRef.current = currentGalleryLength;
+  }, [galeria?.fotos?.length, formData.portadaUrl]);
+
   if (!viaje) return null;
 
   const isBusy = isSaving || isProcessingImage;
@@ -197,76 +219,59 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
             isProcessingImage={isProcessingImage}
             onTituloChange={handleTituloChange}
             onToggleTituloAuto={() => setIsTituloAuto((prev) => !prev)}
-            onFileChange={handleFileChange}
+            onPortadaChange={(url) => setFormData((prev) => ({ ...prev, portadaUrl: url }))}
           />
           <div style={styles.body} className="custom-scroll">
-            {esBorrador ? (
-              <>
-                <EdicionParadasSection
-                  styles={styles}
-                  t={t}
-                  paradas={paradas}
-                  setParadas={setParadas}
-                  fechaRangoDisplay={fechaRangoDisplay}
-                  sinParadas={sinParadas && hasTried}
-                />
-                <EdicionGallerySection
-                  styles={styles}
-                  t={t}
-                  files={galleryFiles}
-                  onFilesChange={setGalleryFiles}
-                  portadaIndex={galleryPortada}
-                  onPortadaChange={setGalleryPortada}
-                  isBusy={isBusy}
-                  isMobile={isMobile}
-                  galeria={galeria}
-                  captionDrafts={captionDrafts}
-                  onCaptionChange={handleCaptionChange}
-                  onCaptionSave={handleCaptionSave}
-                  onSetPortadaExistente={handleSetPortadaExistente}
-                  onEliminarFoto={handleEliminarFoto}
-                />
-              </>
-            ) : (
-              <>
-                <EdicionGallerySection
-                  styles={styles}
-                  t={t}
-                  files={galleryFiles}
-                  onFilesChange={setGalleryFiles}
-                  portadaIndex={galleryPortada}
-                  onPortadaChange={setGalleryPortada}
-                  isBusy={isBusy}
-                  isMobile={isMobile}
-                  galeria={galeria}
-                  captionDrafts={captionDrafts}
-                  onCaptionChange={handleCaptionChange}
-                  onCaptionSave={handleCaptionSave}
-                  onSetPortadaExistente={handleSetPortadaExistente}
-                  onEliminarFoto={handleEliminarFoto}
-                />
-                <EdicionParadasSection
-                  styles={styles}
-                  t={t}
-                  paradas={paradas}
-                  setParadas={setParadas}
-                  fechaRangoDisplay={fechaRangoDisplay}
-                  sinParadas={sinParadas && hasTried}
-                />
-              </>
-            )}
+            {/* Core context (dates + companions) */}
+            <EdicionContextSection
+              styles={styles}
+              t={t}
+              formData={formData}
+              setFormData={setFormData}
+              companionDraft={companionDraft}
+              companionResults={companionResults}
+              onCompanionSearch={handleCompanionSearch}
+              onAddCompanionFreeform={handleAddCompanionFreeform}
+              onAddCompanionFromResult={handleAddCompanionFromResult}
+            />
+
+            {/* Itinerary / Stops */}
+            <EdicionParadasSection
+              styles={styles}
+              t={t}
+              paradas={paradas}
+              setParadas={setParadas}
+              fechaRangoDisplay={fechaRangoDisplay}
+              sinParadas={sinParadas && hasTried}
+            />
+
+            {/* Photo gallery */}
+            <EdicionGallerySection
+              styles={styles}
+              t={t}
+              files={galleryFiles}
+              onFilesChange={setGalleryFiles}
+              portadaIndex={galleryPortada}
+              onPortadaChange={(url) => setFormData((prev) => ({ ...prev, portadaUrl: url }))}
+              portadaUrl={formData.portadaUrl}
+              isBusy={isBusy}
+              isMobile={isMobile}
+              galeria={galeria}
+              captionDrafts={captionDrafts}
+              onCaptionChange={handleCaptionChange}
+              onCaptionSave={handleCaptionSave}
+              onSetPortadaExistente={handleSetPortadaExistente}
+              onEliminarFoto={handleEliminarFoto}
+            />
+
             {/* Secciones secundarias agrupadas en acordeón */}
-            <AccordionSection title={t('accordion.details')} badge={contextBadge}>
-              <EdicionContextSection
+            <AccordionSection title={t('accordion.notes')} badge={notesBadge}>
+              <EdicionNotesSection
                 styles={styles}
                 t={t}
-                formData={formData}
-                setFormData={setFormData}
-                companionDraft={companionDraft}
-                companionResults={companionResults}
-                onCompanionSearch={handleCompanionSearch}
-                onAddCompanionFreeform={handleAddCompanionFreeform}
-                onAddCompanionFromResult={handleAddCompanionFromResult}
+                texto={formData.texto}
+                onChange={(texto) => setFormData((prev) => ({ ...prev, texto }))}
+                isBusy={isBusy}
               />
             </AccordionSection>
             <AccordionSection title={t('accordion.highlights')} badge={highlightsBadge}>
@@ -275,15 +280,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 t={t}
                 formData={formData}
                 setFormData={setFormData}
-              />
-            </AccordionSection>
-            <AccordionSection title={t('accordion.notes')} badge={notesBadge}>
-              <EdicionNotesSection
-                styles={styles}
-                t={t}
-                texto={formData.texto}
-                onChange={(texto) => setFormData((prev) => ({ ...prev, texto }))}
-                isBusy={isBusy}
               />
             </AccordionSection>
           </div>
@@ -308,6 +304,18 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 {isProcessingImage ? t('button.processing') : (isSaving ? t('button.saving') : (esBorrador ? t('button.createTrip') : t('button.save')))}
               </Motion.button>
           </div>
+
+          {/* Cover Picker Modal */}
+          <CoverPickerModal
+            isOpen={showCoverPicker}
+            fotos={galeria?.fotos || []}
+            currentPortadaUrl={formData.portadaUrl}
+            onSelectCover={(coverUrl) => {
+              setFormData((prev) => ({ ...prev, portadaUrl: coverUrl }));
+              setShowCoverPicker(false);
+            }}
+            onClose={() => setShowCoverPicker(false)}
+          />
         </Motion.div>
       </Motion.div>
     </AnimatePresence>

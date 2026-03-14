@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { Search, X, MapPin, Plus, TrendingUp, Globe } from "lucide-react";
-import { COLORS } from '@shared/config';
+import { COLORS, RADIUS } from '@shared/config';
 import { styles } from "./SearchModal.styles";
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
@@ -181,9 +181,9 @@ const SearchModal = ({
                   {POPULAR_DESTINATIONS.map((dest) => (
                     <button key={dest.name} onClick={() => handleSelectPopular(dest)} style={styles.tagBtn}>
                       <img
-                        src={`https://flagcdn.com/w40/${dest.code.toLowerCase()}.png`}
+                        src={`https://flagcdn.com/w32/${dest.code.toLowerCase()}.png`}
                         alt=""
-                        style={{ width: '20px', height: '14px', objectFit: 'cover', borderRadius: '2px', verticalAlign: 'middle', flexShrink: 0 }}
+                        style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: RADIUS.full, verticalAlign: 'middle', flexShrink: 0 }}
                         onError={(e) => { e.target.style.display = 'none'; }}
                       />
                       {dest.name}
@@ -218,7 +218,16 @@ const SearchModal = ({
                 >
                   <div style={styles.iconBox(item.type === "country")}> 
                     {flagUrl ? (
-                      <img src={flagUrl} alt="flag" style={{ width: "24px", height: "18px", objectFit: "cover", borderRadius: "2px" }} />
+                      <img
+                        src={flagUrl}
+                        alt="flag"
+                        style={{
+                          width: '28px',
+                          height: '28px',
+                          objectFit: 'cover',
+                          borderRadius: '50%',
+                        }}
+                      />
                     ) : item.type === "country" ? (
                       <Globe size={18} />
                     ) : (

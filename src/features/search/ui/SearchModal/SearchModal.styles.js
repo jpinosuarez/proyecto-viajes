@@ -63,19 +63,35 @@ export const styles = {
     position: 'relative'
   },
   iconBox: (isCountry) => ({
-    width: '44px', height: '44px', borderRadius: RADIUS.sm,
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
     backgroundColor: isCountry ? `${COLORS.atomicTangerine}15` : `${COLORS.mutedTeal}15`,
     color: isCountry ? COLORS.atomicTangerine : COLORS.mutedTeal,
-    display: 'flex', alignItems: 'center', justifyContent: 'center'
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   }),
+  addLabel: {
+    position: 'absolute',
+    right: '16px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: COLORS.atomicTangerine,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    borderRadius: RADIUS.full,
+    border: `1.5px solid ${COLORS.atomicTangerine}`,
+    background: 'transparent',
+    boxShadow: 'none',
+    cursor: 'pointer',
+    transition: TRANSITIONS.fast,
+  },
   countryName: { fontWeight: '700', color: COLORS.charcoalBlue, display: 'block' },
   subtext: { fontSize: '0.8rem', color: COLORS.textSecondary },
-
-  addLabel: {
-    position: 'absolute', right: '20px',
-    fontSize: '0.8rem', fontWeight: '700', color: COLORS.mutedTeal,
-    display: 'none', alignItems: 'center', gap: '4px'
-  },
 
   emptyState: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '40px 0', color: COLORS.textSecondary

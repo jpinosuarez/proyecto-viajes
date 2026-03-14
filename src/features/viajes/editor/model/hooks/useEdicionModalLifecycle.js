@@ -65,6 +65,8 @@ export function useEdicionModalLifecycle({
       viaje.fechaFin || '',
       ciudadInicial?.nombre || '',
       ciudadInicial?.paisCodigo || '',
+      (ciudadInicial?.coordenadas || []).join(','),
+      ciudadInicial?._selectionId || '',
       usuarioUid || 'anon',
     ].join('|');
 

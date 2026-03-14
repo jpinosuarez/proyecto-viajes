@@ -14,7 +14,7 @@ const EdicionParadasSection = ({ styles, t, paradas, setParadas, fechaRangoDispl
           {`📅 ${fechaRangoDisplay}`}
         </span>
       )}
-      <CityManager paradas={paradas} setParadas={setParadas} />
+      <CityManager t={t} paradas={paradas} setParadas={setParadas} />
       {sinParadas && (
         <span style={{ ...styles.inlineInfo, display: 'flex', alignItems: 'center', gap: 6 }}>
           <MapPin size={13} />

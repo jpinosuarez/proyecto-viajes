@@ -31,25 +31,70 @@ test.describe('Create trip from search modal (E2E)', () => {
     await createAuthUser(userEmail, password);
 
     await page.goto('/');
+    await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: userEmail, password });
     await page.waitForSelector('[data-testid="header-avatar"]');
 
     await page.goto('/trips');
     await page.waitForURL('**/trips');
 
-    // Wait for the empty state or trip grid to appear
-    await page.waitForTimeout(2000); // Give time for data to load
+    // Wait for trips list to load (grid or empty state)
+    await page.waitForTimeout(2000); // give the UI time to settle
 
-    await page.evaluate(() => (window as any).__test_abrirBuscador());
-    await page.waitForSelector('text=New destination');
+    // Open the search palette (new 2026 UX) via the header 'Add Trip' action
+    const addTripBtn = page.getByRole('button', { name: /Add Trip|Crear viaje|Agregar viaje/i }).first();
+    await addTripBtn.click();
 
-    // Pick a hardcoded popular city to avoid external geocoding dependencies.
-    await page.getByRole('button', { name: /New York/i }).click();
+    // Intercept Mapbox API to avoid external dependency and return a stable result
+    await page.route('https://api.mapbox.com/**', (route) => {
+      const fakeGeoJson = {
+        type: 'FeatureCollection',
+        query: ['new', 'york'],
+        features: [
+          {
+            id: 'place.123',
+            type: 'Feature',
+            place_type: ['place'],
+            text: 'New York',
+            place_name: 'New York, New York, United States',
+            center: [-74.006, 40.7128],
+            properties: {},
+            context: [
+              { id: 'country.usa', text: 'United States', short_code: 'us' },
+            ],
+          },
+        ],
+      };
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(fakeGeoJson),
+      });
+    });
 
-    await page.waitForSelector('text=Photo Gallery');
+    // Wait for the SearchPalette input to appear (aria-label="Search")
+    const searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
+    await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 
-    const createTripBtn = page.locator('button').filter({ hasText: /Crear viaje|Create Trip|button\.createTrip/i }).first();
-    await createTripBtn.click({ force: true });
+    // Type a destination and wait for the result to appear
+    await searchInput.fill('New York');
+
+    // Wait for results list to contain the destination and click it
+    const result = page.getByText(/New York/i).first();
+    await result.waitFor({ state: 'visible', timeout: 10000 });
+    await result.click();
+
+    // Wait for the editor to open (title input should appear)
+    const titleInput = page.getByPlaceholder(/trip title|título del viaje/i);
+    await titleInput.waitFor({ state: 'visible', timeout: 10000 });
+
+    // Provide a title and save
+    await titleInput.fill('E2E Trip');
+    const saveBtn = page.getByRole('button', { name: /Save|Guardar|Crear viaje/i }).first();
+    await saveBtn.click();
+
+    // Wait for the editor to close and the trip to appear in the grid
+    await expect(page.locator('text=E2E Trip')).toHaveCount(1, { timeout: 20000 });
 
     // Wait for the modal to close and trip to be created
     await page.waitForTimeout(3000);
@@ -94,6 +139,7 @@ test.describe('Create trip from search modal (E2E)', () => {
     await createAuthUser(userEmail, password);
 
     await page.goto('/');
+    await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: userEmail, password });
     await page.waitForSelector('[data-testid="header-avatar"]');
 

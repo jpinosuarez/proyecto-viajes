@@ -13,6 +13,8 @@
     "presupuesto": "Your approximate spending level."
   },
   "labels": {
+    "draft": "Draft",
+    "editing": "Editing",
     "presupuesto": "Budget",
     "vibe": "Vibe",
     "highlights": "Highlights",
@@ -34,6 +36,20 @@
     "addCoverHint": "Give it life with a photo",
     "portada": "Cover"
   },
+  "unsavedChanges": {
+    "title": "Discard changes?",
+    "message": "You have unsaved edits in your trip. Are you sure you want to close?",
+    "discard": "Discard",
+    "keepEditing": "Keep editing"
+  },
+  "button": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "createTrip": "Create Trip",
+    "processing": "Getting ready...",
+    "saving": "Saving...",
+    "add": "Add"
+  },
   "budget": {
     "mochilero": "Backpacker",
     "economico": "Economical",
@@ -51,13 +67,6 @@
     "topFood": "🍽️ The Dish",
     "topView": "👀 The View",
     "topTip": "💡 The Tip"
-  },
-  "button": {
-    "cancel": "Cancel",
-    "save": "Save",
-    "createTrip": "Create Trip",
-    "processing": "Getting ready...",
-    "saving": "Saving..."
   },
   "search": {
     "newDestination": "New Destination",

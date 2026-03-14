@@ -33,10 +33,11 @@ export const styles = {
     position: 'absolute', inset: 0,
     background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)',
     borderRadius: 'inherit',
+    pointerEvents: 'none',
   },
   headerContent: {
     position: 'relative', zIndex: 2, padding: '24px',
-    display: 'flex', alignItems: 'center', gap: '16px'
+    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '16px',
   },
   flagImg: {
     width: '48px', height: 'auto', borderRadius: RADIUS.sm,
@@ -45,11 +46,12 @@ export const styles = {
   },
   titleInput: {
     fontFamily: FONTS.heading,
-    fontSize: '1.4rem', fontWeight: '800', color: 'white',
+    fontSize: '2rem', fontWeight: '800', color: 'white',
     background: 'transparent', border: 'none',
     borderBottom: '1px solid rgba(255,255,255,0.25)',
     width: '100%', outline: 'none', paddingBottom: '6px',
     letterSpacing: '-0.01em',
+    lineHeight: 1.1,
     transition: TRANSITIONS.fast,
   },
   titleInputAutoPulse: {
@@ -104,6 +106,7 @@ export const styles = {
     transition: TRANSITIONS.fast,
     textAlign: 'center',
     minHeight: '44px',
+    pointerEvents: 'auto',
   },
   coverHintText: {
     fontSize: '0.8rem',
@@ -308,5 +311,227 @@ export const styles = {
     transition: TRANSITIONS.fast,
     fontSize: '0.9rem',
     minHeight: '44px',
-  })
+  }),
+
+  // PART C: PREMIUM EDITOR LAYOUT (2026)
+  stickyHeader: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 50,
+    borderBottom: `1px solid ${COLORS.border}`,
+    background: COLORS.surface,
+    padding: '16px 24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '16px',
+    minHeight: '64px',
+    flexShrink: 0,
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flex: 1,
+    minWidth: 0,
+  },
+  headerFlagImg: {
+    width: '40px',
+    height: '40px',
+    borderRadius: RADIUS.md,
+    objectFit: 'cover',
+    border: `2px solid ${COLORS.border}`,
+    flexShrink: 0,
+  },
+  headerTitle: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    fontFamily: FONTS.heading,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  headerBadge: {
+    fontSize: '0.7rem',
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  headerCloseBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: COLORS.textSecondary,
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: RADIUS.md,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: TRANSITIONS.fast,
+    flexShrink: 0,
+    '&:hover': {
+      backgroundColor: COLORS.background,
+      color: COLORS.textPrimary,
+    },
+  },
+
+  // Scrollable content area
+  scrollableBody: {
+    flex: 1,
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0',
+  },
+
+  // PREMIUM HEADER SECTION: Distinct visual blocks
+  // Hero cover (background image + overlay)
+  premiumHeaderHero: (isMobile) => ({
+    height: isMobile ? '200px' : '240px',
+    position: 'relative',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundColor: COLORS.charcoalBlue,
+    backgroundAttachment: 'fixed',
+    overflow: 'hidden',
+    flexShrink: 0,
+  }),
+
+  // Title section (clean, distinct)
+  premiumHeaderTitleBlock: (isMobile) => ({
+    position: 'relative',
+    zIndex: 2,
+    padding: isMobile ? '24px 16px' : '32px 24px',
+    backgroundColor: COLORS.surface,
+    borderBottom: `1px solid ${COLORS.border}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    flexShrink: 0,
+  }),
+
+  premiumFlagContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+
+  premiumFlagImg: {
+    width: '56px',
+    height: '56px',
+    borderRadius: RADIUS.lg,
+    objectFit: 'cover',
+    border: `2px solid ${COLORS.border}`,
+    boxShadow: SHADOWS.sm,
+  },
+
+  premiumTitleInput: {
+    fontFamily: FONTS.heading,
+    fontSize: '1.8rem',
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    padding: '0',
+    marginBottom: '8px',
+    transition: TRANSITIONS.fast,
+  },
+
+  premiumAutoModeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+
+  premiumAutoBadge: (isAuto) => ({
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+    padding: '6px 12px',
+    borderRadius: RADIUS.full,
+    border: `1.5px solid ${isAuto ? COLORS.atomicTangerine : COLORS.border}`,
+    background: isAuto ? `${COLORS.atomicTangerine}10` : 'transparent',
+    color: isAuto ? COLORS.atomicTangerine : COLORS.textSecondary,
+    cursor: 'pointer',
+    transition: TRANSITIONS.fast,
+    whiteSpace: 'nowrap',
+  }),
+
+  // Sticky Footer: Manual Save + Cancel
+  stickyFooter: {
+    position: 'sticky',
+    bottom: 0,
+    zIndex: 50,
+    borderTop: `1px solid ${COLORS.border}`,
+    background: COLORS.surface,
+    padding: '16px 24px',
+    paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    flexShrink: 0,
+    minHeight: '64px',
+  },
+
+  secondaryFooterBtn: {
+    background: 'transparent',
+    border: `1.5px solid ${COLORS.border}`,
+    color: COLORS.textSecondary,
+    borderRadius: RADIUS.full,
+    padding: '10px 24px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    fontFamily: FONTS.heading,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    minHeight: '44px',
+    transition: TRANSITIONS.fast,
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      borderColor: COLORS.textPrimary,
+      color: COLORS.textPrimary,
+    },
+    '&:disabled': {
+      opacity: 0.5,
+      cursor: 'not-allowed',
+    },
+  },
+
+  primaryFooterBtn: {
+    background: COLORS.atomicTangerine,
+    border: 'none',
+    color: 'white',
+    borderRadius: RADIUS.full,
+    padding: '10px 32px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    fontFamily: FONTS.heading,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    minHeight: '44px',
+    boxShadow: SHADOWS.md,
+    transition: TRANSITIONS.fast,
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      boxShadow: SHADOWS.float,
+      transform: 'translateY(-1px)',
+    },
+    '&:disabled': {
+      opacity: 0.7,
+      cursor: 'not-allowed',
+      transform: 'none',
+    },
+  },
 };

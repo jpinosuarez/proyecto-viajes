@@ -104,7 +104,7 @@ const DocumentaryHero = ({
             )}
           </div>
 
-          <h1 style={styles.editorialTitle(isMobile)}>
+          <h1 data-testid="visor-title" style={styles.editorialTitle(isMobile)}>
             {data.titulo || viajeBase?.nombreEspanol || 'Travesía Sin Nombre'}
           </h1>
 
@@ -114,7 +114,7 @@ const DocumentaryHero = ({
             </span>
 
             {isSharedTrip && (
-              <span style={styles.sharedBadge}>
+              <span data-testid="visor-shared-badge" style={styles.sharedBadge}>
                 🤝 Compartido por {ownerDisplayName || '...'}
               </span>
             )}
