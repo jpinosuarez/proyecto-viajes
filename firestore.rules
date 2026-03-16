@@ -18,7 +18,15 @@ service cloud.firestore {
 
     // 1.a Viajes compartidos: permitir lectura a usuarios listados en sharedWith (owner o invitados aceptados)
     match /usuarios/{userId}/viajes/{viajeId} {
-      allow read: if isOwner(userId) || (isAuthenticated() && request.auth.uid in resource.data.sharedWith);
+      allow read: if isOwner(userId)
+        || (
+          isAuthenticated()
+          && (
+            request.auth.uid in resource.data.sharedWith
+            // Also allow read for users who have an invitation (pending or accepted)
+            || exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+          )
+        );
       allow create, delete: if isOwner(userId);
 
       // permitir que el invitee agregue SOLO su UID a sharedWith (no otros cambios)
@@ -41,9 +49,22 @@ service cloud.firestore {
         );
     }
 
+    // Invitations nested under a trip — needed for invitation acceptance logic
+    match /usuarios/{userId}/viajes/{viajeId}/invitations/{inviteeUid} {
+      // Allow owner and the invitee to read/update the invitation document (used in rules evaluation)
+      allow read, write: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == inviteeUid);
+    }
+
     // Subcolecciones dentro de un viaje (paradas, fotos, etc.) — lectura para owner o usuarios en sharedWith
     match /usuarios/{userId}/viajes/{viajeId}/{subDocument=**} {
-      allow read: if isOwner(userId) || (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)).data.sharedWith);
+      allow read: if isOwner(userId)
+        || (
+          isAuthenticated()
+          && (
+            request.auth.uid in get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)).data.sharedWith
+            || exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+          )
+        );
       allow write: if isOwner(userId);
     }
 

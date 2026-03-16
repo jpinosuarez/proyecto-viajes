@@ -5,7 +5,7 @@ import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import AchievementsGrid from './AchievementsGrid';
 import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 import { styles } from './TravelerHub.styles';
-import { COLORS } from '@shared/config';
+import { COLORS, RADIUS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { Globe, Calendar, MapPin, Image, Share } from 'lucide-react';

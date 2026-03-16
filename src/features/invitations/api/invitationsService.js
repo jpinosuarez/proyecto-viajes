@@ -2,12 +2,12 @@ import {
   collection,
   addDoc,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   query,
   where,
   onSnapshot,
-  runTransaction,
   arrayUnion,
   orderBy
 } from 'firebase/firestore';
@@ -60,31 +60,61 @@ export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null
 export const acceptInvitation = async ({ db: _db, invitationId, acceptorUid }) => {
   const database = _db || db;
   try {
-    return await runTransaction(database, async (transaction) => {
-      const invitationRef = doc(database, 'invitations', invitationId);
-      const invSnap = await transaction.get(invitationRef);
-      if (!invSnap.exists()) throw new Error('Invitation not found');
+    const invitationRef = doc(database, 'invitations', invitationId);
+    const invSnap = await getDoc(invitationRef);
+    if (!invSnap.exists()) throw new Error('Invitation not found');
 
-      const invitationData = invSnap.data() || {};
-      const resolvedInviteeUid = invitationData.inviteeUid || acceptorUid;
-      const acceptedAt = Date.now();
-      const invitationUpdate = {
-        status: 'accepted',
-        acceptedAt,
-        acceptedBy: acceptorUid,
-        inviteeUid: resolvedInviteeUid
-      };
+    const invitationData = invSnap.data() || {};
+    const resolvedInviteeUid = invitationData.inviteeUid || acceptorUid;
+    const acceptedAt = Date.now();
+    const invitationUpdate = {
+      status: 'accepted',
+      acceptedAt,
+      acceptedBy: acceptorUid,
+      inviteeUid: resolvedInviteeUid
+    };
 
-      transaction.update(invitationRef, invitationUpdate);
+    if (import.meta.env.DEV) {
+      console.debug('acceptInvitation: updating invitation', {
+        invitationId,
+        acceptorUid,
+        invitationDataBefore: invitationData,
+        invitationUpdate
+      });
+    }
 
-      if (invitationData.inviterId && invitationData.viajeId) {
-        const viajeRef = doc(database, 'usuarios', invitationData.inviterId, 'viajes', invitationData.viajeId);
-        transaction.update(viajeRef, { sharedWith: arrayUnion(acceptorUid) });
-      }
+    // Update the top-level invitation record.
+    await setDoc(invitationRef, invitationUpdate, { merge: true });
 
-      return true;
-    });
+    // Also update the nested invitation record under the owner's viaje, if it exists.
+    if (invitationData.inviterId && invitationData.viajeId) {
+      const nestedInviteRef = doc(
+        database,
+        'usuarios',
+        invitationData.inviterId,
+        'viajes',
+        invitationData.viajeId,
+        'invitations',
+        resolvedInviteeUid
+      );
+      await setDoc(nestedInviteRef, invitationUpdate, { merge: true });
+
+      const viajeRef = doc(database, 'usuarios', invitationData.inviterId, 'viajes', invitationData.viajeId);
+      await setDoc(viajeRef, { sharedWith: arrayUnion(acceptorUid) }, { merge: true });
+    }
+
+    if (import.meta.env.DEV) {
+      const postSnap = await getDoc(invitationRef);
+      console.debug('acceptInvitation succeeded', {
+        invitationId,
+        acceptorUid,
+        invitationUpdate,
+        after: postSnap.exists() ? postSnap.data() : null
+      });
+    }
+    return true;
   } catch (err) {
+    console.error('acceptInvitation error', err);
     logger.error('acceptInvitation error', { error: err?.message, invitationId, acceptorUid });
     return false;
   }
@@ -93,23 +123,22 @@ export const acceptInvitation = async ({ db: _db, invitationId, acceptorUid }) =
 export const declineInvitation = async ({ db: _db, invitationId, declinerUid }) => {
   const database = _db || db;
   try {
-    return await runTransaction(database, async (transaction) => {
-      const invitationRef = doc(database, 'invitations', invitationId);
-      const invSnap = await transaction.get(invitationRef);
-      if (!invSnap.exists()) throw new Error('Invitation not found');
+    const invitationRef = doc(database, 'invitations', invitationId);
+    const invSnap = await getDoc(invitationRef);
+    if (!invSnap.exists()) throw new Error('Invitation not found');
 
-      const declinedAt = Date.now();
-      const invitationUpdate = {
-        status: 'declined',
-        declinedAt,
-        declinedBy: declinerUid
-      };
+    const declinedAt = Date.now();
+    const invitationUpdate = {
+      status: 'declined',
+      declinedAt,
+      declinedBy: declinerUid
+    };
 
-      transaction.update(invitationRef, invitationUpdate);
+    await setDoc(invitationRef, invitationUpdate, { merge: true });
 
-      return true;
-    });
+    return true;
   } catch (err) {
+    console.error('declineInvitation error', err);
     logger.error('declineInvitation error', { error: err?.message, invitationId, declinerUid });
     return false;
   }

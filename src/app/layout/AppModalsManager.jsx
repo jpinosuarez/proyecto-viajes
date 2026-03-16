@@ -53,6 +53,10 @@ function AppModalsManager({
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  if (import.meta.env.DEV) {
+    console.debug('AppModalsManager params', { tripId, searchParams: Object.fromEntries(searchParams.entries()) });
+  }
+
   const {
     mostrarBuscador,
     closeBuscador,
