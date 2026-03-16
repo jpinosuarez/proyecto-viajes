@@ -126,7 +126,11 @@ const RichResultCard = ({
   };
 
   return (
-    <div style={styles.container} onClick={onClick}>
+    <div
+      data-testid={`search-result-${type}-${isTrip ? item._tripId : item.id}`}
+      style={styles.container}
+      onClick={onClick}
+    >
       {/* Thumbnail */}
       {thumbnailUrl ? (
         <img 

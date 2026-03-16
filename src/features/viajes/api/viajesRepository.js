@@ -11,6 +11,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes, uploadString } from 'firebase/storage';
+import { compressImage } from '@shared/lib/utils/imageUtils';
 
 export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
   let latestSnapshotId = 0;
@@ -78,14 +79,29 @@ export const eliminarViaje = ({ db, userId, viajeId }) =>
 export const subirFotoViaje = async ({ storage, userId, viajeId, foto }) => {
   try {
     const storageRef = ref(storage, `usuarios/${userId}/viajes/${viajeId}/portada.jpg`);
+
     if (foto instanceof Blob) {
-      await uploadBytes(storageRef, foto, { contentType: foto.type || 'image/jpeg' });
-    } else if (typeof foto === 'string' && foto.startsWith('data:image')) {
-      await uploadString(storageRef, foto, 'data_url');
-    } else {
-      return null;
+      let blobToUpload = foto;
+
+      try {
+        const compressed = await compressImage(foto, 1920, 0.8);
+        blobToUpload = compressed.blob;
+      } catch (err) {
+        // If compression fails for any reason, fall back to the original blob.
+        // We log to help understand frequency without breaking uploads.
+        console.warn('Image compression failed, falling back to original blob', err);
+      }
+
+      await uploadBytes(storageRef, blobToUpload, { contentType: blobToUpload.type || 'image/jpeg' });
+      return await getDownloadURL(storageRef);
     }
-    return await getDownloadURL(storageRef);
+
+    if (typeof foto === 'string' && foto.startsWith('data:image')) {
+      await uploadString(storageRef, foto, 'data_url');
+      return await getDownloadURL(storageRef);
+    }
+
+    return null;
   } catch {
     return null;
   }

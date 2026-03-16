@@ -19,6 +19,7 @@
  */
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useOutletContext } from 'react-router-dom';
+import PageLoader from '@shared/ui/components/PageLoader';
 
 import AuthGuard from './AuthGuard';
 import AdminGuard from './AdminGuard';
@@ -125,35 +126,37 @@ function SettingsRoute() {
 // ── Router principal ───────────────────────────────────────────────────────────
 function AppRouter() {
   return (
-    <Routes>
-      {/* Raíz: Landing o redirect a /dashboard */}
-      <Route path="/" element={<RootRoute />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Raíz: Landing o redirect a /dashboard */}
+        <Route path="/" element={<RootRoute />} />
 
-      {/* Rutas protegidas: requieren autenticación */}
-      <Route element={<AuthGuard />}>
-        <Route element={<AppShell />}>
+        {/* Rutas protegidas: requieren autenticación */}
+        <Route element={<AuthGuard />}>
+          <Route element={<AppShell />}>
 
-          <Route path="dashboard" element={<DashboardRoute />} />
+            <Route path="dashboard" element={<DashboardRoute />} />
 
-          {/* TripGrid con soporte futuro de nested route para VisorViaje (Fase 4) */}
-          <Route path="trips">
-            <Route index element={<TripsRoute />} />
-            <Route path=":id" element={<TripsRoute />} />
+            {/* TripGrid con soporte futuro de nested route para VisorViaje (Fase 4) */}
+            <Route path="trips">
+              <Route index element={<TripsRoute />} />
+              <Route path=":id" element={<TripsRoute />} />
+            </Route>
+
+            <Route path="map"        element={<MapRoute />} />
+            <Route path="explorer"   element={<ExplorerRoute />} />
+            <Route path="invitations" element={<InvitationsRoute />} />
+            <Route path="settings"   element={<SettingsRoute />} />
+
+            {/* Rutas de administrador (Deprecated/Removed) */}
+
           </Route>
-
-          <Route path="map"        element={<MapRoute />} />
-          <Route path="explorer"   element={<ExplorerRoute />} />
-          <Route path="invitations" element={<InvitationsRoute />} />
-          <Route path="settings"   element={<SettingsRoute />} />
-
-          {/* Rutas de administrador (Deprecated/Removed) */}
-
         </Route>
-      </Route>
 
-      {/* Fallback global */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback global */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 

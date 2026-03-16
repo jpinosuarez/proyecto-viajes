@@ -14,9 +14,15 @@ const TOAST_COLORS = {
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const timeoutsRef = React.useRef({});
 
   const dismissToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    const timeoutId = timeoutsRef.current[id];
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+      delete timeoutsRef.current[id];
+    }
   }, []);
 
   const pushToast = useCallback((message, type = 'info', duration = 3500) => {
@@ -26,9 +32,19 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => [...prev, nextToast]);
 
     if (duration > 0) {
-      window.setTimeout(() => dismissToast(id), duration);
+      const timeoutId = window.setTimeout(() => {
+        dismissToast(id);
+      }, duration);
+      timeoutsRef.current[id] = timeoutId;
     }
   }, [dismissToast]);
+
+  React.useEffect(() => {
+    return () => {
+      Object.values(timeoutsRef.current).forEach((id) => window.clearTimeout(id));
+      timeoutsRef.current = {};
+    };
+  }, []);
 
   const value = useMemo(() => ({ pushToast, dismissToast }), [pushToast, dismissToast]);
 

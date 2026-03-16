@@ -24,51 +24,55 @@ function useInvitationMetadata(invitations) {
     let cancelled = false;
 
     (async () => {
-      const missingInviters = [...new Set(invitations.map((inv) => inv.inviterId).filter(Boolean))]
-        .filter((inviterId) => !inviterNameCacheRef.current.has(inviterId));
+      try {
+        const missingInviters = [...new Set(invitations.map((inv) => inv.inviterId).filter(Boolean))]
+          .filter((inviterId) => !inviterNameCacheRef.current.has(inviterId));
 
-      const missingTrips = [...new Set(
-        invitations
-          .filter((inv) => inv.inviterId && inv.viajeId)
-          .map((inv) => `${inv.inviterId}/${inv.viajeId}`)
-      )].filter((tripKey) => !tripTitleCacheRef.current.has(tripKey));
+        const missingTrips = [...new Set(
+          invitations
+            .filter((inv) => inv.inviterId && inv.viajeId)
+            .map((inv) => `${inv.inviterId}/${inv.viajeId}`)
+        )].filter((tripKey) => !tripTitleCacheRef.current.has(tripKey));
 
-      await Promise.all([
-        Promise.all(missingInviters.map(async (inviterId) => {
-          try {
-            const perfilSnap = await getDoc(doc(db, 'usuarios', inviterId));
-            const inviterName = perfilSnap.exists() ? (perfilSnap.data().displayName || inviterId) : inviterId;
-            inviterNameCacheRef.current.set(inviterId, inviterName);
-          } catch {
-            inviterNameCacheRef.current.set(inviterId, inviterId);
-          }
-        })),
-        Promise.all(missingTrips.map(async (tripKey) => {
-          const [ownerUid, viajeId] = tripKey.split('/');
-          try {
-            const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${viajeId}`));
-            const tripTitle = viajeSnap.exists()
-              ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || viajeId)
-              : viajeId;
-            tripTitleCacheRef.current.set(tripKey, tripTitle);
-          } catch {
-            tripTitleCacheRef.current.set(tripKey, viajeId);
-          }
-        }))
-      ]);
+        await Promise.all([
+          Promise.all(missingInviters.map(async (inviterId) => {
+            try {
+              const perfilSnap = await getDoc(doc(db, 'usuarios', inviterId));
+              const inviterName = perfilSnap.exists() ? (perfilSnap.data().displayName || inviterId) : inviterId;
+              inviterNameCacheRef.current.set(inviterId, inviterName);
+            } catch {
+              inviterNameCacheRef.current.set(inviterId, inviterId);
+            }
+          })),
+          Promise.all(missingTrips.map(async (tripKey) => {
+            const [ownerUid, viajeId] = tripKey.split('/');
+            try {
+              const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${viajeId}`));
+              const tripTitle = viajeSnap.exists()
+                ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || viajeId)
+                : viajeId;
+              tripTitleCacheRef.current.set(tripKey, tripTitle);
+            } catch {
+              tripTitleCacheRef.current.set(tripKey, viajeId);
+            }
+          }))
+        ]);
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      const nextMeta = {};
-      for (const inv of invitations) {
-        const tripKey = inv.inviterId && inv.viajeId ? `${inv.inviterId}/${inv.viajeId}` : null;
-        nextMeta[inv.id] = {
-          inviterName: inviterNameCacheRef.current.get(inv.inviterId) || inv.inviterId || 'Un usuario',
-          tripTitle: (tripKey ? tripTitleCacheRef.current.get(tripKey) : null) || inv.viajeId
-        };
+        const nextMeta = {};
+        for (const inv of invitations) {
+          const tripKey = inv.inviterId && inv.viajeId ? `${inv.inviterId}/${inv.viajeId}` : null;
+          nextMeta[inv.id] = {
+            inviterName: inviterNameCacheRef.current.get(inv.inviterId) || inv.inviterId || 'Un usuario',
+            tripTitle: (tripKey ? tripTitleCacheRef.current.get(tripKey) : null) || inv.viajeId
+          };
+        }
+
+        setMeta(nextMeta);
+      } catch (error) {
+        console.warn('Error fetching invitation metadata', error);
       }
-
-      setMeta(nextMeta);
     })();
 
     return () => { cancelled = true; };
@@ -113,13 +117,18 @@ export default function InvitationsList({ compact = false, hook = null }) {
                   data-testid={`inv-accept-${inv.id}`}
                   aria-label={`Aceptar invitación de ${inviterLabel} para ${tripLabel}`}
                   onClick={async (e) => {
-                    const ok = await acceptInvitation(inv.id);
-                    if (ok) {
-                      try { e?.currentTarget?.blur?.(); } catch { /* safe fallback for tests */ }
-                      pushToast('Invitación aceptada — ahora puedes ver el viaje', 'success');
-                      navigate('/trips/' + inv.viajeId);
-                    } else {
+                    try {
+                      const ok = await acceptInvitation(inv.id);
+                      if (ok) {
+                        try { e?.currentTarget?.blur?.(); } catch { /* safe fallback for tests */ }
+                        pushToast('Invitación aceptada — ahora puedes ver el viaje', 'success');
+                        navigate('/trips/' + inv.viajeId);
+                      } else {
+                        pushToast('No se pudo aceptar la invitación', 'error');
+                      }
+                    } catch (error) {
                       pushToast('No se pudo aceptar la invitación', 'error');
+                      console.warn('Error accepting invitation', error);
                     }
                   }}
                   style={{ background: '#10b981', color: COLORS.surface, border: 'none', padding: '6px 10px', borderRadius: RADIUS.xs }}
@@ -128,7 +137,15 @@ export default function InvitationsList({ compact = false, hook = null }) {
                 <button
                   data-testid={`inv-decline-${inv.id}`}
                   aria-label={`Rechazar invitación de ${inviterLabel}`}
-                  onClick={async () => { const ok = await declineInvitation(inv.id); if (ok) pushToast('Invitación rechazada', 'warning'); }}
+                  onClick={async () => {
+                    try {
+                      const ok = await declineInvitation(inv.id);
+                      if (ok) pushToast('Invitación rechazada', 'warning');
+                    } catch (error) {
+                      pushToast('No se pudo rechazar la invitación', 'error');
+                      console.warn('Error declining invitation', error);
+                    }
+                  }}
                   style={{ background: COLORS.danger, color: COLORS.surface, border: 'none', padding: '6px 10px', borderRadius: RADIUS.xs }}
                 >Rechazar</button>
               </>

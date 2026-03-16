@@ -14,6 +14,13 @@ const BottomSheetContent = ({ children, style }) => (
       flex: 1,
       ...style,
     }}
+    onTouchMove={(e) => {
+      // Prevent sheet drag when scrolling inside content.
+      // Allow drag-to-close only when the content is at the top.
+      if (e.currentTarget.scrollTop > 0) {
+        e.stopPropagation();
+      }
+    }}
   >
     {children}
   </div>

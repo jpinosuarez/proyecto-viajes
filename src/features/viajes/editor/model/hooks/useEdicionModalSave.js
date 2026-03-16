@@ -26,6 +26,14 @@ export function useEdicionModalSave({
   onAfterSave,
 }) {
   return useCallback(async () => {
+    const normalizeDate = (value) => {
+      if (!value && value !== 0) return null;
+      if (typeof value === 'number' && !Number.isFinite(value)) return null;
+      const date = new Date(value);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+
     if (isProcessingImage || isSaving) return;
 
     try {
@@ -44,6 +52,19 @@ export function useEdicionModalSave({
           null,
         paradasNuevas: paradas,
       };
+
+      // Normalize date fields to prevent invalid values (Infinity / NaN) from
+      // being written to Firestore and corrupting trip timestamps.
+      const safeFechaInicio = normalizeDate(payload.fechaInicio) || normalizeDate(viaje?.fechaInicio);
+      const safeFechaFin = normalizeDate(payload.fechaFin) || normalizeDate(viaje?.fechaFin);
+
+      if (safeFechaInicio) payload.fechaInicio = safeFechaInicio;
+      if (safeFechaFin) payload.fechaFin = safeFechaFin;
+
+      // If after normalization we still have invalid dates, strip them to allow
+      // server-side defaults or validation to handle the case.
+      if (!payload.fechaInicio) delete payload.fechaInicio;
+      if (!payload.fechaFin) delete payload.fechaFin;
 
       if (!payload.nombreEspanol) {
         pushToast(t('error.saveFailed'), 'error');

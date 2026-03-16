@@ -60,7 +60,7 @@ function AppScaffold({ invitationsCount, content, overlays, isMobile }) {
   injectScaffoldStyles();
 
   return (
-    <div style={{ display: 'flex', backgroundColor: '#F8FAFC', height: '100dvh', width: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', backgroundColor: '#F8FAFC', minHeight: '100dvh', height: '100%', width: '100%', overflow: 'hidden' }}>
       <Sidebar />
 
       <main className="scaffold-main">

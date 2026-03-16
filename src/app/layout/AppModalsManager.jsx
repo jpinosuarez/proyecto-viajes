@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -95,11 +95,25 @@ function AppModalsManager({
   };
 
   // Al guardar un nuevo viaje, limpiar borrador y navegar al visor vía URL
+  const navigateTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current) {
+        window.clearTimeout(navigateTimeoutRef.current);
+        navigateTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const handleAfterSave = esBorrador
     ? (savedId) => {
         setViajeBorrador(null);
         setCiudadInicialBorrador(null);
-        setTimeout(() => navigate('/trips/' + savedId), 400);
+        if (navigateTimeoutRef.current) {
+          window.clearTimeout(navigateTimeoutRef.current);
+        }
+        navigateTimeoutRef.current = window.setTimeout(() => navigate('/trips/' + savedId), 400);
       }
     : undefined;
 

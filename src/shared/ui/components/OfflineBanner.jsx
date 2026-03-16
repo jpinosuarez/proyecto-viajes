@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { WifiOff, Wifi } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
@@ -16,21 +16,30 @@ export default function OfflineBanner() {
   const [showReconnected, setShowReconnected] = useState(false);
   // Track whether we've ever been offline so we don't flash "reconnected" on first mount
   const [wasOffline, setWasOffline] = useState(false);
+  const reconnectTimerRef = useRef(null);
 
   useEffect(() => {
     const goOffline = () => {
       setIsOnline(false);
       setWasOffline(true);
       setShowReconnected(false);
+      if (reconnectTimerRef.current) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
     };
 
     const goOnline = () => {
       setIsOnline(true);
       if (wasOffline) {
         setShowReconnected(true);
-        // Auto-dismiss "reconnected" after 3 seconds
-        const timer = setTimeout(() => setShowReconnected(false), 3000);
-        return () => clearTimeout(timer);
+        if (reconnectTimerRef.current) {
+          window.clearTimeout(reconnectTimerRef.current);
+        }
+        reconnectTimerRef.current = window.setTimeout(() => {
+          setShowReconnected(false);
+          reconnectTimerRef.current = null;
+        }, 3000);
       }
     };
 
@@ -39,6 +48,10 @@ export default function OfflineBanner() {
     return () => {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
+      if (reconnectTimerRef.current) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
     };
   }, [wasOffline]);
 
