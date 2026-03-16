@@ -57,10 +57,9 @@ const TripsPage = () => {
       <TripCommandBar 
         activeFilter={activeFilter} 
         onFilterChange={setActiveFilter}
-        tripCount={filteredTrips.length}
       />
       
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 100px)' }}>
         <TripGrid 
           trips={filteredTrips} 
           tripData={tripData}

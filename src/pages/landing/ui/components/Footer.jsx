@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { styles } from './Footer.styles';
+import './Footer.css';
 
 const Footer = () => {
   const { t } = useTranslation('landing');
@@ -20,10 +21,10 @@ const Footer = () => {
       <div style={styles.footerWrapper}>
         {/* Brand and Links Row */}
         <div style={styles.footerTop(isMobile)}>
-          <div style={styles.footerBrand}>
+          <div style={styles.footerBrand()}>
             Keeptrip
           </div>
-          <nav style={styles.footerLinks(isMobile)}>
+          <nav style={styles.footerLinks(isMobile)} aria-label="Footer navigation">
             {footerLinks.map((link, index) => (
               <a
                 key={index}
@@ -36,8 +37,8 @@ const Footer = () => {
           </nav>
         </div>
 
-        {/* Divider */}
-        <div style={styles.footerDivider} />
+        {/* Semantic Divider */}
+        <hr style={styles.footerDivider} aria-hidden="true" />
 
         {/* Copyright */}
         <div style={styles.footerBottom(isMobile)}>

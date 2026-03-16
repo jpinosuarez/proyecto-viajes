@@ -1,4 +1,4 @@
-import { COLORS, FONTS, SHADOWS, RADIUS, SPACING, TRANSITIONS } from '@shared/config';
+import { COLORS, FONTS, RADIUS, SPACING, TRANSITIONS } from '@shared/config';
 
 export const styles = {
   footerContainer: {
@@ -27,18 +27,15 @@ export const styles = {
     gap: SPACING.lg,
   }),
 
-  footerBrand: {
-    fontSize: isMobile => isMobile ? '1.3rem' : '1.5rem',
+  footerBrand: () => ({
+    fontSize: 'clamp(1.2rem, 2vw, 1.8rem)',
     fontWeight: '900',
     color: COLORS.surface,
     letterSpacing: '-1px',
     fontFamily: FONTS.heading,
     cursor: 'pointer',
     transition: TRANSITIONS.normal,
-    ':hover': {
-      color: COLORS.atomicTangerine,
-    },
-  },
+  }),
 
   footerLinks: (isMobile) => ({
     display: 'flex',
@@ -68,9 +65,10 @@ export const styles = {
   },
 
   footerDivider: {
-    height: '1px',
-    background: `linear-gradient(90deg, transparent, ${COLORS.border}40, transparent)`,
+    border: 'none',
+    borderTop: `1px solid ${COLORS.border}30`,
     margin: `${SPACING.md} 0`,
+    height: '0',
   },
 
   footerBottom: (isMobile) => ({
@@ -83,11 +81,12 @@ export const styles = {
   }),
 
   copyrightText: {
-    fontSize: '0.85rem',
+    fontSize: 'clamp(0.75rem, 1vw, 0.95rem)',
     color: COLORS.textSecondary,
     fontFamily: FONTS.body,
     fontWeight: '400',
     margin: 0,
+    lineHeight: 1.5,
   },
 
   footerAccent: {
