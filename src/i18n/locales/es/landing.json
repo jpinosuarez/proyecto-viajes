@@ -17,5 +17,11 @@
     "journalDesc": "Gana sellos y sube de nivel con cada nueva aventura.",
     "security": "Memorias Intactas",
     "securityDesc": "Guarda bitácoras, fotos y rutas sin depender de redes sociales."
+  },
+  "footer": {
+    "terms": "Términos de Servicio",
+    "privacy": "Privacidad",
+    "contact": "Contacto",
+    "copyright": "Todos los derechos reservados."
   }
 }

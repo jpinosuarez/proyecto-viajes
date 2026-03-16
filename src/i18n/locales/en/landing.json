@@ -17,5 +17,11 @@
     "journalDesc": "Earn stamps and level up with each new adventure.",
     "security": "Memories Intact",
     "securityDesc": "Save logs, photos, and routes without relying on social media."
+  },
+  "footer": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "contact": "Contact Us",
+    "copyright": "All rights reserved."
   }
 }

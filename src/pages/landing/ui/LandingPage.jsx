@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, SHADOWS } from '@shared/config';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { WorldMapSVG } from './WorldMapSVG';
+import Footer from './components/Footer';
 
 const FEATURES = [
   { num: '01', icon: Map,      key: 'map',      color: COLORS.atomicTangerine, bentoSpan: 'col-span-12 md:col-span-8' }, // 2/3 width
@@ -324,6 +325,9 @@ const LandingPage = () => {
         </motion.div>
 
       </motion.section>
+
+      {/* Footer */}
+      <Footer />
 
     </motion.div>
   );
