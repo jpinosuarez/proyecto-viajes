@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const FIREBASE_PROJECT = process.env.VITE_FIREBASE_PROJECT_ID || 'keeptrip-app-b06b3';
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
-const FIRESTORE_EMULATOR_URL = 'http://127.0.0.1:8080';
+const FIRESTORE_EMULATOR_URL = 'http://127.0.0.1:8081';
 
 async function createAuthUser(email: string, password = 'testpass') {
   const signUpRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
@@ -69,7 +69,8 @@ test.describe('Invitations flow (E2E)', () => {
     const ownerUid = owner.localId;
     const inviteeUid = invitee.localId;
     const viajeId = 'trip-e2e-1';
-    const invitationId = `inv-${viajeId}-${inviteeUid}`;
+    // Standardized invitation ID format: ${viajeId}_${inviteeUid}
+    const invitationId = `${viajeId}_${inviteeUid}`;
 
     // open app so test helpers are available
     await page.goto('/');
@@ -194,7 +195,8 @@ test.describe('Invitations flow (E2E)', () => {
     const ownerUid = owner.localId;
     const inviteeUid = invitee.localId;
     const viajeId = 'trip-e2e-2';
-    const invitationId = `inv-${viajeId}-${inviteeUid}`;
+    // Standardized invitation ID format: ${viajeId}_${inviteeUid}
+    const invitationId = `${viajeId}_${inviteeUid}`;
 
     await page.goto('/');
 
@@ -296,7 +298,8 @@ test.describe('Invitations flow (E2E)', () => {
     const ownerUid = owner.localId;
     const inviteeUid = invitee.localId;
     const viajeId = 'trip-e2e-5';
-    const invitationId = `inv-${viajeId}-${inviteeUid}`;
+    // Standardized invitation ID format: ${viajeId}_${inviteeUid}
+    const invitationId = `${viajeId}_${inviteeUid}`;
 
     await page.goto('/');
 

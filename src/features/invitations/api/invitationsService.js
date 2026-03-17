@@ -36,7 +36,9 @@ export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null
 
   // If inviteeUid is known, store invitation in both places:
   // - viaje nested path (required by Firestore rules when invitee accepts)
+  //   IMPORTANT: nested document ID MUST be exactly {inviteeUid} (no prefix)
   // - top-level invitations collection (used by UI listeners)
+  //   ID format: ${viajeId}_${inviteeUid}
   if (inviteeUid) {
     if (!inviterId || !viajeId) {
       throw new Error('inviterId and viajeId are required when inviteeUid is provided');

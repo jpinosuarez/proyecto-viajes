@@ -23,10 +23,11 @@ service cloud.firestore {
           isAuthenticated()
           && (
             request.auth.uid in resource.data.sharedWith
-            // Also allow read for users who have an invitation (pending or accepted)
+            // Also allow read for users who have an accepted invitation (short-circuit to prevent null crash)
             || (
               request.auth.uid is string
               && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+              && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
             )
           )
         );
@@ -45,11 +46,9 @@ service cloud.firestore {
           && (request.resource.data.sharedWith == null ? 0 : request.resource.data.sharedWith.size())
             == (resource.data.sharedWith == null ? 0 : resource.data.sharedWith.size()) + 1
           && request.resource.data.sharedWith.hasAny([request.auth.uid])
-          // solo permitir si existe una invitacion creada por el owner para este viaje + invitee
-          // existe una invitacion bajo el viaje creada por el owner para este invitee?
+          // permitir solo si existe una invitacion aceptada para este invitee en este viaje
           && request.auth.uid is string
           && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
-          && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.inviterId == userId
           && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
         );
     }
@@ -71,6 +70,7 @@ service cloud.firestore {
             || (
               request.auth.uid is string
               && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+              && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
             )
           )
         );
