@@ -14,7 +14,14 @@ export default function useInvitations() {
 
   const acceptInvitation = useCallback(async (invId) => {
     if (!usuario) throw new Error('Not authenticated');
-    return invitationsService.acceptInvitation({ db: null, invitationId: invId, acceptorUid: usuario.uid });
+    const result = await invitationsService.acceptInvitation({ db: null, invitationId: invId, acceptorUid: usuario.uid });
+    
+    if (result) {
+      // Espera a que Firestore replique/sincronice los cambios
+      await new Promise(r => setTimeout(r, 4000));
+    }
+    
+    return result;
   }, [usuario]);
 
   const declineInvitation = useCallback(async (invId) => {

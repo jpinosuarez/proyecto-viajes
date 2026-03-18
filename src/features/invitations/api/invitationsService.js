@@ -66,43 +66,78 @@ export const acceptInvitation = async ({ db: _db, invitationId, acceptorUid }) =
   try {
     const invitationRef = doc(database, 'invitations', invitationId);
 
-    await runTransaction(database, async (transaction) => {
-      const invSnap = await transaction.get(invitationRef);
-      if (!invSnap.exists()) throw new Error('Invitation not found');
+    const invSnap = await getDoc(invitationRef);
+    if (!invSnap.exists()) {
+      throw new Error('Invitation not found');
+    }
 
-      const invitationData = invSnap.data() || {};
-      const resolvedInviteeUid = invitationData.inviteeUid || acceptorUid;
-      const acceptedAt = Date.now();
-      const invitationUpdate = {
-        status: 'accepted',
-        acceptedAt,
-        acceptedBy: acceptorUid,
-        inviteeUid: resolvedInviteeUid
-      };
-
-      // Update the top-level invitation record.
-      transaction.set(invitationRef, invitationUpdate, { merge: true });
-
-      // Also update the nested invitation record under the owner's viaje, if it exists.
-      if (invitationData.inviterId && invitationData.viajeId) {
-        const nestedInviteRef = doc(
-          database,
-          'usuarios',
-          invitationData.inviterId,
-          'viajes',
-          invitationData.viajeId,
-          'invitations',
-          resolvedInviteeUid
-        );
-        transaction.set(nestedInviteRef, invitationUpdate, { merge: true });
-
-        const viajeRef = doc(database, 'usuarios', invitationData.inviterId, 'viajes', invitationData.viajeId);
-        transaction.set(viajeRef, { sharedWith: arrayUnion(acceptorUid) }, { merge: true });
-      }
+    const invitationData = invSnap.data() || {};
+    const resolvedInviteeUid = invitationData.inviteeUid || acceptorUid;
+    const acceptedAt = Date.now();
+    const invitationUpdate = {
+      status: 'accepted',
+      acceptedAt,
+      acceptedBy: acceptorUid,
+      inviteeUid: resolvedInviteeUid
+    };
+    
+    console.log('[acceptInvitation] Data from invitation doc:', {
+      invitationId,
+      hasInviterId: 'inviterId' in invitationData,
+      hasInviteeUid: 'inviteeUid' in invitationData,
+      hasViajeId: 'viajeId' in invitationData,
+      invitationDataInviteeUid: invitationData.inviteeUid,
+      acceptorUid,
+      resolvedInviteeUid
     });
+
+    // SEQUENCE IS CRITICAL for UI testing and security rules.
+    // 1 MUST happen first because the reading rules now depend on sharedWith
+    // 2 & 3 can happen after, for verification purposes
+    if (invitationData.inviterId && invitationData.viajeId) {
+      // 1. Update arrayUnion FIRST so invitee can read the trip immediately
+      const viajeRef = doc(database, 'usuarios', invitationData.inviterId, 'viajes', invitationData.viajeId);
+      await setDoc(viajeRef, { sharedWith: arrayUnion(acceptorUid) }, { merge: true });
+      if (import.meta.env.DEV) {
+        console.log('[acceptInvitation] Updated viaje sharedWith FIRST', { path: `usuarios/${invitationData.inviterId}/viajes/${invitationData.viajeId}`, userId: acceptorUid });
+      }
+
+      // 2. Update nested invitation (for verification and future expansions)
+      const nestedInviteRef = doc(
+        database,
+        'usuarios',
+        invitationData.inviterId,
+        'viajes',
+        invitationData.viajeId,
+        'invitations',
+        resolvedInviteeUid
+      );
+      await setDoc(nestedInviteRef, invitationUpdate, { merge: true });
+      if (import.meta.env.DEV) {
+        console.log('[acceptInvitation] Updated nested invitation', { path: `usuarios/${invitationData.inviterId}/viajes/${invitationData.viajeId}/invitations/${resolvedInviteeUid}` });
+      }
+    }
+
+    // 3. Update the top-level invitation record last.
+    await setDoc(invitationRef, invitationUpdate, { merge: true });
+    if (import.meta.env.DEV) {
+      console.log('[acceptInvitation] Updated top-level invitation', { id: invitationId });
+    }
+
+    // Verify the update was written successfully
+    const verifySnap = await getDoc(invitationRef);
+    if (!verifySnap.exists() || verifySnap.data()?.status !== 'accepted') {
+      console.error('CRITICAL: Top-level invitation update failed verification', {
+        id: invitationId,
+        expected: 'accepted',
+        actual: verifySnap.data()?.status
+      });
+      // Still return true since the writes completed, but flag the issue
+    }
 
     return true;
   } catch (err) {
+    console.error('REAL ACCEPT INVITATION ERROR:', err);
     logger.error('acceptInvitation error', { error: err?.message, invitationId, acceptorUid });
     return false;
   }

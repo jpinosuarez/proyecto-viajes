@@ -39,14 +39,20 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
       return;
     }
 
-    const MAX_ATTEMPTS = 3;
-    if (fallbackAttempts >= MAX_ATTEMPTS) return;
+    const MAX_ATTEMPTS = 5;
+    if (fallbackAttempts >= MAX_ATTEMPTS) {
+      console.warn('useVisorViajeData: Max fallback attempts reached', { viajeId, userId: usuario.uid, attempts: fallbackAttempts });
+      return;
+    }
 
     let mounted = true;
     let timeoutId;
 
     const attemptFallbackLoad = async () => {
       try {
+        if (import.meta.env.DEV) {
+          console.debug('useVisorViajeData: Attempting fallback load', { viajeId, userId: usuario.uid, attempt: fallbackAttempts + 1 });
+        }
         // 1) Preferential query: accepted invitations for this user + trip
         const invitationsQ = query(
           collection(db, 'invitations'),
@@ -63,6 +69,9 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
           // fall back to reading by document ID. The standardized invitation ID format is
           // ${viajeId}_${inviteeUid}
           const invitationId = `${viajeId}_${usuario.uid}`;
+          if (import.meta.env.DEV) {
+            console.debug('useVisorViajeData: Query failed, trying standardized ID', { invitationId, error: err.message });
+          }
 
           try {
             const docSnap = await getDoc(doc(db, 'invitations', invitationId));
@@ -127,7 +136,13 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
       } catch (err) {
         // No bloquear el render del visor por fallas en esta fallback (puede ser
         // causado por reglas de seguridad o falta de invitación).
-        console.warn('Error loading shared trip fallback data', err);
+        console.warn('[useVisorViajeData Fallback] Error loading shared trip', {
+          viajeId,
+          userId: usuario.uid,
+          attempt: fallbackAttempts + 1,
+          errorMessage: err?.message,
+          errorCode: err?.code
+        });
       } finally {
         if (mounted) setFallbackAttempts((prev) => prev + 1);
       }
@@ -139,7 +154,7 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
     if (fallbackAttempts + 1 < MAX_ATTEMPTS) {
       timeoutId = window.setTimeout(() => {
         if (mounted) setFallbackAttempts((prev) => prev + 1);
-      }, 3000);
+      }, 500);
     }
 
     return () => {

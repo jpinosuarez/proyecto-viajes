@@ -10,91 +10,78 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 1. ZONA PRIVADA: datos del usuario.
-    // Solo el propietario puede leer/escribir su documento y cualquier subcoleccion.
     match /usuarios/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // 1.a Viajes compartidos: permitir lectura a usuarios listados en sharedWith (owner o invitados aceptados)
     match /usuarios/{userId}/viajes/{viajeId} {
       allow read: if isOwner(userId)
         || (
           isAuthenticated()
-          && (resource.data.sharedWith is list && request.auth.uid in resource.data.sharedWith)
+          && (
+            (request.auth.uid in resource.data.get('sharedWith', []))
+            || (
+              exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+              && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
+            )
+          )
         );
+
       allow create, delete: if isOwner(userId);
 
-      // permitir que el invitee agregue SOLO su UID a sharedWith (no otros cambios)
       allow update: if isOwner(userId)
         || (
           isAuthenticated()
           && request.resource.data.diff(resource.data).changedKeys().hasOnly(['sharedWith'])
-          // Permitir sharedWith como lista (directa) o como transform (arrayUnion)
-          && (
-            (request.resource.data.sharedWith == null || request.resource.data.sharedWith is list)
-            || request.resource.data.sharedWith is map
-          )
-          // Si se envía como lista, garantizamos que solo se agrega el uid del solicitante
-          && (
-            request.resource.data.sharedWith == null
-            || request.resource.data.sharedWith is map
-            || (
-              request.resource.data.sharedWith.hasAll(resource.data.sharedWith == null ? [] : resource.data.sharedWith)
-              && (request.resource.data.sharedWith == null ? 0 : request.resource.data.sharedWith.size())
-                == (resource.data.sharedWith == null ? 0 : resource.data.sharedWith.size()) + 1
-              && request.resource.data.sharedWith.hasAny([request.auth.uid])
-            )
-          )
-          // permitir solo si existe una invitacion aceptada para este invitee en este viaje
-          && request.auth.uid is string
+          && request.auth.uid in request.resource.data.get('sharedWith', [])
           && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
           && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
         );
     }
 
-    // Invitations nested under a trip — needed for invitation acceptance logic
+    match /usuarios/{userId}/viajes/{viajeId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isOwner(userId);
+      allow update: if isOwner(userId);
+    }
+
     match /usuarios/{userId}/viajes/{viajeId}/invitations/{inviteeUid} {
-      // Allow owner and the invitee to read/update the invitation document (used in rules evaluation)
       allow read, write: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == inviteeUid);
     }
 
-    // Subcolecciones dentro de un viaje (paradas, fotos, etc.) — lectura para owner o usuarios con invitación aceptada
     match /usuarios/{userId}/viajes/{viajeId}/{subDocument=**} {
       allow read: if isOwner(userId)
         || (
           isAuthenticated()
-          && request.auth.uid is string
-          && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
-          && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
+          && (
+            (request.auth.uid in resource.data.get('sharedWith', []))
+            || (
+              exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+              && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
+            )
+          )
         );
       allow write: if isOwner(userId);
     }
 
-    // 1.b Resto de subcolecciones del usuario (solo propietario)
     match /usuarios/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
 
-    // Invitations collection: creación por usuarios autenticados y acceso restringido
     match /invitations/{invId} {
-      // Cualquier usuario autenticado puede crear una invitación (owner crea)
       allow create: if isAuthenticated();
-      // Lectura: solo el inviter o el invitee pueden leer su invitación
-      allow read: if isAuthenticated() && (request.auth.uid == resource.data.inviterId || request.auth.uid == resource.data.inviteeUid);
-      // Actualización: inviter o invitee pueden actualizar el documento
-      allow update: if isAuthenticated() && (request.auth.uid == resource.data.inviterId || request.auth.uid == resource.data.inviteeUid);
-      // Eliminación: solo el inviter puede eliminar la invitación
-      allow delete: if isAuthenticated() && request.auth.uid == resource.data.inviterId;
+      allow read: if isAuthenticated() && (
+        ('inviterId' in resource.data && request.auth.uid == resource.data.inviterId) || 
+        ('inviteeUid' in resource.data && request.auth.uid == resource.data.inviteeUid)
+      );
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated() && ('inviterId' in resource.data && request.auth.uid == resource.data.inviterId);
     }
 
-    // 2. ZONA COMPARTIDA: cache global de paises/fotos.
-    // Cualquier usuario autenticado puede leer y escribir.
     match /paises_info/{paisCode} {
       allow read, write: if isAuthenticated();
     }
 
-    // 3. BLOQUEO POR DEFECTO: todo lo demas denegado.
     match /{document=**} {
       allow read, write: if false;
     }

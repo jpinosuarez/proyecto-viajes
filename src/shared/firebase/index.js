@@ -81,13 +81,13 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Detectar localhost/127.0.0.1 y conectar a Emuladores
 if (isLocalhost && useEmulators) {
-  const EMULATOR_HOST = 'localhost';
+  const EMULATOR_HOST = '127.0.0.1';
   if (!isTestEnv) {
     console.log(`🔧 Conectando a Firebase Emulators (${EMULATOR_HOST})...`);
   }
   // Nota: disableWarnings ayuda a limpiar la consola en desarrollo
   connectAuthEmulator(auth, `http://${EMULATOR_HOST}:9099`, { disableWarnings: true });
-  connectFirestoreEmulator(db, EMULATOR_HOST, 8080);
+  connectFirestoreEmulator(db, EMULATOR_HOST, 8081);
   connectStorageEmulator(storage, EMULATOR_HOST, 9199);
 }
 

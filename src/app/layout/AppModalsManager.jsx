@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, useMatch } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
@@ -49,7 +49,8 @@ function AppModalsManager({
   onLugarSeleccionado,
   pushToast,
 }) {
-  const { id: tripId } = useParams();
+  const match = useMatch('/trips/:id');
+  const tripId = match?.params?.id;
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
