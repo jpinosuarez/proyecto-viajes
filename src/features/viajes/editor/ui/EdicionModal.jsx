@@ -59,6 +59,14 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [galleryPortada, setGalleryPortada] = useState(0);
   const [captionDrafts, setCaptionDrafts] = useState({});
   const [hasTried, setHasTried] = useState(false);
+
+  const handlePortadaChange = (value) => {
+    if (typeof value === 'number') {
+      setGalleryPortada(value);
+    } else if (typeof value === 'string') {
+      setFormData((prev) => ({ ...prev, portadaUrl: value }));
+    }
+  };
   const [showCoverPicker, setShowCoverPicker] = useState(false);
   const previousGalleryLengthRef = useRef(0);
 
@@ -265,7 +273,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               files={galleryFiles}
               onFilesChange={setGalleryFiles}
               portadaIndex={galleryPortada}
-              onPortadaChange={(url) => setFormData((prev) => ({ ...prev, portadaUrl: url }))}
+              onPortadaChange={handlePortadaChange}
               portadaUrl={formData.portadaUrl}
               isBusy={isBusy}
               isMobile={isMobile}
