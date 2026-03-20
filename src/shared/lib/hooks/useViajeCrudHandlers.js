@@ -48,6 +48,10 @@ export function useViajeCrudHandlers({
         }
 
         const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
+        if (nuevoId) {
+          setViajeBorrador(null);
+          setCiudadInicialBorrador(null);
+        }
         return nuevoId || null;
       }
 

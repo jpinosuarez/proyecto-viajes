@@ -235,7 +235,8 @@ export const construirViajePayload = ({
   banderas,
   ciudades,
   foto,
-  fotoCredito
+  fotoCredito,
+  ownerId = null,
 }) => {
   const hoy = getTodayIsoDate();
 
@@ -243,6 +244,7 @@ export const construirViajePayload = ({
     code: datosViaje.code || '',
     nombreEspanol: datosViaje.nombreEspanol || 'Viaje',
     titulo: datosViaje.titulo || titulo,
+    ownerId,
     fechaInicio: datosViaje.fechaInicio || hoy,
     fechaFin: datosViaje.fechaFin || hoy,
     texto: datosViaje.texto || '',

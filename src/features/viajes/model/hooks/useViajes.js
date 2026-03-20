@@ -329,8 +329,14 @@ export const useViajes = () => {
       banderas,
       ciudades,
       foto: esFotoParaStorage ? null : fotoFinal || FOTO_DEFAULT_URL,
-      fotoCredito: creditoFinal
+      fotoCredito: creditoFinal,
+      ownerId: usuario.uid
     });
+
+    // OwnerId obligatorio para que Firestore permita creación en la nueva regla.
+    if (!payloadViaje.ownerId) {
+      payloadViaje.ownerId = usuario.uid;
+    }
 
     try {
       logger.info('Guardando nuevo viaje', { 

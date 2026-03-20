@@ -109,8 +109,11 @@ export function useEdicionModalSave({
       }
 
       return savedViajeId;
-    } catch {
-      pushToast(t('error.unexpectedError'), 'error');
+    } catch (error) {
+      console.error('Error en useEdicionModalSave:', error);
+      // Preferimos mostrar mensaje descriptivo si está disponible, sino mensaje genérico
+      const mensaje = error?.message ? `${t('error.saveFailed')}: ${error.message}` : t('error.saveFailed');
+      pushToast(mensaje, 'error');
       return null;
     }
   }, [
