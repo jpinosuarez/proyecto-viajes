@@ -8,9 +8,15 @@ const projectId = 'proyecto-viajes-test';
 beforeAll(async () => {
   const rules = fs.readFileSync('./firestore.rules', 'utf8');
   // connect to local emulator at default ports used by this project
+  const emulatorHostConfig = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
+  const [emulatorHost, emulatorPortString] = emulatorHostConfig.split(':');
+  const emulatorPort = process.env.FIRESTORE_EMULATOR_PORT
+    ? Number(process.env.FIRESTORE_EMULATOR_PORT)
+    : Number(emulatorPortString || '8080');
+
   testEnv = await initializeTestEnvironment({
     projectId,
-    firestore: { host: '127.0.0.1', port: 8080, rules }
+    firestore: { host: emulatorHost, port: emulatorPort, rules }
   });
 });
 
@@ -108,4 +114,47 @@ test('invitations collection: solo inviter o invitee pueden leer/actualizar', as
   await assertSucceeds(inviteeDb.doc('invitations/inv-abc').update({ status: 'accepted' }));
   // otro NO
   await assertFails(otherDb.doc('invitations/inv-abc').update({ status: 'accepted' }));
+});
+
+test('usuario autenticado no puede escribir en paises_info', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    const adminDb = admin.firestore();
+    await adminDb.doc('paises_info/AR').set({ nombre: 'Argentina', zona: 'UTC-3' });
+  });
+
+  const userDb = testEnv.authenticatedContext('userUid').firestore();
+  await assertFails(userDb.doc('paises_info/AR').set({ nombre: 'Argentina', zona: 'UTC-3' }));
+});
+
+test('usuario no puede modificar invitacion ajena en invitations', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    const adminDb = admin.firestore();
+    await adminDb.doc('invitations/inv-xyz').set({ inviterId: 'ownerUid', inviteeUid: 'inviteeUid', viajeId: 'v1', status: 'pending' });
+  });
+
+  const attackerDb = testEnv.authenticatedContext('attackerUid').firestore();
+  await assertFails(attackerDb.doc('invitations/inv-xyz').update({ status: 'accepted' }));
+});
+
+test('invitee sharedWith puede modificar paradas pero no titulo del viaje', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    const adminDb = admin.firestore();
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje4').set({ titulo: 'Trip', sharedWith: ['inviteeUid'] });
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje4/invitations/inviteeUid').set({ inviterId: 'ownerUid', inviteeUid: 'inviteeUid', viajeId: 'viaje4', status: 'accepted' });
+    await adminDb.doc('usuarios/ownerUid/viajes/viaje4/paradas/p1').set({ nombre: 'Parada1' });
+  });
+
+  const inviteeDb = testEnv.authenticatedContext('inviteeUid').firestore();
+  const paradaRef = inviteeDb.doc('usuarios/ownerUid/viajes/viaje4/paradas/p1');
+  await assertSucceeds(paradaRef.update({ nombre: 'Parada1-actualizada' }));
+
+  const viajeRef = inviteeDb.doc('usuarios/ownerUid/viajes/viaje4');
+  await assertFails(viajeRef.update({ titulo: 'Hacked' }));
+});
+
+test('no puede crear viaje con ownerId distinto a request.auth.uid', async () => {
+  const ownerDb = testEnv.authenticatedContext('ownerUid').firestore();
+  const viajeRef = ownerDb.doc('usuarios/ownerUid/viajes/viaje5');
+
+  await assertFails(viajeRef.set({ titulo: 'Trip', ownerId: 'somebodyElse', sharedWith: [] }, { merge: false }));
 });
