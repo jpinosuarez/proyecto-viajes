@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import TravelStatsWidget from './ui/TravelStatsWidget';
 import { Globe } from 'lucide-react';
 
 describe('TravelStatsWidget', () => {
+  afterEach(() => cleanup());
+
   const stats = [
     { value: 5, label: 'Trips', icon: <Globe data-testid="icon" /> },
     { value: 10, label: 'Days' },

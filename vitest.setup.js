@@ -6,6 +6,8 @@
  * stubs at the Vite resolver level (before the worker loads any code).
  * This avoids OOM from barrel-file expansion.
  *
+ * Virtual PWA module is also mocked via resolve.alias
+ *
  * Extends Vitest's expect with @testing-library/jest-dom matchers
  * (toHaveValue, toHaveTextContent, toBeInTheDocument, etc.)
  */

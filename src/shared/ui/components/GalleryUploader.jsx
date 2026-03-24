@@ -90,7 +90,7 @@ export function GalleryUploader({
           }
           validFiles.push(file);
         });
-    onChange(updatedFiles);
+    onChange(acceptedFiles);
 
     // Yield main thread to React's commit phase before generating previews.
     // URL.createObjectURL is a near-instant pointer into the browser's Blob store

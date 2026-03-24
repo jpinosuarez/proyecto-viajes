@@ -21,7 +21,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    VitePWA({
+    // Excluir VitePWA en tests para evitar errores de módulos virtuales
+    !process.env.VITEST && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       cleanupOutdatedCaches: true,
@@ -172,6 +173,8 @@ export default defineConfig({
           // en el entorno de Vitest/rolldown-vite.
           'lucide-react': path.resolve(__dirname, '__mocks__/lucide-react.js'),
           'framer-motion': path.resolve(__dirname, '__mocks__/framer-motion.js'),
+          // Mock virtual PWA module to avoid virtual module resolution errors in tests
+          'virtual:pwa-register/react': path.resolve(__dirname, '__mocks__/pwa-register-react.js'),
         }
       : baseAliases,
   },

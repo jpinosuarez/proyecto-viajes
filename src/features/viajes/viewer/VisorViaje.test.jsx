@@ -90,6 +90,15 @@ vi.mock('./components/VisorHero', () => ({
   ),
 }));
 
+vi.mock('./components/DocumentaryHero', () => ({
+  default: ({ onDelete, onOpenEdit }) => (
+    <div>
+      <button data-testid="documentary-hero-delete" onClick={onDelete}>delete</button>
+      <button data-testid="documentary-hero-open-edit" onClick={onOpenEdit}>edit</button>
+    </div>
+  ),
+}));
+
 vi.mock('./components/VisorRouteLayout', () => ({
   default: () => <div data-testid="route-layout" />,
 }));
@@ -229,7 +238,7 @@ describe('VisorViaje (phase 4 assembler)', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('hero-delete'));
+    fireEvent.click(screen.getByTestId('documentary-hero-delete'));
     expect(onDelete).toHaveBeenCalledWith('v1');
   });
 });
