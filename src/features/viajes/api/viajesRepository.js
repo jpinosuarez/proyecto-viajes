@@ -6,7 +6,6 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   updateDoc,
   writeBatch
@@ -18,7 +17,14 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
   let latestSnapshotId = 0;
 
   const viajesRef = collection(db, `usuarios/${userId}/viajes`);
-  const q = query(viajesRef, orderBy('fechaInicio', 'desc'));
+  const q = query(viajesRef);
+
+  const toMillis = (value) => {
+    if (!value) return 0;
+    if (typeof value?.toMillis === 'function') return value.toMillis();
+    const millis = new Date(value).getTime();
+    return Number.isFinite(millis) ? millis : 0;
+  };
 
   return onSnapshot(
     q,
@@ -27,16 +33,22 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
       const snapshotId = ++latestSnapshotId;
 
       try {
-        const viajes = snapshot.docs.map((item) => {
-          const data = item.data();
-          return {
+        const viajes = snapshot.docs
+          .map((item) => {
+            const data = item.data({ serverTimestamps: 'estimate' });
+            return {
             id: item.id,
             ...data,
             createdAt:
               data.createdAt ??
               (item.metadata.hasPendingWrites ? new Date() : null),
-          };
-        });
+            };
+          })
+          .sort((a, b) => {
+            const createdAtDiff = toMillis(b.createdAt) - toMillis(a.createdAt);
+            if (createdAtDiff !== 0) return createdAtDiff;
+            return toMillis(b.fechaInicio) - toMillis(a.fechaInicio);
+          });
         const paradasPromises = viajes.map(async (viaje) => {
           const paradasRef = collection(db, `usuarios/${userId}/viajes/${viaje.id}/paradas`);
           const paradasSnap = await getDocs(paradasRef);

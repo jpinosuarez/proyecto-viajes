@@ -13,6 +13,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
   const flags = trip.banderas || trip.flags || (trip.flag ? [trip.flag] : []);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
+  const cityLabel = trip.paradaCount === 1 ? 'Ciudad' : 'Ciudades';
 
   // 3D Parallax logic (Desktop Only)
   const cardRef = useRef(null);
@@ -137,7 +138,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
           )}
           {trip.paradaCount > 0 && (
             <span style={styles.glassPill}>
-              <MapPin size={12} /> {trip.paradaCount} Paradas
+              📍 {trip.paradaCount} {cityLabel}
             </span>
           )}
           {trip.ciudades && (

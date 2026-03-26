@@ -15,7 +15,6 @@ import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 
 // Import original editor sections (reusing existing components)
 import EdicionHeaderSection from './components/EdicionHeaderSection';
-import EdicionContextSection from './components/EdicionContextSection';
 import EdicionGallerySection from './components/EdicionGallerySection';
 import EdicionParadasSection from './components/EdicionParadasSection';
 import CoverPickerModal from './components/CoverPickerModal';
@@ -47,11 +46,6 @@ const EditorFocusPanel = ({
   onCaptionSave,
   onSetPortadaExistente,
   onEliminarFoto,
-  companionDraft = '',
-  companionResults = [],
-  onCompanionSearch = () => {},
-  onAddCompanionFreeform = () => {},
-  onAddCompanionFromResult = () => {},
   galeria = { fotos: [], uploading: false },
   onAfterSave = null,
 }) => {
@@ -363,20 +357,6 @@ const EditorFocusPanel = ({
             onTituloChange={handleTituloChange}
             onToggleTituloAuto={() => setAutoTitleMode((prev) => !prev)}
             onPortadaChange={(url) => effectiveSetFormData((prev) => ({ ...prev, portadaUrl: url }))}
-          />
-
-          {/* Core Context (Dates, Companions, Vibe) */}
-          <EdicionContextSection
-            styles={edicionModalStyles}
-            t={t}
-            formData={effectiveFormData}
-            setFormData={effectiveSetFormData}
-            companionDraft={companionDraft}
-            companionResults={companionResults}
-            showCompanions={false}
-            onCompanionSearch={onCompanionSearch}
-            onAddCompanionFreeform={onAddCompanionFreeform}
-            onAddCompanionFromResult={onAddCompanionFromResult}
           />
 
           {/* Itinerary / Stops */}

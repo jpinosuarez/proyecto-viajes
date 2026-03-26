@@ -11,10 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
 import { useGaleriaViaje } from '@shared/lib/hooks/useGaleriaViaje';
 import { useEdicionModalSave } from '../model/hooks/useEdicionModalSave';
-import { useEdicionCompanions } from '../model/hooks/useEdicionCompanions';
 import { useEdicionGalleryManager } from '../model/hooks/useEdicionGalleryManager';
 import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycle';
-import EdicionContextSection from './components/EdicionContextSection';
 import EdicionGallerySection from './components/EdicionGallerySection';
 import EdicionParadasSection from './components/EdicionParadasSection';
 import EdicionHeaderSection from './components/EdicionHeaderSection';
@@ -131,21 +129,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     t,
   });
 
-  const {
-    companionDraft,
-    companionResults,
-    handleCompanionSearch,
-    handleAddCompanionFromResult,
-    handleAddCompanionFreeform,
-  } = useEdicionCompanions({
-    formData,
-    setFormData,
-    viaje,
-    usuario,
-    pushToast,
-    t,
-  });
-
   // Auto-set first photo as cover when gallery goes from 0→1 photos
   useEffect(() => {
     const currentGalleryLength = galeria?.fotos?.length || 0;
@@ -191,20 +174,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
             onPortadaChange={(url) => setFormData((prev) => ({ ...prev, portadaUrl: url }))}
           />
           <div style={styles.body} className="custom-scroll">
-            {/* Core context (dates + companions) */}
-            <EdicionContextSection
-              styles={styles}
-              t={t}
-              formData={formData}
-              setFormData={setFormData}
-              companionDraft={companionDraft}
-              companionResults={companionResults}
-              showCompanions={false}
-              onCompanionSearch={handleCompanionSearch}
-              onAddCompanionFreeform={handleAddCompanionFreeform}
-              onAddCompanionFromResult={handleAddCompanionFromResult}
-            />
-
             {/* Itinerary / Stops */}
             <EdicionParadasSection
               styles={styles}
