@@ -13,10 +13,10 @@ const TripsPage = () => {
   const { data, crud } = useOutletContext();
   const { busqueda } = useSearch();
   
-  const [activeFilter, setActiveFilter] = useState('all'); // all, year, favorites
+  const [activeFilter, setActiveFilter] = useState('all'); // all, year
   
-  const trips = data.bitacora || [];
-  const tripData = data.bitacoraData || {};
+  const trips = useMemo(() => data.bitacora ?? [], [data.bitacora]);
+  const tripData = useMemo(() => data.bitacoraData ?? {}, [data.bitacoraData]);
   const searchTerm = busqueda.trim().toLowerCase();
 
   const filteredTrips = useMemo(() => {

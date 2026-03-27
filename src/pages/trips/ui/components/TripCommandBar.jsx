@@ -1,8 +1,7 @@
 import React from 'react';
-import { motion as Motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
-import { COLORS, SHADOWS, RADIUS, GLASS } from '@shared/config';
+import { LayoutGrid, List } from 'lucide-react';
+import { COLORS, RADIUS, GLASS } from '@shared/config';
 import { useToast } from '@app/providers';
 
 const TripCommandBar = ({ activeFilter, onFilterChange }) => {
@@ -43,14 +42,13 @@ const TripCommandBar = ({ activeFilter, onFilterChange }) => {
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         <button style={btnStyle(activeFilter === 'all')} onClick={() => onFilterChange('all')}>{t('filters.all')}</button>
         <button style={btnStyle(activeFilter === 'year')} onClick={() => onFilterChange('year')}>{t('filters.year')}</button>
-        <button style={btnStyle(activeFilter === 'favorites')} onClick={() => onFilterChange('favorites')}>{t('filters.favorites')}</button>
       </div>
       
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.atomicTangerine, minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center' }} title={t('view.grid')}>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.atomicTangerine, minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center' }} title={t('viewGrid')}>
           <LayoutGrid size={20} />
         </button>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.textSecondary, minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center' }} onClick={handleListToggle} title={t('view.list')}>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.textSecondary, minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center' }} onClick={handleListToggle} title={t('viewList')}>
           <List size={20} />
         </button>
       </div>

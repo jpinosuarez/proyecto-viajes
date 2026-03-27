@@ -26,16 +26,16 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         style={{ width: '100%', minWidth: 0, height: '100%' }}
         initialViewState={{
           longitude: 0,
-          latitude: isMobile ? 15 : 20,
-          zoom: isMobile ? -0.6 : 0.32,
+          latitude: isMobile ? 18 : 16,
+          zoom: isMobile ? 0.45 : 0.72,
         }}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
         reuseMaps
         renderWorldCopies={false}
-        minZoom={1.5}
-        maxBounds={[[ -180, -85 ], [ 180, 85 ]]}
+        minZoom={0.35}
+        maxBounds={[[-180, -70], [180, 85]]}
         scrollZoom={false}
         dragPan={false}
         doubleClickZoom={false}

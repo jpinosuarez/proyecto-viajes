@@ -13,7 +13,7 @@ const TravelerHud = ({ paises = [], trips = [], tripData = {}, isMobile = false 
   const stats = useLogStats(trips, tripData);
   const level = getTravelerLevel(paises.length);
   
-  const name = usuario?.displayName?.split(' ')[0] || 'Viajero';
+  const name = usuario?.displayName?.split(' ')[0] || t('fallbackName', 'Explorer');
   
   return (
     <Motion.div
@@ -23,16 +23,16 @@ const TravelerHud = ({ paises = [], trips = [], tripData = {}, isMobile = false 
       whileTap={{ scale: 0.98 }}
       style={{
         position: 'absolute',
-        top: isMobile ? '10px' : '20px',
-        left: isMobile ? '10px' : '20px',
+        top: isMobile ? '10px' : '18px',
+        left: isMobile ? '10px' : '18px',
         zIndex: 10,
         pointerEvents: 'auto',
 
         ...GLASS.dark,
         backgroundColor: 'rgba(30, 41, 59, 0.75)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid rgba(255, 255, 255, 0.16)',
         borderRadius: RADIUS.xl,
-        padding: isMobile ? '10px 12px' : '14px 18px',
+        padding: isMobile ? '10px 12px' : '16px 20px',
         boxShadow: SHADOWS.float,
 
         display: 'flex',
@@ -68,10 +68,16 @@ const TravelerHud = ({ paises = [], trips = [], tripData = {}, isMobile = false 
       
       <div style={{ marginTop: '4px', paddingTop: isMobile ? '8px' : '10px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <p style={{ margin: 0, fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#fff', fontWeight: 600 }}>
-          {paises.length} {paises.length === 1 ? 'País' : 'Países'} · {stats.continents} Continentes
+          {paises.length}{' '}
+          {paises.length === 1 ? t('hud.countrySingular', 'country') : t('hud.countryPlural', 'countries')}
+          {' · '}
+          {stats.continents} {t('stats.continents')}
         </p>
         <p style={{ margin: 0, fontSize: isMobile ? '0.68rem' : '0.75rem', color: 'rgba(255,255,255,0.65)' }}>
-          {stats.tripCount} {stats.tripCount === 1 ? 'Viaje documentado' : 'Viajes documentados'}
+          {stats.tripCount}{' '}
+          {stats.tripCount === 1
+            ? t('hud.documentedTripSingular', 'documented trip')
+            : t('hud.documentedTripPlural', 'documented trips')}
         </p>
       </div>
     </Motion.div>

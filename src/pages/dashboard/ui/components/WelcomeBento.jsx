@@ -15,7 +15,6 @@ const WelcomeBento = ({
   level, 
   nextLevel, 
   logStatsDashboard, 
-  isNewTraveler, 
   isMobile
 }) => {
   const { t } = useTranslation('dashboard');
@@ -63,21 +62,19 @@ const WelcomeBento = ({
         </div>
       </div>
 
-      {!isNewTraveler && (
-        <div style={styles.statsWrapper}>
-          <TravelStatsWidget
-            stats={[
-              { value: logStatsDashboard.tripCount, label: t('stats.tripsCompleted') },
-              { value: logStatsDashboard.totalDays, label: t('stats.totalDays') },
-              { value: logStatsDashboard.totalCities, label: t('stats.registeredCities') },
-              { value: logStatsDashboard.continents, label: t('stats.continents') },
-              { value: logStatsDashboard.longestTrip, label: t('stats.longestTrip') },
-              { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
-            ]}
-            ariaLabel={t('stats.tripSummary')}
-          />
-        </div>
-      )}
+      <div style={styles.statsWrapper}>
+        <TravelStatsWidget
+          stats={[
+            { value: logStatsDashboard.tripCount, label: t('stats.tripsCompleted') },
+            { value: logStatsDashboard.totalDays, label: t('stats.totalDays') },
+            { value: logStatsDashboard.totalCities, label: t('stats.registeredCities') },
+            { value: logStatsDashboard.continents, label: t('stats.continents') },
+            { value: logStatsDashboard.longestTrip, label: t('stats.longestTrip') },
+            { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
+          ]}
+          ariaLabel={t('stats.tripSummary', 'Trip summary')}
+        />
+      </div>
     </Motion.div>
   );
 };

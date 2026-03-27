@@ -11,6 +11,7 @@
   "newBitacora": "+ New Journey",
   "subtitleStats": "You've explored {{countries}} countries — {{percent}}% of the world.",
   "stats": {
+    "tripSummary": "Trip summary",
     "totalDays": "Total days",
     "registeredCities": "Registered cities",
     "tripsCompleted": "Trips completed",
@@ -23,6 +24,12 @@
     "mainRegion": "Main region",
     "countriesPlural": "countries",
     "countrySingular": "country"
+  },
+  "hud": {
+    "countrySingular": "country",
+    "countryPlural": "countries",
+    "documentedTripSingular": "documented trip",
+    "documentedTripPlural": "documented trips"
   },
   "tooltip": {
     "awaitingFirstCountry": "You haven't registered any country yet.",
@@ -40,6 +47,8 @@
   "noResults": "No results found",
   "noResultsMessage": "No trips match your search. Try different terms.",
   "clearFilter": "Clear filter",
+  "mapUnavailable": "Map is unavailable right now.",
+  "retryMap": "Retry map",
   "viewGrid": "Grid view",
   "viewList": "List view",
   "filters": {

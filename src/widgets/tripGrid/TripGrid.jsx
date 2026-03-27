@@ -25,7 +25,6 @@ const TripGrid = ({
   const logStats = useLogStats(trips, tripData);
 
   const statItems = useMemo(() => {
-    if (logStats.tripCount === 0) return [];
     return [
       { value: logStats.tripCount, label: tDashboard('stats.tripsCompleted') },
       { value: logStats.totalDays, label: tDashboard('stats.totalDays') },
@@ -50,9 +49,11 @@ const TripGrid = ({
 
   return (
     <div style={styles.gridWrapper}>
-      {trips.length > 0 && (
-        <TravelStatsWidget stats={statItems} ariaLabel={tDashboard('stats.tripSummary', 'Resumen de viajes')} variant="compact" />
-      )}
+      <TravelStatsWidget
+        stats={statItems}
+        ariaLabel={tDashboard('stats.tripSummary', 'Trip summary')}
+        variant="compact"
+      />
 
       <Motion.div 
         className="trip-masonry"
@@ -100,8 +101,8 @@ const TripGrid = ({
 
       {hasNoSearchResults && (
         <div style={{ textAlign: 'center', padding: '64px 24px', gridColumn: '1 / -1' }}>
-          <h3 style={{ fontSize: '1.2rem', color: COLORS.charcoalBlue }}>No encontramos viajes mágicos</h3>
-          <p style={{ color: COLORS.textSecondary }}>Prueba ajustando tus filtros o búsqueda.</p>
+          <h3 style={{ fontSize: '1.2rem', color: COLORS.charcoalBlue }}>{tDashboard('noResults')}</h3>
+          <p style={{ color: COLORS.textSecondary }}>{tDashboard('noResultsMessage')}</p>
         </div>
       )}
 

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { motion as Motion } from 'framer-motion';
-import { AlertTriangle, Compass, Calendar, Globe, MapPin, ArrowRight, Sparkles, WifiOff } from 'lucide-react';
+import { WifiOff, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@app/providers/AuthContext';
@@ -31,6 +30,10 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   const recentTrips = useMemo(
     () => [...log].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio)),
     [log]
+  );
+  const visibleRecentTrips = useMemo(
+    () => recentTrips.slice(0, isMobile ? 2 : 2),
+    [recentTrips, isMobile]
   );
   const isNewTraveler = log.length === 0;
   const [mapRenderKey, setMapRenderKey] = useState(0);
@@ -90,7 +93,6 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
         level={level}
         nextLevel={next}
         logStatsDashboard={logStatsDashboard}
-        isNewTraveler={isNewTraveler}
         isMobile={isMobile}
       />
 
@@ -114,7 +116,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
 
           <div style={styles.cardsList(isMobile)} className="custom-scroll">
             {loading ? (
-              <SkeletonList count={3} Component={TripCardSkeleton} />
+              <SkeletonList count={2} Component={TripCardSkeleton} />
             ) : isError ? (
               <div style={styles.dashboardErrorCard} role="status" aria-live="polite">
                 <WifiOff size={18} color={COLORS.warning} />
@@ -126,7 +128,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
                 )}
               </div>
             ) : !isNewTraveler ? (
-              recentTrips.map((trip) => (
+              visibleRecentTrips.map((trip) => (
                 <TripCard 
                   key={trip.id} 
                   trip={trip} 

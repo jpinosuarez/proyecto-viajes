@@ -11,6 +11,7 @@
   "newBitacora": "+ Nueva Bitácora",
   "subtitleStats": "Llevas {{countries}} países explorados — el {{percent}}% del mundo.",
   "stats": {
+    "tripSummary": "Resumen de viajes",
     "totalDays": "Días totales",
     "registeredCities": "Ciudades registradas",
     "tripsCompleted": "Viajes completados",
@@ -23,6 +24,12 @@
     "mainRegion": "Región predominante",
     "countriesPlural": "países",
     "countrySingular": "país"
+  },
+  "hud": {
+    "countrySingular": "país",
+    "countryPlural": "países",
+    "documentedTripSingular": "viaje documentado",
+    "documentedTripPlural": "viajes documentados"
   },
   "tooltip": {
     "awaitingFirstCountry": "Aún no has registrado ningún país.",
@@ -46,6 +53,8 @@
   "noResults": "No se encontraron resultados",
   "noResultsMessage": "No hay viajes que coincidan con tu búsqueda. Intenta con otros términos.",
   "clearFilter": "Limpiar filtro",
+  "mapUnavailable": "El mapa no está disponible ahora mismo.",
+  "retryMap": "Reintentar mapa",
   "viewGrid": "Vista de cuadrícula",
   "viewList": "Vista de lista",
   "filters": {

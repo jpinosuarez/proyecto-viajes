@@ -2,9 +2,13 @@ import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 
 export const mediaQueries = `
   @media (max-width: 768px) {
+    .travel-stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)) !important;
+      gap: 8px !important;
+    }
     .travel-stats-pill {
       min-height: 44px !important;
-      min-width: 90px !important;
+      min-width: 0 !important;
       padding: 6px 12px !important;
     }
     .travel-stats-value {
@@ -19,14 +23,12 @@ export const mediaQueries = `
 
 export const styles = {
   container: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))',
     alignItems: 'stretch',
     gap: '8px',
-    overflowX: 'auto',
     padding: '12px 0',
-    scrollbarWidth: 'none',
-    WebkitOverflowScrolling: 'touch',
+    width: '100%',
   },
   pill: {
     display: 'flex',
@@ -41,7 +43,6 @@ export const styles = {
     border: `1px solid rgba(44,62,80,0.08)`,
     boxShadow: SHADOWS.md,
     position: 'relative',
-    flexShrink: 0,
     transition: TRANSITIONS.normal,
   },
   iconWrap: {

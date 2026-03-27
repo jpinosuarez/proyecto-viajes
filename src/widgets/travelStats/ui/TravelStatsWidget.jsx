@@ -21,6 +21,7 @@ const TravelStatsWidget = ({ stats = [], ariaLabel, variant = 'full' }) => {
       <div
         role="region"
         aria-label={ariaLabel}
+        className="travel-stats-grid"
         style={styles.container}
       >
         {displayed.map((stat) => (
@@ -32,18 +33,19 @@ const TravelStatsWidget = ({ stats = [], ariaLabel, variant = 'full' }) => {
 };
 
 const StatPill = memo(({ stat }) => {
+  const numericValue = typeof stat.value === 'number' ? stat.value : Number.parseFloat(stat.value) || 0;
   // motion value for animated counter
-  const count = useMotionValue(stat.value);
+  const count = useMotionValue(numericValue);
   const rounded = useTransform(count, (latest) => Math.round(latest));
-  const prev = React.useRef(stat.value);
+  const prev = React.useRef(numericValue);
 
   useEffect(() => {
-    if (prev.current !== stat.value) {
-      animate(count, stat.value, { duration: 0.8 });
-      prev.current = stat.value;
+    if (prev.current !== numericValue) {
+      animate(count, numericValue, { duration: 0.8 });
+      prev.current = numericValue;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stat.value]);
+  }, [numericValue]);
 
   return (
     <Motion.div
@@ -57,7 +59,9 @@ const StatPill = memo(({ stat }) => {
           {stat.icon || null}
         </div>
       </div>
-      <Motion.span className="travel-stats-value" style={styles.value}>{rounded}</Motion.span>
+      <Motion.span className="travel-stats-value" style={styles.value}>
+        {typeof stat.value === 'number' ? rounded : stat.value}
+      </Motion.span>
       <span className="travel-stats-label" style={styles.label}>{stat.label}</span>
     </Motion.div>
   );

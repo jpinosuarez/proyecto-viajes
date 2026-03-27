@@ -89,6 +89,7 @@ export const useViajes = () => {
     warning: (message) => pushToast(message, 'warning')
   };
   const errorToastCooldownRef = useRef({});
+  const pendingTripIdsRef = useRef(new Set());
 
   const notifyErrorThrottled = useCallback((key, message, cooldownMs = 10000) => {
     const now = Date.now();
@@ -108,6 +109,7 @@ export const useViajes = () => {
   useEffect(() => {
     if (!usuario) {
       logger.debug('Usuario no autenticado, limpiando estado de viajes');
+      pendingTripIdsRef.current.clear();
       setBitacora([]);
       setBitacoraData({});
       setTodasLasParadas([]);
@@ -141,7 +143,13 @@ export const useViajes = () => {
         // personal puede dispararse después que el listener compartido).
         setBitacora((prev) => {
           const compartidos = prev.filter((item) => item.ownerId !== usuario.uid);
-          const next = [...viajesConOwner, ...compartidos];
+          const pendingPersonal = prev.filter(
+            (item) =>
+              item.ownerId === usuario.uid &&
+              pendingTripIdsRef.current.has(item.id) &&
+              !viajesConOwner.some((viaje) => viaje.id === item.id)
+          );
+          const next = [...viajesConOwner, ...pendingPersonal, ...compartidos];
           setBitacoraData(construirBitacoraData(next));
           return next;
         });
@@ -367,6 +375,22 @@ export const useViajes = () => {
       payloadViaje.ownerId = usuario.uid;
     }
 
+    const optimisticTripId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimisticTrip = {
+      ...payloadViaje,
+      id: optimisticTripId,
+      ownerId: usuario.uid,
+      createdAt: new Date().toISOString(),
+      paradas: paradasProcesadas,
+      isPending: true
+    };
+    pendingTripIdsRef.current.add(optimisticTripId);
+    setBitacora((prev) => {
+      const next = [optimisticTrip, ...prev.filter((item) => item.id !== optimisticTripId)];
+      setBitacoraData(construirBitacoraData(next));
+      return next;
+    });
+
     try {
       logger.info('Guardando nuevo viaje', { 
         userId: usuario.uid,
@@ -384,6 +408,20 @@ export const useViajes = () => {
       if (!viajeId) {
         throw new Error('No se obtuvo viajeId al crear viaje');
       }
+
+      pendingTripIdsRef.current.delete(optimisticTripId);
+      setBitacora((prev) => {
+        const withoutPending = prev.filter((item) => item.id !== optimisticTripId);
+        const hasSyncedTrip = withoutPending.some((item) => item.id === viajeId);
+        const optimisticResolved = {
+          ...optimisticTrip,
+          id: viajeId,
+          isPending: false
+        };
+        const next = hasSyncedTrip ? withoutPending : [optimisticResolved, ...withoutPending];
+        setBitacoraData(construirBitacoraData(next));
+        return next;
+      });
 
       if (esFotoParaStorage) {
         try {
@@ -412,6 +450,12 @@ export const useViajes = () => {
       toast.success('Viaje guardado correctamente');
       return viajeId;
     } catch (saveError) {
+      pendingTripIdsRef.current.delete(optimisticTripId);
+      setBitacora((prev) => {
+        const next = prev.filter((item) => item.id !== optimisticTripId);
+        setBitacoraData(construirBitacoraData(next));
+        return next;
+      });
       logger.error('Error guardando viaje', { 
         error: saveError?.message || saveError,
         stack: saveError?.stack || null,

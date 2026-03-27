@@ -27,15 +27,6 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
 
-  const handleLocateMe = React.useCallback(() => {
-    mapRef.current?.flyTo({
-      center: [20, 20],
-      zoom: 1.5,
-      duration: 1500,
-      essential: true,
-    });
-  }, []);
-
   const onMapClick = React.useCallback((event) => {
     const feature = event.features && event.features[0];
     if (feature && feature.layer.id === 'unclustered-point') {
@@ -91,6 +82,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         projection={isMobile ? 'mercator' : 'globe'}
         onLoad={(e) => setMapLanguage(e.target, i18n.language)}
         reuseMaps
+        attributionControl={false}
       >
         <Layer id="sky" type="sky" paint={{ 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 5 }} />
 
@@ -144,7 +136,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
 
       {/* OVERLAY LAYER (HUD) */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
-        {!isEmptyMap && (
+        {!isEmptyMap && !isMobile && (
           <TravelerHud isMobile={isMobile} paises={paises} trips={trips} tripData={tripData} />
         )}
       </div>
@@ -178,7 +170,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
               textAlign: 'right'
             }}
           >
-            {t('welcome.emptyStateDescription', 'El globo está en blanco. Planta tu primera bandera.')}
+            {t('welcome.emptyStateDescription', 'The globe is waiting for your first flag.')}
           </Motion.div>
         )}
       </AnimatePresence>

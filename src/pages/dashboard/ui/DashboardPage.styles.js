@@ -5,8 +5,10 @@ export const styles = {
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    gap: isMobile ? '10px' : '16px', // Reduce el gap vertical
-    padding: isMobile ? '16px 16px 80px' : '32px 32px 32px', // Reduce padding inferior
+    gap: isMobile ? '12px' : '18px',
+    padding: isMobile ? '16px 16px 80px' : '28px 28px 24px',
+    height: '100%',
+    minHeight: 0,
     boxSizing: 'border-box',
   }),
 
@@ -91,10 +93,11 @@ export const styles = {
 
   mainGrid: (isMobile) => ({
     display: 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 320px',
-    gap: isMobile ? '16px' : '18px',
-    alignItems: isMobile ? 'stretch' : 'center', // Centra verticalmente en desktop
-    justifyContent: 'center', // Centra horizontalmente el grid
+    gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1.25fr) minmax(320px, 0.95fr)',
+    gap: isMobile ? '16px' : '20px',
+    alignItems: 'start',
+    flex: 1,
+    minHeight: 0,
   }),
 
   mapCard: (isMobile) => ({
@@ -103,10 +106,10 @@ export const styles = {
     width: '100%',
     minWidth: 0,
     maxWidth: '100%',
-    aspectRatio: '2.2/1', // Relación de aspecto más panorámica
-    height: isMobile ? 'auto' : 'auto', // Deja que aspectRatio controle el alto
-    minHeight: isMobile ? '160px' : '220px', // Asegura suficiente altura
-    maxHeight: isMobile ? '260px' : '320px', // Evita que sea demasiado grande
+    aspectRatio: '2.2/1',
+    height: 'auto',
+    minHeight: isMobile ? '160px' : '230px',
+    maxHeight: isMobile ? '260px' : '340px',
     boxShadow: SHADOWS.md,
     backgroundColor: COLORS.surface,
     cursor: 'crosshair',
@@ -206,8 +209,9 @@ export const styles = {
   recentsContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px', // Reduce el gap interno
-    marginTop: '-8px', // Sube el bloque de aventuras recientes
+    gap: '8px',
+    minWidth: 0,
+    minHeight: 0,
   },
 
   sectionHeader: {
@@ -244,13 +248,14 @@ export const styles = {
   },
 
   cardsList: (isMobile) => ({
-    display: isMobile ? 'grid' : 'flex',
-    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : undefined,
-    flexDirection: isMobile ? undefined : 'row',
-    gap: '8px',
-    overflowX: isMobile ? 'hidden' : 'auto',
-    paddingBottom: isMobile ? '0' : '8px',
-    scrollbarWidth: 'none',
+    display: 'grid',
+    gridTemplateColumns: isMobile
+      ? 'repeat(auto-fit, minmax(min(170px, 100%), 1fr))'
+      : 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))',
+    alignItems: 'stretch',
+    gap: isMobile ? '10px' : '12px',
+    overflow: 'hidden',
+    minWidth: 0,
   }),
 
   dashboardErrorCard: {
