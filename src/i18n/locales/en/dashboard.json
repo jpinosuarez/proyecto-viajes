@@ -47,6 +47,11 @@
     "year": "This year",
     "favorites": "Favorites"
   },
+  "ghostEmptyState": {
+    "title": "Your logbook is ready for takeoff",
+    "description": "Every explorer starts with a first route. Create your next trip and turn that destination into a story.",
+    "action": "Create my first route"
+  },
   "toast": {
     "comingSoon": "Coming soon"
   }

@@ -1,6 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { motion as Motion } from 'framer-motion';
 import { Share2, Download, Instagram, Loader2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@app/providers/ToastContext';
 import StoryExportTemplate from './StoryExportTemplate';
 import { captureNodeAsPng, shareImage, downloadBlob } from '@shared/lib/utils/shareUtils';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX, TRANSITIONS } from '@shared/config';
@@ -21,6 +23,7 @@ const VARIANTS = [
  */
 const ShareStoryButton = ({ data, style = {} }) => {
   const { t } = useTranslation('share');
+  const { pushToast } = useToast();
   const [open, setOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState('classic');
   const [isExporting, setIsExporting] = useState(false);
@@ -36,19 +39,45 @@ const ShareStoryButton = ({ data, style = {} }) => {
       const node = templateRefs.current[selectedVariant];
       if (!node) throw new Error('Template ref not found');
 
-      const blob = await captureNodeAsPng(node);
+      const fallbackMessage = t('fallbackMessage');
+      const blob = await captureNodeAsPng(node, { fallbackMessage });
+      const normalizedTitle = data.titulo || t('defaultTitle');
+      const filename = `keeptrip-${normalizedTitle.replace(/\s+/g, '-').toLowerCase()}.png`;
+      const shareText = t('shareText', { title: normalizedTitle });
+      const shareUrl = data?.id ? `${window.location.origin}/trips/${data.id}` : '';
 
       if (mode === 'download') {
-        downloadBlob(blob, `keeptrip-${data.titulo?.replace(/\s+/g, '-') || 'story'}.png`);
+        downloadBlob(blob, filename);
+        pushToast(t('shareDownloaded'), 'success');
+        setOpen(false);
       } else {
-        await shareImage(blob, { title: data.titulo });
+        const result = await shareImage(blob, {
+          title: normalizedTitle,
+          text: shareText,
+          url: shareUrl,
+          filename,
+          clipboardText: t('clipboardFallbackText', { title: normalizedTitle, url: shareUrl })
+        });
+
+        if (result.status === 'shared') {
+          pushToast(t('shareSuccess'), 'success');
+          setOpen(false);
+        } else if (result.status === 'clipboard') {
+          pushToast(t('clipboardCopied'), 'info');
+          setOpen(false);
+        } else if (result.status === 'downloaded') {
+          pushToast(t('shareDownloaded'), 'info');
+          setOpen(false);
+        } else if (result.status === 'dismissed') {
+          pushToast(t('shareDismissed'), 'info');
+        }
       }
-    } catch (err) {
-      console.error('Export failed:', err);
+    } catch {
+      pushToast(t('shareError'), 'error');
     } finally {
       setIsExporting(false);
     }
-  }, [selectedVariant, data]);
+  }, [selectedVariant, data, pushToast, t]);
 
   const cycleVariant = (dir) => {
     const idx = VARIANTS.findIndex((v) => v.id === selectedVariant);
@@ -59,17 +88,18 @@ const ShareStoryButton = ({ data, style = {} }) => {
   return (
     <>
       {/* Trigger button */}
-      <button
+      <Motion.button
         type="button"
         onClick={() => setOpen(true)}
         title={t('shareTrip')}
+        whileTap={{ scale: 0.98 }}
         style={{
           ...btnBase,
           ...style,
         }}
       >
         <Share2 size={16} />
-      </button>
+      </Motion.button>
 
       {/* Hidden export templates */}
       {VARIANTS.map((v) => (
@@ -81,9 +111,9 @@ const ShareStoryButton = ({ data, style = {} }) => {
         <div style={overlayStyle} onClick={() => !isExporting && setOpen(false)}>
           <div style={panelStyle} onClick={(e) => e.stopPropagation()}>
             {/* Close */}
-            <button type="button" onClick={() => setOpen(false)} style={closeBtnStyle} disabled={isExporting}>
+            <Motion.button type="button" onClick={() => setOpen(false)} style={closeBtnStyle} disabled={isExporting} whileTap={{ scale: 0.98 }}>
               <X size={18} />
-            </button>
+            </Motion.button>
 
             <h3 style={{ fontFamily: FONTS.heading, fontWeight: '900', fontSize: '1.15rem', color: COLORS.charcoalBlue, margin: '0 0 4px 0' }}>
               {t('shareTrip')}
@@ -94,18 +124,19 @@ const ShareStoryButton = ({ data, style = {} }) => {
 
             {/* Variant selector */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '24px' }}>
-              <button type="button" onClick={() => cycleVariant(-1)} style={arrowBtnStyle} disabled={isExporting}>
+              <Motion.button type="button" onClick={() => cycleVariant(-1)} style={arrowBtnStyle} disabled={isExporting} whileTap={{ scale: 0.98 }}>
                 <ChevronLeft size={18} />
-              </button>
+              </Motion.button>
               <div style={{
                 display: 'flex', gap: '8px',
               }}>
                 {VARIANTS.map((v) => (
-                  <button
+                  <Motion.button
                     key={v.id}
                     type="button"
                     onClick={() => setSelectedVariant(v.id)}
                     disabled={isExporting}
+                    whileTap={{ scale: 0.98 }}
                     style={{
                       ...variantChipStyle,
                       background: selectedVariant === v.id ? COLORS.charcoalBlue : COLORS.background,
@@ -114,20 +145,21 @@ const ShareStoryButton = ({ data, style = {} }) => {
                     }}
                   >
                     {v.icon} {t(v.labelKey)}
-                  </button>
+                  </Motion.button>
                 ))}
               </div>
-              <button type="button" onClick={() => cycleVariant(1)} style={arrowBtnStyle} disabled={isExporting}>
+              <Motion.button type="button" onClick={() => cycleVariant(1)} style={arrowBtnStyle} disabled={isExporting} whileTap={{ scale: 0.98 }}>
                 <ChevronRight size={18} />
-              </button>
+              </Motion.button>
             </div>
 
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
+              <Motion.button
                 type="button"
                 onClick={() => handleExport('share')}
                 disabled={isExporting}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   ...actionBtnStyle,
                   background: COLORS.atomicTangerine,
@@ -145,11 +177,12 @@ const ShareStoryButton = ({ data, style = {} }) => {
                     <Instagram size={16} /> {t('button')}
                   </>
                 )}
-              </button>
-              <button
+              </Motion.button>
+              <Motion.button
                 type="button"
                 onClick={() => handleExport('download')}
                 disabled={isExporting}
+                whileTap={{ scale: 0.98 }}
                 style={{
                   ...actionBtnStyle,
                   background: COLORS.background,
@@ -158,7 +191,7 @@ const ShareStoryButton = ({ data, style = {} }) => {
                 }}
               >
                 <Download size={16} />
-              </button>
+              </Motion.button>
             </div>
           </div>
         </div>
@@ -170,8 +203,8 @@ const ShareStoryButton = ({ data, style = {} }) => {
 // ── Styles ──
 
 const btnBase = {
-  width: '36px',
-  height: '36px',
+  minWidth: '44px',
+  minHeight: '44px',
   borderRadius: RADIUS.md,
   border: 'none',
   background: 'rgba(255,255,255,0.15)',
@@ -216,7 +249,11 @@ const closeBtnStyle = {
   border: 'none',
   color: COLORS.textSecondary,
   cursor: 'pointer',
-  padding: '4px',
+  minWidth: '44px',
+  minHeight: '44px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
 const arrowBtnStyle = {
@@ -224,11 +261,16 @@ const arrowBtnStyle = {
   border: 'none',
   color: COLORS.textSecondary,
   cursor: 'pointer',
-  padding: '4px',
+  minWidth: '44px',
+  minHeight: '44px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 };
 
 const variantChipStyle = {
-  padding: '8px 14px',
+  minHeight: '44px',
+  padding: '10px 14px',
   borderRadius: RADIUS.full,
   fontFamily: FONTS.heading,
   fontWeight: '700',
@@ -238,6 +280,7 @@ const variantChipStyle = {
 };
 
 const actionBtnStyle = {
+  minHeight: '44px',
   padding: '12px 20px',
   borderRadius: RADIUS.md,
   border: 'none',

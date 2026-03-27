@@ -65,9 +65,9 @@ const ProfileModal = ({ isOpen, onClose }) => {
         onChange={e => setPhoto(e.target.value)}
         placeholder={t('profile.photoPlaceholder')}
       />
-      <button type="submit" style={styles.saveBtn} disabled={loading}>
+      <Motion.button type="submit" style={styles.saveBtn} disabled={loading} whileTap={{ scale: 0.98 }}>
         <Save size={18} /> {loading ? t('profile.saving') : t('profile.save')}
-      </button>
+      </Motion.button>
     </form>
   );
 
@@ -96,7 +96,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
         >
           <div style={styles.header}>
             <h3>{t('profile.editTitle')}</h3>
-            <button onClick={onClose} style={styles.closeBtn} aria-label={t('profile.close')}> <X size={20}/> </button>
+            <Motion.button onClick={onClose} style={styles.closeBtn} aria-label={t('profile.close')} whileTap={{ scale: 0.98 }}> <X size={20}/> </Motion.button>
           </div>
           {formContent}
         </Motion.div>

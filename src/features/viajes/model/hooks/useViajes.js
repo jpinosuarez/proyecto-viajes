@@ -306,7 +306,6 @@ export const useViajes = () => {
   );
 
   const guardarNuevoViaje = async (datosViaje, paradas = []) => {
-    console.log('[useViajes] guardarNuevoViaje params:', { datosViaje, paradas, usuario: usuario?.uid });
     if (!usuario) return null;
 
     const tituloDefault = isNonEmptyString(datosViaje?.nombreEspanol)
@@ -323,7 +322,10 @@ export const useViajes = () => {
     const titulo = generarTituloInteligente(datosViajeNormalizados.nombreEspanol, paradas);
     const validacion = validarDatosViaje({ datosViaje: datosViajeNormalizados, paradas, tituloGenerado: titulo });
     if (!validacion.esValido) {
-      console.warn('[useViajes] validacion fallida', { validacion, datosViajeNormalizados, paradas });
+      logger.warn('Trip validation failed before save', {
+        validacion,
+        userId: usuario.uid,
+      });
       toast.warning(validacion.mensaje);
       return null;
     }
@@ -378,7 +380,6 @@ export const useViajes = () => {
         viaje: payloadViaje,
         paradas: paradasProcesadas
       });
-      console.log('[useViajes] viajeId devuelto desde guardarViajeConParadas:', viajeId);
 
       if (!viajeId) {
         throw new Error('No se obtuvo viajeId al crear viaje');
@@ -411,7 +412,6 @@ export const useViajes = () => {
       toast.success('Viaje guardado correctamente');
       return viajeId;
     } catch (saveError) {
-      console.error('[useViajes] saveError completo:', saveError);
       logger.error('Error guardando viaje', { 
         error: saveError?.message || saveError,
         stack: saveError?.stack || null,

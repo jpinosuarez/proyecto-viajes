@@ -2,12 +2,20 @@ import domtoimage from 'dom-to-image-more';
 import { logger } from './logger';
 
 /**
- * Captura un nodo DOM como PNG Blob (para IG Stories / compartir).
+ * Capture a DOM node as a PNG blob (for stories and sharing).
  * @param {HTMLElement} node
- * @param {{ width?: number, height?: number, scale?: number }} opts
+ * @param {{ width?: number, height?: number, scale?: number, fallbackMessage?: string }} opts
  * @returns {Promise<Blob>}
  */
-export const captureNodeAsPng = async (node, { width = 1080, height = 1920, scale = 1 } = {}) => {
+export const captureNodeAsPng = async (
+  node,
+  {
+    width = 1080,
+    height = 1920,
+    scale = 1,
+    fallbackMessage = 'Your travel story is ready to share',
+  } = {}
+) => {
   if (!node) throw new Error('No node provided for capture');
 
   try {
@@ -26,17 +34,18 @@ export const captureNodeAsPng = async (node, { width = 1080, height = 1920, scal
     // Graceful degradation: if canvas is tainted (CORS) or capture fails,
     // generate a minimal fallback image with just the gradient + text.
     logger.warn('DOM capture failed, generating fallback image', err);
-    return generateFallbackBlob(width, height);
+    return generateFallbackBlob(width, height, fallbackMessage);
   }
 };
 
 /**
- * Fallback: renders a branded gradient card when DOM capture fails (e.g. CORS taint).
+ * Fallback renderer: returns a branded gradient card when DOM capture fails.
  * @param {number} w
  * @param {number} h
+ * @param {string} fallbackMessage
  * @returns {Promise<Blob>}
  */
-const generateFallbackBlob = (w, h) =>
+const generateFallbackBlob = (w, h, fallbackMessage) =>
   new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     canvas.width = w;
@@ -52,18 +61,18 @@ const generateFallbackBlob = (w, h) =>
 
     // Branding text
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.font = 'bold 48px sans-serif';
+    ctx.font = 'bold 48px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('KEEPTRIP', w / 2, h / 2 - 20);
-    ctx.font = '28px sans-serif';
+    ctx.font = '28px "Plus Jakarta Sans", sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText('No se pudo generar la imagen completa', w / 2, h / 2 + 30);
+    ctx.fillText(fallbackMessage, w / 2, h / 2 + 30);
 
     canvas.toBlob((blob) => resolve(blob), 'image/png');
   });
 
 /**
- * Convierte un Blob a un File (necesario para Web Share API).
+ * Convert a Blob into a File (required by Web Share API file sharing).
  * @param {Blob} blob
  * @param {string} filename
  * @returns {File}
@@ -72,36 +81,103 @@ const blobToFile = (blob, filename = 'keeptrip-story.png') =>
   new File([blob], filename, { type: blob.type || 'image/png' });
 
 /**
- * Comparte una imagen usando Web Share API (mobile) o descarga (desktop fallback).
- * @param {Blob} blob - PNG blob
- * @param {{ title?: string, text?: string }} opts
- * @returns {Promise<'shared'|'downloaded'|'dismissed'>}
+ * Creates an evocative clipboard text fallback for manual sharing.
+ * @param {{ title?: string, text?: string, url?: string }} opts
+ * @returns {string}
  */
-export const shareImage = async (blob, { title = 'Mi viaje — Keeptrip', text = '' } = {}) => {
-  const file = blobToFile(blob);
+const buildClipboardFallbackText = ({ title = '', text = '', url = '' } = {}) => {
+  const lines = [
+    title ? `✈️ ${title}` : '',
+    text || 'I just captured a new story in Keeptrip.',
+    url ? `🔗 ${url}` : '',
+    'Shared from Keeptrip',
+  ].filter(Boolean);
 
-  // Web Share API con soporte para archivos (mobile Chrome, Safari)
+  return lines.join('\n');
+};
+
+/**
+ * Copy text to clipboard with runtime fallback.
+ * @param {string} text
+ * @returns {Promise<boolean>}
+ */
+const copyTextToClipboard = async (text) => {
+  if (!text) return false;
+
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (error) {
+    logger.warn('Clipboard API writeText failed, trying fallback', { error: error?.message });
+  }
+
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+  } catch (error) {
+    logger.warn('Clipboard fallback failed', { error: error?.message });
+    return false;
+  }
+};
+
+/**
+ * Share an image with layered fallback: Web Share -> Clipboard text -> Download.
+ * @param {Blob} blob - PNG blob
+ * @param {{ title?: string, text?: string, url?: string, filename?: string, clipboardText?: string }} opts
+ * @returns {Promise<{ status: 'shared'|'clipboard'|'downloaded'|'dismissed', copiedText?: string }>}
+ */
+export const shareImage = async (
+  blob,
+  {
+    title = 'My trip — Keeptrip',
+    text = '',
+    url = '',
+    filename = 'keeptrip-story.png',
+    clipboardText = '',
+  } = {}
+) => {
+  const file = blobToFile(blob, filename);
+  const manualShareText = clipboardText || buildClipboardFallbackText({ title, text, url });
+
+  // 1) Web Share API (mobile)
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({
         title,
-        text: text || 'Mirá mi viaje en Keeptrip ✈️',
+        text: text || manualShareText,
         files: [file],
       });
-      return 'shared';
+      return { status: 'shared', copiedText: manualShareText };
     } catch (err) {
-      if (err.name === 'AbortError') return 'dismissed';
-      logger.warn('Web Share failed, falling back to download', err);
+      if (err.name === 'AbortError') return { status: 'dismissed', copiedText: manualShareText };
+      logger.warn('Web Share failed, trying clipboard fallback', err);
     }
   }
 
-  // Fallback: descarga directa
-  downloadBlob(blob, 'keeptrip-story.png');
-  return 'downloaded';
+  // 2) Clipboard text fallback (useful for WhatsApp/manual share)
+  const copied = await copyTextToClipboard(manualShareText);
+  if (copied) {
+    return { status: 'clipboard', copiedText: manualShareText };
+  }
+
+  // 3) Last resort: download image
+  downloadBlob(blob, filename);
+  return { status: 'downloaded', copiedText: manualShareText };
 };
 
 /**
- * Descarga un blob como archivo.
+ * Download a blob as a file.
  * @param {Blob} blob
  * @param {string} filename
  */

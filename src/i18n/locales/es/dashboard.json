@@ -53,6 +53,11 @@
     "year": "Este año",
     "favorites": "Favoritos"
   },
+  "ghostEmptyState": {
+    "title": "Tu bitácora está lista para despegar",
+    "description": "Cada explorador empieza con una primera ruta. Crea tu próximo viaje y convierte ese destino en historia.",
+    "action": "Crear mi primera ruta"
+  },
   "toast": {
     "comingSoon": "Próximamente"
   }

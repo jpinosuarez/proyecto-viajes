@@ -4,7 +4,6 @@ import {
   deleteDoc,
   doc,
   getDoc,
-  getDocs,
   onSnapshot,
   query,
   updateDoc,
@@ -12,9 +11,12 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes, uploadString } from 'firebase/storage';
 import { compressImage } from '@shared/lib/utils/imageUtils';
+import { logger } from '@shared/lib/utils/logger';
 
 export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
-  let latestSnapshotId = 0;
+  const stopUnsubscribers = new Map();
+  const stopsByTrip = new Map();
+  let currentTrips = [];
 
   const viajesRef = collection(db, `usuarios/${userId}/viajes`);
   const q = query(viajesRef);
@@ -26,52 +28,99 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
     return Number.isFinite(millis) ? millis : 0;
   };
 
-  return onSnapshot(
+  const emitSnapshot = () => {
+    onData({
+      viajes: currentTrips,
+      paradas: Array.from(stopsByTrip.values()).flat()
+    });
+  };
+
+  const clearTripStopsListener = (tripId) => {
+    const unsubscribeStops = stopUnsubscribers.get(tripId);
+    if (unsubscribeStops) {
+      unsubscribeStops();
+      stopUnsubscribers.delete(tripId);
+    }
+    stopsByTrip.delete(tripId);
+  };
+
+  const subscribeTripStops = (tripId) => {
+    if (stopUnsubscribers.has(tripId)) return;
+
+    const paradasRef = collection(db, `usuarios/${userId}/viajes/${tripId}/paradas`);
+    const unsubscribeStops = onSnapshot(
+      paradasRef,
+      { includeMetadataChanges: true },
+      (paradasSnap) => {
+        const tripStops = paradasSnap.docs.map((parada) => ({
+          id: parada.id,
+          viajeId: tripId,
+          ...parada.data({ serverTimestamps: 'estimate' })
+        }));
+
+        stopsByTrip.set(tripId, tripStops);
+        emitSnapshot();
+      },
+      (error) => {
+        clearTripStopsListener(tripId);
+        onError?.(error);
+        emitSnapshot();
+      }
+    );
+
+    stopUnsubscribers.set(tripId, unsubscribeStops);
+  };
+
+  const unsubscribeTrips = onSnapshot(
     q,
     { includeMetadataChanges: true },
-    async (snapshot) => {
-      const snapshotId = ++latestSnapshotId;
-
-      try {
-        const viajes = snapshot.docs
-          .map((item) => {
-            const data = item.data({ serverTimestamps: 'estimate' });
-            return {
+    (snapshot) => {
+      currentTrips = snapshot.docs
+        .map((item) => {
+          const data = item.data({ serverTimestamps: 'estimate' });
+          return {
             id: item.id,
             ...data,
             createdAt:
               data.createdAt ??
               (item.metadata.hasPendingWrites ? new Date() : null),
-            };
-          })
-          .sort((a, b) => {
-            const createdAtDiff = toMillis(b.createdAt) - toMillis(a.createdAt);
-            if (createdAtDiff !== 0) return createdAtDiff;
-            return toMillis(b.fechaInicio) - toMillis(a.fechaInicio);
-          });
-        const paradasPromises = viajes.map(async (viaje) => {
-          const paradasRef = collection(db, `usuarios/${userId}/viajes/${viaje.id}/paradas`);
-          const paradasSnap = await getDocs(paradasRef);
-          return paradasSnap.docs.map((parada) => ({
-            id: parada.id,
-            viajeId: viaje.id,
-            ...parada.data()
-          }));
+          };
+        })
+        .sort((a, b) => {
+          const createdAtDiff = toMillis(b.createdAt) - toMillis(a.createdAt);
+          if (createdAtDiff !== 0) return createdAtDiff;
+          return toMillis(b.fechaInicio) - toMillis(a.fechaInicio);
         });
 
-        const paradasPorViaje = await Promise.all(paradasPromises);
-        if (snapshotId !== latestSnapshotId) return;
-        onData({ viajes, paradas: paradasPorViaje.flat() });
-      } catch (error) {
-        onError?.(error);
+      const activeTripIds = new Set(currentTrips.map((viaje) => viaje.id));
+
+      currentTrips.forEach((viaje) => {
+        subscribeTripStops(viaje.id);
+      });
+
+      for (const tripId of stopUnsubscribers.keys()) {
+        if (!activeTripIds.has(tripId)) {
+          clearTripStopsListener(tripId);
+        }
       }
+
+      emitSnapshot();
     },
     (error) => onError?.(error)
   );
+
+  return () => {
+    unsubscribeTrips();
+    for (const unsubscribeStops of stopUnsubscribers.values()) {
+      unsubscribeStops();
+    }
+    stopUnsubscribers.clear();
+    stopsByTrip.clear();
+    currentTrips = [];
+  };
 };
 
 export const guardarViajeConParadas = async ({ db, userId, viaje, paradas = [] }) => {
-  console.log('[viajesRepository] guardarViajeConParadas start', { userId, viajeId: viaje?.id, viaje, paradas });
   const batch = writeBatch(db);
   const viajeRef = doc(collection(db, `usuarios/${userId}/viajes`));
   batch.set(viajeRef, viaje);
@@ -84,11 +133,15 @@ export const guardarViajeConParadas = async ({ db, userId, viaje, paradas = [] }
   try {
     await batch.commit();
   } catch (err) {
-    console.error('[viajesRepository] guardarViajeConParadas commit error', err);
+    logger.error('guardarViajeConParadas commit failed', {
+      userId,
+      viajeId: viajeRef.id,
+      error: err?.message,
+      code: err?.code,
+    });
     throw err;
   }
 
-  console.log('[viajesRepository] guardarViajeConParadas success', { viajeId: viajeRef.id });
   return viajeRef.id;
 };
 
@@ -146,7 +199,10 @@ export const subirFotoViaje = async ({ storage, userId, viajeId, foto }) => {
       } catch (err) {
         // If compression fails for any reason, fall back to the original blob.
         // We log to help understand frequency without breaking uploads.
-        console.warn('Image compression failed, falling back to original blob', err);
+        logger.warn('Image compression failed, falling back to original blob', {
+          error: err?.message,
+          code: err?.code,
+        });
       }
 
       await uploadBytes(storageRef, blobToUpload, { contentType: blobToUpload.type || 'image/jpeg' });
@@ -160,7 +216,7 @@ export const subirFotoViaje = async ({ storage, userId, viajeId, foto }) => {
 
     return null;
   } catch (error) {
-    console.error('[subirFotoViaje] Upload to Firebase Storage failed', {
+    logger.error('Upload to Firebase Storage failed', {
       userId,
       viajeId,
       code: error?.code,

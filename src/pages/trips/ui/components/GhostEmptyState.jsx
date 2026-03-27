@@ -3,86 +3,83 @@ import { motion as Motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { useUI } from '@app/providers/UIContext';
-import { COLORS, SHADOWS, RADIUS, GLASS } from '@shared/config';
+import { COLORS, SHADOWS, RADIUS } from '@shared/config';
 
 const GhostEmptyState = () => {
   const { t } = useTranslation('dashboard');
   const { openBuscador } = useUI();
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      
-      {/* Ghost Cards Background */}
+    <div style={{ position: 'relative', width: '100%', minHeight: '58vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
       <div style={{
         position: 'absolute',
         inset: 0,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '24px',
-        padding: '24px',
-        opacity: 0.4,
+        background: 'radial-gradient(circle at 18% 24%, rgba(255,107,53,0.14), transparent 42%), radial-gradient(circle at 80% 82%, rgba(69,176,168,0.16), transparent 40%)',
         pointerEvents: 'none',
-        filter: 'blur(8px)',
+        opacity: 0.85,
       }}>
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+        {[1, 2, 3].map((i) => (
           <div key={i} style={{
-            height: '240px',
-            borderRadius: RADIUS.lg,
-            backgroundColor: COLORS.mutedTeal,
-            backgroundImage: `linear-gradient(45deg, ${COLORS.mutedTeal} 25%, #e2e8f0 25%, #e2e8f0 50%, ${COLORS.mutedTeal} 50%, ${COLORS.mutedTeal} 75%, #e2e8f0 75%, #e2e8f0 100%)`,
-            backgroundSize: '20px 20px',
+            position: 'absolute',
+            width: i === 1 ? '140px' : i === 2 ? '96px' : '120px',
+            height: i === 1 ? '140px' : i === 2 ? '96px' : '120px',
+            top: i === 1 ? '14%' : i === 2 ? '62%' : '26%',
+            left: i === 1 ? '8%' : i === 2 ? '74%' : '66%',
+            borderRadius: RADIUS.full,
+            background: i === 2 ? 'rgba(69,176,168,0.2)' : 'rgba(255,107,53,0.2)',
+            filter: 'blur(1px)',
           }} />
         ))}
       </div>
 
-      {/* Premium Glassmorphic Overlay */}
       <Motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
         style={{
           position: 'relative',
           zIndex: 10,
-          ...GLASS.light,
+          background: 'rgba(255,255,255,0.95)',
           border: `1px solid ${COLORS.border}`,
-          borderRadius: RADIUS['2xl'],
-          padding: '48px 32px',
-          maxWidth: '500px',
+          borderRadius: RADIUS.xl,
+          padding: '36px 24px',
+          maxWidth: '520px',
+          width: '100%',
           textAlign: 'center',
-          boxShadow: SHADOWS.xl,
-          margin: '0 24px'
+          boxShadow: SHADOWS.lg,
         }}
       >
-        <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: COLORS.charcoalBlue, marginBottom: '16px' }}>
-           Tu biblioteca está en blanco.
+        <h2 style={{ fontSize: '1.55rem', fontWeight: 900, color: COLORS.charcoalBlue, marginBottom: '12px', lineHeight: 1.2 }}>
+          {t('ghostEmptyState.title')}
         </h2>
-        <p style={{ fontSize: '1.1rem', color: COLORS.textSecondary, marginBottom: '32px', lineHeight: 1.5 }}>
-           Las mejores historias aún están por escribirse. Registra tu primera aventura y comienza tu legado.
+        <p style={{ fontSize: '0.98rem', color: COLORS.textSecondary, marginBottom: '28px', lineHeight: 1.55 }}>
+          {t('ghostEmptyState.description')}
         </p>
         
         <Motion.button
-           whileHover={{ scale: 1.05 }}
-           whileTap={{ scale: 0.95 }}
-           onClick={openBuscador}
-           style={{
-             backgroundColor: COLORS.atomicTangerine,
-             color: '#fff',
-             border: 'none',
-             height: '56px',
-             borderRadius: '28px',
-             padding: '0 32px',
-             fontSize: '1.1rem',
-             fontWeight: 800,
-             display: 'inline-flex',
-             alignItems: 'center',
-             justifyContent: 'center',
-             gap: '12px',
-             boxShadow: `0 8px 24px ${COLORS.atomicTangerine}60, 0 4px 12px rgba(0,0,0,0.2)`,
-             cursor: 'pointer'
-           }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={openBuscador}
+          style={{
+            backgroundColor: COLORS.atomicTangerine,
+            color: '#fff',
+            border: 'none',
+            minHeight: '56px',
+            minWidth: '44px',
+            borderRadius: '28px',
+            padding: '0 26px',
+            fontSize: '1rem',
+            fontWeight: 800,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            boxShadow: `0 10px 24px ${COLORS.atomicTangerine}44`,
+            cursor: 'pointer'
+          }}
         >
-           <Plus size={24} strokeWidth={2.5} />
-           Escribir Historia
+          <Plus size={22} strokeWidth={2.5} />
+          {t('ghostEmptyState.action')}
         </Motion.button>
       </Motion.div>
     </div>

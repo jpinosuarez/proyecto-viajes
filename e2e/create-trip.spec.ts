@@ -125,14 +125,8 @@ test.describe('Create trip from search modal (E2E)', () => {
     await closeModals();
     await closeModals();
 
-    // Force a page reload to ensure Firestore listeners update
-    await page.reload();
-    await page.waitForSelector('[data-testid="header-avatar"]');
-    await page.goto('/trips');
-    await page.waitForURL('**/trips');
-    await page.waitForTimeout(2000);
-
-    await expect(page.locator('text=Your logbook has no stops yet')).toHaveCount(0, { timeout: 15000 });
-    await expect((await page.locator('[data-testid^="trip-card-"]').count())).toBeGreaterThan(0);
+    // Ensure the trip list is reactive without forcing a hard reload.
+    await expect(page.locator('text=Your logbook has no stops yet')).toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator('[data-testid^="trip-card-"]')).toHaveCount(1, { timeout: 5000 });
   });
 });

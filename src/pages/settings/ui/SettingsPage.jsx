@@ -21,6 +21,7 @@ import { useToast } from '@app/providers/ToastContext';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
+import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { auth, storage } from '@shared/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { deleteUser } from 'firebase/auth';
@@ -29,15 +30,21 @@ import { compressImage } from '@shared/lib/utils/imageUtils';
 const DEBOUNCE_MS = 800;
 
 const SettingsPage = ({ log = [] }) => {
-  const { usuario, actualizarPerfilUsuario, logout, isAdmin } = useAuth();
-  const { mapStyle, setMapStyle, MAP_STYLES } = useUI();
+  const {
+    usuario: user,
+    actualizarPerfilUsuario: updateUserProfile,
+    logout,
+    isAdmin,
+  } = useAuth();
+  const { mapStyle, setMapStyle } = useUI();
   const { pushToast } = useToast();
   const { t, i18n } = useTranslation(['settings', 'common', 'nav']);
   const { t: tNav } = useTranslation('nav');
+  const { isMobile } = useWindowSize(768);
   useDocumentTitle(tNav('settings'));
 
-  const [nombre, setNombre] = useState(usuario?.displayName || '');
-  const [foto, setFoto]    = useState(usuario?.photoURL || '');
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [photoUrl, setPhotoUrl] = useState(user?.photoURL || '');
   const [savedMsg, setSavedMsg] = useState('');
   const [editingProfile, setEditingProfile] = useState(false);
   const [photoError, setPhotoError] = useState(false);
@@ -52,12 +59,12 @@ const SettingsPage = ({ log = [] }) => {
   const handleSaveOnBlur = useCallback(async () => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      if (nombre === (usuario?.displayName || '') && foto === (usuario?.photoURL || '')) return;
-      const ok = await actualizarPerfilUsuario(nombre, foto);
+      if (displayName === (user?.displayName || '') && photoUrl === (user?.photoURL || '')) return;
+      const ok = await updateUserProfile(displayName, photoUrl);
       setSavedMsg(ok ? t('settings:toast.success') : t('settings:toast.error'));
       setTimeout(() => setSavedMsg(''), 2500);
     }, DEBOUNCE_MS);
-  }, [nombre, foto, usuario, actualizarPerfilUsuario, t]);
+  }, [displayName, photoUrl, user, updateUserProfile, t]);
 
   const fileInputRef = useRef(null);
 
@@ -83,8 +90,8 @@ const SettingsPage = ({ log = [] }) => {
       await uploadBytes(avatarRef, blob, { contentType: 'image/jpeg' });
       const url = await getDownloadURL(avatarRef);
 
-      setFoto(url);
-      await actualizarPerfilUsuario(nombre, url);
+      setPhotoUrl(url);
+      await updateUserProfile(displayName, url);
       pushToast(t('settings:avatarUploadSuccess', 'Avatar updated!'), 'success');
     } catch (error) {
       console.error('Avatar upload failed:', error);
@@ -139,7 +146,7 @@ const SettingsPage = ({ log = [] }) => {
     { id: 'hybrid', icon: Layers,   label: t('settings:mapStyle.hybrid'), desc: t('settings:mapStyle.hybridDesc','Satellite Hybrid') },
   ];
 
-  const initials = usuario?.displayName?.trim()?.[0]?.toUpperCase() || '';
+  const initials = user?.displayName?.trim()?.[0]?.toUpperCase() || '';
 
   return (
     <div style={s.page(isMobile)}>
@@ -154,9 +161,9 @@ const SettingsPage = ({ log = [] }) => {
         <div style={s.identityRow}>
           {/* Avatar */}
           <div style={s.avatarWrap}>
-            {foto && !photoError ? (
+            {photoUrl && !photoError ? (
               <img
-                src={foto}
+                src={photoUrl}
                 alt="Avatar"
                 style={s.avatarImg}
                 onError={() => setPhotoError(true)}
@@ -168,11 +175,11 @@ const SettingsPage = ({ log = [] }) => {
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={s.nameRow}>
-              <h1 style={s.displayName}>{usuario?.displayName || '—'}</h1>
+              <h1 style={s.displayName}>{user?.displayName || '—'}</h1>
               <Motion.button
                 type="button"
                 onClick={() => setEditingProfile(v => !v)}
-                whileTap={{ scale: 0.94 }}
+                whileTap={{ scale: 0.98 }}
                 style={s.editBtn}
                 aria-label="Edit profile"
               >
@@ -180,7 +187,7 @@ const SettingsPage = ({ log = [] }) => {
               </Motion.button>
             </div>
             <div style={s.badgeRow}>
-              {usuario?.email && <span style={s.emailBadge}>{usuario.email}</span>}
+              {user?.email && <span style={s.emailBadge}>{user.email}</span>}
               <span style={s.roleBadge(isAdmin)}>{isAdmin ? t('settings:admin') : t('settings:user')}</span>
             </div>
 
@@ -202,16 +209,17 @@ const SettingsPage = ({ log = [] }) => {
                       style={{ display: 'none' }}
                       onChange={handleAvatarFileChange}
                     />
-                    <button
+                    <Motion.button
                       type="button"
                       onClick={handleAvatarUploadClick}
                       style={s.uploadBtn}
                       disabled={uploadingAvatar}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {uploadingAvatar ? `${Math.round(uploadProgress)}%` : t('settings:uploadAvatar', 'Upload avatar')}
-                    </button>
+                      {uploadingAvatar ? `${Math.round(uploadProgress)}%` : t('settings:uploadAvatar')}
+                    </Motion.button>
                     <span style={{ fontSize: '0.85rem', color: COLORS.textSecondary }}>
-                      {t('settings:avatarHint', 'Max 2MB, JPG/PNG')}
+                      {t('settings:avatarHint')}
                     </span>
                   </div>
 
@@ -220,8 +228,8 @@ const SettingsPage = ({ log = [] }) => {
                       <label style={s.label}>{t('settings:travelerName')}</label>
                       <input
                         style={s.input}
-                        value={nombre}
-                        onChange={e => setNombre(e.target.value)}
+                        value={displayName}
+                        onChange={e => setDisplayName(e.target.value)}
                         onBlur={handleSaveOnBlur}
                         placeholder={t('settings:travelerName')}
                       />
@@ -231,8 +239,8 @@ const SettingsPage = ({ log = [] }) => {
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                         <input
                           style={{ ...s.input, flex: 1 }}
-                          value={foto}
-                          onChange={e => { setFoto(e.target.value); setPhotoError(false); }}
+                          value={photoUrl}
+                          onChange={e => { setPhotoUrl(e.target.value); setPhotoError(false); }}
                           onBlur={handleSaveOnBlur}
                           placeholder="https://..."
                         />
@@ -259,7 +267,7 @@ const SettingsPage = ({ log = [] }) => {
       </Motion.section>
 
       {/* ── Two-column row: Language + Appearance ── */}
-      <div style={s.twoCol}>
+      <div style={s.twoCol(isMobile)}>
         {/* Language */}
         <Motion.section
           initial={{ opacity: 0, y: 12 }}
@@ -277,7 +285,7 @@ const SettingsPage = ({ log = [] }) => {
                   key={lang.code}
                   type="button"
                   onClick={() => i18n.changeLanguage(lang.code)}
-                  whileTap={{ scale: 0.94 }}
+                  whileTap={{ scale: 0.98 }}
                   style={s.langBtn(active)}
                 >
                   {lang.label}
@@ -294,10 +302,10 @@ const SettingsPage = ({ log = [] }) => {
           transition={{ type: 'spring', damping: 20, stiffness: 120, delay: 0.1 }}
           style={s.card}
         >
-          <h2 style={s.sectionTitle}><Moon size={16} /> {t('settings:appearance', 'Apariencia')}</h2>
-          <p style={s.sectionDesc}>{t('settings:appearanceDesc', 'Modo oscuro próximamente')}</p>
+          <h2 style={s.sectionTitle}><Moon size={16} /> {t('settings:appearance')}</h2>
+          <p style={s.sectionDesc}>{t('settings:appearanceDesc')}</p>
           <div style={{ ...s.comingSoon }}>
-            🌙 Dark Mode — Coming Soon
+            {t('settings:mapStyle.comingSoon')}
           </div>
         </Motion.section>
       </div>
@@ -309,16 +317,17 @@ const SettingsPage = ({ log = [] }) => {
         transition={{ type: 'spring', damping: 20, stiffness: 120, delay: 0.15 }}
         style={s.card}
       >
-        <h2 style={s.sectionTitle}><Compass size={16} /> {t('settings:mapStyle.title', 'Estilo de Mapa')}</h2>
-        <p style={s.sectionDesc}>{t('settings:mapStyle.desc', 'Elige cómo se muestra tu mundo.')}</p>
+        <h2 style={s.sectionTitle}><Compass size={16} /> {t('settings:mapStyle.title')}</h2>
+        <p style={s.sectionDesc}>{t('settings:mapStyle.desc')}</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontSize: '0.85rem', color: COLORS.textSecondary }}>{t('settings:mapStyle.comingSoon', 'Coming soon')}</span>
-          <span style={{ fontSize: '0.85rem', color: COLORS.textSecondary }}>{t('settings:mapStyle.disabledHint', 'Disabled in this preview')}</span>
+          <span style={{ fontSize: '0.85rem', color: COLORS.textSecondary }}>{t('settings:mapStyle.comingSoon')}</span>
+          <span style={{ fontSize: '0.85rem', color: COLORS.textSecondary }}>{t('settings:mapStyle.disabledHint')}</span>
         </div>
         <div style={s.mapStyleGrid}>
-          {MAP_STYLE_OPTIONS.map(({ id, icon: Icon, label, desc }) => {
+          {MAP_STYLE_OPTIONS.map(({ id, icon, label, desc }) => {
             const active = mapStyle === id;
             const disabled = true;
+            const IconComponent = icon;
             return (
               <Motion.button
                 key={id}
@@ -326,11 +335,11 @@ const SettingsPage = ({ log = [] }) => {
                 onClick={() => {
                   if (!disabled) setMapStyle(id);
                 }}
-                whileTap={disabled ? undefined : { scale: 0.96 }}
+                whileTap={disabled ? undefined : { scale: 0.98 }}
                 style={s.mapStyleBtn(active, disabled)}
                 disabled={disabled}
               >
-                <Icon size={22} color={active ? COLORS.atomicTangerine : COLORS.textSecondary} strokeWidth={active ? 2.5 : 1.8} />
+                <IconComponent size={22} color={active ? COLORS.atomicTangerine : COLORS.textSecondary} strokeWidth={active ? 2.5 : 1.8} />
                 <span style={{ fontWeight: '800', fontSize: '0.88rem', color: active ? COLORS.charcoalBlue : COLORS.textSecondary }}>{label}</span>
                 <span style={{ fontSize: '0.72rem', color: COLORS.textSecondary }}>{desc}</span>
                 {active && <CheckCircle size={14} color={COLORS.atomicTangerine} style={{ position: 'absolute', top: '10px', right: '10px' }} />}
@@ -347,17 +356,17 @@ const SettingsPage = ({ log = [] }) => {
         transition={{ type: 'spring', damping: 20, stiffness: 120, delay: 0.2 }}
         style={s.card}
       >
-        <h2 style={s.sectionTitle}><Download size={16} /> {t('settings:legacyData', 'Legado & Datos')}</h2>
-        <p style={s.sectionDesc}>{t('settings:legacyDataDesc', 'Tu bitácora es tuya. Descárgala cuando quieras.')}</p>
+        <h2 style={s.sectionTitle}><Download size={16} /> {t('settings:legacyData')}</h2>
+        <p style={s.sectionDesc}>{t('settings:legacyDataDesc')}</p>
         <Motion.button
           type="button"
           onClick={handleExport}
           whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
+          whileTap={{ scale: 0.98 }}
           style={s.exportBtn}
         >
           <Download size={16} />
-          {t('settings:exportJSON', 'Exportar viajes (JSON)')}
+          {t('settings:exportJSON')}
           <ChevronRight size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />
         </Motion.button>
       </Motion.section>
@@ -375,7 +384,7 @@ const SettingsPage = ({ log = [] }) => {
           type="button"
           onClick={logout}
           whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
+          whileTap={{ scale: 0.98 }}
           style={s.logoutBtn}
         >
           <LogOut size={16} />
@@ -386,7 +395,7 @@ const SettingsPage = ({ log = [] }) => {
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
           whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.96 }}
+          whileTap={{ scale: 0.98 }}
           style={s.deleteAccountBtn}
         >
           <Trash2 size={16} />
@@ -395,9 +404,9 @@ const SettingsPage = ({ log = [] }) => {
 
         <ConfirmModal
           isOpen={showDeleteConfirm}
-          title={t('settings:deleteAccountTitle', 'Delete account')}
-          message={t('settings:deleteAccountMessage', 'This will permanently delete your account and all your data. This action cannot be undone.')}
-          confirmText={t('settings:deleteAccountConfirm', 'Delete account')}
+          title={t('settings:deleteAccountTitle')}
+          message={t('settings:deleteAccountMessage')}
+          confirmText={t('settings:deleteAccountConfirm')}
           cancelText={t('common:cancel')}
           onConfirm={handleDeleteAccount}
           onClose={() => setShowDeleteConfirm(false)}
@@ -429,11 +438,11 @@ const s = {
     padding: '28px',
     position: 'relative',
   },
-  twoCol: {
+  twoCol: (isMobile) => ({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(260px, 1fr))',
     gap: '20px',
-  },
+  }),
   identityRow: {
     display: 'flex',
     gap: '20px',
@@ -465,7 +474,8 @@ const s = {
     background: 'rgba(0,0,0,0.05)',
     border: 'none',
     borderRadius: RADIUS.md,
-    width: '30px', height: '30px',
+    minWidth: '44px',
+    minHeight: '44px',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     cursor: 'pointer',
     color: COLORS.textSecondary,
@@ -518,6 +528,8 @@ const s = {
   },
   sectionDesc: { margin: '0 0 16px', fontSize: '0.83rem', color: COLORS.textSecondary },
   langBtn: (active) => ({
+    minHeight: '44px',
+    minWidth: '44px',
     padding: '10px 18px',
     borderRadius: RADIUS.md,
     border: active ? `2px solid ${COLORS.atomicTangerine}` : '1px solid rgba(0,0,0,0.1)',
@@ -545,6 +557,7 @@ const s = {
   mapStyleBtn: (active, disabled) => ({
     display: 'flex', flexDirection: 'column', gap: '4px',
     alignItems: 'flex-start',
+    minHeight: '44px',
     padding: '16px',
     borderRadius: RADIUS.xl,
     border: active ? `2px solid ${COLORS.atomicTangerine}` : '1px solid rgba(0,0,0,0.08)',
@@ -556,6 +569,8 @@ const s = {
     transition: 'all 0.2s',
   }),
   uploadBtn: {
+    minHeight: '44px',
+    minWidth: '44px',
     padding: '10px 14px',
     borderRadius: RADIUS.md,
     border: '1px solid rgba(0,0,0,0.1)',
@@ -571,6 +586,8 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    minHeight: '44px',
+    minWidth: '44px',
     padding: '12px 20px',
     borderRadius: RADIUS.md,
     border: '2px solid rgba(248, 113, 113, 0.8)',
@@ -583,6 +600,7 @@ const s = {
   },
   exportBtn: {
     display: 'flex', alignItems: 'center', gap: '10px',
+    minHeight: '44px',
     padding: '14px 18px',
     borderRadius: RADIUS.xl,
     border: '1px solid rgba(0,0,0,0.08)',
@@ -597,6 +615,8 @@ const s = {
   },
   logoutBtn: {
     display: 'flex', alignItems: 'center', gap: '10px',
+    minHeight: '44px',
+    minWidth: '44px',
     padding: '12px 20px',
     borderRadius: RADIUS.md,
     border: '2px solid #fee2e2',
