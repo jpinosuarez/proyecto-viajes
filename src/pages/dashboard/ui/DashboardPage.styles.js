@@ -20,10 +20,11 @@ export const styles = {
   },
 
   mainGrid: (isMobile) => ({
-    display: 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 60%) minmax(0, 40%)',
+    display: isMobile ? 'flex' : 'grid',
+    gridTemplateColumns: isMobile ? undefined : '60% 40%',
+    flexDirection: isMobile ? 'column' : undefined,
     gap: isMobile ? '12px' : '14px',
-    alignItems: 'stretch',
+    alignItems: isMobile ? undefined : 'stretch',
     flex: 1,
     minHeight: 0,
     overflow: 'hidden',

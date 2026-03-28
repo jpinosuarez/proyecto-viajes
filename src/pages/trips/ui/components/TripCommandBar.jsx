@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { LayoutGrid, List } from 'lucide-react';
 import { COLORS, RADIUS } from '@shared/config';
 import { useToast } from '@app/providers';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
+
 const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null }) => {
   const { t } = useTranslation('dashboard');
   const { pushToast } = useToast();
@@ -33,15 +35,20 @@ const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null }) => {
     justifyContent: 'center',
     transition: 'color 0.2s ease-out',
   };
-  const statsText = logStats
-    ? `${logStats.tripCount} Trips • ${logStats.totalDays} Travel Days • ${logStats.totalCities} Cities`
-    : '';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px', borderBottom: `1px solid ${COLORS.border}` }}>
-      {statsText && (
-        <div style={{ fontSize: '0.9rem', color: COLORS.charcoalBlue, fontWeight: 600, lineHeight: 1.3 }}>
-          {statsText}
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '12px', borderBottom: `1px solid ${COLORS.border}` }}>
+      {logStats && (
+        <TravelStatsWidget
+          heroMetric={{ value: logStats.tripCount, label: t('stats.tripsCompleted') }}
+          stats={[
+            { value: logStats.totalDays, label: t('stats.totalDays') },
+            { value: logStats.totalCities, label: t('stats.registeredCities') },
+            { value: logStats.continents, label: t('stats.continents') },
+          ]}
+          ariaLabel={t('stats.tripSummary')}
+          variant="trips"
+        />
       )}
       <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

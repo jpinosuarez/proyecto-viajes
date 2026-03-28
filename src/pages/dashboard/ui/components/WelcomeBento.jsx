@@ -52,6 +52,8 @@ const WelcomeBento = ({ name, visitedCount, level, nextLevel, logStatsDashboard,
             { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
           ]}
           ariaLabel={t('stats.tripSummary')}
+          variant="home"
+          isMobile={isMobile}
         />
       </div>
     </div>
