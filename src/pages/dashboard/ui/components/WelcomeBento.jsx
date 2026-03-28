@@ -36,57 +36,59 @@ const WelcomeBento = ({
         <span style={styles.decorOrbB} />
       </div>
 
-      <div style={styles.headerRow}>
-        <div style={styles.identityGroup}>
-          <h1 style={styles.title}>{t('greeting', { name })}</h1>
-          <p style={styles.subtitle}>
-            {visitedCount > 0
-              ? t('subtitleStats', { countries: visitedCount, percent: worldPercent, trips: tripsCount })
-              : t('welcome.emptyStateSubtitle')}
-          </p>
-          
-          <div style={styles.badgeRow}>
-            {ENABLE_IMMERSIVE_VIEWER ? (
-              <button type="button" onClick={handleLevelClick} style={styles.badgeLevelButton}>
+      <div style={styles.contentWrap}>
+        <div style={styles.headerRow}>
+          <div style={styles.identityGroup}>
+            <h1 style={styles.title}>{t('greeting', { name })}</h1>
+            <p style={styles.subtitle}>
+              {visitedCount > 0
+                ? t('subtitleStats', { countries: visitedCount, percent: worldPercent, trips: tripsCount })
+                : t('welcome.emptyStateSubtitle')}
+            </p>
+
+            <div style={styles.badgeRow}>
+              {ENABLE_IMMERSIVE_VIEWER ? (
+                <button type="button" onClick={handleLevelClick} style={styles.badgeLevelButton}>
+                  <span style={styles.badgeLevel}>
+                    {level.icon} {level.label}
+                  </span>
+                  <ArrowRight size={16} />
+                </button>
+              ) : (
                 <span style={styles.badgeLevel}>
                   {level.icon} {level.label}
                 </span>
-                <ArrowRight size={16} />
-              </button>
-            ) : (
-              <span style={styles.badgeLevel}>
-                {level.icon} {level.label}
-              </span>
-            )}
-            {nextLevel.level && (
-              <span style={styles.badgeProgress}>
-                {t('nextLevelProgress', {
-                  remaining: nextLevel.remaining,
-                  countryWord: nextLevel.remaining !== 1 ? t('stats.countriesPlural') : t('stats.countrySingular'),
-                  level: nextLevel.level.label,
-                })}
-              </span>
-            )}
+              )}
+              {nextLevel.level && (
+                <span style={styles.badgeProgress}>
+                  {t('nextLevelProgress', {
+                    remaining: nextLevel.remaining,
+                    countryWord: nextLevel.remaining !== 1 ? t('stats.countriesPlural') : t('stats.countrySingular'),
+                    level: nextLevel.level.label,
+                  })}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div style={styles.statsWrapper}>
-        <TravelStatsWidget
-          heroMetric={{
-            value: visitedCount,
-            label: t('stats.countriesVisited')
-          }}
-          stats={[
-            { value: logStatsDashboard.tripCount, label: t('stats.tripsCompleted') },
-            { value: logStatsDashboard.totalDays, label: t('stats.totalDays') },
-            { value: logStatsDashboard.totalCities, label: t('stats.registeredCities') },
-            { value: logStatsDashboard.continents, label: t('stats.continents') },
-            { value: logStatsDashboard.longestTrip, label: t('stats.longestTrip') },
-            { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
-          ]}
-          ariaLabel={t('stats.tripSummary')}
-        />
+        <div style={styles.statsWrapper}>
+          <TravelStatsWidget
+            heroMetric={{
+              value: visitedCount,
+              label: t('stats.countriesVisited')
+            }}
+            stats={[
+              { value: logStatsDashboard.tripCount, label: t('stats.tripsCompleted') },
+              { value: logStatsDashboard.totalDays, label: t('stats.totalDays') },
+              { value: logStatsDashboard.totalCities, label: t('stats.registeredCities') },
+              { value: logStatsDashboard.continents, label: t('stats.continents') },
+              { value: logStatsDashboard.longestTrip, label: t('stats.longestTrip') },
+              { value: logStatsDashboard.totalPhotos, label: t('stats.photos') },
+            ]}
+            ariaLabel={t('stats.tripSummary')}
+          />
+        </div>
       </div>
     </Motion.div>
   );

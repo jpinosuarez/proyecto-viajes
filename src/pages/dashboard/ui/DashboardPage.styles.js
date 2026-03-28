@@ -6,9 +6,10 @@ export const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: isMobile ? '10px' : '14px',
-    padding: isMobile ? '14px 14px 80px' : '18px 20px 14px',
+    padding: isMobile ? '14px 14px 0' : '18px 20px 0',
     height: '100%',
     minHeight: 0,
+    overflow: 'hidden',
     boxSizing: 'border-box',
   }),
 
@@ -19,6 +20,7 @@ export const styles = {
     alignItems: 'start',
     flex: 1,
     minHeight: 0,
+    overflow: 'hidden',
   }),
 
   mapCard: (isMobile) => ({
@@ -130,6 +132,7 @@ export const styles = {
     gap: '8px',
     minWidth: 0,
     minHeight: 0,
+    overflow: 'hidden',
   },
 
   sectionHeader: {

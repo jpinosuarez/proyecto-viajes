@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,20 +8,13 @@ import { setMapLanguage } from '@shared/lib/geo';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
-  const { i18n, t } = useTranslation('dashboard');
-  const [hoverInfo, setHoverInfo] = useState(null);
-
-  const onHover = useCallback(event => {
-    const { features, point: { x, y } } = event;
-    const hoveredFeature = features && features[0];
-    setHoverInfo(hoveredFeature ? { feature: hoveredFeature, x, y } : null);
-  }, []);
+  const { i18n } = useTranslation('dashboard');
 
   // Asegurar que la lista no esté vacía para la expresión de Mapbox
   const listaPaises = paisesVisitados.length > 0 ? paisesVisitados : ['EMPTY_LIST'];
 
   return (
-    <div style={{ width: '100%', minWidth: 0, height: '100%', position: 'relative', background: COLORS.background, borderRadius: RADIUS.xl, overflow: 'hidden' }}>
+    <div style={{ width: '100%', minWidth: 0, height: '100%', position: 'relative', background: COLORS.background, borderRadius: RADIUS.xl, overflow: 'hidden', pointerEvents: 'none' }}>
       <Map
         style={{ width: '100%', minWidth: 0, height: '100%' }}
         initialViewState={{
@@ -33,15 +26,20 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
         reuseMaps
+        interactive={false}
         renderWorldCopies={false}
         minZoom={0.35}
         maxBounds={[[-180, -70], [180, 85]]}
+        boxZoom={false}
+        keyboard={false}
         scrollZoom={false}
         dragPan={false}
+        dragRotate={false}
         doubleClickZoom={false}
+        touchZoomRotate={false}
+        touchPitch={false}
+        pitchWithRotate={false}
         onLoad={(e) => setMapLanguage(e.target, i18n.language)}
-        onMouseMove={onHover}
-        interactiveLayerIds={['country-fills']} // Solo interactuar con países pintados
         attributionControl={false}
       >
         <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
@@ -75,26 +73,6 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
             }}
           />
         </Source>
-
-        {hoverInfo && (
-          <div style={{
-            position: 'absolute',
-            zIndex: 10,
-            pointerEvents: 'none',
-            left: hoverInfo.x,
-            top: hoverInfo.y,
-            transform: 'translate(-50%, -120%)',
-            background: 'rgba(30, 41, 59, 0.9)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: RADIUS.xs,
-            fontSize: '0.75rem',
-            fontWeight: '600'
-          }}>
-            {/* Mapbox suele tener name_es o name_en */}
-            {hoverInfo.feature.properties[`name_${i18n.language}`] || hoverInfo.feature.properties.name_en || t('countryFallback')}
-          </div>
-        )}
       </Map>
     </div>
   );

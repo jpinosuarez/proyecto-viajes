@@ -421,8 +421,8 @@ const SettingsPage = ({ log = [] }) => {
 const s = {
   page: (isMobile) => ({
     width: '100%',
-    maxWidth: '860px',
-    margin: '0 auto',
+    maxWidth: '100%',
+    margin: 0,
     padding: isMobile ? '16px 16px 80px' : '24px 24px 80px',
     display: 'flex',
     flexDirection: 'column',
