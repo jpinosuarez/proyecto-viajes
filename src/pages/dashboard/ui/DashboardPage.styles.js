@@ -22,6 +22,20 @@ export const styles = {
     minHeight: 0,
     overflow: 'hidden',
   }),
+mapSection: {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  minWidth: 0,
+},
+mapSectionTitle: {
+  margin: 0,
+  fontSize: '0.85rem',
+  fontWeight: '800',
+  color: COLORS.charcoalBlue,
+  textTransform: 'uppercase',
+  letterSpacing: '0.4px',
+},
 
   mapCard: (isMobile) => ({
     borderRadius: RADIUS.xl,

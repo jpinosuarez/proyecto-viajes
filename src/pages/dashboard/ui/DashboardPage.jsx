@@ -59,7 +59,6 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   const logStatsDashboard = useLogStats(log, tripDataMap);
 
   const visitedCount = countriesVisited.length;
-  const worldPercent = visitedCount > 0 ? ((visitedCount / 195) * 100).toFixed(0) : '0';
 
   const level = getTravelerLevel(visitedCount);
   const next = getNextLevel(visitedCount);
@@ -97,8 +96,6 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
       <WelcomeBento 
         name={name}
         visitedCount={visitedCount}
-        worldPercent={worldPercent}
-        tripsCount={log.length}
         level={level}
         nextLevel={next}
         logStatsDashboard={logStatsDashboard}
@@ -107,13 +104,17 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
 
       {/* Main grid: map + recents */}
       <div style={styles.mainGrid(isMobile)}>
-        <div style={styles.mapCard(isMobile)}>
-          <ErrorBoundary fallback={mapFallback}>
-            <HomeMap key={mapRenderKey} paisesVisitados={countriesVisited} isMobile={isMobile} />
-          </ErrorBoundary>
-        </div>
-
-        <div style={styles.recentsContainer}>
+  {/* Map Section with Real Title */}
+  <div style={styles.mapSection}>
+    <h3 style={styles.mapSectionTitle}>{t('explorationMap')}</h3>
+    <div style={styles.mapCard(isMobile)}>
+      <ErrorBoundary fallback={mapFallback}>
+        <HomeMap key={mapRenderKey} paisesVisitados={countriesVisited} isMobile={isMobile} />
+      </ErrorBoundary>
+    </div>
+  </div>
+  {/* Recents Section */}
+  <div style={styles.recentsContainer}>
           <div style={styles.sectionHeader}>
             <h2 style={styles.sectionTitle}>{t('recentAdventures')}</h2>
             {!isNewTraveler && (

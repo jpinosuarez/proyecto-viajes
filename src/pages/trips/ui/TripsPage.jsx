@@ -5,6 +5,7 @@ import { useSearch } from '@app/providers/UIContext';
 import TripGrid from '@widgets/tripGrid/TripGrid';
 import TripCommandBar from './components/TripCommandBar';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
+import { useLogStats } from '@shared/lib/hooks/useLogStats';
 
 const TripsPage = () => {
   const { t } = useTranslation('dashboard');
@@ -17,6 +18,7 @@ const TripsPage = () => {
   
   const trips = useMemo(() => data.bitacora ?? [], [data.bitacora]);
   const tripData = useMemo(() => data.bitacoraData ?? {}, [data.bitacoraData]);
+  const logStats = useLogStats(trips, tripData);
   const searchTerm = busqueda.trim().toLowerCase();
 
   const filteredTrips = useMemo(() => {
@@ -60,6 +62,7 @@ const TripsPage = () => {
       <TripCommandBar 
         activeFilter={activeFilter} 
         onFilterChange={setActiveFilter}
+        logStats={logStats}
       />
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 100px)' }}>

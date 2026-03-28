@@ -1,5 +1,6 @@
 {
   "greeting": "Hello, {{name}}! Welcome to your Travel Log.",
+  "welcomeSubtitle": "The map awaits your next story.",
   "countries": "Countries",
   "trips": "Trips",
   "world": "World",
@@ -68,5 +69,6 @@
   },
   "toast": {
     "comingSoon": "Coming soon"
-  }
+  },
+  "explorationMap": "Exploration Map"
 }

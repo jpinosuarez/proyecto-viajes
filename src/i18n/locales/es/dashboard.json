@@ -1,5 +1,6 @@
 {
   "greeting": "¡Hola, {{name}}! Bienvenido a tus aventuras.",
+  "welcomeSubtitle": "Cada rincón del mundo espera tu próxima aventura.",
   "countries": "Países",
   "trips": "Viajes",
   "world": "Mundo",
@@ -74,5 +75,6 @@
   },
   "toast": {
     "comingSoon": "Próximamente"
-  }
+  },
+  "explorationMap": "Tu Mundo"
 }

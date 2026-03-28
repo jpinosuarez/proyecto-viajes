@@ -1,141 +1,26 @@
 import { COLORS, SHADOWS, RADIUS } from '@shared/config';
-
 export const welcomeStyles = {
-  card: (isMobile) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-    padding: isMobile ? '16px' : '18px',
-    minHeight: isMobile ? 'auto' : 'clamp(200px, 24dvh, 240px)',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    border: `1px solid ${COLORS.border}`,
-    boxShadow: SHADOWS.sm,
-    position: 'relative',
-  }),
-
-  contentWrap: {
+  pageHeader: (isMobile) => ({
     width: '100%',
-    maxWidth: '1080px',
-    margin: '0 auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
-    minHeight: 0,
-  },
-
-  decorLayer: {
-    position: 'absolute',
-    inset: 0,
-    pointerEvents: 'none',
-  },
-
-  decorOrbA: {
-    position: 'absolute',
-    width: '140px',
-    height: '140px',
-    right: '-44px',
-    top: '-56px',
-    borderRadius: '999px',
-    background: 'radial-gradient(circle, rgba(255,107,53,0.16) 0%, rgba(255,107,53,0) 72%)',
-  },
-
-  decorOrbB: {
-    position: 'absolute',
-    width: '120px',
-    height: '120px',
-    left: '-38px',
-    bottom: '-60px',
-    borderRadius: '999px',
-    background: 'radial-gradient(circle, rgba(69,176,168,0.14) 0%, rgba(69,176,168,0) 74%)',
-  },
-
-  headerRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '16px',
-    flexWrap: 'wrap',
-  },
-
-  identityGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
+    gap: isMobile ? '24px' : '28px',
+    padding: '0px',
     position: 'relative',
-    zIndex: 1,
-  },
-
-  title: {
-    margin: 0,
-    fontSize: 'clamp(1.3rem, 2.3vw, 1.7rem)',
-    fontWeight: '900',
-    color: COLORS.charcoalBlue,
-    lineHeight: 1.1,
-    letterSpacing: '-0.02em',
-  },
-
-  subtitle: {
-    margin: 0,
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    color: COLORS.textSecondary,
-    lineHeight: 1.35,
-  },
-
-  badgeRow: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '5px 10px',
-    backgroundColor: '#F8FAFC',
-    borderRadius: RADIUS.full,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    border: 'none',
     boxShadow: 'none',
-    border: `1px solid ${COLORS.border}`,
-    marginTop: '2px',
-    flexWrap: 'wrap',
-    maxWidth: '100%',
-  },
-
-  badgeLevelButton: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '8px 12px',
-    borderRadius: RADIUS.full,
-    border: `1px solid ${COLORS.border}`,
-    background: COLORS.surface,
-    cursor: 'pointer',
-    color: COLORS.charcoalBlue,
-    fontWeight: 800,
-    fontSize: '0.875rem',
-  },
-
-  badgeLevel: {
-    fontSize: '0.875rem',
-    fontWeight: '800',
-    color: COLORS.atomicTangerine,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
-
-  badgeProgress: {
-    fontSize: '0.72rem',
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    opacity: 0.9,
-    lineHeight: 1.3,
-    whiteSpace: 'normal',
-    maxWidth: '34ch',
-    overflowWrap: 'anywhere',
-  },
-
-  statsWrapper: {
-    marginTop: '4px',
-    position: 'relative',
-    zIndex: 1,
-    minHeight: 0,
-  },
-  
+  }),
+  decorLayer: { position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5 },
+  decorOrbA: { position: 'absolute', width: '140px', height: '140px', right: '-44px', top: '-56px', borderRadius: '999px', background: 'radial-gradient(circle, rgba(255,107,53,0.16) 0%, rgba(255,107,53,0) 72%)' },
+  decorOrbB: { position: 'absolute', width: '120px', height: '120px', left: '-38px', bottom: '-60px', borderRadius: '999px', background: 'radial-gradient(circle, rgba(69,176,168,0.14) 0%, rgba(69,176,168,0) 74%)' },
+  headerContent: { position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' },
+  title: { margin: 0, fontSize: 'clamp(2rem, 3.5vw, 2.6rem)', fontWeight: '900', color: COLORS.charcoalBlue, lineHeight: 1.15, letterSpacing: '-0.02em' },
+  subtitle: { margin: 0, marginTop: '4px', fontSize: 'clamp(0.95rem, 1.2vw, 1.1rem)', fontWeight: '500', color: COLORS.textSecondary, lineHeight: 1.4 },
+  badgeRow: { display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap', maxWidth: '100%' },
+  badgeLevelButton: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '999px', border: `1px solid ${COLORS.border}`, background: COLORS.surface, cursor: 'pointer', color: COLORS.charcoalBlue, fontWeight: 800, fontSize: '0.8rem', minHeight: '32px', transition: 'all 200ms ease-out' },
+  badgeLevel: { fontSize: '0.8rem', fontWeight: '800', color: COLORS.atomicTangerine, display: 'flex', alignItems: 'center', gap: '4px' },
+  badgeProgress: { fontSize: '0.7rem', fontWeight: '600', color: COLORS.textSecondary, opacity: 0.85 },
+  statsSection: { position: 'relative', zIndex: 1, width: '100%' },
 };
