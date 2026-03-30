@@ -11,6 +11,7 @@ describe('useLogStats', () => {
       tripCount: 0,
       totalDays: 0,
       totalCities: 0,
+      percentOfWorld: 0,
       averageRating: null,
       continents: 0,
       longestTrip: 0,
@@ -25,6 +26,7 @@ describe('useLogStats', () => {
       tripCount: 0,
       totalDays: 0,
       totalCities: 0,
+      percentOfWorld: 0,
       averageRating: null,
       continents: 0,
       longestTrip: 0,
@@ -55,6 +57,7 @@ describe('useLogStats', () => {
       tripCount: 2,
       totalDays: 6,
       totalCities: 5,
+      percentOfWorld: 0,
       averageRating: '4.5',
       continents: 0, // no country codes provided
       longestTrip: 3,

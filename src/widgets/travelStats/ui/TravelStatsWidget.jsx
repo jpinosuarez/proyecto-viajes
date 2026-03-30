@@ -51,7 +51,7 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'home', isMob
           value: safeValue(logStats.percentOfWorld),
           label: t('stats.percentOfWorld') || '% of World',
           hint: t('stats.percentHint') || 'Of global 195 countries',
-          displayValue: `${Math.round(safeValue(logStats.percentOfWorld) * 10) / 10}%`,
+          displayValue: `${safeValue(logStats.percentOfWorld)}%`,
         },
         {
           value: safeValue(logStats.continents),
@@ -86,49 +86,87 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'home', isMob
   }
 
   if (variant === 'home') {
-    // Horizontal layout: Hero on left, secondary grid on right (always visible now)
+    // PHASE 5: Traveler's Biography Layout — Hero % on left + Experience/Exploration groups on right
+    // Extract metrics for biography sections: Experience (Trips + Days) | Exploration (Cities + Continents)
+    const percentMetric = secondaryMetrics[2]; // % of World
+    const experienceMetrics = [heroMetric, secondaryMetrics[0]]; // Trips, Days
+    const explorationMetrics = [secondaryMetrics[1], secondaryMetrics[3]]; // Cities, Continents
+
     return (
       <section role="region" aria-label={ariaLabel} className="travel-stats-home" style={styles.homeShell(isMobile)}>
-        {/* PHASE 4: Fast staggered entry animation — fade-in + slide up on mount ONLY */}
+        {/* PHASE 5a: % of World as Hero (left side) — the big "wow" metric */}
         <Motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: ANIMATION_DELAYS.fast, duration: 0.4 }}
-          style={styles.homeHeroContainer}
+          style={styles.biographyHeroContainer}
         >
-          <span style={styles.homeHeroLabel} title={t('stats.tripsCompleted')}>{heroMetric.label}</span>
-          <span style={styles.homeHeroValue}>{heroMetric.displayValue}</span>
+          <span style={styles.biographyHeroLabel} title={percentMetric.hint}>{percentMetric.label}</span>
+          <span style={styles.biographyHeroValue}>{percentMetric.displayValue}</span>
         </Motion.div>
 
-        {/* Secondary metrics: Always render (unhidden mobile) */}
-        <div 
-          className="travel-stats-home-secondary" 
-          style={styles.homeSecondaryGrid(isMobile)}
+        {/* PHASE 5b: Biography Section (right side) — Experience and Exploration groups */}
+        <Motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.35 }}
+          style={styles.biographySection(isMobile)}
           role="group"
           aria-label={t('stats.additionalMetrics') || 'Additional travel metrics'}
         >
-          {secondaryMetrics.map((stat, idx) => (
-            <Motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              /* PHASE 4: Faster stagger, total sequence < 0.6s */
-              transition={{ delay: 0.15 + idx * 0.08, duration: 0.35 }}
-              style={styles.homeSecondaryStat}
-              role="doc-subtitle"
-              aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
-              title={stat.hint}
-            >
-              <StatDisplay stat={stat} />
-            </Motion.div>
-          ))}
-        </div>
+          {/* EXPERIENCE: Trips + Days */}
+          <div style={styles.biographyGroup}>
+            <div style={styles.groupTitle}>{t('stats.experience') || 'Experience'}</div>
+            <div style={styles.groupStats}>
+              {experienceMetrics.map((stat, idx) => (
+                <Motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + idx * 0.08, duration: 0.35 }}
+                  role="doc-subtitle"
+                  aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
+                  title={stat.hint}
+                >
+                  <StatDisplay stat={stat} />
+                </Motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Divider: • */}
+          <div style={styles.groupDivider}>•</div>
+
+          {/* EXPLORATION: Cities + Continents */}
+          <div style={styles.biographyGroup}>
+            <div style={styles.groupTitle}>{t('stats.exploration') || 'Exploration'}</div>
+            <div style={styles.groupStats}>
+              {explorationMetrics.map((stat, idx) => (
+                <Motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.24 + idx * 0.08, duration: 0.35 }}
+                  role="doc-subtitle"
+                  aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
+                  title={stat.hint}
+                >
+                  <StatDisplay stat={stat} />
+                </Motion.div>
+              ))}
+            </div>
+          </div>
+        </Motion.div>
       </section>
     );
   }
 
   if (variant === 'trips') {
-    // Compact layout: Hero scaled down on left with border, 4 secondary in compact grid
+    // PHASE 5: Compact layout updated for narrative — % of World as hero, 4 metrics in compact grid
+    // This maintains scannability while introducing the "wow" metric as hero
+    const percentMetric = secondaryMetrics[2]; // % of World
+    const tripsMetrics = [heroMetric, secondaryMetrics[0], secondaryMetrics[1], secondaryMetrics[3]]; // Trips, Days, Cities, Continents
+
     return (
       <section role="region" aria-label={ariaLabel} className="travel-stats-trips" style={styles.tripsShell}>
         <Motion.div
@@ -137,8 +175,8 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'home', isMob
           transition={{ delay: ANIMATION_DELAYS.fast, duration: 0.4 }}
           style={styles.tripsHeroContainer}
         >
-          <span style={styles.tripsHeroLabel}>{heroMetric.label}</span>
-          <span style={styles.tripsHeroValue}>{heroMetric.displayValue}</span>
+          <span style={styles.tripsHeroLabel} title={percentMetric.hint}>{percentMetric.label}</span>
+          <span style={styles.tripsHeroValue}>{percentMetric.displayValue}</span>
         </Motion.div>
 
         <div 
@@ -147,12 +185,12 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'home', isMob
           role="group"
           aria-label={t('stats.additionalMetrics') || 'Additional travel metrics'}
         >
-          {secondaryMetrics.map((stat, idx) => (
+          {tripsMetrics.map((stat, idx) => (
             <Motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              /* PHASE 4: Faster stagger */
+              /* PHASE 5: Faster stagger */
               transition={{ delay: 0.15 + idx * 0.08, duration: 0.35 }}
               style={styles.tripsSecondaryStat}
               role="doc-subtitle"

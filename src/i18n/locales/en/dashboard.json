@@ -18,17 +18,27 @@
   "stats": {
     "tripSummary": "Trip summary",
     "totalDays": "Total days",
+    "totalDaysHint": "Days across all trips",
     "registeredCities": "Registered cities",
+    "citiesHint": "Unique cities visited",
     "tripsCompleted": "Trips completed",
     "averageRating": "Average rating",
     "countriesVisited": "Countries visited",
     "worldCovered": "% of world covered",
+    "percentOfWorld": "% of World",
+    "percentHint": "Of global 195 countries",
     "continents": "Continents",
+    "continentsHint": "Continents explored",
     "longestTrip": "Longest trip (days)",
     "photos": "Photos",
     "mainRegion": "Main region",
     "countriesPlural": "countries",
-    "countrySingular": "country"
+    "countrySingular": "country",
+    "emptyStateHint": "✨ Your passport awaits",
+    "emptyStateMessage": "Start your first adventure to discover your explorer story",
+    "additionalMetrics": "Additional travel metrics",
+    "experience": "Experience",
+    "exploration": "Exploration"
   },
   "hud": {
     "countrySingular": "country",

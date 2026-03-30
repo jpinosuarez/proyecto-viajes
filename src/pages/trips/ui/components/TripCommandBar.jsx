@@ -5,7 +5,7 @@ import { COLORS, RADIUS } from '@shared/config';
 import { useToast } from '@app/providers';
 import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
-const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null }) => {
+const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null, isMobile = false }) => {
   const { t } = useTranslation('dashboard');
   const { pushToast } = useToast();
   const handleListToggle = () => { pushToast(t('toast.comingSoon'), 'info'); };
@@ -43,6 +43,7 @@ const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null }) => {
           logStats={logStats}
           ariaLabel={t('stats.tripSummary')}
           variant="trips"
+          isMobile={isMobile}
         />
       )}
       <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

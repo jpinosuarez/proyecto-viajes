@@ -3,12 +3,13 @@ import { motion as Motion } from 'framer-motion';
 import { getTravelerLevel, getNextLevel, TRAVELER_LEVELS } from '../model/travelerLevel';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import AchievementsGrid from './AchievementsGrid';
-import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
+// DEPRECATED: TravelStatsWidget - now uses new API with logStats hook and variant prop
+// import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 import { styles } from './TravelerHub.styles';
 import { COLORS, RADIUS } from '@shared/config';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
-import { Globe, Calendar, MapPin, Image, Share } from 'lucide-react';
+import { Share } from 'lucide-react';
 import { useToast } from '@app/providers';
 import { useAchievements } from '../model/useAchievements';
 import { BottomSheet, BottomSheetHeader, BottomSheetContent } from '@shared/ui/components';
@@ -48,6 +49,9 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
   const level = getTravelerLevel(countryCount);
   const next  = getNextLevel(countryCount);
   const { pushToast } = useToast();
+  
+  // DEPRECATED: statsArray - used for old TravelStatsWidget integration
+  // Stats are now properly integrated in DashboardPage and TripsPage
 
   // ── Confetti on first unlock detection (Guardrail #3) ──
   const prevUnlockedCount = useRef(null);
@@ -93,14 +97,6 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
       } catch {}
     }
   }, [pushToast, tNav, t]);
-
-  const statsArray = [
-    { value: countryCount, label: t('stats.countries'),    icon: <Globe size={16} /> },
-    { value: bitacora.length, label: t('stats.trips'),     icon: <Calendar size={16} /> },
-    { value: stats.continents, label: t('stats.continents'), icon: <MapPin size={16} /> },
-    ...(stats.longestTrip ? [{ value: stats.longestTrip, label: t('stats.longestTrip'), icon: <Calendar size={16} /> }] : []),
-    ...(stats.totalPhotos  ? [{ value: stats.totalPhotos,  label: t('stats.photos'),     icon: <Image size={16} /> }] : []),
-  ];
 
   const progressPercent = Math.round((next.progress || 0) * 100);
 
@@ -221,9 +217,11 @@ const TravelerHub = ({ paisesVisitados, bitacora, achievementsWithProgress, stat
         </Motion.div>
 
         {/* ── Global Stats ── */}
-        <div style={{ marginTop: '24px', padding: '0 16px' }}>
-          <TravelStatsWidget stats={statsArray} ariaLabel={t('stats.overview')} variant="full" />
-        </div>
+        {/* DEPRECATED: TravelStatsWidget integration removed - use DashboardPage or TripsPage for updated stats display */}
+        {/* Stats are now properly displayed in:
+            - Home: DashboardPage (via WelcomeBento with variant="home")
+            - Trips: TripsPage (via TripCommandBar with variant="trips")
+        */}
 
         {/* ── Achievement Grid ── */}
         <AchievementsGrid achievementsWithProgress={achievementsWithProgress} isMobile={isMobile} />

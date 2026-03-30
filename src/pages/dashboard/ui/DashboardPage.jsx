@@ -17,6 +17,7 @@ import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import WelcomeBento from './components/WelcomeBento';
 import EmptyDashboardState from './components/EmptyDashboardState';
 import TripCard from '@widgets/tripGrid/ui/TripCard';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
 const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, loading = false, isError = false, fetchError = null }) => {
   const { usuario } = useAuth();

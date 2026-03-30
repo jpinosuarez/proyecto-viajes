@@ -3,7 +3,8 @@ import { motion as Motion } from 'framer-motion';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLogStats } from '@shared/lib/hooks/useLogStats';
-import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
+// DEPRECATED: TravelStatsWidget widget moved to TripCommandBar (TravelStatsWidget now uses logStats API, not stats)
+// import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 import { COLORS } from '@shared/config';
 import { styles } from './TripGrid.styles';
 import TripCard from './ui/TripCard';
@@ -23,20 +24,8 @@ const TripGrid = ({
   const location = useLocation();
 
   const logStats = useLogStats(trips, tripData);
-
-  const statItems = useMemo(() => {
-    return [
-      { value: logStats.tripCount, label: tDashboard('stats.tripsCompleted') },
-      { value: logStats.totalDays, label: tDashboard('stats.totalDays') },
-      { value: logStats.totalCities, label: tDashboard('stats.registeredCities') },
-      { value: logStats.continents, label: tDashboard('stats.continents') },
-      { value: logStats.longestTrip, label: tDashboard('stats.longestTrip') },
-      { value: logStats.totalPhotos, label: tDashboard('stats.photos') },
-      ...(logStats.averageRating
-        ? [{ value: `${logStats.averageRating}\u2605`, label: tDashboard('stats.averageRating'), accent: true }]
-        : []),
-    ];
-  }, [logStats, tDashboard]);
+  // DEPRECATED: statItems - stats are now displayed in TripCommandBar
+  // const statItems = useMemo(() => { ... });
 
   const hasNoTrips = totalLogCount === 0;
   const hasNoSearchResults = !hasNoTrips && trips.length === 0;
@@ -49,11 +38,8 @@ const TripGrid = ({
 
   return (
     <div style={styles.gridWrapper}>
-      <TravelStatsWidget
-        stats={statItems}
-        ariaLabel={tDashboard('stats.tripSummary', 'Trip summary')}
-        variant="compact"
-      />
+      {/* DEPRECATED: TravelStatsWidget moved to TripCommandBar for centralized stats display */}
+      {/* Stats are now displayed in TripCommandBar with TravelStatsWidget (home & trips variants) */}
 
       <Motion.div 
         className="trip-masonry"

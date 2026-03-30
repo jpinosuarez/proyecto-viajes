@@ -6,10 +6,14 @@ import TripGrid from '@widgets/tripGrid/TripGrid';
 import TripCommandBar from './components/TripCommandBar';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useLogStats } from '@shared/lib/hooks/useLogStats';
+import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 
 const TripsPage = () => {
   const { t } = useTranslation('dashboard');
   useDocumentTitle(t('pageTitle.journal', 'Mis Viajes'));
+  
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
   
   const { data, crud } = useOutletContext();
   const { busqueda } = useSearch();
@@ -63,6 +67,7 @@ const TripsPage = () => {
         activeFilter={activeFilter} 
         onFilterChange={setActiveFilter}
         logStats={logStats}
+        isMobile={isMobile}
       />
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 100px)' }}>

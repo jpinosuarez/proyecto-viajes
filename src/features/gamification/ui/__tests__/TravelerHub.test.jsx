@@ -10,7 +10,6 @@ vi.mock('@app/providers/ToastContext', () => ({ useToast: () => ({ pushToast: mo
 
 // stub out heavy subcomponents to avoid rendering logic in unit test
 vi.mock('../AchievementsGrid', () => ({ default: () => <div data-testid="achievements" /> }));
-vi.mock('@widgets/travelStats/ui/TravelStatsWidget', () => ({ default: () => <div data-testid="stats" /> }));
 
 // stub window size hook
 vi.mock('@shared/lib/hooks/useWindowSize', () => ({ useWindowSize: () => ({ isMobile: false }) }));
@@ -30,12 +29,10 @@ describe('TravelerHub', () => {
     stats: baseStats,
   };
 
-  it('renders without crashing and shows share button and stats widget', () => {
+  it('renders without crashing and shows share button', () => {
     render(<TravelerHub {...defaultProps} />);
     // the share button should be present (label is key because of mocked i18n)
     expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
-    // stats widget stub should mount
-    expect(screen.getByTestId('stats')).toBeInTheDocument();
   });
 
   it('copy link to clipboard when share clicked and navigator.share not available', async () => {

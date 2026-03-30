@@ -106,9 +106,9 @@ export const useLogStats = (trips = [], tripData = {}) => {
 
     const averageRating = ratedTripCount > 0 ? ratingSum / ratedTripCount : 0;
 
-    // Calculate % of World (ISO 3166-1: 195 recognized countries)
+    // Calculate % of World (ISO 3166-1: 195 recognized countries) — return pure integer for narrative strength
     const uniqueCountries = continentCodes.size;
-    const percentOfWorld = Number(((uniqueCountries / 195) * 100).toFixed(1));
+    const percentOfWorld = Math.round((uniqueCountries / 195) * 100);
 
     // convert continent codes to count via achievementsEngine helper
     const continents = getContinents([...continentCodes]).size;
