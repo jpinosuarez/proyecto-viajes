@@ -10,75 +10,100 @@ const GhostEmptyState = () => {
   const { openBuscador } = useUI();
 
   return (
-    <div style={{ position: 'relative', width: '100%', minHeight: '58vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px 16px',
+      overflow: 'hidden',
+    }}>
+      {/* Decorative orbs — contained within parent bounds */}
       <div style={{
         position: 'absolute',
         inset: 0,
-        background: 'radial-gradient(circle at 18% 24%, rgba(255,107,53,0.14), transparent 42%), radial-gradient(circle at 80% 82%, rgba(69,176,168,0.16), transparent 40%)',
+        background: 'radial-gradient(circle at 18% 24%, rgba(255,107,53,0.10), transparent 42%), radial-gradient(circle at 80% 82%, rgba(69,176,168,0.12), transparent 40%)',
         pointerEvents: 'none',
-        opacity: 0.85,
+        opacity: 0.7,
       }}>
         {[1, 2, 3].map((i) => (
           <div key={i} style={{
             position: 'absolute',
-            width: i === 1 ? '140px' : i === 2 ? '96px' : '120px',
-            height: i === 1 ? '140px' : i === 2 ? '96px' : '120px',
-            top: i === 1 ? '14%' : i === 2 ? '62%' : '26%',
-            left: i === 1 ? '8%' : i === 2 ? '74%' : '66%',
+            width: i === 1 ? '120px' : i === 2 ? '80px' : '100px',
+            height: i === 1 ? '120px' : i === 2 ? '80px' : '100px',
+            top: i === 1 ? '18%' : i === 2 ? '60%' : '30%',
+            left: i === 1 ? '10%' : i === 2 ? '70%' : '62%',
             borderRadius: RADIUS.full,
-            background: i === 2 ? 'rgba(69,176,168,0.2)' : 'rgba(255,107,53,0.2)',
-            filter: 'blur(1px)',
+            background: i === 2 ? 'rgba(69,176,168,0.15)' : 'rgba(255,107,53,0.15)',
+            filter: 'blur(2px)',
           }} />
         ))}
       </div>
 
       <Motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 22 }}
         style={{
           position: 'relative',
           zIndex: 10,
-          background: 'rgba(255,255,255,0.95)',
+          background: 'rgba(255,255,255,0.92)',
           border: `1px solid ${COLORS.border}`,
           borderRadius: RADIUS.xl,
-          padding: '36px 24px',
-          maxWidth: '520px',
+          padding: '32px 28px',
+          maxWidth: '480px',
           width: '100%',
           textAlign: 'center',
-          boxShadow: SHADOWS.lg,
+          boxShadow: SHADOWS.md,
+          margin: '0 auto',
         }}
       >
-        <h2 style={{ fontSize: '1.55rem', fontWeight: 900, color: COLORS.charcoalBlue, marginBottom: '12px', lineHeight: 1.2 }}>
+        <h2 style={{
+          fontSize: '1.4rem',
+          fontWeight: 900,
+          color: COLORS.charcoalBlue,
+          marginBottom: '10px',
+          marginTop: 0,
+          lineHeight: 1.2,
+          letterSpacing: '-0.01em',
+        }}>
           {t('ghostEmptyState.title')}
         </h2>
-        <p style={{ fontSize: '0.98rem', color: COLORS.textSecondary, marginBottom: '28px', lineHeight: 1.55 }}>
+        <p style={{
+          fontSize: '0.92rem',
+          color: COLORS.textSecondary,
+          marginBottom: '24px',
+          marginTop: 0,
+          lineHeight: 1.5,
+        }}>
           {t('ghostEmptyState.description')}
         </p>
         
         <Motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           onClick={openBuscador}
           style={{
-            backgroundColor: COLORS.atomicTangerine,
+            background: `linear-gradient(135deg, ${COLORS.atomicTangerine}, #ff9a4d)`,
             color: '#fff',
             border: 'none',
-            minHeight: '56px',
-            minWidth: '44px',
-            borderRadius: '28px',
-            padding: '0 26px',
-            fontSize: '1rem',
+            minHeight: '48px',
+            borderRadius: '9999px',
+            padding: '0 28px',
+            fontSize: '0.92rem',
             fontWeight: 800,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
-            boxShadow: `0 10px 24px ${COLORS.atomicTangerine}44`,
-            cursor: 'pointer'
+            gap: '8px',
+            boxShadow: `0 6px 20px ${COLORS.atomicTangerine}35`,
+            cursor: 'pointer',
+            letterSpacing: '0.01em',
           }}
         >
-          <Plus size={22} strokeWidth={2.5} />
+          <Plus size={20} strokeWidth={2.5} />
           {t('ghostEmptyState.action')}
         </Motion.button>
       </Motion.div>

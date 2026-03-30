@@ -104,9 +104,9 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
           return (
             <g>
               {/* Country fills */}
-              {countries.features.map((feature) => {
-                const id = String(feature.id);
-                const isVisited = VISITED_IDS.has(id);
+              {countries.features.map((feature, idx) => {
+                const id = String(feature.id ?? `geo-${idx}`);
+                const isVisited = VISITED_IDS.has(String(feature.id));
                 const isHovered = hoveredCountry === id;
                 return (
                   <path

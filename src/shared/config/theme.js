@@ -104,3 +104,59 @@ export const ANIMATION_DELAYS = {
   stagger: 0.05,
   staggerLarge: 0.04,
 };
+
+/**
+ * BUTTONS — Canonical Design System button tokens.
+ * Primary: Tangerine gradient pill with glow shadow.
+ * Secondary: Ghost text button — no BG, subtle hover.
+ * Icon: Circular icon-only button.
+ */
+export const BUTTONS = {
+  primary: {
+    background: `linear-gradient(135deg, ${COLORS.atomicTangerine}, #ff9a4d)`,
+    color: '#fff',
+    border: 'none',
+    borderRadius: RADIUS.full,
+    padding: '10px 24px',
+    fontSize: '0.88rem',
+    fontWeight: '800',
+    cursor: 'pointer',
+    boxShadow: `0 6px 20px ${COLORS.atomicTangerine}35`,
+    minHeight: '44px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    letterSpacing: '0.01em',
+    transition: 'opacity 0.2s ease, transform 0.2s ease',
+  },
+  secondary: {
+    background: 'transparent',
+    color: COLORS.textSecondary,
+    border: 'none',
+    borderRadius: RADIUS.md,
+    padding: '8px 16px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    minHeight: '40px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    transition: 'color 0.2s ease, background 0.2s ease',
+  },
+  icon: {
+    background: 'transparent',
+    border: 'none',
+    borderRadius: RADIUS.full,
+    width: '44px',
+    height: '44px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    color: COLORS.textSecondary,
+    transition: 'color 0.2s ease, background 0.2s ease',
+  },
+};

@@ -55,7 +55,10 @@
     "emptyStateTitle": "El Comienzo de tu Legado",
     "emptyStateSubtitle": "Comienza a explorar el mundo",
     "emptyStateDescription": "Aún no tienes destinos guardados. El mapa espera por tus historias.",
-    "emptyStateCTA": "Registrar Primera Aventura"
+    "emptyStateCTA": "Registrar Primera Aventura",
+    "aspirationalMessage": "Tu pasaporte espera su primera marca",
+    "aspirationalCtaLabel": "Registra tu primera aventura",
+    "recentPlaceholder": "Tus aventuras recientes aparecerán aquí"
   },
   "showingResults": "Mostrando {{shown}} de {{total}} viajes",
   "clearSearch": "Limpiar búsqueda",

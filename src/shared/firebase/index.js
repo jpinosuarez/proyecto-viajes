@@ -57,7 +57,8 @@ if (missingFirebaseConfig) {
   if (isTestEnv) {
     // Evita ruido en test output: la config demo es esperada en suites locales.
   } else if (useEmulators) {
-    console.info(`${message} (Usas emulators, pero el SDK igual requiere config.)`);
+    // Expected when using emulators — downgrade to debug to reduce QA console noise.
+    console.debug(`${message} (Usas emulators, config demo es esperada.)`);
   } else {
     console.warn(message);
   }

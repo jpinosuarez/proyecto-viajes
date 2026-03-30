@@ -72,6 +72,15 @@
     "year": "This year",
     "favorites": "Favorites"
   },
+  "welcome": {
+    "emptyStateTitle": "The Start of Your Legacy",
+    "emptyStateSubtitle": "Start exploring the world",
+    "emptyStateDescription": "You have no destinations saved yet. The map awaits your stories.",
+    "emptyStateCTA": "Register First Adventure",
+    "aspirationalMessage": "Your passport awaits its first stamp",
+    "aspirationalCtaLabel": "Log your first adventure",
+    "recentPlaceholder": "Your recent adventures will appear here"
+  },
   "ghostEmptyState": {
     "title": "Your logbook is ready for takeoff",
     "description": "Every explorer starts with a first route. Create your next trip and turn that destination into a story.",

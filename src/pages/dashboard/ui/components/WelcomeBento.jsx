@@ -30,7 +30,7 @@ const WelcomeBento = ({ name, level, nextLevel, logStatsDashboard, isMobile, isN
               style={styles.aspirationalBlock}
             >
               <p style={styles.aspirationalText}>
-                {t('welcome.aspirationalMessage', { defaultValue: 'Your passport awaits its first stamp' })}
+                {t('welcome.aspirationalMessage')}
               </p>
               <Motion.button
                 type="button"
@@ -40,7 +40,7 @@ const WelcomeBento = ({ name, level, nextLevel, logStatsDashboard, isMobile, isN
                 whileTap={{ scale: 0.97 }}
               >
                 <Compass size={16} />
-                {t('welcome.aspirationalCtaLabel', { defaultValue: 'Log your first adventure' })}
+                {t('welcome.aspirationalCtaLabel')}
               </Motion.button>
             </Motion.div>
           ) : (

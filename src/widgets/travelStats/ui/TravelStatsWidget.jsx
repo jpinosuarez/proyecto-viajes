@@ -162,45 +162,78 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'home', isMob
   }
 
   if (variant === 'trips') {
-    // PHASE 5: Compact layout updated for narrative — % of World as hero, 4 metrics in compact grid
-    // This maintains scannability while introducing the "wow" metric as hero
+    // PHASE 6: Full Biography layout on Trips — EXACT parity with Home variant.
+    // Product Owner mandate: no compact bar, render the full "Traveler's Biography"
+    // with Hero % + Experience/Exploration groups, adapted to full-width container.
     const percentMetric = secondaryMetrics[2]; // % of World
-    const tripsMetrics = [heroMetric, secondaryMetrics[0], secondaryMetrics[1], secondaryMetrics[3]]; // Trips, Days, Cities, Continents
+    const experienceMetrics = [heroMetric, secondaryMetrics[0]]; // Trips, Days
+    const explorationMetrics = [secondaryMetrics[1], secondaryMetrics[3]]; // Cities, Continents
 
     return (
-      <section role="region" aria-label={ariaLabel} className="travel-stats-trips" style={styles.tripsShell}>
+      <section role="region" aria-label={ariaLabel} className="travel-stats-trips" style={styles.homeShell(isMobile)}>
+        {/* Hero: % of World — the big "wow" metric */}
         <Motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: ANIMATION_DELAYS.fast, duration: 0.4 }}
-          style={styles.tripsHeroContainer}
+          style={styles.biographyHeroContainer}
         >
-          <span style={styles.tripsHeroLabel} title={percentMetric.hint}>{percentMetric.label}</span>
-          <span style={styles.tripsHeroValue}>{percentMetric.displayValue}</span>
+          <span style={styles.biographyHeroLabel} title={percentMetric.hint}>{percentMetric.label}</span>
+          <span style={styles.biographyHeroValue}>{percentMetric.displayValue}</span>
         </Motion.div>
 
-        <div 
-          className="travel-stats-trips-secondary" 
-          style={styles.tripsSecondaryGrid}
+        {/* Biography Section — Experience and Exploration groups */}
+        <Motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.35 }}
+          style={styles.biographySection(isMobile)}
           role="group"
           aria-label={t('stats.additionalMetrics') || 'Additional travel metrics'}
         >
-          {tripsMetrics.map((stat, idx) => (
-            <Motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              /* PHASE 5: Faster stagger */
-              transition={{ delay: 0.15 + idx * 0.08, duration: 0.35 }}
-              style={styles.tripsSecondaryStat}
-              role="doc-subtitle"
-              aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
-              title={stat.hint}
-            >
-              <StatDisplay stat={stat} variant="trips" />
-            </Motion.div>
-          ))}
-        </div>
+          {/* EXPERIENCE: Trips + Days */}
+          <div style={styles.biographyGroup}>
+            <div style={styles.groupTitle}>{t('stats.experience') || 'Experience'}</div>
+            <div style={styles.groupStats}>
+              {experienceMetrics.map((stat, idx) => (
+                <Motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + idx * 0.08, duration: 0.35 }}
+                  role="doc-subtitle"
+                  aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
+                  title={stat.hint}
+                >
+                  <StatDisplay stat={stat} variant="biography" />
+                </Motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Divider: • */}
+          <div style={styles.groupDivider}>•</div>
+
+          {/* EXPLORATION: Cities + Continents */}
+          <div style={styles.biographyGroup}>
+            <div style={styles.groupTitle}>{t('stats.exploration') || 'Exploration'}</div>
+            <div style={styles.groupStats}>
+              {explorationMetrics.map((stat, idx) => (
+                <Motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.24 + idx * 0.08, duration: 0.35 }}
+                  role="doc-subtitle"
+                  aria-label={`${stat.label}: ${stat.displayValue}. ${stat.hint}`}
+                  title={stat.hint}
+                >
+                  <StatDisplay stat={stat} variant="biography" />
+                </Motion.div>
+              ))}
+            </div>
+          </div>
+        </Motion.div>
       </section>
     );
   }
