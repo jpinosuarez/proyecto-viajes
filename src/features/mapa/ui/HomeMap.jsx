@@ -101,7 +101,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
             anchor="top"
             offset={[0, -10]}
           >
-            <div style={{ background: 'rgba(30, 41, 59, 0.95)', color: 'white', padding: '6px 10px', borderRadius: RADIUS.xs, fontSize: '0.75rem', fontWeight: '600', whiteSpace: 'nowrap' }}>
+            <div>
               {hoverInfo.feature.properties[`name_${i18n.language}`] || hoverInfo.feature.properties.name_en || t('countryFallback')}
             </div>
           </Popup>
