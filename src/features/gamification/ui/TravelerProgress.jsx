@@ -18,9 +18,11 @@ import { COLORS, SHADOWS, RADIUS, FONTS, TRANSITIONS } from '@shared/config';
  */
 const TravelerProgress = ({ displayName, photoURL, countriesCount = 0, tripsCount = 0 }) => {
   const { t } = useTranslation('hub');
+  const [photoFailed, setPhotoFailed] = React.useState(false);
   const level = getTravelerLevel(countriesCount);
   const next = getNextLevel(countriesCount);
   const name = displayName || t('progress.fallbackName');
+  const canShowPhoto = Boolean(photoURL && !photoFailed);
 
   return (
     <Motion.div
@@ -54,8 +56,8 @@ const TravelerProgress = ({ displayName, photoURL, countriesCount = 0, tripsCoun
           overflow: 'hidden',
           flexShrink: 0,
         }}>
-          {photoURL ? (
-            <img src={photoURL} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {canShowPhoto ? (
+            <img src={photoURL} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setPhotoFailed(true)} />
           ) : (
             <User size={60} color={COLORS.borderLight} />
           )}

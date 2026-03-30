@@ -1,4 +1,5 @@
 import { COLORS, SHADOWS, RADIUS } from '@shared/config';
+
 export const welcomeStyles = {
   pageHeader: (isMobile) => ({
     width: '100%',
@@ -19,8 +20,43 @@ export const welcomeStyles = {
   title: { margin: 0, fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: '900', color: COLORS.charcoalBlue, lineHeight: 1.1, letterSpacing: '-0.02em' },
   subtitle: { margin: 0, marginTop: '4px', fontSize: 'clamp(0.95rem, 1.2vw, 1.1rem)', fontWeight: '500', color: COLORS.textSecondary, lineHeight: 1.4 },
   badgeRow: { display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap', maxWidth: '100%' },
-  badgeLevelButton: { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px',borderRadius: '999px', border: `1px solid ${COLORS.border}`, background: COLORS.surface, cursor: 'pointer', color: COLORS.charcoalBlue, fontWeight: 800, fontSize: '0.75rem', minHeight: '28px', transition: 'all 200ms ease-out' },
+  badgeLevelButton: { display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', borderRadius: '999px', border: `1px solid ${COLORS.border}`, background: COLORS.surface, cursor: 'pointer', color: COLORS.charcoalBlue, fontWeight: 800, fontSize: '0.75rem', minHeight: '28px', transition: 'all 200ms ease-out' },
   badgeLevel: { fontSize: '0.75rem', fontWeight: '800', color: COLORS.atomicTangerine, display: 'flex', alignItems: 'center', gap: '3px' },
   badgeProgress: { fontSize: '0.7rem', fontWeight: '600', color: COLORS.textSecondary, opacity: 0.85 },
   statsSection: { position: 'relative', zIndex: 1, width: '100%' },
+
+  /* ── Aspirational Empty State (New Traveler) ── */
+  aspirationalBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    marginTop: '8px',
+  },
+  aspirationalText: {
+    margin: 0,
+    fontSize: 'clamp(1.1rem, 2vw, 1.35rem)',
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    lineHeight: 1.4,
+    letterSpacing: '-0.01em',
+    fontStyle: 'italic',
+    maxWidth: '380px',
+  },
+  aspirationalCta: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 24px',
+    background: `linear-gradient(135deg, ${COLORS.atomicTangerine}, #ff9a4d)`,
+    color: '#fff',
+    border: 'none',
+    borderRadius: '999px',
+    fontSize: '0.88rem',
+    fontWeight: '800',
+    cursor: 'pointer',
+    boxShadow: `0 6px 20px ${COLORS.atomicTangerine}35`,
+    minHeight: '44px',
+    width: 'fit-content',
+    letterSpacing: '0.01em',
+  },
 };

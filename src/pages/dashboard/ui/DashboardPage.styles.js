@@ -213,9 +213,10 @@ mapSectionTitle: {
     display: 'grid',
     gridTemplateColumns: isMobile
       ? 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))'
-      : 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
+      : '1fr',
+    gridAutoRows: '1fr',
     alignItems: 'stretch',
-    gap: isMobile ? '8px' : '10px',
+    gap: isMobile ? '8px' : '8px',
     overflow: 'hidden',
     minWidth: 0,
     minHeight: 0,

@@ -14,7 +14,12 @@ import { COLORS, RADIUS, SHADOWS } from '@shared/config';
 // usuario abre la funcionalidad por primera vez. Las visitas siguientes usan
 // la caché del SW de Workbox.
 const SearchPalette = lazy(() => import('@features/search/ui/SearchPalette/SearchPalette'));
-const EditorFocusPanel = lazy(() => import('@features/viajes/editor/ui/EditorFocusPanel'));
+const EditorFocusPanel = lazy(() =>
+  import('@features/viajes/editor/ui/EditorFocusPanel').catch(() => {
+    // Retry once on chunk-load failure (stale hash after deploy)
+    return import('@features/viajes/editor/ui/EditorFocusPanel');
+  })
+);
 const SearchModal  = lazy(() => import('@features/search/ui/SearchModal/SearchModal'));
 const EdicionModal = lazy(() => import('@features/viajes/editor/ui/EdicionModal'));
 const VisorViaje   = lazy(() => import('@features/viajes/viewer/VisorViaje'));

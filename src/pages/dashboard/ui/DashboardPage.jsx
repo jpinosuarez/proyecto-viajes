@@ -101,6 +101,8 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
           nextLevel={next}
           logStatsDashboard={logStatsDashboard}
           isMobile={isMobile}
+          isNewTraveler={isNewTraveler}
+          onNewTrip={openBuscador}
         />
       </div>
 
