@@ -40,7 +40,6 @@ mapSection: {
   minHeight: 0,
   overflow: 'hidden',
   width: '100%',
-  height: '100%',
   position: 'relative',
 },
 mapSectionTitle: {
@@ -51,21 +50,21 @@ mapSectionTitle: {
   textTransform: 'uppercase',
   letterSpacing: '0.4px',
   lineHeight: 1,
-  flex: '0 0 auto',
 },
 
   mapCard: (isMobile) => ({
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     width: '100%',
     minWidth: 0,
+    maxWidth: '100%',
     minHeight: 0,
+    height: '100%',
     boxShadow: SHADOWS.md,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
+    cursor: 'default',
     position: 'relative',
   }),
 
@@ -213,10 +212,9 @@ mapSectionTitle: {
     display: 'grid',
     gridTemplateColumns: isMobile
       ? 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))'
-      : '1fr',
-    gridAutoRows: '1fr',
+      : 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
     alignItems: 'stretch',
-    gap: isMobile ? '8px' : '8px',
+    gap: isMobile ? '8px' : '10px',
     overflow: 'hidden',
     minWidth: 0,
     minHeight: 0,
