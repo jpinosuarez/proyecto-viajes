@@ -150,6 +150,7 @@ function AppRouter() {
             </Route>
 
             <Route path="map"        element={<MapRoute />} />
+            <Route path="mapa"       element={<MapRoute />} />
             <Route
               path="explorer"
               element={ENABLE_IMMERSIVE_VIEWER ? <ExplorerRoute /> : <Navigate to="/dashboard" replace />}

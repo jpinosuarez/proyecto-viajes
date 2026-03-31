@@ -25,19 +25,18 @@
 
 @media (max-width: 768px) {
   .scaffold-main {
-    margin-left: 0 !important;
-    overflow: visible !important;
-    overflow-y: auto !important;
-    min-height: auto;
-    height: auto;
-    flex: 1 1 auto;
+    margin-left: 0;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+    flex: 1;
   }
 
   .scaffold-content {
     padding: 12px 12px 100px;
-    overflow: visible !important;
-    height: auto;
-    min-height: auto;
-    flex: 0 0 auto;
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+    flex: 1;
   }
 }

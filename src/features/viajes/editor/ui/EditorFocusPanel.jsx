@@ -324,7 +324,14 @@ const EditorFocusPanel = ({
         <div style={styles.stickyHeader}>
           <div style={styles.headerLeft}>
             {flagUrl && (
-              <img src={flagUrl} alt="" style={styles.headerFlagImg} />
+              <img
+                src={flagUrl}
+                alt={t('labels.flagAlt', 'Country flag')}
+                style={styles.headerFlagImg}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
             )}
             <div>
               <div style={styles.headerTitle}>{viaje.titulo}</div>

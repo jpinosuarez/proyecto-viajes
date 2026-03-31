@@ -20,7 +20,6 @@ const GLASS_PANEL = {
   background: 'rgba(248, 250, 252, 0.82)',
   backdropFilter: 'blur(16px) saturate(180%)',
   WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-  border: '1px solid rgba(226, 232, 240, 0.5)',
   boxShadow: '0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
 };
 
@@ -42,7 +41,9 @@ const RosterHeader = ({ paises, trips, tripData, isMobile, onToggle, isExpanded 
         width: '100%',
         padding: isMobile ? '14px 16px' : '14px 18px',
         background: 'transparent',
-        border: 'none',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderTop: 'none',
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
         cursor: 'pointer',
         textAlign: 'left',
@@ -105,8 +106,8 @@ const RosterHeader = ({ paises, trips, tripData, isMobile, onToggle, isExpanded 
         transition: 'background 0.2s',
       }}>
         {isExpanded
-          ? <ChevronUp size={14} color={COLORS.textSecondary} />
-          : <ChevronDown size={14} color={COLORS.textSecondary} />}
+          ? <ChevronDown size={14} color={COLORS.textSecondary} />
+          : <ChevronUp size={14} color={COLORS.textSecondary} />}
       </div>
     </button>
   );
@@ -122,7 +123,7 @@ const TripRoster = ({
   onTripSelect,
 }) => {
   const { t } = useTranslation('dashboard');
-  const [isExpanded, setIsExpanded] = useState(true); // Default: semi-expanded
+  const [isExpanded, setIsExpanded] = useState(!isMobile); // Mobile: collapsed by default, desktop: expanded
 
   // Sort trips by date (newest first)
   const sortedTrips = useMemo(
@@ -152,6 +153,9 @@ const TripRoster = ({
           pointerEvents: 'auto',
           ...GLASS_PANEL,
           borderRadius: `${RADIUS.xl} ${RADIUS.xl} 0 0`,
+          borderTop: '1px solid rgba(226, 232, 240, 0.5)',
+          borderLeft: '1px solid rgba(226, 232, 240, 0.5)',
+          borderRight: '1px solid rgba(226, 232, 240, 0.5)',
           borderBottom: 'none',
           maxHeight: isExpanded ? '55dvh' : '80px',
           transition: 'max-height 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -233,6 +237,7 @@ const TripRoster = ({
         zIndex: 15,
         pointerEvents: 'auto',
         ...GLASS_PANEL,
+        border: '1px solid rgba(226, 232, 240, 0.5)',
         borderRadius: RADIUS.xl,
         width: '320px',
         maxHeight: isExpanded ? '50vh' : '72px',

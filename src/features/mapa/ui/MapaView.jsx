@@ -8,7 +8,6 @@ import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 
 import TripRoster from './components/TripRoster';
-import MapFabGroup from './components/MapFabGroup';
 import MapEmptyState from './components/MapEmptyState';
 import { createSpinGlobe } from './components/SpinGlobe';
 
@@ -21,7 +20,7 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
  *   Full-bleed Mapbox globe (100% viewport) with glassmorphic overlay layer.
  *   Three states:
  *     1. Empty (0 trips): SpinGlobe + MapEmptyState CTA
- *     2. Roster (N trips): TripRoster drawer + MapFabGroup
+ *     2. Roster (N trips): TripRoster drawer
  *     3. Trip Selected: Cinematic flyTo + highlighted roster item
  *
  * Performance:
@@ -186,7 +185,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   return (
     <div style={{
       width: '100%',
-      height: '100%',
+      height: isMobile ? '100dvh' : '100%',
       borderRadius: RADIUS.xl,
       overflow: 'hidden',
       background: '#e0f2fe',
@@ -202,6 +201,11 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection={isMobile ? 'mercator' : 'globe'}
+        minZoom={1}
+        maxZoom={20}
+        doubleClickZoom={true}
+        scrollZoom={true}
+        dragPan={true}
         onLoad={onMapLoad}
         reuseMaps
         attributionControl={false}
@@ -299,10 +303,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
               activeTrip={selectedTrip}
               onTripSelect={handleTripSelect}
             />
-            {!isMobile && (
-              <MapFabGroup onLocateMe={handleLocateMe} />
-            )}
-          </>
+            </>
         )}
       </div>
     </div>

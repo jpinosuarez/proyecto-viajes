@@ -299,8 +299,13 @@ const SearchModal = ({
                     <span style={styles.countryName}>{item.name}</span>
                     <span style={styles.subtext}>{item.type === "country" ? t('search:country') : item.countryName}</span>
                   </div>
-                  <div className="add-label" style={styles.addLabel}>
-                    <Plus size={14} /> {t('search:add')}
+                  <div
+                    className="add-label"
+                    style={styles.addLabel}
+                    role="button"
+                    aria-label={t('common:add')}
+                  >
+                    <Plus size={14} /> {t('common:add')}
                   </div>
                 </div>
               );

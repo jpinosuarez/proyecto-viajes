@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, MapPin, Calendar } from 'lucide-react';
+import { Globe, MapPin, Calendar, Plus, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
@@ -36,7 +36,8 @@ const RichResultCard = ({
     ? item.foto 
     : (item.countryCode ? getFlagUrl(item.countryCode) : null);
   
-  const badgeLabel = isTrip ? t('common.open', 'Open') : t('common.add', 'Add');
+  const badgeLabel = isTrip ? t('common:open') : t('common:add');
+  const badgeIcon = isTrip ? <ArrowRight size={14} /> : <Plus size={14} />;
   
   const styles = {
     container: {
@@ -155,8 +156,12 @@ const RichResultCard = ({
       </div>
 
       {/* Badge */}
-      <div style={styles.badgeContainer}>
-        {isTrip ? '→' : '+'} {badgeLabel}
+      <div
+        style={styles.badgeContainer}
+        role="button"
+        aria-label={isTrip ? t('common:open') : t('common:add')}
+      >
+        {badgeIcon} {badgeLabel}
       </div>
     </div>
   );

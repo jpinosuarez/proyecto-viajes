@@ -19,9 +19,9 @@ function AppScaffold({ invitationsCount, content, overlays, isMobile }) {
         display: 'flex',
         backgroundColor: '#F8FAFC',
         minHeight: '100dvh',
-        height: isMobile ? 'auto' : '100dvh',
+        height: '100dvh',
         width: '100%',
-        overflow: isMobile ? 'visible' : 'hidden',
+        overflow: 'hidden',
       }}>
       <Sidebar />
 
