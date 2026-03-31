@@ -1,76 +1,198 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion as Motion, AnimatePresence } from 'framer-motion';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
+import { COLORS, RADIUS } from '@shared/config';
 import { setMapLanguage } from '@shared/lib/geo';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 
-import TravelerHud from './components/TravelerHud';
-import TripSlideOver from './components/TripSlideOver';
+import TripRoster from './components/TripRoster';
+import MapFabGroup from './components/MapFabGroup';
+import MapEmptyState from './components/MapEmptyState';
+import { createSpinGlobe } from './components/SpinGlobe';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
+/**
+ * MapaView — "Command Center" Map Page
+ *
+ * Architecture:
+ *   Full-bleed Mapbox globe (100% viewport) with glassmorphic overlay layer.
+ *   Three states:
+ *     1. Empty (0 trips): SpinGlobe + MapEmptyState CTA
+ *     2. Roster (N trips): TripRoster drawer + MapFabGroup
+ *     3. Trip Selected: Cinematic flyTo + highlighted roster item
+ *
+ * Performance:
+ *   - 100dvh no-scroll rule enforced (parent scaffold handles this)
+ *   - SpinGlobe cleaned up on unmount and on trip arrival
+ *   - Internal roster scroll via overflow-y: auto
+ */
 function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   const { i18n, t } = useTranslation('dashboard');
   useDocumentTitle(t('map', 'Mapa 3D'));
   const mapRef = useRef(null);
+  const spinGlobeRef = useRef(null);
   const { isMobile } = useWindowSize(768);
+
   const [viewState, setViewState] = useState(() => ({
     longitude: 0,
     latitude: 20,
     zoom: isMobile ? 0 : 1.5,
   }));
-  
+
   const [selectedTrip, setSelectedTrip] = useState(null);
-  const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
 
-  const onMapClick = React.useCallback((event) => {
-    const feature = event.features && event.features[0];
-    if (feature && feature.layer.id === 'unclustered-point') {
-      const tripId = feature.properties.id;
-      const trip = trips.find(t => t.id === tripId);
-      
-      if (trip) {
-        setSelectedTrip(trip);
-        setIsSlideOverOpen(true);
-        
-        mapRef.current?.flyTo({
-          center: feature.geometry.coordinates,
-          zoom: 5.5,
-          duration: 1800,
-          essential: true
-        });
-      }
-    }
-  }, [trips]);
+  const isEmptyMap = paises.length === 0;
 
+  // ── Unique stops for markers ─────────────────────────────────────────
   const paradasUnicas = useMemo(() => {
-    const vistas = new Set();
+    const seen = new Set();
     return paradas.filter((p) => {
       const key = `${p.coordenadas[0]},${p.coordenadas[1]}`;
-      if (vistas.has(key)) return false;
-      vistas.add(key);
+      if (seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }, [paradas]);
 
-  const paradasGeoJSON = {
+  const paradasGeoJSON = useMemo(() => ({
     type: 'FeatureCollection',
     features: paradasUnicas.map((p) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: p.coordenadas },
-      properties: { id: p.id, name: p.nombre }
-    }))
-  };
+      properties: { id: p.id, name: p.nombre, tripId: p.tripId || p.viajeId },
+    })),
+  }), [paradasUnicas]);
 
   const listaPaises = paises.length > 0 ? paises : ['EMPTY'];
-  const isEmptyMap = paises.length === 0;
 
+  // ── SpinGlobe lifecycle ──────────────────────────────────────────────
+  const initSpinGlobe = useCallback((map) => {
+    // Only spin on empty state with globe projection (desktop)
+    if (!isEmptyMap || isMobile) return;
+    if (spinGlobeRef.current) spinGlobeRef.current.destroy();
+
+    spinGlobeRef.current = createSpinGlobe(map, {
+      secondsPerRevolution: 120,
+      maxSpinZoom: 5,
+    });
+    spinGlobeRef.current.start();
+  }, [isEmptyMap, isMobile]);
+
+  // Cleanup SpinGlobe when trips arrive or on unmount
+  useEffect(() => {
+    if (!isEmptyMap && spinGlobeRef.current) {
+      spinGlobeRef.current.destroy();
+      spinGlobeRef.current = null;
+    }
+    return () => {
+      if (spinGlobeRef.current) {
+        spinGlobeRef.current.destroy();
+        spinGlobeRef.current = null;
+      }
+    };
+  }, [isEmptyMap]);
+
+  // ── Map event handlers ───────────────────────────────────────────────
+  const onMapLoad = useCallback((e) => {
+    const map = e.target;
+    setMapLanguage(map, i18n.language);
+    initSpinGlobe(map);
+  }, [i18n.language, initSpinGlobe]);
+
+  // Click on map marker → select trip
+  const onMapClick = useCallback((event) => {
+    const feature = event.features && event.features[0];
+    if (feature && feature.layer.id === 'unclustered-point') {
+      const tripId = feature.properties.tripId || feature.properties.id;
+      const trip = trips.find((t) => t.id === tripId);
+
+      if (trip) {
+        setSelectedTrip(trip);
+        mapRef.current?.flyTo({
+          center: feature.geometry.coordinates,
+          zoom: 5.5,
+          pitch: 45,
+          bearing: -17.6,
+          duration: 2400,
+          essential: true,
+          curve: 1.42,
+        });
+        // Settle camera after arc
+        setTimeout(() => {
+          mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 1200 });
+        }, 2800);
+      }
+    }
+  }, [trips]);
+
+  // Trip roster selection → cinematic flyTo
+  const handleTripSelect = useCallback((trip) => {
+    setSelectedTrip(trip);
+
+    // Find the first parada belonging to this trip
+    const tripParada = paradas.find(
+      (p) => (p.tripId || p.viajeId) === trip.id
+    );
+
+    if (tripParada && tripParada.coordenadas) {
+      mapRef.current?.flyTo({
+        center: tripParada.coordenadas,
+        zoom: 5.5,
+        pitch: 45,
+        bearing: -17.6,
+        duration: 2400,
+        essential: true,
+        curve: 1.42,
+      });
+      // Settle camera
+      setTimeout(() => {
+        mapRef.current?.easeTo({ pitch: 0, bearing: 0, duration: 1200 });
+      }, 2800);
+    } else {
+      // Fallback: try trip-level coordinates
+      const lat = trip.lat || trip.latitud;
+      const lng = trip.lng || trip.longitud;
+      if (lat && lng) {
+        mapRef.current?.flyTo({
+          center: [lng, lat],
+          zoom: 5,
+          duration: 1800,
+          essential: true,
+        });
+      }
+    }
+  }, [paradas]);
+
+  // Locate Me (geolocation)
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        mapRef.current?.flyTo({
+          center: [pos.coords.longitude, pos.coords.latitude],
+          zoom: 8,
+          duration: 1600,
+          essential: true,
+        });
+      },
+      () => { /* silent fail — geolocation denied */ }
+    );
+  }, []);
+
+  // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div style={{ width: '100%', height: '100%', borderRadius: RADIUS.xl, overflow: 'hidden', background: '#e0f2fe', position: 'relative' }}>
+    <div style={{
+      width: '100%',
+      height: '100%',
+      borderRadius: RADIUS.xl,
+      overflow: 'hidden',
+      background: '#e0f2fe',
+      position: 'relative',
+    }}>
+      {/* Full-bleed Mapbox */}
       <Map
         ref={mapRef}
         {...viewState}
@@ -80,12 +202,22 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
         projection={isMobile ? 'mercator' : 'globe'}
-        onLoad={(e) => setMapLanguage(e.target, i18n.language)}
+        onLoad={onMapLoad}
         reuseMaps
         attributionControl={false}
       >
-        <Layer id="sky" type="sky" paint={{ 'sky-type': 'atmosphere', 'sky-atmosphere-sun': [0.0, 0.0], 'sky-atmosphere-sun-intensity': 5 }} />
+        {/* Atmosphere */}
+        <Layer
+          id="sky"
+          type="sky"
+          paint={{
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-sun': [0.0, 0.0],
+            'sky-atmosphere-sun-intensity': 5,
+          }}
+        />
 
+        {/* Visited countries fill */}
         <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
           <Layer
             id="country-fills"
@@ -93,12 +225,20 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
             source-layer="country_boundaries"
             paint={{
               'fill-color': COLORS.atomicTangerine,
-              'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], listaPaises, 0.6, 0]
+              'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], listaPaises, 0.6, 0],
             }}
           />
         </Source>
 
-        <Source id="paradas" type="geojson" data={paradasGeoJSON} cluster={true} clusterMaxZoom={14} clusterRadius={50}>
+        {/* Trip stop markers with clustering */}
+        <Source
+          id="paradas"
+          type="geojson"
+          data={paradasGeoJSON}
+          cluster={true}
+          clusterMaxZoom={14}
+          clusterRadius={50}
+        >
           <Layer
             id="clusters"
             type="circle"
@@ -107,14 +247,18 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
               'circle-color': COLORS.charcoalBlue,
               'circle-radius': ['step', ['get', 'point_count'], 15, 5, 20, 10, 30],
               'circle-stroke-width': 2,
-              'circle-stroke-color': '#fff'
+              'circle-stroke-color': '#fff',
             }}
           />
           <Layer
             id="cluster-count"
             type="symbol"
             filter={['has', 'point_count']}
-            layout={{ 'text-field': '{point_count_abbreviated}', 'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'], 'text-size': 12 }}
+            layout={{
+              'text-field': '{point_count_abbreviated}',
+              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+              'text-size': 12,
+            }}
             paint={{ 'text-color': '#ffffff' }}
           />
           <Layer
@@ -123,9 +267,9 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
             filter={['!', ['has', 'point_count']]}
             paint={{
               'circle-color': COLORS.atomicTangerine,
-              'circle-radius': 6,
-              'circle-stroke-width': 2,
-              'circle-stroke-color': 'white'
+              'circle-radius': 7,
+              'circle-stroke-width': 2.5,
+              'circle-stroke-color': 'white',
             }}
           />
         </Source>
@@ -134,52 +278,33 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         <NavigationControl position="top-right" />
       </Map>
 
-      {/* OVERLAY LAYER (HUD) */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5 }}>
-        {!isEmptyMap && !isMobile && (
-          <TravelerHud isMobile={isMobile} paises={paises} trips={trips} tripData={tripData} />
+      {/* ── OVERLAY LAYER ─────────────────────────────────────────────── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 5,
+      }}>
+        {isEmptyMap ? (
+          /* STATE: Empty — spinning globe + editorial CTA */
+          <MapEmptyState />
+        ) : (
+          /* STATE: Active — trip roster + FABs */
+          <>
+            <TripRoster
+              trips={trips}
+              paises={paises}
+              tripData={tripData}
+              isMobile={isMobile}
+              activeTrip={selectedTrip}
+              onTripSelect={handleTripSelect}
+            />
+            {!isMobile && (
+              <MapFabGroup onLocateMe={handleLocateMe} />
+            )}
+          </>
         )}
       </div>
-
-      <AnimatePresence>
-        {isEmptyMap && (
-          <Motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ 
-              y: { repeat: Infinity, duration: 2, ease: "easeInOut" },
-              opacity: { duration: 0.3 }
-            }}
-            style={{
-              position: 'absolute',
-              right: '24px',
-              bottom: '100px',
-              ...GLASS.dark,
-              backgroundColor: 'rgba(30, 41, 59, 0.85)',
-              color: '#fff',
-              border: '1px solid rgba(255,255,255,0.18)',
-              borderRadius: RADIUS.lg,
-              padding: '12px 18px',
-              fontSize: '0.86rem',
-              fontWeight: '700',
-              boxShadow: SHADOWS.lg,
-              pointerEvents: 'none',
-              zIndex: 3,
-              maxWidth: '220px',
-              textAlign: 'right'
-            }}
-          >
-            {t('welcome.emptyStateDescription', 'The globe is waiting for your first flag.')}
-          </Motion.div>
-        )}
-      </AnimatePresence>
-      
-      <TripSlideOver 
-        isOpen={isSlideOverOpen} 
-        onClose={() => setIsSlideOverOpen(false)} 
-        trip={selectedTrip} 
-      />
     </div>
   );
 }

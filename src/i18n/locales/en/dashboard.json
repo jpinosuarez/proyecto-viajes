@@ -89,5 +89,20 @@
   "toast": {
     "comingSoon": "Coming soon"
   },
-  "explorationMap": "Exploration Map"
+  "explorationMap": "Exploration Map",
+  "map": {
+    "emptyState": {
+      "title": "Your world awaits",
+      "subtitle": "Every explorer starts here. Drop your first pin and watch your story unfold.",
+      "cta": "Log First Adventure"
+    },
+    "roster": {
+      "title": "Your Journeys",
+      "openLog": "Open Log",
+      "tripsCount": "{{count}} trips",
+      "expandRoster": "Show all trips",
+      "collapseRoster": "Minimize",
+      "locateMe": "Locate me"
+    }
+  }
 }

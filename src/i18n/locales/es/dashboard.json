@@ -89,5 +89,20 @@
   "toast": {
     "comingSoon": "Próximamente"
   },
-  "explorationMap": "Tu Mundo"
+  "explorationMap": "Tu Mundo",
+  "map": {
+    "emptyState": {
+      "title": "Tu mundo te espera",
+      "subtitle": "Todo explorador empieza aquí. Marca tu primer destino y observa cómo se despliega tu historia.",
+      "cta": "Registrar Primera Aventura"
+    },
+    "roster": {
+      "title": "Tus Viajes",
+      "openLog": "Abrir Bitácora",
+      "tripsCount": "{{count}} viajes",
+      "expandRoster": "Mostrar todos los viajes",
+      "collapseRoster": "Minimizar",
+      "locateMe": "Localizarme"
+    }
+  }
 }
