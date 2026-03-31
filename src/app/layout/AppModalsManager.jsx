@@ -89,7 +89,7 @@ function AppModalsManager({
   // ── EdicionModal: ?editing=<id> para viajes existentes, viajeBorrador para nuevos ──
   const editingId = searchParams.get('editing');
   const viajeParaEditar = editingId
-    ? bitacora.find((v) => v.id === editingId)
+    ? bitacoraData[editingId] || bitacora.find((v) => v.id === editingId)
     : viajeBorrador;
   const esBorrador = !editingId && !!viajeBorrador;
 

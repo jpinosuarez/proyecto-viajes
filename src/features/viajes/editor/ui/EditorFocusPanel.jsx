@@ -10,7 +10,6 @@ import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycl
 import { useEdicionModalSave } from '../model/hooks/useEdicionModalSave';
 import { useAuth } from '@app/providers/AuthContext';
 import { useUpload } from '@app/providers/UploadContext';
-import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 
 // Import original editor sections (reusing existing components)
@@ -72,6 +71,10 @@ const EditorFocusPanel = ({
   const [localCaptionDrafts, setLocalCaptionDrafts] = useState({});
 
   const effectiveFormData = formData ?? localFormData;
+  const formDataWithFallback = {
+    ...effectiveFormData,
+    titulo: effectiveFormData?.titulo || viaje?.titulo || viaje?.nombreEspanol || ''
+  };
   const effectiveSetFormData = setFormData ?? setLocalFormData;
   const effectiveParadas = paradas ?? localParadas;
   const effectiveSetParadas = setParadas ?? setLocalParadas;
@@ -264,7 +267,6 @@ const EditorFocusPanel = ({
     setShowCoverPicker(false);
   };
 
-  const flagUrl = viaje.banderas?.[0] ? getFlagUrl(viaje.banderas[0]) : null;
   const isBusy = isSaving || isProcessingImage;
 
   // Animation variants
@@ -323,18 +325,8 @@ const EditorFocusPanel = ({
         {/* Sticky Header */}
         <div style={styles.stickyHeader}>
           <div style={styles.headerLeft}>
-            {flagUrl && (
-              <img
-                src={flagUrl}
-                alt={t('labels.flagAlt', 'Country flag')}
-                style={styles.headerFlagImg}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            )}
             <div>
-              <div style={styles.headerTitle}>{viaje.titulo}</div>
+              <div style={styles.headerTitle}>{t('editor:tripEditorHeader', 'Editor de viaje')}</div>
               <div style={styles.headerBadge}>{esBorrador ? t('labels.draft') || 'Draft' : t('labels.editing') || 'Editing'}</div>
             </div>
           </div>
@@ -354,7 +346,7 @@ const EditorFocusPanel = ({
           <EdicionHeaderSection
             styles={edicionModalStyles}
             t={t}
-            formData={effectiveFormData}
+            formData={formDataWithFallback}
             isMobile={isMobile}
             isBusy={isBusy}
             esBorrador={esBorrador}
@@ -363,7 +355,6 @@ const EditorFocusPanel = ({
             isProcessingImage={isProcessingImage}
             onTituloChange={handleTituloChange}
             onToggleTituloAuto={() => setAutoTitleMode((prev) => !prev)}
-            onPortadaChange={(url) => effectiveSetFormData((prev) => ({ ...prev, portadaUrl: url }))}
           />
 
           {/* Itinerary / Stops */}

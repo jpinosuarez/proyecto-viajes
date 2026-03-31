@@ -10,7 +10,7 @@ export const styles = {
     height: '100%',
     flex: 1,
     minHeight: 0,
-    overflow: isMobile ? 'auto' : 'hidden',
+    overflowY: isMobile ? 'auto' : 'hidden',
     overflowX: 'hidden',
     WebkitOverflowScrolling: isMobile ? 'touch' : undefined,
     boxSizing: 'border-box',

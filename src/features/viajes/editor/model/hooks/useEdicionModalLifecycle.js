@@ -80,9 +80,13 @@ export function useEdicionModalLifecycle({
       limpiarGaleriaRef.current();
     }
 
+    const resolvedTitulo = esBorrador
+      ? viaje.titulo || ''
+      : viaje.titulo || viaje.nombreEspanol || viaje.code || `Viaje a ${viaje.nombreEspanol || ''}`;
+
     setFormData({
       ...viaje,
-      titulo: esBorrador ? viaje.titulo || '' : viaje.titulo || `Viaje a ${viaje.nombreEspanol}`,
+      titulo: resolvedTitulo,
       fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
       fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
       foto: viaje.foto,

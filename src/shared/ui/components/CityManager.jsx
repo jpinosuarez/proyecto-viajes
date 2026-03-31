@@ -128,8 +128,9 @@ const CityManager = ({ t, paradas, setParadas }) => {
                   type="button"
                   onClick={() => agregarCiudad(res)}
                   style={styles.addButton}
+                  aria-label={t('common:add')}
                 >
-                  {t('button.add') || 'Add'}
+                  <Plus size={14} /> {t('common:add')}
                 </button>
               </div>
             );

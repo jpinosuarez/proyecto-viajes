@@ -137,6 +137,10 @@ export const useViajes = () => {
         });
         // anexar ownerId para mantener consistencia entre viajes personales y compartidos
         const viajesConOwner = viajes.map((v) => ({ ...v, ownerId: usuario.uid }));
+        const confirmedTripIds = new Set(viajesConOwner.map((viaje) => viaje.id));
+        for (const tripId of confirmedTripIds) {
+          pendingTripIdsRef.current.delete(tripId);
+        }
         const paradasConOwner = paradas.map((p) => ({ ...p, ownerId: usuario.uid }));
         // Actualización funcional para NO perder los viajes compartidos que
         // upsertSharedViaje ya haya insertado (race condition: el listener
@@ -410,15 +414,23 @@ export const useViajes = () => {
       }
 
       pendingTripIdsRef.current.delete(optimisticTripId);
+      const persistedTrip = {
+        ...payloadViaje,
+        id: viajeId,
+        ownerId: usuario.uid,
+        createdAt: new Date().toISOString(),
+        paradas: paradasProcesadas,
+        isPending: false,
+      };
       setBitacora((prev) => {
         const withoutPending = prev.filter((item) => item.id !== optimisticTripId);
         const hasSyncedTrip = withoutPending.some((item) => item.id === viajeId);
-        const optimisticResolved = {
-          ...optimisticTrip,
-          id: viajeId,
-          isPending: false
-        };
-        const next = hasSyncedTrip ? withoutPending : [optimisticResolved, ...withoutPending];
+        if (hasSyncedTrip) {
+          pendingTripIdsRef.current.delete(viajeId);
+        } else {
+          pendingTripIdsRef.current.add(viajeId);
+        }
+        const next = hasSyncedTrip ? withoutPending : [persistedTrip, ...withoutPending];
         setBitacoraData(construirBitacoraData(next));
         return next;
       });

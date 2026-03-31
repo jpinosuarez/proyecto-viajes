@@ -1,12 +1,29 @@
 // Fuente de verdad para banderas y códigos.
 // Usamos flagcdn.com para asegurar compatibilidad total (Windows/Mac/Android).
 
-export const getFlagUrl = (countryCode) => {
-  if (!countryCode) return null;
-  // flagcdn usa códigos de 2 letras en minúscula
-  return `https://flagcdn.com/${countryCode.toLowerCase()}.svg`;
+export const normalizeCountryCode = (code) => {
+  if (!code || typeof code !== 'string') return null;
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return null;
+  if (normalized.length === 2) return normalized;
+
+  if (normalized.length === 3) {
+    const country = COUNTRIES_DATA.find((item) => item.iso3 === normalized);
+    return country?.code || null;
+  }
+
+  return null;
 };
 
+export const getFlagUrl = (countryCode) => {
+  if (!countryCode) return null;
+  if (typeof countryCode === 'string' && /^https?:\/\//i.test(countryCode)) return countryCode;
+
+  // flagcdn usa códigos de 2 letras en minúscula
+  const normalizedCode = normalizeCountryCode(countryCode);
+  if (!normalizedCode) return null;
+  return `https://flagcdn.com/${normalizedCode.toLowerCase()}.svg`;
+};
 // Convierte código Alpha-2 (ej: AR) a Alpha-3 (ej: ARG) para Mapbox
 export const getCountryISO3 = (code2) => {
   if (!code2) return null;
@@ -19,7 +36,16 @@ export const getCountryName = (code) => {
   const country = COUNTRIES_DATA.find(c => c.code === code.toUpperCase() || c.iso3 === code.toUpperCase());
   return country ? country.name : code;
 };
-
+export const getCountryFlagEmoji = (code) => {
+  if (!code) return '🌍';
+  const normalized = normalizeCountryCode(code);
+  if (!normalized) return '🌍';
+  if (normalized.length !== 2) return '🌍';
+  const first = normalized.charCodeAt(0) - 65 + 0x1F1E6;
+  const second = normalized.charCodeAt(1) - 65 + 0x1F1E6;
+  if (first < 0x1F1E6 || second < 0x1F1E6) return '🌍';
+  return String.fromCodePoint(first, second);
+};
 // LISTA ESTÁNDAR ISO 3166-1 (Selección principal)
 export const COUNTRIES_DATA = [
   { code: 'AF', iso3: 'AFG', name: 'Afganistán' },

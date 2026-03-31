@@ -30,10 +30,21 @@ test.describe('Create trip from search modal (E2E)', () => {
     const password = 'testpass';
     await createAuthUser(userEmail, password);
 
+    const consoleWarnings = [];
+    page.on('console', (message) => {
+      if (['warning', 'error', 'log'].includes(message.type())) {
+        consoleWarnings.push(`[${message.type()}] ${message.text()}`);
+      }
+    });
+
     await page.goto('/');
     await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
     await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: userEmail, password });
     await page.waitForSelector('[data-testid="header-avatar"]');
+
+    // Assert no overflow style conflict warning appears
+    await expect(consoleWarnings).not.toContainEqual(expect.stringContaining('Updating a style property during rerender (overflow)'));
+
 
     await page.goto('/trips');
     await page.waitForURL('**/trips');
@@ -89,8 +100,38 @@ test.describe('Create trip from search modal (E2E)', () => {
     await resultCard.click();
 
     // Wait for the editor to open (trip title input should appear)
+    await page.waitForTimeout(1000);
+    const allInputs = await page.$$('input');
+    console.log('DEBUG all inputs count:', allInputs.length);
+    for (const input of allInputs) {
+      const name = await input.getAttribute('name');
+      const placeholder = await input.getAttribute('placeholder');
+      const value = await input.inputValue();
+      console.log('DEBUG input', {name, placeholder, value});
+    }
+
     const titleInput = page.getByPlaceholder(/Trip Title|Título del viaje/i);
-    await titleInput.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(titleInput).toBeVisible({ timeout: 10000 });
+
+    // Validate editor header is visible and title is auto-populated from search selection
+    await expect(page.getByText('Editor de viaje').first()).toBeVisible();
+    await expect(titleInput).not.toHaveValue('');
+    await expect(titleInput).toHaveValue(/Escapada a New York|New York|E2E Trip/);
+    const citySearchInput = page.getByPlaceholder(/Type the city name|Escribe el nombre de la ciudad/i).first();
+    if (await citySearchInput.count() > 0) {
+      await citySearchInput.fill('Paris');
+      // Wait for results and verify the CTA text
+      const cityAddBtn = page.getByRole('button', { name: /Agregar|Add/ }).first();
+      await expect(cityAddBtn).toBeVisible({ timeout: 10000 });
+      await expect(cityAddBtn).toContainText(/Agregar|Add/);
+    }
+
+    // Ensure no raw key jargon fallback text is exposed in the UI
+    await expect(page.locator('text=button.add')).toHaveCount(0);
+    await expect(page.locator('text=common:add')).toHaveCount(0);
+
+    // Verify gallery cover info text has been updated
+    await expect(page.locator('text=Esta imagen será la foto de portada del viaje')).toBeVisible({ timeout: 10000 });
 
     // Provide a title and save
     await titleInput.fill('E2E Trip');
@@ -118,6 +159,13 @@ test.describe('Create trip from search modal (E2E)', () => {
         await page.getByRole('button', { name: 'Great! 🎉' }).click();
         await page.waitForTimeout(500);
       }
+
+      // Close expedition summary modal (appears on big unlock bursts)
+      const expeditionModal = page.locator('text=Expedition Summary!');
+      if (await expeditionModal.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await page.getByRole('button', { name: 'Amazing! 🚀' }).click();
+        await page.waitForTimeout(500);
+      }
     };
 
     // Close modals multiple times in case multiple achievements trigger
@@ -128,5 +176,25 @@ test.describe('Create trip from search modal (E2E)', () => {
     // Ensure the trip list is reactive without forcing a hard reload.
     await expect(page.locator('text=Your logbook has no stops yet')).toHaveCount(0, { timeout: 5000 });
     await expect(page.locator('[data-testid^="trip-card-"]')).toHaveCount(1, { timeout: 5000 });
+
+    await closeModals();
+
+    // Open the newly created trip using query param by extracting its ID from the displayed card.
+    const createdTripCard = page.locator('[data-testid^="trip-card-"]').first();
+    const createdTripTestId = await createdTripCard.getAttribute('data-testid');
+    const createdTripId = createdTripTestId?.replace('trip-card-', '');
+    expect(createdTripId).toBeTruthy();
+
+    await page.goto(`/trips?editing=${createdTripId}`);
+    const existingTitleInput = page.getByPlaceholder(/Trip Title|Título del viaje/i);
+    await expect(existingTitleInput).toBeVisible({ timeout: 10000 });
+
+    await expect(existingTitleInput).not.toHaveValue('');
+
+    // Update title to ensure changes persist and UI reflects update
+    await existingTitleInput.fill('E2E Trip Edited');
+    const saveUpdatedBtn = page.getByRole('button', { name: /Save|Guardar/i }).first();
+    await saveUpdatedBtn.click();
+    await expect(page.getByRole('button', { name: /E2E Trip Edited/i })).toBeVisible({ timeout: 15000 });
   });
 });

@@ -96,7 +96,7 @@ const EdicionGallerySection = ({
         isMobile={isMobile}
       />
       <span style={styles.inlineInfo}>
-        {t('gallery.coverOnlyNotice', 'Por ahora, solo permitimos 1 foto de portada para tu viaje.')}
+        {t('gallery.coverPhotoInfo', 'Esta imagen será la foto de portada del viaje y aparece en la tarjeta principal.')}
       </span>
       {galeria.uploading && (
         <span style={styles.inlineInfo}>{t('toast.uploadingPhotos')}</span>
