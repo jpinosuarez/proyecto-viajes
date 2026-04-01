@@ -32,11 +32,15 @@
     "selectDefault": "Sin especificar",
     "notesPlaceholder": "¿Qué quieres recordar de este viaje?",
     "addCityWarning": "Tu ruta necesita al menos una parada para despegar.",
+    "emptyStopsTitle": "Tu ruta esta vacia",
+    "emptyStopsDescription": "Agrega tu primer destino para continuar.",
     "captionPlaceholder": "Describe este momento...",
     "addCoverHint": "Dale vida con una foto",
     "portada": "Portada",
     "multiCountriesSummary": "{{count}} países",
     "multiCountryRoute": "Ruta por {{count}} países",
+    "noStopsSummary": "Sin paradas",
+    "noStopsRoute": "Agrega una parada para empezar",
     "countryFallback": "Destino por confirmar",
     "titleEditableHint": "Toca para editar el título",
     "autoTitle": "Auto",
@@ -44,6 +48,7 @@
   },
   "autoTitle": {
     "fallback": "Nuevo Viaje",
+    "noStops": "Viaje sin paradas",
     "oneCity": "Escapada a {{city}}",
     "twoCities": "{{city1}} y {{city2}}",
     "twoCountries": "Aventura entre {{country1}} y {{country2}}",
@@ -108,6 +113,9 @@
     }
   },
   "error": {
+    "tripNeedsStop": "El viaje debe tener al menos un destino.",
+    "tripNeedsTitle": "El viaje debe tener un titulo.",
+    "tripNeedsStartDate": "El viaje debe tener fecha de inicio.",
     "unsupportedFormat": "Solo se aceptan fotos JPG o PNG. Elige otro archivo e intenta de nuevo.",
     "optimizationFailed": "No pudimos procesar esa foto. Prueba con otra imagen.",
     "saveFailed": "No pudimos guardar tu bitácora. Revisa tu conexión e intenta de nuevo.",

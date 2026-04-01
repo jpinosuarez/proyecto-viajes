@@ -20,7 +20,7 @@ import EdicionHeaderSection from './components/EdicionHeaderSection';
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false, onAfterSave }) => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
-  const { t } = useTranslation('editor');
+  const { t } = useTranslation(['editor', 'countries']);
 
   // useUpload puede no estar disponible en tests aislados; usar fallback seguro
   let iniciarSubida = () => {};
@@ -82,6 +82,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     setGalleryFiles,
     setGalleryPortada,
     setCaptionDrafts,
+    t,
   });
 
   const { isUploading } = viaje?.id ? getEstadoViaje(viaje.id) : { isUploading: false };
@@ -156,6 +157,10 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     ...formData,
     titulo: formData?.titulo ?? viaje?.titulo ?? viaje?.nombreEspanol ?? '',
   };
+  const hasValidStops = Array.isArray(paradas) && paradas.length > 0;
+  const hasValidTitle = Boolean((headerFormData?.titulo || '').trim());
+  const hasValidStartDate = Boolean((formData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
+  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isBusy;
 
   return (
     <AnimatePresence>
@@ -201,7 +206,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               paradas={paradas}
               setParadas={setParadas}
               fechaRangoDisplay={fechaRangoDisplay}
-              sinParadas={sinParadas && hasTried}
+              sinParadas={sinParadas}
             />
 
             {/* Photo gallery */}
@@ -234,11 +239,34 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               >{t('button.cancel')}</Motion.button>
               <Motion.button
                 onClick={() => { setHasTried(true); handleSave(); }}
-                style={styles.saveBtn(isBusy, isMobile)}
-                disabled={isBusy}
-                whileHover={!isBusy ? { scale: 1.02, boxShadow: '0 4px 20px rgba(255,107,53,0.35)' } : {}}
-                whileTap={!isBusy ? { scale: 0.97 } : {}}
+                disabled={!canSave}
+                whileHover={canSave ? { scale: 1.02, boxShadow: '0 4px 20px rgba(255,107,53,0.35)' } : {}}
+                whileTap={canSave ? { scale: 0.97 } : {}}
                 transition={{ duration: 0.15 }}
+                aria-disabled={!canSave}
+                aria-label={
+                  !hasValidStops
+                    ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                    : !hasValidTitle
+                      ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                      : !hasValidStartDate
+                        ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                        : undefined
+                }
+                title={
+                  !hasValidStops
+                    ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                    : !hasValidTitle
+                      ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                      : !hasValidStartDate
+                        ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                        : ''
+                }
+                style={{
+                  ...styles.saveBtn(isBusy, isMobile),
+                  opacity: canSave ? 1 : 0.5,
+                  cursor: canSave ? 'pointer' : 'not-allowed',
+                }}
               >
                 {isBusy ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
                 {isProcessingImage ? t('button.processing') : (isSaving ? t('button.saving') : (esBorrador ? t('button.createTrip') : t('button.save')))}

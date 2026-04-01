@@ -35,6 +35,25 @@ export function useEdicionModalSave({
 
     if (isProcessingImage || isSaving || isUploading) return;
 
+    const hasValidStops = Array.isArray(paradas) && paradas.length > 0;
+    const hasValidTitle = Boolean((formData?.titulo || '').trim());
+    const hasValidStartDate = Boolean((formData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
+
+    if (!hasValidStops) {
+      pushToast(t('error.tripNeedsStop', 'El viaje debe tener al menos un destino'), 'error');
+      return null;
+    }
+
+    if (!hasValidTitle) {
+      pushToast(t('error.tripNeedsTitle', 'El viaje debe tener un titulo'), 'error');
+      return null;
+    }
+
+    if (!hasValidStartDate) {
+      pushToast(t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio'), 'error');
+      return null;
+    }
+
     try {
       const payload = {
         ...formData,
@@ -64,11 +83,6 @@ export function useEdicionModalSave({
       // server-side defaults or validation to handle the case.
       if (!payload.fechaInicio) delete payload.fechaInicio;
       if (!payload.fechaFin) delete payload.fechaFin;
-
-      if (!payload.nombreEspanol) {
-        pushToast(t('error.saveFailed'), 'error');
-        return null;
-      }
 
       // Ensure legacy photo field is updated when portadaUrl is set.
       if (payload.portadaUrl) {

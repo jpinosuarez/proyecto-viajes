@@ -72,6 +72,10 @@
     "year": "This year",
     "favorites": "Favorites"
   },
+  "tripCard": {
+    "cityLabel_one": "city",
+    "cityLabel_other": "cities"
+  },
   "welcome": {
     "emptyStateTitle": "The Start of Your Legacy",
     "emptyStateSubtitle": "Start exploring the world",

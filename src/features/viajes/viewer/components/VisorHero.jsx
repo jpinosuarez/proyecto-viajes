@@ -26,7 +26,8 @@ const VisorHero = ({
   const isDefaultPhoto = !fotoMostrada || fotoMostrada === FOTO_DEFAULT_URL;
   const countryCode = data?.paisCodigo || data?.code || viajeBase?.paisCodigo || viajeBase?.code || null;
   const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
-  const fallbackTitle = localizedCountryName || viajeBase?.nombreEspanol || t('untitledTrip', { ns: 'visor', defaultValue: 'Travesía Sin Nombre' });
+  const legacyCountryName = data?.nombreEspanol || data?.nameSpanish || viajeBase?.nombreEspanol || viajeBase?.nameSpanish;
+  const fallbackTitle = localizedCountryName || legacyCountryName || t('untitledTrip', { ns: 'visor', defaultValue: 'Travesía Sin Nombre' });
   const heroTitle = data?.titulo || fallbackTitle;
 
   return (

@@ -7,6 +7,11 @@
  */
 const MAPBOX_SUPPORTED_LANGS = new Set(['en', 'es']);
 
+function resolveMapInstance(map) {
+  if (!map) return null;
+  return typeof map.getMap === 'function' ? map.getMap() : map;
+}
+
 /**
  * Normalizes any locale-like input to a Mapbox-compatible base language.
  * Examples: es-AR -> es, EN_us -> en, null -> en.
@@ -32,7 +37,8 @@ export function normalizeMapboxLanguage(lang) {
 
 export function setMapLanguage(map, lang) {
   if (!map) return;
-  const mapInstance = typeof map.getMap === 'function' ? map.getMap() : map;
+  const mapInstance = resolveMapInstance(map);
+  if (!mapInstance) return;
   const normalizedLang = normalizeMapboxLanguage(lang);
   const field = `name_${normalizedLang}`;
   const style = mapInstance.getStyle();
@@ -48,4 +54,10 @@ export function setMapLanguage(map, lang) {
       mapInstance.setLayoutProperty(layer.id, 'text-field', ['coalesce', ['get', field], ['get', 'name']]);
     }
   }
+}
+
+export function isMapStyleLoaded(map) {
+  const mapInstance = resolveMapInstance(map);
+  if (!mapInstance || typeof mapInstance.isStyleLoaded !== 'function') return false;
+  return mapInstance.isStyleLoaded();
 }

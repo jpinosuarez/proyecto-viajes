@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
-import { setMapLanguage } from '@shared/lib/geo';
+import { isMapStyleLoaded, setMapLanguage } from '@shared/lib/geo';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 
@@ -102,7 +102,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   }, [i18n.language, initSpinGlobe]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isMapStyleLoaded(mapRef.current)) return;
     setMapLanguage(mapRef.current, i18n.language);
   }, [i18n.language]);
 

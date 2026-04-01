@@ -16,7 +16,11 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
   const flags = trip.banderas || trip.flags || (trip.flag ? [trip.flag] : []);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
-  const cityLabel = trip.paradaCount === 1 ? 'Ciudad' : 'Ciudades';
+  const cityLabel = t('tripCard.cityLabel', {
+    ns: 'dashboard',
+    count: Number(trip.paradaCount) || 0,
+    defaultValue: Number(trip.paradaCount) === 1 ? 'ciudad' : 'ciudades',
+  });
 
   const countryCode = trip.paisCodigo || trip.code || trip.countryCode || null;
   const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);

@@ -81,6 +81,10 @@
     "year": "Este año",
     "favorites": "Favoritos"
   },
+  "tripCard": {
+    "cityLabel_one": "ciudad",
+    "cityLabel_other": "ciudades"
+  },
   "ghostEmptyState": {
     "title": "Tu bitácora está lista para despegar",
     "description": "Cada explorador empieza con una primera ruta. Crea tu próximo viaje y convierte ese destino en historia.",

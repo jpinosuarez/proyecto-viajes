@@ -1,6 +1,7 @@
 import React from 'react';
 import { LoaderCircle, CalendarDays, MapPinned } from 'lucide-react';
-import { getCountryName, getCountryFlagEmoji, getFlagUrl, normalizeCountryCode } from '@shared/lib/utils/countryUtils';
+import { getCountryFlagEmoji, getFlagUrl, normalizeCountryCode } from '@shared/lib/utils/countryUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { styles } from './EdicionHeaderSection.styles';
 import './EdicionHeaderSection.css';
 
@@ -67,40 +68,30 @@ const EdicionHeaderSection = ({
   )];
 
   const fallbackFormCountry = normalizeCountryCode(formData?.code || formData?.paisCodigo || formData?.countryCode || null);
-  const normalizedCountries = [...new Set([
-    ...normalizedStopCountries,
-    fallbackFormCountry,
-  ].filter(Boolean))];
+  const legacyCountryName = formData?.nombreEspanol || formData?.nameSpanish || '';
+  const normalizedCountries = normalizedStopCountries.length > 0
+    ? normalizedStopCountries
+    : [...new Set([fallbackFormCountry].filter(Boolean))];
+  const hasStops = normalizedStopCountries.length > 0;
 
   const isMultiCountry = normalizedCountries.length > 1;
-  const countryNames = normalizedCountries.map((code) => getCountryName(code)).filter(Boolean);
+  const countryNames = normalizedCountries
+    .map((code) => getLocalizedCountryName(code, undefined, t))
+    .filter(Boolean);
 
   const countrySummary = normalizedCountries.length === 0
-    ? t('labels.countryFallback', 'Destino por confirmar')
+    ? t('labels.noStopsSummary', 'Sin paradas')
     : normalizedCountries.length === 1
-      ? (countryNames[0] || t('labels.countryFallback', 'Destino por confirmar'))
+      ? (countryNames[0] || legacyCountryName || t('labels.countryFallback', 'Destino por confirmar'))
       : t('labels.multiCountriesSummary', '{{count}} países', { count: normalizedCountries.length });
 
-  const locationText = isMultiCountry
+  const locationText = !hasStops
+    ? t('labels.noStopsRoute', 'Agrega una parada para empezar')
+    : isMultiCountry
     ? t('labels.multiCountryRoute', 'Ruta por {{count}} países', { count: normalizedCountries.length })
-    : (formData?.nombreEspanol || countrySummary);
+    : countrySummary;
 
   const dateRangeText = `${formData?.fechaInicio || '--'} - ${formData?.fechaFin || '--'}`;
-
-  const flagValues = [];
-  if (Array.isArray(formData?.banderas)) flagValues.push(...formData.banderas);
-  if (Array.isArray(formData?.flags)) flagValues.push(...formData.flags);
-  if (formData?.flag) flagValues.push(formData.flag);
-
-  const extraFlagVisuals = flagValues
-    .map((value) => {
-      if (typeof value !== 'string') return null;
-      if (/^https?:\/\//i.test(value)) return { type: 'image', value };
-      if (/^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(value)) return { type: 'emoji', value };
-      const normalized = normalizeCountryCode(value);
-      return normalized ? { type: 'image', value: getFlagUrl(normalized) } : null;
-    })
-    .filter(Boolean);
 
   const derivedCountryFlagVisuals = normalizedCountries
     .map((code) => ({
@@ -110,7 +101,11 @@ const EdicionHeaderSection = ({
     }))
     .filter((flag) => Boolean(flag.value));
 
-  const allFlagVisuals = [...derivedCountryFlagVisuals, ...extraFlagVisuals]
+  const allFlagVisuals = hasStops
+    ? derivedCountryFlagVisuals
+    : [];
+
+  const dedupedFlagVisuals = allFlagVisuals
     .filter((flag) => flag?.value)
     .filter((flag, index, arr) => arr.findIndex((item) => `${item.type}-${item.value}` === `${flag.type}-${flag.value}`) === index)
     .slice(0, 4);
@@ -172,10 +167,10 @@ const EdicionHeaderSection = ({
           />
           <small style={styles.titleHint}>{t('labels.titleEditableHint', 'Toca para editar el título')}</small>
 
-          {allFlagVisuals.length > 0 && (
-            <div style={styles.flagsAndLocationRow}>
-              <div style={styles.flagsStack}>
-                {allFlagVisuals.map((flagVisual, idx) => {
+          <div style={styles.flagsAndLocationRow}>
+            <div style={styles.flagsStack}>
+              {dedupedFlagVisuals.length > 0 ? (
+                dedupedFlagVisuals.map((flagVisual, idx) => {
                   if (flagVisual.type === 'emoji') {
                     return (
                       <span
@@ -208,13 +203,21 @@ const EdicionHeaderSection = ({
                       }}
                     />
                   );
-                })}
-              </div>
-              <span style={styles.locationText}>
-                {locationText}
-              </span>
+                })
+              ) : (
+                <span
+                  role="img"
+                  aria-label={t('labels.flagAlt', 'Country flag')}
+                  style={styles.flagEmoji(0)}
+                >
+                  🌍
+                </span>
+              )}
             </div>
-          )}
+            <span style={styles.locationText}>
+              {locationText}
+            </span>
+          </div>
 
           <div style={styles.tagsRow}>
             <span style={styles.infoTag}>

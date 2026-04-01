@@ -14,6 +14,7 @@
   },
   "autoTitle": {
     "fallback": "New Trip",
+    "noStops": "Trip without stops",
     "oneCity": "Getaway to {{city}}",
     "twoCities": "{{city1}} and {{city2}}",
     "twoCountries": "Adventure between {{country1}} and {{country2}}",
@@ -41,11 +42,15 @@
     "selectDefault": "Not specified",
     "notesPlaceholder": "What do you want to remember about this trip?",
     "addCityWarning": "Your route needs at least one stop to take off.",
+    "emptyStopsTitle": "Your route is empty",
+    "emptyStopsDescription": "Add your first destination to continue.",
     "captionPlaceholder": "Describe this moment...",
     "addCoverHint": "Give it life with a photo",
     "portada": "Cover",
     "multiCountriesSummary": "{{count}} countries",
     "multiCountryRoute": "Route across {{count}} countries",
+    "noStopsSummary": "No stops yet",
+    "noStopsRoute": "Add a stop to get started",
     "countryFallback": "Destination to be confirmed",
     "titleEditableHint": "Tap to edit the title",
     "autoTitle": "Auto",
@@ -107,6 +112,9 @@
     }
   },
   "error": {
+    "tripNeedsStop": "A trip must include at least one destination.",
+    "tripNeedsTitle": "A trip must include a title.",
+    "tripNeedsStartDate": "A trip must include a start date.",
     "unsupportedFormat": "Only JPG or PNG photos are accepted. Choose a different file and try again.",
     "optimizationFailed": "We couldn't process that photo. Try with a different image.",
     "saveFailed": "We couldn't save your log. Check your connection and try again.",

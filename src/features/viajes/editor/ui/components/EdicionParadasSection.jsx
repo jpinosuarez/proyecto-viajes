@@ -16,10 +16,29 @@ const EdicionParadasSection = ({ styles, t, paradas, setParadas, fechaRangoDispl
       )}
       <CityManager t={t} paradas={paradas} setParadas={setParadas} />
       {sinParadas && (
-        <span style={{ ...styles.inlineInfo, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <MapPin size={13} />
-          {t('labels.addCityWarning')}
-        </span>
+        <div
+          style={{
+            marginTop: 8,
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: `1px solid ${COLORS.border}`,
+            background: COLORS.surface,
+            boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.charcoalBlue, fontWeight: 700 }}>
+            <MapPin size={14} color={COLORS.atomicTangerine} />
+            {t('labels.emptyStopsTitle', 'Tu ruta esta vacia')}
+          </div>
+          <span style={{ fontSize: '0.86rem', color: COLORS.textSecondary, lineHeight: 1.4 }}>
+            {t('labels.emptyStopsDescription', 'Agrega tu primer destino para continuar.')}
+          </span>
+        </div>
       )}
     </div>
   );

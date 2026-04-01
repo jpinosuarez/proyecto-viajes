@@ -112,7 +112,7 @@ export function useEdicionModalLifecycle({
       companions: viaje.companions || [],
     });
 
-    setIsTituloAuto(esBorrador && (!viaje.titulo || viaje.titulo.trim() === ''));
+    setIsTituloAuto(!viaje.titulo || viaje.titulo.trim() === '');
 
     if (esBorrador && ciudadInicial) {
       setParadas([
@@ -168,7 +168,7 @@ export function useEdicionModalLifecycle({
   }, [setCaptionDrafts, setFormData, setGalleryFiles, setGalleryPortada, setParadas]);
 
   useEffect(() => {
-    if (!esBorrador || !isTituloAuto) return;
+    if (!isTituloAuto) return;
 
     const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas, t);
 
@@ -179,7 +179,7 @@ export function useEdicionModalLifecycle({
       if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
       titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
     }
-  }, [esBorrador, formData.nombreEspanol, formData.titulo, isTituloAuto, paradas, setFormData, t]);
+  }, [formData.nombreEspanol, formData.titulo, isTituloAuto, paradas, setFormData, t]);
 
   useEffect(() => {
     return () => {
@@ -274,9 +274,9 @@ export function useEdicionModalLifecycle({
   const handleTituloChange = useCallback(
     (titulo) => {
       setFormData((prev) => ({ ...prev, titulo }));
-      if (esBorrador && isTituloAuto) setIsTituloAuto(false);
+      if (isTituloAuto) setIsTituloAuto(false);
     },
-    [esBorrador, isTituloAuto, setFormData]
+    [isTituloAuto, setFormData]
   );
 
   return {

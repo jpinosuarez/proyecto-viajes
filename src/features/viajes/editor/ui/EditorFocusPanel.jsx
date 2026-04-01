@@ -47,7 +47,7 @@ const EditorFocusPanel = ({
   galeria = { fotos: [], uploading: false },
   onAfterSave = null,
 }) => {
-  const { t } = useTranslation('editor');
+  const { t } = useTranslation(['editor', 'countries']);
   const { isMobile } = useWindowSize(768);
   const { usuario } = useAuth();
   const uploadCtx = useUpload();
@@ -287,6 +287,10 @@ const EditorFocusPanel = ({
   const safeOnCaptionSave = onCaptionSave || (() => {});
   const safeOnSetPortadaExistente = onSetPortadaExistente || (() => {});
   const safeOnEliminarFoto = onEliminarFoto || (() => {});
+  const hasValidStops = Array.isArray(effectiveParadas) && effectiveParadas.length > 0;
+  const hasValidTitle = Boolean((formDataWithFallback?.titulo || '').trim());
+  const hasValidStartDate = Boolean((effectiveFormData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
+  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isSavingManual;
 
   return (
     <>
@@ -377,12 +381,31 @@ const EditorFocusPanel = ({
           </button>
           <button
             onClick={handleSaveWithLoading}
-            disabled={isSavingManual}
+            disabled={!canSave}
             style={{
               ...styles.topBarPrimaryBtn,
-              cursor: isSavingManual ? 'not-allowed' : 'pointer',
-              opacity: isSavingManual ? 0.7 : 1,
+              cursor: canSave ? 'pointer' : 'not-allowed',
+              opacity: canSave ? 1 : 0.5,
             }}
+            aria-disabled={!canSave}
+            aria-label={
+              !hasValidStops
+                ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                : !hasValidTitle
+                  ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                  : !hasValidStartDate
+                    ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                    : undefined
+            }
+            title={
+              !hasValidStops
+                ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                : !hasValidTitle
+                  ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                  : !hasValidStartDate
+                    ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                    : ''
+            }
           >
             {isSavingManual && <LoaderCircle size={16} className="spin" />}
             {t('button.save') || 'Guardar'}

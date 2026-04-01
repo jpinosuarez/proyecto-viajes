@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, Popup, AttributionControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
-import { normalizeMapboxLanguage, setMapLanguage } from '@shared/lib/geo';
+import { isMapStyleLoaded, normalizeMapboxLanguage, setMapLanguage } from '@shared/lib/geo';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
+import { normalizeCountryCode } from '@shared/lib/utils/countryUtils';
 
 /**
  * Inhabited World Bounds: Lat -60 (south of Argentina) to Lat 80 (north of Russia).
@@ -100,7 +101,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
 
   // ── Reactively update map labels when app language changes ─────────────────
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isMapStyleLoaded(mapRef.current)) return;
     setMapLanguage(mapRef.current, i18n.language);
   }, [i18n.language]);
 
@@ -130,9 +131,10 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
 
   const getPopupCountryLabel = useCallback((feature) => {
     const props = feature?.properties || {};
-    const isoCode = props.iso_3166_1_alpha_2 || props.iso_3166_1_alpha_3 || props.iso_3166_1;
-    const localizedFromIso = getLocalizedCountryName(isoCode, i18n.language, t);
-    if (localizedFromIso && localizedFromIso !== String(isoCode || '').toUpperCase()) {
+    const mapboxIsoRaw = props.iso_3166_1 || props.iso_3166_1_alpha_2 || props.iso_3166_1_alpha_3;
+    const isoCodeAlpha2 = normalizeCountryCode(mapboxIsoRaw);
+    const localizedFromIso = getLocalizedCountryName(isoCodeAlpha2, i18n.language, t);
+    if (localizedFromIso && localizedFromIso !== String(isoCodeAlpha2 || '').toUpperCase()) {
       return localizedFromIso;
     }
 

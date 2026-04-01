@@ -1,4 +1,5 @@
-import { getCountryISO3, getCountryName, getFlagUrl } from './countryUtils';
+import { getCountryISO3, getFlagUrl, normalizeCountryCode } from './countryUtils';
+import { getLocalizedCountryName } from './countryI18n';
 
 export const EXTERNAL_API_TIMEOUT_MS = 3000;
 
@@ -145,6 +146,7 @@ export const obtenerPaisesVisitados = (bitacora = [], todasLasParadas = []) => {
 
 const AUTO_TITLE_FALLBACK = {
   'editor:autoTitle.fallback': () => 'Nuevo Viaje',
+  'editor:autoTitle.noStops': () => 'Viaje sin paradas',
   'editor:autoTitle.oneCity': ({ city }) => `Escapada a ${city}`,
   'editor:autoTitle.twoCities': ({ city1, city2 }) => `${city1} y ${city2}`,
   'editor:autoTitle.twoCountries': ({ country1, country2 }) => `Aventura entre ${country1} y ${country2}`,
@@ -165,14 +167,21 @@ export const generarTituloInteligente = (nombreBase, paradas = [], t) => {
       };
 
   if (!paradas || paradas.length === 0) {
-    return translate('editor:autoTitle.fallback', { defaultValue: 'Nuevo Viaje' });
+    return translate('editor:autoTitle.noStops', { defaultValue: 'Viaje sin paradas' });
   }
+
+  const resolveCountryName = (code) => {
+    const normalizedCode = normalizeCountryCode(code);
+    if (!normalizedCode) return '';
+    const localized = getLocalizedCountryName(normalizedCode, 'es', translate);
+    return localized && localized !== normalizedCode ? localized : normalizedCode;
+  };
 
   const ciudadesUnicas = [...new Set(paradas.map((p) => p.nombre).filter(Boolean))];
   const paisesUnicos = [...new Set(paradas.map((p) => p.paisCodigo).filter(Boolean))];
 
   if (paisesUnicos.length === 2) {
-    const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
+    const nombresPaises = paisesUnicos.map((c) => resolveCountryName(c)).filter(Boolean);
     if (nombresPaises.length === 2) {
       return translate('editor:autoTitle.twoCountries', {
         country1: nombresPaises[0],
@@ -194,7 +203,7 @@ export const generarTituloInteligente = (nombreBase, paradas = [], t) => {
     });
   }
 
-  const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
+  const nombresPaises = paisesUnicos.map((c) => resolveCountryName(c)).filter(Boolean);
 
   if (paisesUnicos.length === 1) {
     const nombrePais = nombresPaises[0] || nombreBase;

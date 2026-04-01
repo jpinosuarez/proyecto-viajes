@@ -145,7 +145,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
 
       <div style={styles.list}>
         {paradas.map((p, index) => (
-          <div key={p.id || index} style={styles.item}>
+          <div key={p.id ?? `parada-${index}-${p.nombre}`} style={styles.item}>
             <div style={styles.itemHeader}>
                <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
                    {p.flag && <img src={p.flag} alt="flag" style={{width:'24px', borderRadius:RADIUS.xs, border:'1px solid #eee'}} />}

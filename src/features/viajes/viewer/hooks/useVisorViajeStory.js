@@ -14,7 +14,8 @@ export function useVisorViajeStory({ data, viajeBase, paradas }) {
 
   const countryCode = data?.paisCodigo || data?.code || viajeBase?.paisCodigo || viajeBase?.code || null;
   const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
-  const fallbackTitle = localizedCountryName || viajeBase?.nombreEspanol || t('untitledTrip', { ns: 'visor', defaultValue: 'Mi viaje' });
+  const legacyCountryName = data?.nombreEspanol || data?.nameSpanish || viajeBase?.nombreEspanol || viajeBase?.nameSpanish;
+  const fallbackTitle = localizedCountryName || legacyCountryName || t('untitledTrip', { ns: 'visor', defaultValue: 'Mi viaje' });
 
   const storyData = useMemo(
     () => ({
