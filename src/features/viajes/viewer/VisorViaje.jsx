@@ -14,7 +14,7 @@ import { useVisorViajeUI } from './hooks/useVisorViajeUI';
 import { useVisorViajeStory } from './hooks/useVisorViajeStory';
 import { useDocumentaryState } from './hooks/useDocumentaryState';
 import DocumentaryHero from './components/DocumentaryHero';
-import VisorBitacoraSection from './components/VisorBitacoraSection';
+import VisorStorySection from './components/VisorStorySection';
 import VisorGallerySection from './components/VisorGallerySection';
 import VisorTimelineSection from './components/VisorTimelineSection';
 import VisorContextSection from './components/VisorContextSection';
@@ -109,7 +109,7 @@ const VisorViaje = ({
         galeria={galleryVM.galeria}
       />
     ),
-    bitacora: <VisorBitacoraSection paradas={paradas} texto={data.texto} styles={styles} />,
+    bitacora: <VisorStorySection stops={paradas} text={data.texto} styles={styles} />,
     gallery: (
       <VisorGallerySection
         styles={styles}

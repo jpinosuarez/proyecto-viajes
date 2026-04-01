@@ -63,8 +63,8 @@ const Footer = () => {
                 type="button"
                 onClick={() => handleChangeLanguage(lang.code)}
                 style={{
-                  width: '26px',
-                  height: '26px',
+                  width: '44px',
+                  height: '44px',
                   borderRadius: '50%',
                   border: i18n.language === lang.code ? `2px solid ${COLORS.atomicTangerine}` : '1px solid rgba(0,0,0,0.1)',
                   background: 'white',
@@ -80,7 +80,7 @@ const Footer = () => {
                 <img
                   src={lang.flagUrl}
                   alt={lang.title}
-                  style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }}
+                  style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
                   onError={(e) => (e.target.style.display = 'none')}
                 />
               </button>

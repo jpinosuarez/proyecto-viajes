@@ -1,13 +1,8 @@
-/**
- * Mock for virtual:pwa-register/react
- * Used during testing to avoid PWA plugin virtual module resolution errors
- */
-export function useRegisterSW() {
-  return {
-    needRefresh: [false, () => {}],
-    updateServiceWorker: () => {},
-    offlineReady: [false, () => {}],
-  };
-}
-
-export default { useRegisterSW };
+export const useRegisterSW = () => ({
+  isInstalled: false,
+  isOfflineReady: false,
+  needRefresh: false,
+  offlineReady: false,
+  registration: null,
+  updateServiceWorker: () => {},
+});

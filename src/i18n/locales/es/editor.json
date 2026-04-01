@@ -119,7 +119,7 @@
     "tripNeedsStartDate": "El viaje debe tener fecha de inicio.",
     "unsupportedFormat": "Solo se aceptan fotos JPG o PNG. Elige otro archivo e intenta de nuevo.",
     "optimizationFailed": "No pudimos procesar esa foto. Prueba con otra imagen.",
-    "saveFailed": "No pudimos guardar tu bitácora. Revisa tu conexión e intenta de nuevo.",
+    "saveFailed": "No pudimos guardar tu viaje. Revisa tu conexión e intenta de nuevo.",
     "unexpectedError": "Algo salió mal al guardar. Espera un momento e intenta de nuevo.",
     "coverUpdateFailed": "No pudimos cambiar la portada. Intenta de nuevo.",
     "photoDeleteFailed": "La foto no se eliminó. Intenta de nuevo.",

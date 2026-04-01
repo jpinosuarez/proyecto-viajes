@@ -71,7 +71,7 @@ const TripsPage = () => {
         isMobile={isMobile}
       />
       
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 100px)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: isMobile ? 'max(env(safe-area-inset-bottom), 20px)' : '0px' }}>
         <TripGrid 
           trips={filteredTrips} 
           tripData={tripData}

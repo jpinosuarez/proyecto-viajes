@@ -46,6 +46,6 @@
   "deleteAccountError": "No se pudo eliminar la cuenta. Intenta de nuevo.",
   "deleteAccountNeedsRelogin": "Por favor cierra sesión y vuelve a ingresar para eliminar tu cuenta.",
   "legacyData": "Legado & Datos",
-  "legacyDataDesc": "Tu bitácora es tuya. Descárgala cuando quieras.",
+  "legacyDataDesc": "Tus viajes son tuyos. Descárgalos cuando quieras.",
   "exportJSON": "Exportar viajes (JSON)"
 }

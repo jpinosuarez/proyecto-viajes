@@ -245,7 +245,7 @@ const styles = {
 
   tierTag: {
     display: 'inline-block',
-    padding: '2px 10px',
+    padding: '8px 12px',
     borderRadius: RADIUS.full,
     fontSize: '0.65rem',
     fontWeight: '800',
@@ -253,6 +253,9 @@ const styles = {
     textTransform: 'uppercase',
     border: '1px solid',
     width: 'fit-content',
+    minHeight: '32px',
+    display: 'inline-flex',
+    alignItems: 'center',
   },
 
   progressRow: {

@@ -9,7 +9,7 @@
   "emptyLog": "¡Aún no tienes viajes guardados!",
   "firstTripMessage": "Comienza tu aventura registrando tu primer destino.",
   "addFirstTrip": "Agregar primer viaje",
-  "newBitacora": "+ Nueva Bitácora",
+  "newBitacora": "+ Nuevo Viaje",
   "fallbackName": "Explorador",
   "subtitleStats": "Llevas {{countries}} países explorados — el {{percent}}% del mundo.",
   "nextLevelProgress": "· {{remaining}} {{countryWord}} para {{level}}",
@@ -86,7 +86,7 @@
     "cityLabel_other": "ciudades"
   },
   "ghostEmptyState": {
-    "title": "Tu bitácora está lista para despegar",
+    "title": "Tu historia está lista para despegar",
     "description": "Cada explorador empieza con una primera ruta. Crea tu próximo viaje y convierte ese destino en historia.",
     "action": "Crear mi primera ruta"
   },
@@ -102,7 +102,7 @@
     },
     "roster": {
       "title": "Tus Viajes",
-      "openLog": "Abrir Bitácora",
+      "openLog": "Abrir Viaje",
       "tripsCount": "{{count}} viajes",
       "expandRoster": "Mostrar todos los viajes",
       "collapseRoster": "Minimizar",

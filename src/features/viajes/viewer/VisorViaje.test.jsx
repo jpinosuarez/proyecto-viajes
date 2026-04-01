@@ -107,8 +107,8 @@ vi.mock('./components/VisorDestinoLayout', () => ({
   default: () => <div data-testid="destino-layout" />,
 }));
 
-vi.mock('./components/VisorBitacoraSection', () => ({
-  default: () => <div data-testid="bitacora-section" />,
+vi.mock('./components/VisorStorySection', () => ({
+  default: () => <div data-testid="story-section" />,
 }));
 
 vi.mock('./components/VisorContextSection', () => ({

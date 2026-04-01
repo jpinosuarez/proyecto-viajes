@@ -3,24 +3,24 @@ import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firesto
 import { db } from '@shared/firebase';
 
 export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuario }) {
-  const viajeBase = useMemo(
+  const tripBase = useMemo(
     () => bitacoraLista.find((v) => v.id === viajeId),
     [bitacoraLista, viajeId]
   );
 
-  // Fallback data when we don't yet have the trip in the user's local bitácora.
+  // Fallback data when we don't yet have the trip in the user's local trips collection.
   // This happens when the user navigates directly to a shared trip before the
   // shared-trip listener has populated the local state.
-  const [fallbackData, setFallbackData] = useState(null);
-  const [fallbackOwnerUid, setFallbackOwnerUid] = useState(null);
+  const [fallbackTrip, setFallbackTrip] = useState(null);
+  const [fallbackOwnerId, setFallbackOwnerId] = useState(null);
   const [fallbackAttempts, setFallbackAttempts] = useState(0);
 
   const hasViajeData = Boolean(
-    viajeId && (bitacoraData[viajeId] || viajeBase || fallbackData)
+    viajeId && (bitacoraData[viajeId] || tripBase || fallbackTrip)
   );
 
-  const data = bitacoraData[viajeId] || viajeBase || fallbackData || {};
-  const ownerUid = data.ownerId || fallbackOwnerUid || usuario?.uid || null;
+  const data = bitacoraData[viajeId] || tripBase || fallbackTrip || {};
+  const ownerUid = data.ownerId || fallbackOwnerId || usuario?.uid || null;
 
   const [paradas, setParadas] = useState([]);
   const [ownerDisplayName, setOwnerDisplayName] = useState(null);
@@ -32,9 +32,9 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
     if (!viajeId || !usuario?.uid) return;
 
     // If we already have it locally, clear any previous fallback state.
-    if (bitacoraData[viajeId] || viajeBase) {
-      setFallbackData(null);
-      setFallbackOwnerUid(null);
+    if (bitacoraData[viajeId] || tripBase) {
+      setFallbackTrip(null);
+      setFallbackOwnerId(null);
       setFallbackAttempts(0);
       return;
     }
@@ -127,11 +127,11 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
         const viajeSnap = await getDoc(doc(db, 'usuarios', ownerId, 'viajes', viajeId));
         if (!mounted || !viajeSnap.exists()) return;
 
-        const viajeFromOwner = { id: viajeSnap.id, ownerId, ...viajeSnap.data() };
-        setFallbackData(viajeFromOwner);
-        setFallbackOwnerUid(ownerId);
+        const tripFromOwner = { id: viajeSnap.id, ownerId, ...viajeSnap.data() };
+        setFallbackTrip(tripFromOwner);
+        setFallbackOwnerId(ownerId);
         if (import.meta.env.DEV) {
-          console.debug('Shared trip fallback loaded', { viajeId, ownerId, viajeFromOwner });
+          console.debug('Shared trip fallback loaded', { viajeId, ownerId, tripFromOwner });
         }
       } catch (err) {
         // No bloquear el render del visor por fallas en esta fallback (puede ser
@@ -161,7 +161,7 @@ export function useVisorViajeData({ viajeId, bitacoraData, bitacoraLista, usuari
       mounted = false;
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [bitacoraData, viajeBase, viajeId, usuario?.uid, fallbackAttempts]);
+  }, [bitacoraData, tripBase, viajeId, usuario?.uid, fallbackAttempts]);
 
   useEffect(() => {
     if (!isSharedTrip) return;

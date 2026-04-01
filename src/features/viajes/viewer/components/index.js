@@ -1,4 +1,4 @@
-export { default as VisorBitacoraSection } from './VisorBitacoraSection';
+export { default as VisorStorySection } from './VisorStorySection';
 export { default as VisorContextSection } from './VisorContextSection';
 export { default as VisorDestinoLayout } from './VisorDestinoLayout';
 export { default as VisorGallerySection } from './VisorGallerySection';
