@@ -1,19 +1,28 @@
 import React, { useRef } from 'react';
 import { motion as Motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Compass, Calendar, MapPin, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { tripStyles as styles } from './TripCard.styles';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
 import { FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 /**
  * Cinematic TripCard (2026 Restyle)
  * Features full-bleed images, floating glass pills, and 3D parallax on desktop hovering.
  */
 const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' }) => {
+  const { t, i18n } = useTranslation(['countries', 'dashboard']);
   const flags = trip.banderas || trip.flags || (trip.flag ? [trip.flag] : []);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
   const cityLabel = trip.paradaCount === 1 ? 'Ciudad' : 'Ciudades';
+
+  const countryCode = trip.paisCodigo || trip.code || trip.countryCode || null;
+  const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
+  const defaultTitle = localizedCountryName || trip.nombreEspanol || trip.nameSpanish || '';
+  const title = trip.titulo || defaultTitle;
+  const cardAriaLabel = title || t('viewTrip', { ns: 'dashboard', defaultValue: 'Ver viaje' });
 
   // 3D Parallax logic (Desktop Only)
   const cardRef = useRef(null);
@@ -53,7 +62,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
       ref={cardRef}
       role="button"
       tabIndex={0}
-      aria-label={trip.titulo || trip.nombreEspanol || 'Ver viaje'}
+      aria-label={cardAriaLabel}
       style={{
         ...styles.cardBase(isMobile, variant),
         perspective: 1000,
@@ -87,7 +96,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
           {!isDefaultPhoto ? (
             <img 
               src={coverUrl} 
-              alt={trip.titulo || 'viaje'} 
+              alt={title || t('tripCoverAlt', { ns: 'dashboard', defaultValue: 'Portada del viaje' })} 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               loading="lazy"
             />
@@ -129,7 +138,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
       </div>
 
       <div style={styles.bottomContent}>
-        <h4 style={styles.title}>{trip.titulo || trip.nombreEspanol || trip.nameSpanish}</h4>
+        <h4 style={styles.title}>{title}</h4>
         <div style={styles.metaRow}>
           {(trip.fechaInicio || trip.startDate) && (
             <span style={styles.glassPill}>

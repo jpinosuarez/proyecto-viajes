@@ -1,16 +1,24 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 export function useVisorViajeStory({ data, viajeBase, paradas }) {
+  const { t, i18n } = useTranslation(['countries', 'visor']);
+
   const fotoMostrada = useMemo(() => {
     if (data.foto && typeof data.foto === 'string' && data.foto.trim()) return data.foto;
     if (viajeBase?.foto && typeof viajeBase.foto === 'string' && viajeBase.foto.trim()) return viajeBase.foto;
     return null;
   }, [data.foto, viajeBase?.foto]);
 
+  const countryCode = data?.paisCodigo || data?.code || viajeBase?.paisCodigo || viajeBase?.code || null;
+  const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
+  const fallbackTitle = localizedCountryName || viajeBase?.nombreEspanol || t('untitledTrip', { ns: 'visor', defaultValue: 'Mi viaje' });
+
   const storyData = useMemo(
     () => ({
-      titulo: data.titulo || viajeBase?.nombreEspanol || 'Mi viaje',
+      titulo: data.titulo || fallbackTitle,
       fechas: formatDateRange(data.fechaInicio, data.fechaFin),
       foto: fotoMostrada,
       banderas: data.banderas || [],
@@ -25,7 +33,7 @@ export function useVisorViajeStory({ data, viajeBase, paradas }) {
       presupuesto: data.presupuesto || null,
       vibes: data.vibe || [],
     }),
-    [data, viajeBase?.nombreEspanol, fotoMostrada, paradas]
+    [data, fallbackTitle, fotoMostrada, paradas]
   );
 
   return {

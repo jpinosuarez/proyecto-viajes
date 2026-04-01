@@ -12,6 +12,15 @@
     "relato": "Tell each stop like a chapter.",
     "presupuesto": "Your approximate spending level."
   },
+  "autoTitle": {
+    "fallback": "New Trip",
+    "oneCity": "Getaway to {{city}}",
+    "twoCities": "{{city1}} and {{city2}}",
+    "twoCountries": "Adventure between {{country1}} and {{country2}}",
+    "oneCountry": "Route through {{country}}",
+    "threeCountries": "Journey through {{countries}}",
+    "manyCountries": "Epic journey through {{firstTwo}} and {{others}} more"
+  },
   "labels": {
     "draft": "Draft",
     "editing": "Editing",
@@ -34,7 +43,13 @@
     "addCityWarning": "Your route needs at least one stop to take off.",
     "captionPlaceholder": "Describe this moment...",
     "addCoverHint": "Give it life with a photo",
-    "portada": "Cover"
+    "portada": "Cover",
+    "multiCountriesSummary": "{{count}} countries",
+    "multiCountryRoute": "Route across {{count}} countries",
+    "countryFallback": "Destination to be confirmed",
+    "titleEditableHint": "Tap to edit the title",
+    "autoTitle": "Auto",
+    "manualTitle": "Manual"
   },
   "unsavedChanges": {
     "title": "Discard changes?",

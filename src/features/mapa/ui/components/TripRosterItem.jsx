@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS } from '@shared/config';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
 import { FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 /**
  * TripRosterItem — Compact trip row for the Map Command Center roster.
@@ -14,14 +15,16 @@ import { FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
  * Active state: atomicTangerine left-border accent + background tint.
  */
 const TripRosterItem = ({ trip, isActive = false, onSelect, index = 0 }) => {
-  const { t } = useTranslation('dashboard');
+  const { t, i18n } = useTranslation(['dashboard', 'countries']);
   const navigate = useNavigate();
   const { search } = useLocation();
 
   const flags = trip.banderas || trip.flags || (trip.flag ? [trip.flag] : []);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
-  const title = trip.titulo || trip.nombreEspanol || trip.nameSpanish || t('countryFallback');
+  const countryCode = trip.paisCodigo || trip.code || trip.countryCode || null;
+  const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
+  const title = trip.titulo || localizedCountryName || trip.nombreEspanol || trip.nameSpanish || t('countryFallback');
   const dateLabel = trip.fechaInicio || trip.startDate || '';
 
   const openTripEditor = (e) => {

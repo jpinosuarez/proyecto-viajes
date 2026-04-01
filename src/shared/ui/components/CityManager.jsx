@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowUp, ArrowDown, Plus, Search, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { parseFlexibleDate, formatDateSlash } from '@shared/lib/utils/viajeUtils';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -9,6 +11,7 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 
 const CityManager = ({ t, paradas, setParadas }) => {
+  const { i18n } = useTranslation();
   const [busqueda, setBusqueda] = useState('');
   const [resultados, setResultados] = useState([]);
   
@@ -19,13 +22,14 @@ const CityManager = ({ t, paradas, setParadas }) => {
     }
     const timer = setTimeout(async () => {
         try {
-            const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(busqueda)}.json?types=place&language=es&access_token=${MAPBOX_TOKEN}`);
+            const lang = (i18n.resolvedLanguage || i18n.language || 'es').split('-')[0];
+            const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(busqueda)}.json?types=place&language=${encodeURIComponent(lang)}&access_token=${MAPBOX_TOKEN}`);
             const data = await res.json();
             setResultados(data.features || []);
         } catch (e) { console.error(e); }
     }, 300);
     return () => clearTimeout(timer);
-  }, [busqueda]);
+  }, [busqueda, i18n.language, i18n.resolvedLanguage]);
 
   const agregarCiudad = (feature) => {
     const contextCountry = feature.context?.find(c => c.id.startsWith('country'));
@@ -98,6 +102,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
             const contextCountry = res.context?.find(c => c.id.startsWith('country'));
             const code = contextCountry?.short_code?.toUpperCase();
             const flag = getFlagUrl(code);
+            const countryLabel = getLocalizedCountryName(code, i18n.language, t) || contextCountry?.text || '';
 
             return (
                 <div key={res.id || `result-${resIdx}`} style={styles.resultItem}>
@@ -120,7 +125,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                     <span style={{ flex: 1, minWidth: 0 }}>
                       {res.text},{' '}
                       <span style={{ color: COLORS.textSecondary, fontSize: '0.8rem' }}>
-                        {contextCountry?.text}
+                        {countryLabel}
                       </span>
                     </span>
                 </div>
@@ -128,9 +133,9 @@ const CityManager = ({ t, paradas, setParadas }) => {
                   type="button"
                   onClick={() => agregarCiudad(res)}
                   style={styles.addButton}
-                  aria-label={t('common:add')}
+                  aria-label={t('button.add') || '+ Agregar destino'}
                 >
-                  <Plus size={14} /> {t('common:add')}
+                  <Plus size={14} /> {t('button.add', '+ Agregar destino')}
                 </button>
               </div>
             );

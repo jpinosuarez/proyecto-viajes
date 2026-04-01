@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, connectAuthEmulator, GoogleAuthProvider, signOut } from "firebase/auth";
 import {
   connectFirestoreEmulator,
   initializeFirestore,
@@ -70,6 +70,12 @@ if (useEmulators && isLocalhost) {
   clearStaleEmulatorAuthState();
 }
 const auth = getAuth(app);
+if (useEmulators && isLocalhost) {
+  // For emulator development, forzar sesión neutral para evitar refresh token old/bad-case.
+  signOut(auth).catch(() => {
+    // ignore; puede venir sin sesión inicial.
+  });
+}
 // Inicializar Firestore con caché persistente multi-tab (offline-first).
 // Usa IndexedDB para que queries funcionen sin conexión y escrituras se encolen.
 const useMemoryCache = isTestEnv || useEmulators;

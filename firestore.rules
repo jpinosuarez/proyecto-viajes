@@ -24,8 +24,8 @@ service cloud.firestore {
 
         function isInvitationAccepted() {
           return isAuthenticated()
-            && exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
-            && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted';
+            && existsAfter(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+            && getAfter(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted';
         }
 
         allow read: if isOwner(userId) || isSharedWithMe() || isInvitationAccepted();
@@ -44,8 +44,8 @@ service cloud.firestore {
             return isOwner(userId)
               || (parentData.sharedWith is list && request.auth.uid in parentData.sharedWith)
               || (
-                exists(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
-                && get(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
+                existsAfter(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid))
+                && getAfter(/databases/$(database)/documents/usuarios/$(userId)/viajes/$(viajeId)/invitations/$(request.auth.uid)).data.status == 'accepted'
               );
           }
 

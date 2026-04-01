@@ -16,6 +16,7 @@ export function useEdicionModalLifecycle({
   setGalleryFiles,
   setGalleryPortada,
   setCaptionDrafts,
+  t,
 }) {
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
@@ -55,20 +56,30 @@ export function useEdicionModalLifecycle({
       return;
     }
 
-    const initSignature = [
-      viaje.id || 'none',
-      esBorrador ? 'borrador' : 'edicion',
-      viaje.nombreEspanol || '',
-      viaje.code || '',
-      viaje.flag || '',
-      viaje.fechaInicio || '',
-      viaje.fechaFin || '',
-      ciudadInicial?.nombre || '',
-      ciudadInicial?.paisCodigo || '',
-      (ciudadInicial?.coordenadas || []).join(','),
-      ciudadInicial?._selectionId || '',
-      usuarioUid || 'anon',
-    ].join('|');
+    const initSignature = JSON.stringify({
+      id: viaje.id || 'none',
+      mode: esBorrador ? 'borrador' : 'edicion',
+      userId: usuarioUid || 'anon',
+      code: viaje.code || '',
+      countryName: viaje.nombreEspanol || '',
+      flag: viaje.flag || '',
+      title: viaje.titulo || '',
+      startDate: viaje.fechaInicio || '',
+      endDate: viaje.fechaFin || '',
+      text: viaje.texto || '',
+      budget: viaje.presupuesto || null,
+      vibe: Array.isArray(viaje.vibe) ? viaje.vibe : [],
+      companions: Array.isArray(viaje.companions) ? viaje.companions : [],
+      highlights: viaje.highlights || { topFood: '', topView: '', topTip: '' },
+      photo: viaje.foto || null,
+      coverPhoto: viaje.portadaUrl || null,
+      cityInitial: {
+        name: ciudadInicial?.nombre || '',
+        countryCode: ciudadInicial?.paisCodigo || '',
+        coordinates: ciudadInicial?.coordenadas || [],
+        selectionId: ciudadInicial?._selectionId || '',
+      },
+    });
 
     if (initSignatureRef.current === initSignature) return;
     initSignatureRef.current = initSignature;
@@ -90,6 +101,7 @@ export function useEdicionModalLifecycle({
       fechaInicio: viaje.fechaInicio || new Date().toISOString().split('T')[0],
       fechaFin: viaje.fechaFin || new Date().toISOString().split('T')[0],
       foto: viaje.foto,
+      portadaUrl: viaje.portadaUrl || viaje.foto || null,
       texto: viaje.texto || '',
       flag: viaje.flag,
       code: viaje.code,
@@ -157,7 +169,9 @@ export function useEdicionModalLifecycle({
 
   useEffect(() => {
     if (!esBorrador || !isTituloAuto) return;
-    const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
+
+    const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas, t);
+
     if (tituloAuto !== formData.titulo) {
       setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -165,17 +179,7 @@ export function useEdicionModalLifecycle({
       if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
       titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
     }
-  }, [esBorrador, formData.nombreEspanol, formData.titulo, isTituloAuto, paradas, setFormData]);
-
-  useEffect(() => {
-    if (!esBorrador || !isTituloAuto) return;
-    const tituloAuto = generarTituloInteligente(formData.nombreEspanol, paradas);
-    setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTitlePulse(true);
-    if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
-    titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
-  }, [esBorrador, formData.nombreEspanol, isTituloAuto, paradas, setFormData]);
+  }, [esBorrador, formData.nombreEspanol, formData.titulo, isTituloAuto, paradas, setFormData, t]);
 
   useEffect(() => {
     return () => {

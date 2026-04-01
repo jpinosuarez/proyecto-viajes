@@ -42,6 +42,12 @@ async function getFirestoreDocument(path: string) {
   return res.ok ? res.json() : null;
 }
 
+async function signInInBrowser(page, email: string, password = 'testpass') {
+  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
+  await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email, password });
+  await page.waitForSelector('[data-testid="header-avatar"]', { timeout: 15000 });
+}
+
 function extractString(field) {
   return field && field.stringValue ? field.stringValue : null;
 }
@@ -77,8 +83,7 @@ test.describe('Invitations flow (E2E)', () => {
     await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
 
     // sign in as owner in the browser and create viaje + viaje-level invitation + top-level invitation
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
     // Ensure the owner has a profile doc so the shared badge can resolve the displayName
     await page.evaluate(({ ownerUid, ownerEmail }) => {
@@ -124,14 +129,11 @@ test.describe('Invitations flow (E2E)', () => {
 
     // sign out owner and sign in as invitee to continue the flow
     await page.evaluate(() => (window as any).__test_signOut());
-    await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
+    await signInInBrowser(page, inviteeEmail, password);
 
-    // wait for the invitations badge to appear
-    await page.waitForSelector('[data-testid="header-invitations-count"]');
-
-    // open invitations view
-    await page.click('[data-testid="header-invitations-button"]');
+    // Open invitations view directly to avoid header-layout coupling across breakpoints.
+    await page.goto('/invitations');
+    await page.waitForURL('**/invitations', { timeout: 15000 });
 
     // accept the invitation
     await page.waitForSelector(`[data-testid="inv-accept-${invitationId}"]`);
@@ -146,27 +148,23 @@ test.describe('Invitations flow (E2E)', () => {
       { timeout: 15000 }
     );
 
-    // Navegar a /trips sin recargar la página para preservar los listeners de Firestore
-    await page.evaluate(() => (window as any).__test_navigate('/trips'));
-    await page.waitForURL('**/trips');
+    // Navigate to logbook cleanly to verify the trip appears in the grid
+    await page.goto('/trips');
+    await page.waitForURL('**/trips', { timeout: 15000 });
 
-    // After accepting, ensure the invitation was accepted in the database
-    await page.waitForFunction(
-      (path) => (window as any).__test_readDoc(path).then((doc) => !!(doc && doc.status === 'accepted')),
-      `invitations/${invitationId}`,
-      { timeout: 15000 }
-    );
+    // Wait until the trip card actually renders to assure React state has fully synced with Firestore
+    const sharedCard = page.locator(`[data-testid="trip-card-${viajeId}"]`);
+    await expect(sharedCard).toBeVisible({ timeout: 20000 });
 
-    // Then navigate directly to the shared trip page (to avoid depending on internal router navigation)
-    await page.goto(`/trips/${viajeId}`);
+    // Click it to open the Trip View
+    await sharedCard.click();
     await page.waitForURL(`**/trips/${viajeId}`, { timeout: 15000 });
 
     // Verify the visor opened and the trip title is correctly shown
     await expect(page.locator('[data-testid="visor-title"]')).toContainText('Viaje de prueba E2E', { timeout: 15000 });
 
     // verify invitation status and viaje ownership docs as owner (owner-protected paths)
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
     const invDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `invitations/${invitationId}`);
     expect(invDoc).not.toBeNull();
@@ -201,10 +199,9 @@ test.describe('Invitations flow (E2E)', () => {
     await page.goto('/');
 
     // sign in as owner and create viaje + invitations via browser helper
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
-    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje declinado', nombreEspanol: 'Ciudad Decline', code: 'DC', sharedWith: [] }), { ownerUid, viajeId });
+    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje declinado', nombreEspanol: 'Ciudad Decline', code: 'DC', sharedWith: [] }), { ownerUid, viajeId });
 
     await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { ownerUid, viajeId, inviteeUid });
 
@@ -212,9 +209,9 @@ test.describe('Invitations flow (E2E)', () => {
 
     // sign out owner and sign in as invitee
     await page.evaluate(() => (window as any).__test_signOut());
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
-    await page.waitForSelector('[data-testid="header-invitations-count"]');
-    await page.click('[data-testid="header-invitations-button"]');
+    await signInInBrowser(page, inviteeEmail, password);
+    await page.goto('/invitations');
+    await page.waitForURL('**/invitations', { timeout: 15000 });
 
     await page.waitForSelector(`[data-testid="inv-decline-${invitationId}"]`);
     await page.click(`[data-testid="inv-decline-${invitationId}"]`);
@@ -234,8 +231,7 @@ test.describe('Invitations flow (E2E)', () => {
 
     // ensure viaje.sharedWith does NOT contain inviteeUid (read as owner)
     await page.evaluate(() => (window as any).__test_signOut());
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
     const nestedInvDoc = await page.evaluate(
       (path) => (window as any).__test_readDoc(path),
@@ -267,16 +263,14 @@ test.describe('Invitations flow (E2E)', () => {
 
     // create viaje and mark sharedWith (invitee only)
     await page.goto('/');
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
-    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje privado compartido', nombreEspanol: 'Ciudad Secure', code: 'SC', sharedWith: [inviteeUid] }), { ownerUid, viajeId, inviteeUid });
+    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje privado compartido', nombreEspanol: 'Ciudad Secure', code: 'SC', sharedWith: [inviteeUid] }), { ownerUid, viajeId, inviteeUid });
 
     await page.evaluate(() => (window as any).__test_signOut());
 
     // Sign in as attacker and assert they cannot see the viaje in bitacora
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: attackerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, attackerEmail, password);
 
     // Navegar a /trips
     await page.goto('/trips');
@@ -303,11 +297,11 @@ test.describe('Invitations flow (E2E)', () => {
 
     await page.goto('/');
 
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
     await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => {
       return (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, {
+        ownerId: ownerUid,
         titulo: 'Ruta compartida E2E',
         nombreEspanol: 'Ciudad Ruta',
         code: 'RT',
@@ -359,17 +353,17 @@ test.describe('Invitations flow (E2E)', () => {
     }, { invitationId, ownerUid, inviteeUid, viajeId });
 
     await page.evaluate(() => (window as any).__test_signOut());
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: inviteeEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, inviteeEmail, password);
 
-    await page.evaluate(() => (window as any).__test_navigate('/trips'));
-    // Esperar a que el card sea VISIBLE (no solo attached), garantizando que
-    // bitacora tiene los datos completos antes de navegar al visor
-    await page.waitForSelector(`[data-testid="trip-card-${viajeId}"]`, { timeout: 15000 });
-    // Click en el card —en vez de navigate programático— para abrir VisorViaje
-    // con la garantía de que los datos están cargados
-    await page.click(`[data-testid="trip-card-${viajeId}"]`);
-    await page.waitForURL(`**/trips/${viajeId}`);
+    await page.goto('/trips');
+    
+    // Esperar a que el card sea VISIBLE
+    const sharedCard = page.locator(`[data-testid="trip-card-${viajeId}"]`);
+    await expect(sharedCard).toBeVisible({ timeout: 20000 });
+    
+    // Click en el card para abrir VisorViaje
+    await sharedCard.click();
+    await page.waitForURL(`**/trips/${viajeId}`, { timeout: 15000 });
 
     // Wait for the title to appear (ensures the visor has rendered).
     await page.waitForSelector('[data-testid="visor-title"]', { timeout: 15000 });
@@ -403,10 +397,9 @@ test.describe('Invitations flow (E2E)', () => {
     const invitationId = `inv-${viajeId}-by-email`;
 
     await page.goto('/');
-    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: ownerEmail, password });
-    await page.waitForSelector('[data-testid="header-avatar"]');
+    await signInInBrowser(page, ownerEmail, password);
 
-    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { titulo: 'Viaje para invitar por email', nombreEspanol: 'Ciudad Email', code: 'EM', sharedWith: [] }), { ownerUid, viajeId });
+    await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje para invitar por email', nombreEspanol: 'Ciudad Email', code: 'EM', sharedWith: [] }), { ownerUid, viajeId });
 
     // create top-level invitation with inviteeEmail (simulates owner sending email invite)
     await page.evaluate(({ invitationId, ownerUid, inviteeEmail, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeEmail, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeEmail, viajeId });

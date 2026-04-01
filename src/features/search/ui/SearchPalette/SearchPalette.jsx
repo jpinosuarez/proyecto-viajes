@@ -8,6 +8,7 @@ import { useToast } from '@app/providers/ToastContext';
 import { useDebounce } from '../../model/useDebounce';
 import { useSearchHistory } from '../../model/useSearchHistory';
 import RichResultCard from './RichResultCard';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -37,7 +38,7 @@ const SearchPalette = ({
     setDebouncedQuery(debouncedVal);
   });
 
-  const { localResults } = useSearchHistory(allTrips, query);
+  const { localResults } = useSearchHistory(allTrips, query, i18n.language, t);
 
   // Fetch Mapbox results when debounced query changes
   useEffect(() => {
@@ -85,7 +86,7 @@ const SearchPalette = ({
             type: feat.place_type[0],
             coordinates: feat.center,
             countryCode,
-            countryName: countryContext?.text || '',
+            countryName: getLocalizedCountryName(countryCode, i18n.language, t) || countryContext?.text || '',
             _mapbox: true,
           };
         });

@@ -29,10 +29,14 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   useDocumentTitle(tNav('home'));
 
   const name = usuario?.displayName ? usuario.displayName.split(' ')[0] : t('fallbackName');
-  const recentTrips = useMemo(
-    () => [...log].sort((a, b) => new Date(b.fechaInicio) - new Date(a.fechaInicio)),
-    [log]
-  );
+  const recentTrips = useMemo(() => {
+    return [...log].sort((a, b) => {
+      const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+      const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+      if (dateB !== dateA) return dateB - dateA;
+      return 0;
+    });
+  }, [log]);
 
   const recentTripsLimit = useMemo(() => {
     if (isMobile) return 2;

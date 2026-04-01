@@ -88,7 +88,7 @@ describe('EdicionModal (borrador)', () => {
 
     const input = await screen.findByPlaceholderText(/tripTitlePlaceholder/i);
     // al inicio debe estar en Auto (badge)
-    expect(screen.getByRole('button', { name: /autoTitle|manualTitle/ })).toHaveTextContent('autoTitle');
+    expect(screen.getByRole('button', { name: /auto/i })).toHaveTextContent('labels.autoTitle');
 
     // Limpiar y escribir manualmente
     await user.clear(input);
@@ -96,8 +96,8 @@ describe('EdicionModal (borrador)', () => {
 
     // Badge debe indicar Manual (el nombre accesible viene del texto, no del title)
     await waitFor(() => {
-      const btn = screen.getByRole('button', { name: /manualTitle/i });
-      expect(btn).toHaveTextContent('manualTitle');
+      const btn = screen.getByRole('button', { name: /manual/i });
+      expect(btn).toHaveTextContent('labels.manualTitle');
       expect(btn).toHaveAttribute('title', expect.stringMatching(/tooltip\.manualMode/i));
     });
   });

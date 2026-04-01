@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { LayoutGrid, List } from 'lucide-react';
 import { COLORS, RADIUS } from '@shared/config';
 import { useToast } from '@app/providers';
-import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
-const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null, isMobile = false }) => {
+const TripCommandBar = ({ activeFilter, onFilterChange, isMobile = false }) => {
   const { t } = useTranslation('dashboard');
   const { pushToast } = useToast();
   const handleListToggle = () => { pushToast(t('toast.comingSoon'), 'info'); };
@@ -46,14 +45,6 @@ const TripCommandBar = ({ activeFilter, onFilterChange, logStats = null, isMobil
       gap: '8px',
       paddingBottom: '8px',
     }}>
-      {logStats && (
-        <TravelStatsWidget
-          logStats={logStats}
-          ariaLabel={t('stats.tripSummary')}
-          variant="trips"
-          isMobile={isMobile}
-        />
-      )}
       <div style={{
         padding: '8px 0 0',
         display: 'flex',

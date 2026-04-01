@@ -219,14 +219,21 @@ export const useViajes = () => {
     );
 
     const unsubShared = fbOnSnapshot(acceptedInvitationsQ, (snap) => {
+      console.log(`[E2E DEBUG] acceptedInvitationsQ snapshot fired, empty: ${snap.empty}, size: ${snap.size}`);
       const desiredKeys = new Set();
 
       snap.docs.forEach((docSnap) => {
         const invitation = docSnap.data() || {};
+        console.log('[E2E DEBUG] Found invitation doc:', { id: docSnap.id, status: invitation.status, inviteeUid: invitation.inviteeUid });
         if (invitation.status !== 'accepted') return;
         const ownerId = invitation.inviterId;
         const viajeId = invitation.viajeId;
-        if (!ownerId || !viajeId || ownerId === usuario.uid) return;
+        if (!ownerId || !viajeId || ownerId === usuario.uid) {
+           console.warn('[E2E DEBUG] Accepted invitation skipped due to missing ownerId/viajeId or owner is current user', { invitation });
+           return;
+        }
+
+        console.log('[E2E DEBUG] Accepted invitation processing for shared trip', { ownerId, viajeId });
 
         const key = `${ownerId}/${viajeId}`;
         desiredKeys.add(key);
@@ -237,9 +244,11 @@ export const useViajes = () => {
 
         const unsubViaje = fbOnSnapshot(viajeRef, (viajeSnap) => {
           if (!viajeSnap.exists()) {
+            console.warn('[E2E DEBUG] Shared viajeSnap does NOT exist!', { ownerId, viajeId });
             removeSharedViaje({ ownerId, viajeId });
             return;
           }
+          console.log('[E2E DEBUG] Shared viajeSnap loaded successfully!', { ownerId, viajeId, data: viajeSnap.data() });
           upsertSharedViaje({ ownerId, viaje: { id: viajeSnap.id, ...viajeSnap.data() } });
         }, (sharedViajeError) => {
           logger.error('Error en viaje compartido', {
@@ -248,6 +257,7 @@ export const useViajes = () => {
             viajeId,
             userId: usuario.uid
           });
+          console.error('[E2E DEBUG] Error loading shared viajeSnap', sharedViajeError.message);
           notifyErrorThrottled(
             'shared-trip-subscription',
             'Un viaje compartido no pudo actualizarse. Continuamos con el resto de tu bitacora.'
@@ -401,11 +411,16 @@ export const useViajes = () => {
         paisCodigo: datosViajeNormalizados.code,
         totalParadas: paradasProcesadas.length 
       });
+      const viajeParaDb = {
+        ...payloadViaje,
+        ownerId: usuario.uid,
+        createdAt: new Date().toISOString(),
+      };
 
       const viajeId = await guardarViajeConParadas({
         db,
         userId: usuario.uid,
-        viaje: payloadViaje,
+        viaje: viajeParaDb,
         paradas: paradasProcesadas
       });
 
@@ -413,6 +428,7 @@ export const useViajes = () => {
         throw new Error('No se obtuvo viajeId al crear viaje');
       }
 
+      pendingTripIdsRef.current.add(viajeId);
       pendingTripIdsRef.current.delete(optimisticTripId);
       const persistedTrip = {
         ...payloadViaje,
@@ -420,17 +436,17 @@ export const useViajes = () => {
         ownerId: usuario.uid,
         createdAt: new Date().toISOString(),
         paradas: paradasProcesadas,
-        isPending: false,
+        isPending: true,
       };
       setBitacora((prev) => {
         const withoutPending = prev.filter((item) => item.id !== optimisticTripId);
         const hasSyncedTrip = withoutPending.some((item) => item.id === viajeId);
         if (hasSyncedTrip) {
           pendingTripIdsRef.current.delete(viajeId);
-        } else {
-          pendingTripIdsRef.current.add(viajeId);
         }
-        const next = hasSyncedTrip ? withoutPending : [persistedTrip, ...withoutPending];
+        const next = hasSyncedTrip
+          ? withoutPending.map((item) => (item.id === viajeId ? { ...item, isPending: false } : item))
+          : [persistedTrip, ...withoutPending];
         setBitacoraData(construirBitacoraData(next));
         return next;
       });
@@ -538,6 +554,30 @@ export const useViajes = () => {
       });
 
       await actualizarViaje({ db, userId: usuario.uid, viajeId: id, data: dataToSave });
+
+      // Optimistically update local state to reflect the change immediately in the UI.
+      const tripFromState = viajeActual || bitacoraData[id] || bitacora.find((viaje) => viaje.id === id);
+      const updatedViaje = {
+        ...tripFromState,
+        ...dataToSave,
+        id,
+        ownerId: usuario.uid,
+        banderas:
+          dataToSave.banderas ||
+          tripFromState?.banderas ||
+          construirBanderasViaje(dataToSave.code || tripFromState?.code, paradasDelViaje),
+        ciudades:
+          dataToSave.ciudades ||
+          tripFromState?.ciudades ||
+          construirCiudadesViaje(paradasDelViaje),
+      };
+
+      setBitacora((prev) => {
+        const next = prev.map((viaje) => (viaje.id === id ? updatedViaje : viaje));
+        setBitacoraData(construirBitacoraData(next));
+        return next;
+      });
+
       logger.info('Viaje actualizado exitosamente', { viajeId: id });
       toast.success('Viaje guardado correctamente');
       return true;

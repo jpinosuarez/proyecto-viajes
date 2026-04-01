@@ -5,11 +5,11 @@ import { useSearch } from '@app/providers/UIContext';
 import TripGrid from '@widgets/tripGrid/TripGrid';
 import TripCommandBar from './components/TripCommandBar';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
-import { useLogStats } from '@shared/lib/hooks/useLogStats';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 const TripsPage = () => {
-  const { t } = useTranslation('dashboard');
+  const { t, i18n } = useTranslation(['dashboard', 'countries']);
   useDocumentTitle(t('pageTitle.journal', 'Mis Viajes'));
   
   const { width } = useWindowSize();
@@ -22,7 +22,6 @@ const TripsPage = () => {
   
   const trips = useMemo(() => data.bitacora ?? [], [data.bitacora]);
   const tripData = useMemo(() => data.bitacoraData ?? {}, [data.bitacoraData]);
-  const logStats = useLogStats(trips, tripData);
   const searchTerm = busqueda.trim().toLowerCase();
 
   const filteredTrips = useMemo(() => {
@@ -41,8 +40,11 @@ const TripsPage = () => {
     if (searchTerm) {
       result = result.filter(trip => {
         const d = tripData[trip.id] || {};
+        const countryCode = d.paisCodigo || d.code || d.countryCode || trip.paisCodigo || trip.code || trip.countryCode;
+        const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
         const fields = [
           d.titulo,
+          localizedCountryName,
           d.nombreEspanol,
           trip.nombreEspanol,
           trip.nameSpanish,
@@ -59,14 +61,13 @@ const TripsPage = () => {
       const dateB = new Date(tripData[b.id]?.fechaInicio || tripData[b.id]?.startDate || b.fechaInicio || b.date).getTime();
       return dateB - dateA; // newest first
     });
-  }, [trips, tripData, activeFilter, searchTerm]);
+  }, [trips, tripData, activeFilter, searchTerm, i18n.language, t]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflowY: 'auto', overflowX: 'hidden' }}>
       <TripCommandBar 
         activeFilter={activeFilter} 
         onFilterChange={setActiveFilter}
-        logStats={logStats}
         isMobile={isMobile}
       />
       

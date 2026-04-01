@@ -2,12 +2,14 @@ import React, { lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate, useMatch } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
 import { BentoCardSkeleton } from '@shared/ui/components';
 import UserMenuBottomSheet from '@shared/ui/components/UserMenuBottomSheet';
 import { COLORS, RADIUS, SHADOWS } from '@shared/config';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 // ── Lazy-loaded heavy components ───────────────────────────────────────────────
 // Cada uno genera su propio chunk de Rolldown y solo se descarga cuando el
@@ -55,6 +57,7 @@ function AppModalsManager({
   onLugarSeleccionado,
   pushToast,
 }) {
+  const { i18n } = useTranslation();
   const match = useMatch('/trips/:id');
   const tripId = match?.params?.id;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,7 +121,9 @@ function AppModalsManager({
   const viajeAEliminar = confirmarEliminacion
     ? (bitacoraData[confirmarEliminacion] || bitacora.find((v) => v.id === confirmarEliminacion))
     : null;
-  const tituloViajeAEliminar = viajeAEliminar?.titulo || viajeAEliminar?.nombreEspanol || 'este viaje';
+  const countryCodeAEliminar = viajeAEliminar?.paisCodigo || viajeAEliminar?.code || viajeAEliminar?.countryCode;
+  const localizedCountryAEliminar = getLocalizedCountryName(countryCodeAEliminar, i18n.language);
+  const tituloViajeAEliminar = viajeAEliminar?.titulo || localizedCountryAEliminar || viajeAEliminar?.nombreEspanol || 'este viaje';
 
   const searchPaletteFallback = (
     <div

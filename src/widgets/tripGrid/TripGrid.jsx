@@ -30,7 +30,17 @@ const TripGrid = ({
   const hasNoTrips = totalLogCount === 0;
   const hasNoSearchResults = !hasNoTrips && trips.length === 0;
 
-  const openTripEditor = (tripId) => {
+  const openTrip = (tripId) => {
+    // Determine if the trip is shared (read-only for this user)
+    const trip = trips.find(t => t.id === tripId) || tripData[tripId];
+    if (trip && trip.isShared) {
+      if (location.pathname.startsWith('/trips')) {
+        navigate(`/trips/${tripId}`);
+      } else {
+        navigate(`/trips/${tripId}`);
+      }
+      return;
+    }
     const params = new URLSearchParams(location.search);
     params.set('editing', tripId);
     navigate({ pathname: location.pathname, search: params.toString() });
@@ -53,7 +63,9 @@ const TripGrid = ({
           <AnimatePresence mode="popLayout">
             {trips.map((trip) => {
               const data = tripData[trip.id] || trip || {};
-              if (!data.nombreEspanol && !data.nameSpanish && !data.titulo) return null;
+              if (!data.titulo && !data.nombreEspanol && !data.nameSpanish && !data.paisCodigo && !data.code && !data.countryCode) {
+                return null;
+              }
 
               const paradaCount = Array.isArray(data.paradas)
                 ? data.paradas.length
@@ -75,7 +87,7 @@ const TripGrid = ({
                   <TripCard
                     trip={{ ...data, id: trip.id, paradaCount }}
                     variant="grid"
-                    onClick={() => openTripEditor(trip.id)}
+                    onClick={() => openTrip(trip.id)}
                     onDelete={handleDelete}
                   />
                 </Motion.div>

@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { Calendar, ArrowLeft, Trash2, LoaderCircle, Edit3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatDateRange, getInitials, FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';    
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { COLORS, FONTS, RADIUS, SHADOWS, GLASS, Z_INDEX } from '@shared/config';
 import { ShareStoryButton } from '@features/share';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
@@ -26,6 +28,7 @@ const DocumentaryHero = ({
   ownerDisplayName,
   isRouteMode,
 }) => {
+  const { t, i18n } = useTranslation(['countries', 'visor']);
   const flags = useMemo(() => {
     const uniqueCodes = [...new Set((data.banderas || []).map(b => {
       // Banderas might be URLs or codes. Let's try to normalize.
@@ -36,6 +39,10 @@ const DocumentaryHero = ({
   }, [data.banderas]);
 
   const isDefaultPhoto = !fotoMostrada || fotoMostrada === FOTO_DEFAULT_URL;
+  const countryCode = data?.paisCodigo || data?.code || viajeBase?.paisCodigo || viajeBase?.code || null;
+  const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
+  const fallbackTitle = localizedCountryName || viajeBase?.nombreEspanol || t('untitledTrip', { ns: 'visor', defaultValue: 'Travesía Sin Nombre' });
+  const heroTitle = data?.titulo || fallbackTitle;
 
   return (
     <div style={styles.heroWrapper(isMobile)}>
@@ -45,7 +52,7 @@ const DocumentaryHero = ({
           <div style={styles.heroImage(fotoMostrada, isMobile)}>
             <img
               src={fotoMostrada}
-              alt="Hero cover"
+              alt={heroTitle}
               fetchPriority="high"
               style={styles.heroImgLayer} 
             />
@@ -105,7 +112,7 @@ const DocumentaryHero = ({
           </div>
 
           <h1 data-testid="visor-title" style={styles.editorialTitle(isMobile)}>
-            {data.titulo || viajeBase?.nombreEspanol || 'Travesía Sin Nombre'}
+            {heroTitle}
           </h1>
 
           <div style={styles.metaRow}>

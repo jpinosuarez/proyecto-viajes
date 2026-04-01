@@ -1,6 +1,8 @@
 import React from 'react';
 import { Calendar, ArrowLeft, Trash2, LoaderCircle, Edit3 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatDateRange, getInitials, FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { ShareStoryButton } from '@features/share';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
 
@@ -20,7 +22,12 @@ const VisorHero = ({
   ownerDisplayName,
   isRouteMode,
 }) => {
+  const { t, i18n } = useTranslation(['countries', 'visor']);
   const isDefaultPhoto = !fotoMostrada || fotoMostrada === FOTO_DEFAULT_URL;
+  const countryCode = data?.paisCodigo || data?.code || viajeBase?.paisCodigo || viajeBase?.code || null;
+  const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
+  const fallbackTitle = localizedCountryName || viajeBase?.nombreEspanol || t('untitledTrip', { ns: 'visor', defaultValue: 'Travesía Sin Nombre' });
+  const heroTitle = data?.titulo || fallbackTitle;
 
   return (
     <div style={styles.heroWrapper}>
@@ -28,7 +35,7 @@ const VisorHero = ({
         {!isDefaultPhoto ? (
           <img
             src={fotoMostrada}
-            alt="Hero cover" 
+            alt={heroTitle}
             fetchPriority="high" 
             style={styles.heroImgLayer} 
           />
@@ -69,7 +76,7 @@ const VisorHero = ({
             )}
           </div>
 
-          <h1 data-testid="visor-title" style={styles.titleDisplay}>{data.titulo || viajeBase?.nombreEspanol || ''}</h1>
+          <h1 data-testid="visor-title" style={styles.titleDisplay}>{heroTitle}</h1>
 
           <div style={styles.metaRow}>
             <span style={styles.metaBadge}>

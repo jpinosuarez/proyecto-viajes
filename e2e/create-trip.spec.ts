@@ -49,15 +49,35 @@ test.describe('Create trip from search modal (E2E)', () => {
     await page.goto('/trips');
     await page.waitForURL('**/trips');
 
+    // Session can occasionally bounce to landing in emulator boot races.
+    // If that happens, sign in again and retry /trips before continuing.
+    const isOnLanding = await page.getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i }).count();
+    if (isOnLanding > 0) {
+      await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
+      await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: userEmail, password });
+      await page.waitForSelector('[data-testid="header-avatar"]');
+      await page.goto('/trips');
+      await page.waitForURL('**/trips');
+    }
+
     // Wait for trips list to load (grid or empty state)
     await page.waitForTimeout(2000); // give the UI time to settle
 
+    // Refresh auth session once more before interacting with the search palette.
+    await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
+    await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email: userEmail, password });
+    await page.waitForSelector('[data-testid="header-avatar"]');
+    await page.goto('/trips');
+    await page.waitForURL('**/trips');
+
     // Open the search palette (new 2026 UX). Prefer the Add Trip CTA; fallback to test helper.
+    await page.evaluate(() => (window as any).__test_abrirSearchPalette?.());
     const addTripBtn = page.getByRole('button', { name: /Add Trip|Crear viaje|Agregar viaje/i }).first();
     if (await addTripBtn.count() > 0) {
-      await addTripBtn.click();
-    } else {
-      await page.evaluate(() => (window as any).__test_abrirSearchPalette?.());
+      const isSearchVisible = await page.getByRole('textbox', { name: /Search|Buscar/i }).first().isVisible().catch(() => false);
+      if (!isSearchVisible) {
+        await addTripBtn.click();
+      }
     }
 
     // Intercept Mapbox API to avoid external dependency and return a stable result
@@ -87,8 +107,8 @@ test.describe('Create trip from search modal (E2E)', () => {
       });
     });
 
-    // Wait for the SearchPalette input to appear (aria-label="Search")
-    const searchInput = page.getByRole('textbox', { name: 'Search', exact: true });
+    // Wait for the SearchPalette input to appear (label can change with active locale)
+    const searchInput = page.getByRole('textbox', { name: /Search|Buscar/i }).first();
     await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 
     // Type a destination and wait for the result to appear
@@ -113,8 +133,9 @@ test.describe('Create trip from search modal (E2E)', () => {
     const titleInput = page.getByPlaceholder(/Trip Title|Título del viaje/i);
     await expect(titleInput).toBeVisible({ timeout: 10000 });
 
-    // Validate editor header is visible and title is auto-populated from search selection
-    await expect(page.getByText('Editor de viaje').first()).toBeVisible();
+    // Validate sticky top action bar is visible and title is auto-populated from search selection
+    await expect(page.getByRole('button', { name: /Cancel|Cancelar/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Save|Guardar/i }).first()).toBeVisible();
     await expect(titleInput).not.toHaveValue('');
     await expect(titleInput).toHaveValue(/Escapada a New York|New York|E2E Trip/);
     const citySearchInput = page.getByPlaceholder(/Type the city name|Escribe el nombre de la ciudad/i).first();
@@ -131,7 +152,7 @@ test.describe('Create trip from search modal (E2E)', () => {
     await expect(page.locator('text=common:add')).toHaveCount(0);
 
     // Verify gallery cover info text has been updated
-    await expect(page.locator('text=Esta imagen será la foto de portada del viaje')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Esta imagen será la foto de portada del viaje|For now, we only allow 1 cover photo for your trip/)).toBeVisible({ timeout: 10000 });
 
     // Provide a title and save
     await titleInput.fill('E2E Trip');
@@ -139,7 +160,7 @@ test.describe('Create trip from search modal (E2E)', () => {
     await saveBtn.click();
 
     // Wait for the editor to close and the trip to appear in the grid
-    await expect(page.getByRole('button', { name: /E2E Trip/i })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: /E2E Trip/i }).first()).toBeVisible({ timeout: 20000 });
 
     // Wait for the modal to close and trip to be created
     await page.waitForTimeout(3000);
@@ -149,21 +170,21 @@ test.describe('Create trip from search modal (E2E)', () => {
       // Close level-up modal
       const levelUpModal = page.locator('text=New Level!');
       if (await levelUpModal.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await page.getByRole('button', { name: 'Next →' }).click();
+        await page.getByRole('button', { name: /Next|Siguiente/i }).first().click();
         await page.waitForTimeout(500);
       }
 
       // Close achievement modal
       const achievementModal = page.locator('text=Achievement unlocked!');
       if (await achievementModal.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await page.getByRole('button', { name: 'Great! 🎉' }).click();
+        await page.getByRole('button', { name: /Great|Genial|Excelente/i }).first().click();
         await page.waitForTimeout(500);
       }
 
       // Close expedition summary modal (appears on big unlock bursts)
       const expeditionModal = page.locator('text=Expedition Summary!');
       if (await expeditionModal.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await page.getByRole('button', { name: 'Amazing! 🚀' }).click();
+        await page.getByRole('button', { name: /Amazing|Increíble|Asombroso/i }).first().click();
         await page.waitForTimeout(500);
       }
     };
@@ -195,6 +216,6 @@ test.describe('Create trip from search modal (E2E)', () => {
     await existingTitleInput.fill('E2E Trip Edited');
     const saveUpdatedBtn = page.getByRole('button', { name: /Save|Guardar/i }).first();
     await saveUpdatedBtn.click();
-    await expect(page.getByRole('button', { name: /E2E Trip Edited/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /E2E Trip Edited/i }).first()).toBeVisible({ timeout: 15000 });
   });
 });

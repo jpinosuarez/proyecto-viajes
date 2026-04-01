@@ -86,3 +86,5 @@ export const Disc = mod.Disc;
 export const LayoutGrid = mod.LayoutGrid;
 export const Percent = mod.Percent;
 export const Clock = mod.Clock;
+export const CalendarDays = mod.CalendarDays;
+export const MapPinned = mod.MapPinned;

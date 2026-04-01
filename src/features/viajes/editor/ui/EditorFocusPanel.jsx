@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { X, LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { COLORS } from '@shared/config';
 import { styles } from './EditorFocusPanel.styles';
@@ -16,7 +16,6 @@ import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import EdicionHeaderSection from './components/EdicionHeaderSection';
 import EdicionGallerySection from './components/EdicionGallerySection';
 import EdicionParadasSection from './components/EdicionParadasSection';
-import CoverPickerModal from './components/CoverPickerModal';
 
 /**
  * EditorFocusPanel: Desktop slide-over + Mobile full-screen sheet
@@ -55,7 +54,6 @@ const EditorFocusPanel = ({
   const usuarioUid = usuario?.uid || null;
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   // Track initial state for unsaved changes detection
   const initialFormDataRef = useRef(null);
@@ -72,6 +70,7 @@ const EditorFocusPanel = ({
 
   const effectiveFormData = formData ?? localFormData;
   const formDataWithFallback = {
+    ...viaje,
     ...effectiveFormData,
     titulo: effectiveFormData?.titulo || viaje?.titulo || viaje?.nombreEspanol || ''
   };
@@ -125,6 +124,7 @@ const EditorFocusPanel = ({
     setGalleryFiles: effectiveSetGalleryFiles,
     setGalleryPortada: effectiveSetGalleryPortada,
     setCaptionDrafts: effectiveSetCaptionDrafts,
+    t,
   });
 
   const iniciarSubida = uploadCtx?.iniciarSubida;
@@ -259,14 +259,6 @@ const EditorFocusPanel = ({
 
   if (!viaje) return null;
 
-  const handleSelectCover = (coverUrl) => {
-    effectiveSetFormData((prev) => ({
-      ...prev,
-      portadaUrl: coverUrl,
-    }));
-    setShowCoverPicker(false);
-  };
-
   const isBusy = isSaving || isProcessingImage;
 
   // Animation variants
@@ -322,24 +314,6 @@ const EditorFocusPanel = ({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sticky Header */}
-        <div style={styles.stickyHeader}>
-          <div style={styles.headerLeft}>
-            <div>
-              <div style={styles.headerTitle}>{t('editor:tripEditorHeader', 'Editor de viaje')}</div>
-              <div style={styles.headerBadge}>{esBorrador ? t('labels.draft') || 'Draft' : t('labels.editing') || 'Editing'}</div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleClose}
-            style={styles.headerCloseBtn}
-            aria-label={t('button.close') || 'Close'}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
         {/* Scrollable Body */}
         <div style={styles.scrollableBody} className="custom-scroll">
           {/* Header Section (Photo + Title) - PREMIUM LAYOUT */}
@@ -353,6 +327,7 @@ const EditorFocusPanel = ({
             isTituloAuto={autoTitleMode}
             titlePulse={titlePulseState}
             isProcessingImage={isProcessingImage}
+            paradas={effectiveParadas}
             onTituloChange={handleTituloChange}
             onToggleTituloAuto={() => setAutoTitleMode((prev) => !prev)}
           />
@@ -392,11 +367,10 @@ const EditorFocusPanel = ({
 
         </div>
 
-        {/* Sticky Footer with Manual Save & Cancel */}
-        <div style={styles.stickyFooter}>
+        <div style={styles.stickyBottomActionBar}>
           <button
             onClick={handleClose}
-            style={styles.secondaryFooterBtn}
+            style={styles.topBarSecondaryBtn}
             disabled={isSavingManual}
           >
             {t('button.cancel') || 'Cancelar'}
@@ -405,19 +379,16 @@ const EditorFocusPanel = ({
             onClick={handleSaveWithLoading}
             disabled={isSavingManual}
             style={{
-              ...styles.primaryFooterBtn,
+              ...styles.topBarPrimaryBtn,
               cursor: isSavingManual ? 'not-allowed' : 'pointer',
               opacity: isSavingManual ? 0.7 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
             }}
           >
             {isSavingManual && <LoaderCircle size={16} className="spin" />}
             {t('button.save') || 'Guardar'}
           </button>
         </div>
+
       </Motion.div>
     </AnimatePresence>
 
@@ -435,14 +406,6 @@ const EditorFocusPanel = ({
       onClose={() => setShowConfirmModal(false)}
     />
 
-    {/* Cover Photo Picker Modal - Single Source of Truth */}
-    <CoverPickerModal
-      isOpen={showCoverPicker}
-      fotos={galeria?.fotos || []}
-      currentPortadaUrl={effectiveFormData?.portadaUrl}
-      onSelectCover={handleSelectCover}
-      onClose={() => setShowCoverPicker(false)}
-    />
     </>
   );
 };

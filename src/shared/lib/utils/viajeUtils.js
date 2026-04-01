@@ -143,44 +143,82 @@ export const obtenerPaisesVisitados = (bitacora = [], todasLasParadas = []) => {
   return [...codigos].filter(Boolean);
 };
 
-export const generarTituloInteligente = (nombreBase, paradas = []) => {
-  if (!paradas || paradas.length === 0) return nombreBase || 'Nuevo Viaje';
+const AUTO_TITLE_FALLBACK = {
+  'editor:autoTitle.fallback': () => 'Nuevo Viaje',
+  'editor:autoTitle.oneCity': ({ city }) => `Escapada a ${city}`,
+  'editor:autoTitle.twoCities': ({ city1, city2 }) => `${city1} y ${city2}`,
+  'editor:autoTitle.twoCountries': ({ country1, country2 }) => `Aventura entre ${country1} y ${country2}`,
+  'editor:autoTitle.oneCountry': ({ country }) => `Ruta por ${country}`,
+  'editor:autoTitle.threeCountries': ({ countries }) => `Travesía por ${countries}`,
+  'editor:autoTitle.manyCountries': ({ firstTwo, others }) => `Gran travesía por ${firstTwo} y ${others} más`,
+};
+
+export const generarTituloInteligente = (nombreBase, paradas = [], t) => {
+  const translate = typeof t === 'function'
+    ? t
+    : (key, options = {}) => {
+        if (options.defaultValue) return options.defaultValue;
+        const fallback = AUTO_TITLE_FALLBACK[key];
+        if (typeof fallback === 'function') return fallback(options);
+        if (fallback !== undefined) return fallback;
+        return key;
+      };
+
+  if (!paradas || paradas.length === 0) {
+    return translate('editor:autoTitle.fallback', { defaultValue: 'Nuevo Viaje' });
+  }
 
   const ciudadesUnicas = [...new Set(paradas.map((p) => p.nombre).filter(Boolean))];
   const paisesUnicos = [...new Set(paradas.map((p) => p.paisCodigo).filter(Boolean))];
 
-  // Si hay exactamente 2 países distintos, priorizar ese título (ej: España y Francia)
   if (paisesUnicos.length === 2) {
     const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
-    if (nombresPaises.length === 2) return `Aventura entre ${nombresPaises[0]} y ${nombresPaises[1]}`;
+    if (nombresPaises.length === 2) {
+      return translate('editor:autoTitle.twoCountries', {
+        country1: nombresPaises[0],
+        country2: nombresPaises[1],
+      });
+    }
   }
 
-  // Priorizar títulos por ciudad cuando quedan claros y cortos
-  if (ciudadesUnicas.length === 1) return `Escapada a ${ciudadesUnicas[0]}`;
-  if (ciudadesUnicas.length === 2) return `${ciudadesUnicas[0]} y ${ciudadesUnicas[1]}`;
+  if (ciudadesUnicas.length === 1) {
+    return translate('editor:autoTitle.oneCity', {
+      city: ciudadesUnicas[0],
+    });
+  }
 
-  // Construir nombres de países legibles
+  if (ciudadesUnicas.length === 2) {
+    return translate('editor:autoTitle.twoCities', {
+      city1: ciudadesUnicas[0],
+      city2: ciudadesUnicas[1],
+    });
+  }
+
   const nombresPaises = paisesUnicos.map((c) => getCountryName(c)).filter(Boolean);
 
-  // Reglas de storytelling por país
   if (paisesUnicos.length === 1) {
     const nombrePais = nombresPaises[0] || nombreBase;
-    return `Ruta por ${nombrePais}`; // claro y directo
+    return translate('editor:autoTitle.oneCountry', {
+      country: nombrePais,
+    });
   }
 
   if (paisesUnicos.length === 3) {
-    // Listado evocador pero legible
-    return `Travesía por ${nombresPaises.join(', ')}`;
+    return translate('editor:autoTitle.threeCountries', {
+      countries: nombresPaises.join(', '),
+    });
   }
 
   if (paisesUnicos.length > 3) {
-    // Mantener título corto y sugerir escala
     const firstTwo = nombresPaises.slice(0, 2).join(', ');
     const others = nombresPaises.length - 2;
-    return `Gran travesía por ${firstTwo} y ${others} más`;
+    return translate('editor:autoTitle.manyCountries', {
+      firstTwo,
+      others,
+    });
   }
 
-  return nombreBase || 'Nuevo Viaje';
+  return translate('editor:autoTitle.fallback', { defaultValue: nombreBase || 'Nuevo Viaje' });
 };
 
 export const construirBanderasViaje = (codigoPaisBase, paradas = []) => {

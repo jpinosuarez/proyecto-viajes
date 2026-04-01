@@ -16,7 +16,6 @@ import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycl
 import EdicionGallerySection from './components/EdicionGallerySection';
 import EdicionParadasSection from './components/EdicionParadasSection';
 import EdicionHeaderSection from './components/EdicionHeaderSection';
-import CoverPickerModal from './components/CoverPickerModal';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false, onAfterSave }) => {
   const { usuario } = useAuth();
@@ -59,7 +58,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
       setFormData((prev) => ({ ...prev, portadaUrl: value }));
     }
   };
-  const [showCoverPicker, setShowCoverPicker] = useState(false);
   const previousGalleryLengthRef = useRef(0);
 
   // Hook de galería: no cargar para borradores (id 'new') — solo cuando es un viaje guardado
@@ -153,6 +151,11 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const isBusy = isSaving || isProcessingImage || isUploading;
   const sinParadas = paradas.length === 0;
   const fechaRangoDisplay = formatDateRange(formData.fechaInicio, formData.fechaFin);
+  const headerFormData = {
+    ...viaje,
+    ...formData,
+    titulo: formData?.titulo ?? viaje?.titulo ?? viaje?.nombreEspanol ?? '',
+  };
 
   return (
     <AnimatePresence>
@@ -165,13 +168,13 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               justifyContent: 'center',
               padding: '10px 0 2px',
               flexShrink: 0,
-              background: COLORS.charcoalBlue,
+              background: '#F8FAFC',
             }}>
               <div style={{
                 width: '36px',
                 height: '4px',
                 borderRadius: '2px',
-                background: 'rgba(255, 255, 255, 0.25)',
+                background: '#CBD5E1',
               }} />
             </div>
           )}
@@ -179,18 +182,18 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
           <EdicionHeaderSection
             styles={styles}
             t={t}
-            formData={formData}
+            formData={headerFormData}
             isMobile={isMobile}
             isBusy={isBusy}
             esBorrador={esBorrador}
             isTituloAuto={isTituloAuto}
             titlePulse={titlePulse}
             isProcessingImage={isProcessingImage}
+            paradas={paradas}
             onTituloChange={handleTituloChange}
             onToggleTituloAuto={() => setIsTituloAuto((prev) => !prev)}
-            onPortadaChange={(url) => setFormData((prev) => ({ ...prev, portadaUrl: url }))}
           />
-          <div style={styles.body} className="custom-scroll">
+          <div style={{ ...styles.body, paddingBottom: 'calc(16px + 64px)' }} className="custom-scroll">
             {/* Itinerary / Stops */}
             <EdicionParadasSection
               styles={styles}
@@ -220,7 +223,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               onEliminarFoto={handleEliminarFoto}
             />
           </div>
-          <div style={styles.footer(isMobile)}>
+          <div style={styles.stickyFooter}>
               <Motion.button
                 onClick={onClose}
                 style={styles.cancelBtn(isBusy, isMobile)}
@@ -241,18 +244,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 {isProcessingImage ? t('button.processing') : (isSaving ? t('button.saving') : (esBorrador ? t('button.createTrip') : t('button.save')))}
               </Motion.button>
           </div>
-
-          {/* Cover Picker Modal */}
-          <CoverPickerModal
-            isOpen={showCoverPicker}
-            fotos={galeria?.fotos || []}
-            currentPortadaUrl={formData.portadaUrl}
-            onSelectCover={(coverUrl) => {
-              setFormData((prev) => ({ ...prev, portadaUrl: coverUrl }));
-              setShowCoverPicker(false);
-            }}
-            onClose={() => setShowCoverPicker(false)}
-          />
         </Motion.div>
       </Motion.div>
     </AnimatePresence>

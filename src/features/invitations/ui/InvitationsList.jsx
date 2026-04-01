@@ -3,15 +3,17 @@ import { Bell } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@shared/firebase';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useInvitations from '../model/useInvitations';
 import { useToast } from '@app/providers/ToastContext';
 import { COLORS, RADIUS } from '@shared/config';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 /**
  * Resuelve displayName del inviter y título del viaje para cada invitación.
  * Se cachea en un Map para evitar lecturas repetidas.
  */
-function useInvitationMetadata(invitations) {
+function useInvitationMetadata(invitations, language, t) {
   const [meta, setMeta] = useState({}); // { [invId]: { inviterName, tripTitle } }
   const inviterNameCacheRef = useRef(new Map());
   const tripTitleCacheRef = useRef(new Map());
@@ -48,8 +50,12 @@ function useInvitationMetadata(invitations) {
             const [ownerUid, viajeId] = tripKey.split('/');
             try {
               const viajeSnap = await getDoc(doc(db, `usuarios/${ownerUid}/viajes/${viajeId}`));
+              const countryCode = viajeSnap.exists()
+                ? (viajeSnap.data().paisCodigo || viajeSnap.data().code || viajeSnap.data().countryCode)
+                : null;
+              const localizedCountryName = getLocalizedCountryName(countryCode, language, t);
               const tripTitle = viajeSnap.exists()
-                ? (viajeSnap.data().titulo || viajeSnap.data().nombreEspanol || viajeId)
+                ? (viajeSnap.data().titulo || localizedCountryName || viajeSnap.data().nombreEspanol || viajeId)
                 : viajeId;
               tripTitleCacheRef.current.set(tripKey, tripTitle);
             } catch {
@@ -76,17 +82,18 @@ function useInvitationMetadata(invitations) {
     })();
 
     return () => { cancelled = true; };
-  }, [invitations]);
+  }, [invitations, language, t]);
 
   return invitations && invitations.length > 0 ? meta : {};
 }
 
 export default function InvitationsList({ compact = false, hook = null }) {
+  const { i18n, t } = useTranslation(['dashboard', 'countries']);
   const defaultInvitationsHook = useInvitations();
   const { invitations, acceptInvitation, declineInvitation } = hook || defaultInvitationsHook;
   const { pushToast } = useToast();
   const navigate = useNavigate();
-  const metadata = useInvitationMetadata(invitations);
+  const metadata = useInvitationMetadata(invitations, i18n.language, t);
 
   if (!invitations || invitations.length === 0) {
     return compact ? (

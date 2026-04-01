@@ -28,7 +28,20 @@ export const AuthProvider = ({ children }) => {
   }, [usuario]);
 
   const login = async () => {
+    const isEmulator = import.meta.env.VITE_USE_EMULATORS === 'true';
+    const testEmail = import.meta.env.VITE_EMULATOR_TEST_EMAIL;
+    const testPassword = import.meta.env.VITE_EMULATOR_TEST_PASSWORD;
+
     try {
+      if (isEmulator && testEmail && testPassword) {
+        await signInWithEmailAndPassword(auth, testEmail, testPassword);
+        return;
+      }
+
+      if (isEmulator) {
+        console.warn('[Auth] modo emulador activo: signInWithPopup puede no funcionar. Usa VITE_EMULATOR_TEST_EMAIL/PASSWORD.');
+      }
+
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error al autenticar:", error);

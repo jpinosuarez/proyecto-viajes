@@ -5,9 +5,36 @@
  * @param {import('mapbox-gl').Map} map - Mapbox GL map instance
  * @param {string} lang - Language code ('es' | 'en')
  */
+const MAPBOX_SUPPORTED_LANGS = new Set(['en', 'es']);
+
+/**
+ * Normalizes any locale-like input to a Mapbox-compatible base language.
+ * Examples: es-AR -> es, EN_us -> en, null -> en.
+ *
+ * @param {string} lang
+ * @returns {'en' | 'es'}
+ */
+export function normalizeMapboxLanguage(lang) {
+  if (typeof lang !== 'string' || !lang.trim()) return 'en';
+
+  const baseLang = lang
+    .replace('_', '-')
+    .split('-')[0]
+    .trim()
+    .toLowerCase();
+
+  if (MAPBOX_SUPPORTED_LANGS.has(baseLang)) {
+    return baseLang;
+  }
+
+  return 'en';
+}
+
 export function setMapLanguage(map, lang) {
+  if (!map) return;
   const mapInstance = typeof map.getMap === 'function' ? map.getMap() : map;
-  const field = lang === 'en' ? 'name_en' : 'name_es';
+  const normalizedLang = normalizeMapboxLanguage(lang);
+  const field = `name_${normalizedLang}`;
   const style = mapInstance.getStyle();
   if (!style?.layers) return;
 

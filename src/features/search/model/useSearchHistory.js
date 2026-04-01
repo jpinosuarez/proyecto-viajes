@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 /**
  * Fuzzy search algorithm: Simple substring match with scoring.
  * Returns matched trips sorted by relevance.
  */
-function fuzzySearch(trips, query) {
+function fuzzySearch(trips, query, language, t) {
   if (!query.trim()) return [];
   
   const lowerQuery = query.toLowerCase();
@@ -12,7 +13,9 @@ function fuzzySearch(trips, query) {
   return trips
     .map((trip) => {
       const titulo = trip.titulo?.toLowerCase() || '';
-      const country = trip.nombreEspanol?.toLowerCase() || '';
+      const countryCode = trip.paisCodigo || trip.code || trip.countryCode;
+      const localizedCountry = getLocalizedCountryName(countryCode, language, t);
+      const country = (localizedCountry || trip.nombreEspanol || '').toLowerCase();
       
       // Score: exact match > prefix match > substring match
       let score = 0;
@@ -36,10 +39,10 @@ function fuzzySearch(trips, query) {
  * Hook to search user's existing trips locally.
  * Accepts a search query and returns filtered trips with scoring.
  */
-export function useSearchHistory(allTrips = [], searchQuery = '') {
+export function useSearchHistory(allTrips = [], searchQuery = '', language = 'es', t) {
   const localResults = useMemo(() => {
-    return fuzzySearch(allTrips, searchQuery);
-  }, [allTrips, searchQuery]);
+    return fuzzySearch(allTrips, searchQuery, language, t);
+  }, [allTrips, searchQuery, language, t]);
 
   return {
     localResults,

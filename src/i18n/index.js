@@ -13,6 +13,7 @@ import landingES from './locales/es/landing.json';
 import galleryES from './locales/es/gallery.json';
 import shareES from './locales/es/share.json';
 import navES from './locales/es/nav.json';
+import countriesES from './locales/es/countries.json';
 
 // Diccionarios EN (placeholder — traducir con i18n Ally)
 import commonEN from './locales/en/common.json';
@@ -25,6 +26,7 @@ import landingEN from './locales/en/landing.json';
 import galleryEN from './locales/en/gallery.json';
 import shareEN from './locales/en/share.json';
 import navEN from './locales/en/nav.json';
+import countriesEN from './locales/en/countries.json';
 import searchES from './locales/es/search.json';
 import searchEN from './locales/en/search.json';
 
@@ -45,6 +47,7 @@ i18n
         share: shareES,
         nav: navES,
         search: searchES,
+        countries: countriesES,
       },
       en: {
         common: commonEN,
@@ -58,10 +61,13 @@ i18n
         share: shareEN,
         nav: navEN,
         search: searchEN,
+        countries: countriesEN,
       },
     },
     fallbackLng: 'es',
     defaultNS: 'common',
+    debug: false,
+    logLevel: 'warn',
     interpolation: {
       escapeValue: false, // React ya escapa por defecto
     },

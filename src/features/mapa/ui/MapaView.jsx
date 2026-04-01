@@ -101,6 +101,11 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
     initSpinGlobe(map);
   }, [i18n.language, initSpinGlobe]);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+    setMapLanguage(mapRef.current, i18n.language);
+  }, [i18n.language]);
+
   // Click on map marker → select trip
   const onMapClick = useCallback((event) => {
     const feature = event.features && event.features[0];

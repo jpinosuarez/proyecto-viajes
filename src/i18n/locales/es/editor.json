@@ -34,7 +34,22 @@
     "addCityWarning": "Tu ruta necesita al menos una parada para despegar.",
     "captionPlaceholder": "Describe este momento...",
     "addCoverHint": "Dale vida con una foto",
-    "portada": "Portada"
+    "portada": "Portada",
+    "multiCountriesSummary": "{{count}} países",
+    "multiCountryRoute": "Ruta por {{count}} países",
+    "countryFallback": "Destino por confirmar",
+    "titleEditableHint": "Toca para editar el título",
+    "autoTitle": "Auto",
+    "manualTitle": "Manual"
+  },
+  "autoTitle": {
+    "fallback": "Nuevo Viaje",
+    "oneCity": "Escapada a {{city}}",
+    "twoCities": "{{city1}} y {{city2}}",
+    "twoCountries": "Aventura entre {{country1}} y {{country2}}",
+    "oneCountry": "Ruta por {{country}}",
+    "threeCountries": "Travesía por {{countries}}",
+    "manyCountries": "Gran travesía por {{firstTwo}} y {{others}} más"
   },
   "unsavedChanges": {
     "title": "¿Descartar cambios?",
@@ -68,13 +83,7 @@
     "topView": "👀 La Vista",
     "topTip": "💡 El Tip"
   },
-  "button": {
-    "cancel": "Cancelar",
-    "save": "Guardar",
-    "createTrip": "Crear Viaje",
-    "processing": "Preparando...",
-    "saving": "Guardando..."
-  },
+
   "search": {
     "newDestination": "Nuevo Destino",
     "placeholder": "Escribe un país o ciudad...",
@@ -135,7 +144,7 @@
     "optimizing": "Optimizando...",
     "optimizingCount": "Preparando {{count}} foto(s)...",
     "photosSelected": "fotos seleccionadas",
-    "coverOnlyNotice": "Por ahora, solo permitimos 1 foto de portada para tu viaje.",
+    "coverOnlyNotice": "Esta imagen será la foto de portada del viaje.",
     "setCover": "Marcar como portada",
     "currentCover": "Foto de portada actual",
     "deletePhoto": "Eliminar foto"

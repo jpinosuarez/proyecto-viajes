@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, Popup, AttributionControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
-import { setMapLanguage } from '@shared/lib/geo';
+import { normalizeMapboxLanguage, setMapLanguage } from '@shared/lib/geo';
+import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
 /**
  * Inhabited World Bounds: Lat -60 (south of Argentina) to Lat 80 (north of Russia).
@@ -44,7 +45,7 @@ function computeContainedSize(containerW, containerH) {
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
-  const { i18n, t } = useTranslation('dashboard');
+  const { i18n, t } = useTranslation(['dashboard', 'countries']);
   const [hoverInfo, setHoverInfo] = useState(null);
   const mapRef = useRef(null);
   const containerRef = useRef(null);
@@ -97,6 +98,12 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
     return () => cancelAnimationFrame(id);
   }, [mapDims, mapReady]);
 
+  // ── Reactively update map labels when app language changes ─────────────────
+  useEffect(() => {
+    if (!mapRef.current) return;
+    setMapLanguage(mapRef.current, i18n.language);
+  }, [i18n.language]);
+
   const onHover = useCallback((event) => {
     const { features, lngLat } = event;
     const hoveredFeature = features && features[0];
@@ -119,6 +126,18 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
 
   const listaPaises = paisesVisitados.length > 0 ? paisesVisitados : ['EMPTY_LIST'];
   const hasValidDims = mapDims.width > 0 && mapDims.height > 0;
+  const mapLang = normalizeMapboxLanguage(i18n.language);
+
+  const getPopupCountryLabel = useCallback((feature) => {
+    const props = feature?.properties || {};
+    const isoCode = props.iso_3166_1_alpha_2 || props.iso_3166_1_alpha_3 || props.iso_3166_1;
+    const localizedFromIso = getLocalizedCountryName(isoCode, i18n.language, t);
+    if (localizedFromIso && localizedFromIso !== String(isoCode || '').toUpperCase()) {
+      return localizedFromIso;
+    }
+
+    return props[`name_${mapLang}`] || props.name_en || props.name || t('countryFallback');
+  }, [i18n.language, mapLang, t]);
 
   return (
     <div
@@ -201,9 +220,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
               offset={[0, -10]}
             >
               <div>
-                {hoverInfo.feature.properties[`name_${i18n.language}`] ||
-                  hoverInfo.feature.properties.name_en ||
-                  t('countryFallback')}
+                {getPopupCountryLabel(hoverInfo.feature)}
               </div>
             </Popup>
           )}
