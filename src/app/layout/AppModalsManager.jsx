@@ -213,8 +213,8 @@ function AppModalsManager({
               <VisorViaje
                 key={tripId}
                 viajeId={tripId}
-                bitacoraLista={bitacora}
-                bitacoraData={bitacoraData}
+                tripList={bitacora}
+                tripData={bitacoraData}
                 onClose={() => navigate('/trips')}
                 onSave={handleGuardarDesdeVisor}
                 onDelete={solicitarEliminarViaje}

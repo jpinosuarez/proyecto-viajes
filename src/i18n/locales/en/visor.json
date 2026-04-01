@@ -1,6 +1,10 @@
 {
   "bitacora": "Logbook",
   "noStoryYet": "No story yet...",
+  "story": {
+    "title": "Story",
+    "empty": "No story yet..."
+  },
   "photoGallery": "Photo Gallery",
   "gallerySubtitle": "Your memories, ready to tell the story.",
   "hideEditing": "Hide editing",

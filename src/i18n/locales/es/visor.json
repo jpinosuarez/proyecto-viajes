@@ -1,6 +1,10 @@
 {
   "bitacora": "Historia",
   "noStoryYet": "Sin relato aún...",
+  "story": {
+    "title": "Historia",
+    "empty": "Sin relato aun..."
+  },
   "photoGallery": "Galería de fotos",
   "gallerySubtitle": "Tus recuerdos, listos para contar la historia.",
   "hideEditing": "Ocultar edición",

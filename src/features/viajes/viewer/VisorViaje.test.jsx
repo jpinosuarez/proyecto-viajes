@@ -170,8 +170,8 @@ describe('VisorViaje (phase 4 assembler)', () => {
     render(
       <VisorViaje
         viajeId="v1"
-        bitacoraData={{}}
-        bitacoraLista={[]}
+        tripData={{}}
+        tripList={[]}
         onClose={vi.fn()}
         onSave={vi.fn(async () => true)}
         onDelete={vi.fn()}
@@ -188,8 +188,8 @@ describe('VisorViaje (phase 4 assembler)', () => {
     render(
       <VisorViaje
         viajeId="v1"
-        bitacoraData={{}}
-        bitacoraLista={[]}
+        tripData={{}}
+        tripList={[]}
         onClose={vi.fn()}
         onSave={vi.fn(async () => true)}
         onDelete={vi.fn()}
@@ -207,8 +207,8 @@ describe('VisorViaje (phase 4 assembler)', () => {
     render(
       <VisorViaje
         viajeId="v1"
-        bitacoraData={{}}
-        bitacoraLista={[]}
+        tripData={{}}
+        tripList={[]}
         onClose={vi.fn()}
         onSave={onSave}
         onDelete={vi.fn()}
@@ -230,8 +230,8 @@ describe('VisorViaje (phase 4 assembler)', () => {
     render(
       <VisorViaje
         viajeId="v1"
-        bitacoraData={{}}
-        bitacoraLista={[]}
+        tripData={{}}
+        tripList={[]}
         onClose={vi.fn()}
         onSave={vi.fn(async () => true)}
         onDelete={onDelete}

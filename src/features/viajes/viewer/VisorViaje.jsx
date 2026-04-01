@@ -23,8 +23,8 @@ import VisorDestinoLayout from './components/VisorDestinoLayout';
 
 const VisorViaje = ({
   viajeId,
-  bitacoraData,
-  bitacoraLista,
+  tripData,
+  tripList,
   onClose,
   onSave,
   onDelete,
@@ -38,8 +38,8 @@ const VisorViaje = ({
 
   const dataVM = useVisorViajeData({
     viajeId,
-    bitacoraData,
-    bitacoraLista,
+    bitacoraData: tripData,
+    bitacoraLista: tripList,
     usuario,
   });
 
@@ -109,7 +109,7 @@ const VisorViaje = ({
         galeria={galleryVM.galeria}
       />
     ),
-    bitacora: <VisorStorySection stops={paradas} text={data.texto} styles={styles} />,
+    story: <VisorStorySection stops={paradas} text={data.texto} styles={styles} />,
     gallery: (
       <VisorGallerySection
         styles={styles}
