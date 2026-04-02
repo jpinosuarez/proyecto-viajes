@@ -14,7 +14,7 @@ const WelcomeBento = ({ name, isMobile, isNewTraveler, onNewTrip }) => {
         <span style={styles.decorOrbB} />
       </div>
       <div style={styles.headerContent}>
-        <div>
+        <div style={styles.textStack}>
           <h1 style={styles.title}>{t('greeting', { name })}</h1>
           {isNewTraveler ? (
             /* ── Aspirational Empty State: Premium editorial magazine feel ── */
@@ -40,9 +40,7 @@ const WelcomeBento = ({ name, isMobile, isNewTraveler, onNewTrip }) => {
             </Motion.div>
           ) : (
             /* ── Returning Traveler: Clean subtitle, no gamification clutter ── */
-            <>
-              <p style={styles.subtitle}>{t('welcomeSubtitle')}</p>
-            </>
+            <p style={styles.subtitle}>{t('welcomeSubtitle')}</p>
           )}
         </div>
       </div>

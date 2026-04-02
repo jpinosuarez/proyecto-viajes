@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Globe, Compass, Calendar, MapPin } from 'lucide-react';
 import { ANIMATION_DELAYS } from '@shared/config';
 import { styles } from './TravelStatsWidget.styles';
 
@@ -9,35 +10,59 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US').format(Math.round(value));
 };
 
-const StatCard = ({ stat, hero = false, compact = false, style, index }) => (
-  <Motion.div
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: ANIMATION_DELAYS.fast + index * 0.06, duration: 0.35 }}
-    style={{
-      ...styles.card,
-      ...(compact ? styles.compactCard : null),
-      ...(hero ? styles.heroCard : null),
-      ...(compact && hero ? styles.compactHeroCard : null),
-      ...style,
-    }}
-  >
-    <div style={styles.cardBody}>
-      <span
+const StatCard = ({ stat, hero = false, compact = false, style, index }) => {
+  const isSecondary = !hero;
+
+  return (
+    <Motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: ANIMATION_DELAYS.fast + index * 0.06, duration: 0.35 }}
+      style={{
+        ...styles.card,
+        ...(compact ? styles.compactCard : null),
+        ...(hero ? styles.heroCard : styles.secondaryCard),
+        ...(compact && hero ? styles.compactHeroCard : null),
+        ...style,
+      }}
+    >
+      <div
         style={{
-          ...styles.value,
-          ...(compact ? styles.compactValue : null),
-          ...(hero ? styles.heroValue : null),
-          ...(compact && hero ? styles.compactHeroValue : null),
+          ...styles.cardBody,
+          ...(hero ? styles.heroCardBody : styles.secondaryCardBody),
         }}
       >
-        {stat.displayValue}
-      </span>
-      <span style={styles.label}>{stat.label}</span>
-      {stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
-    </div>
-  </Motion.div>
-);
+        {isSecondary ? (
+          <div style={styles.secondaryValueRow}>
+            <span style={styles.secondaryIcon} aria-hidden="true">{stat.icon}</span>
+            <span
+              style={{
+                ...styles.value,
+                ...(compact ? styles.compactValue : null),
+              }}
+            >
+              {stat.displayValue}
+            </span>
+          </div>
+        ) : (
+          <span
+            style={{
+              ...styles.value,
+              ...(compact ? styles.compactValue : null),
+              ...(hero ? styles.heroValue : null),
+              ...(compact && hero ? styles.compactHeroValue : null),
+            }}
+          >
+            {stat.displayValue}
+          </span>
+        )}
+
+        <span style={hero ? styles.label : styles.secondaryLabel}>{stat.label}</span>
+        {hero && stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
+      </div>
+    </Motion.div>
+  );
+};
 
 const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false, variant = 'hero' }) => {
   const { t } = useTranslation('dashboard');
@@ -59,22 +84,22 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false, varia
       },
       uniqueCountries: {
         label: t('stats.uniqueCountries'),
-        hint: t('stats.uniqueCountriesHint'),
+        icon: <Globe size={14} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.uniqueCountries)),
       },
       completedTrips: {
         label: t('stats.completedTrips'),
-        hint: t('stats.completedTripsHint'),
+        icon: <Compass size={14} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.completedTrips)),
       },
       totalDays: {
         label: t('stats.totalDays'),
-        hint: t('stats.totalDaysHint'),
+        icon: <Calendar size={14} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.totalDays)),
       },
       totalStops: {
         label: t('stats.totalStops'),
-        hint: t('stats.totalStopsHint'),
+        icon: <MapPin size={14} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.totalStops)),
       },
     };

@@ -1,20 +1,22 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
 import { setMapLanguage } from '@shared/lib/geo';
 
-const WORLD_BOUNDS = [
-  [-180, -85],
-  [180, 85],
-];
+const WORLD_BOUNDS = [[-170, -56], [170, 72]];
+const MAP_OCEAN_COLOR = '#e0e6ed';
+const MIN_WORLD_ZOOM = -4;
+const WORLD_VERTICAL_PADDING = 6;
+const WORLD_TARGET_ASPECT = 0.82;
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   const { i18n, t } = useTranslation('dashboard');
   const [hoverInfo, setHoverInfo] = useState(null);
   const mapRef = useRef(null);
+  const mapContainerRef = useRef(null);
 
   const onHover = useCallback(event => {
     const { features, lngLat } = event;
@@ -27,8 +29,19 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   }, []);
 
   const fitWorld = useCallback(map => {
+    const container = map.getContainer();
+    const width = container?.clientWidth || 0;
+    const height = container?.clientHeight || 0;
+    const targetInnerWidth = Math.min(width, Math.max(height * WORLD_TARGET_ASPECT, 1));
+    const sidePadding = Math.max((width - targetInnerWidth) / 2, 0);
+
     map.fitBounds(WORLD_BOUNDS, {
-      padding: 20,
+      padding: {
+        top: WORLD_VERTICAL_PADDING,
+        right: sidePadding,
+        bottom: WORLD_VERTICAL_PADDING,
+        left: sidePadding,
+      },
       duration: 0,
     });
   }, []);
@@ -36,6 +49,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   const handleMapLoad = useCallback(e => {
     const map = e.target;
     mapRef.current = map;
+    map.setMinZoom(MIN_WORLD_ZOOM);
     setMapLanguage(map, i18n.language);
 
     // Keep the full Mercator world fully framed inside the available viewport.
@@ -55,20 +69,39 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
     }
   }, [fitWorld]);
 
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined' || !mapContainerRef.current) return undefined;
+
+    const observer = new ResizeObserver(() => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      map.resize();
+      fitWorld(map);
+    });
+
+    observer.observe(mapContainerRef.current);
+
+    return () => observer.disconnect();
+  }, [fitWorld]);
+
   const listaPaises = paisesVisitados.length > 0 ? paisesVisitados : ['EMPTY_LIST'];
   return (
-    <div style={{
-      width: '100%',
-      minWidth: 0,
-      height: '100%',
-      minHeight: 0,
-      position: 'relative',
-      background: COLORS.background,
-      borderRadius: RADIUS.xl,
-      overflow: 'hidden',
-      margin: 0,
-      padding: 0
-    }}>
+    <div
+      ref={mapContainerRef}
+      style={{
+        width: '100%',
+        minWidth: 0,
+        height: '100%',
+        minHeight: 0,
+        position: 'relative',
+        backgroundColor: MAP_OCEAN_COLOR,
+        borderRadius: RADIUS.xl,
+        overflow: 'hidden',
+        margin: 0,
+        padding: 0
+      }}
+    >
       <Map
         style={{ width: '100%', minWidth: 0, height: '100%', minHeight: 0 }}
         initialViewState={{ longitude: 0, latitude: 15, zoom: 1.5 }}
@@ -79,8 +112,8 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         preventStyleDiffing={true}
         interactive={true}
         renderWorldCopies={false}
-        minZoom={0}
-        maxZoom={2.8}
+        minZoom={MIN_WORLD_ZOOM}
+        maxZoom={3}
         boxZoom={false}
         keyboard={false}
         scrollZoom={false}

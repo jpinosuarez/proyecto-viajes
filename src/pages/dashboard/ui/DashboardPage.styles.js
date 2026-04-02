@@ -223,10 +223,11 @@ export const styles = {
 
   sectionHeader: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     flexShrink: 0,
     gap: '8px',
+    marginTop: 0,
   },
 
   sectionTitle: {
