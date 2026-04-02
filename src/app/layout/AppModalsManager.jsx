@@ -8,6 +8,7 @@ import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
 import { BentoCardSkeleton } from '@shared/ui/components';
 import UserMenuBottomSheet from '@widgets/userMenu/ui/UserMenuBottomSheet';
+import { MiniMapaRuta } from '@features/mapa';
 import { COLORS, RADIUS, SHADOWS } from '@shared/config';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
@@ -215,6 +216,7 @@ function AppModalsManager({
                 viajeId={tripId}
                 tripList={bitacora}
                 tripData={bitacoraData}
+                MapRoutePreview={MiniMapaRuta}
                 onClose={() => navigate('/trips')}
                 onSave={handleGuardarDesdeVisor}
                 onDelete={solicitarEliminarViaje}

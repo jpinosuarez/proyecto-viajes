@@ -3,7 +3,7 @@ import { Calendar, ArrowLeft, Trash2, LoaderCircle, Edit3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatDateRange, getInitials, FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
-import { ShareStoryButton } from '@features/share';
+import ShareStoryButton from '@shared/ui/components/ShareStoryButton';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
 
 const VisorHero = ({

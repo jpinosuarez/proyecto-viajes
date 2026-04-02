@@ -194,7 +194,7 @@ Realizar prueba manual **EN DISPOSITIVO** para validar:
 
 ## 📝 Archivos Modificados
 
-1. **src/shared/ui/components/CityManager.jsx** - Key strategy fix
+1. **src/features/viajes/editor/ui/components/CityManager.jsx** - Key strategy fix
 2. **e2e/delete-last-stop.spec.ts** - Test E2E creado (new file)
 3. **No hay cambios en lógica de negocio** - Solo mejora de robustez
 

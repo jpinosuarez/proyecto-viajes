@@ -13,7 +13,10 @@ import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
  */
 const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' }) => {
   const { t, i18n } = useTranslation(['countries', 'dashboard']);
-  const flags = trip.banderas || trip.flags || (trip.flag ? [trip.flag] : []);
+  const flags =
+    (Array.isArray(trip.banderas) && trip.banderas.filter(Boolean).length > 0 && trip.banderas.filter(Boolean)) ||
+    (Array.isArray(trip.flags) && trip.flags.filter(Boolean).length > 0 && trip.flags.filter(Boolean)) ||
+    (trip.flag ? [trip.flag] : []);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
   const cityLabel = t('tripCard.cityLabel', {

@@ -78,6 +78,11 @@ describe('viajeUtils', () => {
     expect(banderas).toEqual(['https://flagcdn.com/es.svg', 'https://flagcdn.com/fr.svg']);
   });
 
+  it('acepta codigo ISO3 al construir banderas', () => {
+    const banderas = construirBanderasViaje('SVK', []);
+    expect(banderas).toEqual(['https://flagcdn.com/sk.svg']);
+  });
+
   it('construye string de ciudades unicas', () => {
     const ciudades = construirCiudadesViaje([{ nombre: 'Lima' }, { nombre: 'Cusco' }, { nombre: 'Lima' }]);
     expect(ciudades).toBe('Lima, Cusco');
@@ -144,6 +149,11 @@ describe('viajeUtils', () => {
     );
     expect(paises).toEqual(expect.arrayContaining(['ARG', 'ESP', 'FRA']));
     expect(paises.length).toBe(3);
+  });
+
+  it('convierte Eslovaquia de ISO2 a ISO3 para mapas', () => {
+    const paises = obtenerPaisesVisitados([{ code: 'SK' }], []);
+    expect(paises).toEqual(['SVK']);
   });
 
   // ─── parseFlexibleDate ───

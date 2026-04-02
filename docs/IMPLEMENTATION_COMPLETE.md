@@ -58,7 +58,7 @@
 ✓ Smooth transitions and interactions
 
 **Files Modified:**
-- `src/shared/ui/components/PremiumDateInput.jsx` — Complete refactor with calendar integration
+- PremiumDateInput component — Complete refactor with calendar integration
 
 ---
 

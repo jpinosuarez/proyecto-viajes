@@ -1,5 +1,17 @@
 import { useMemo } from 'react';
-import { getContinents } from '../achievementsEngine';
+import { COUNTRIES_DB } from '../../../../assets/sellos';
+
+const getContinents = (countryCodes) => {
+  const continents = new Set();
+  const lookup = new Map(COUNTRIES_DB.map((country) => [country.code, country.continente]));
+
+  countryCodes.forEach((code) => {
+    const continent = lookup.get(code);
+    if (continent) continents.add(continent);
+  });
+
+  return continents;
+};
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const EMPTY_TRIPS = [];

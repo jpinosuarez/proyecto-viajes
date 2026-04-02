@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { motion as Motion } from 'framer-motion';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useLogStats } from '@features/gamification/model/hooks';
+import { useLogStats } from '@features/gamification/model';
 // DEPRECATED: TravelStatsWidget widget moved to TripCommandBar (TravelStatsWidget now uses logStats API, not stats)
 // import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 import { COLORS } from '@shared/config';

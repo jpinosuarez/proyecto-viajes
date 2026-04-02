@@ -3,9 +3,9 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Globe2, MapPin } from 'lucide-react';
 import { useAuth } from '@app/providers';
-import { useLogStats } from '@features/gamification/model/hooks';
-import { COLORS, RADIUS, SHADOWS, SPACING } from '@shared/config';
+import { COLORS, RADIUS, SHADOWS } from '@shared/config';
 import TripRosterItem from './TripRosterItem';
+import { COUNTRIES_DB } from '../../../../assets/sellos';
 
 /**
  * TripRoster — The flight deck's trip mission control.
@@ -23,11 +23,26 @@ const GLASS_PANEL = {
   boxShadow: '0 16px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06)',
 };
 
+const CONTINENT_LOOKUP = new Map(COUNTRIES_DB.map((country) => [country.code, country.continente]));
+
+const countContinents = (trips = [], tripData = {}) => {
+  const continents = new Set();
+
+  trips.forEach((trip) => {
+    const details = tripData[trip.id] || trip;
+    const code = details?.code || details?.paisCodigo || trip.code || trip.paisCodigo;
+    const continent = CONTINENT_LOOKUP.get(code);
+    if (continent) continents.add(continent);
+  });
+
+  return continents.size;
+};
+
 /* ── Roster Header (Traveler Identity Badge — no gamification) ─────────── */
 const RosterHeader = ({ paises, trips, tripData, isMobile, onToggle, isExpanded }) => {
   const { t } = useTranslation('dashboard');
   const { usuario } = useAuth();
-  const stats = useLogStats(trips, tripData);
+  const continentsCount = useMemo(() => countContinents(trips, tripData), [trips, tripData]);
   const name = usuario?.displayName?.split(' ')[0] || t('fallbackName', 'Explorer');
 
   return (
@@ -87,7 +102,7 @@ const RosterHeader = ({ paises, trips, tripData, isMobile, onToggle, isExpanded 
         }}>
           {paises.length} {paises.length === 1 ? t('hud.countrySingular', 'country') : t('hud.countryPlural', 'countries')}
           <span style={{ opacity: 0.4 }}>·</span>
-          {stats.continents} <Globe2 size={10} />
+          {continentsCount} <Globe2 size={10} />
           <span style={{ opacity: 0.4 }}>·</span>
           {trips.length} <MapPin size={10} />
         </p>

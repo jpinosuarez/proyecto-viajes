@@ -6,7 +6,7 @@ import { formatDateRange, getInitials, FOTO_DEFAULT_URL } from '@shared/lib/util
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { COLORS, FONTS, RADIUS, SHADOWS, GLASS, Z_INDEX } from '@shared/config';
-import { ShareStoryButton } from '@features/share';
+import ShareStoryButton from '@shared/ui/components/ShareStoryButton';
 import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
 
 /**

@@ -169,7 +169,7 @@ const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isBusy;
 
 ## ✅ MANDATE 4: APPLY THE KEY FIX
 
-**Location:** `src/shared/ui/components/CityManager.jsx` (Line 148)
+**Location:** `src/features/viajes/editor/ui/components/CityManager.jsx` (Line 148)
 
 ### The Issue
 ```js

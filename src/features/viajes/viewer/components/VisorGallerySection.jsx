@@ -1,6 +1,6 @@
 import { Star, Trash2, Share2, Sparkles } from 'lucide-react';
 import { GalleryGrid } from '@shared/ui/components/GalleryGrid';
-import { ShareStoryButton } from '@features/share';
+import ShareStoryButton from '@shared/ui/components/ShareStoryButton';
 
 const VisorGallerySection = ({
   styles,

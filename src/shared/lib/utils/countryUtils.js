@@ -27,8 +27,15 @@ export const getFlagUrl = (countryCode) => {
 // Convierte código Alpha-2 (ej: AR) a Alpha-3 (ej: ARG) para Mapbox
 export const getCountryISO3 = (code2) => {
   if (!code2) return null;
-  const country = COUNTRIES_DATA.find(c => c.code === code2.toUpperCase());
-  return country ? country.iso3 : code2.toUpperCase();
+
+  const normalizedAlpha2 = normalizeCountryCode(code2);
+  if (normalizedAlpha2) {
+    const country = COUNTRIES_DATA.find((c) => c.code === normalizedAlpha2);
+    if (country?.iso3) return country.iso3;
+  }
+
+  const raw = typeof code2 === 'string' ? code2.trim().toUpperCase() : '';
+  return raw.length === 3 ? raw : null;
 };
 
 export const getCountryName = (code) => {
@@ -129,6 +136,7 @@ export const COUNTRIES_DATA = [
   { code: 'CZ', iso3: 'CZE', name: 'República Checa' },
   { code: 'RU', iso3: 'RUS', name: 'Rusia' },
   { code: 'SG', iso3: 'SGP', name: 'Singapur' },
+  { code: 'SK', iso3: 'SVK', name: 'Eslovaquia' },
   { code: 'ZA', iso3: 'ZAF', name: 'Sudáfrica' },
   { code: 'SE', iso3: 'SWE', name: 'Suecia' },
   { code: 'CH', iso3: 'CHE', name: 'Suiza' },

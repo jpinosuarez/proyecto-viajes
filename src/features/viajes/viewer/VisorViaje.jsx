@@ -25,6 +25,7 @@ const VisorViaje = ({
   viajeId,
   tripData,
   tripList,
+  MapRoutePreview,
   onClose,
   onSave,
   onDelete,
@@ -181,6 +182,7 @@ const VisorViaje = ({
             styles={styles}
             paradas={paradas}
             sections={sectionsVM}
+            MapRoutePreview={MapRoutePreview}
           />
         )}
 

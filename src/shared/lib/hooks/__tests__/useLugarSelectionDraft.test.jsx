@@ -75,4 +75,35 @@ describe('useLugarSelectionDraft', () => {
       paisCodigo: 'ES',
     }));
   });
+
+  test('normaliza codigo ISO3 de pais a ISO2', () => {
+    const closeBuscador = vi.fn();
+    const setFiltro = vi.fn();
+    const setViajeBorrador = vi.fn();
+    const setCiudadInicialBorrador = vi.fn();
+
+    const { result } = renderHook(() => useLugarSelectionDraft({
+      closeBuscador,
+      setFiltro,
+      setViajeBorrador,
+      setCiudadInicialBorrador,
+    }));
+
+    act(() => {
+      result.current({
+        isCountry: true,
+        code: 'SVK',
+        name: 'Slovakia',
+        coordinates: [19.699, 48.669],
+      });
+    });
+
+    expect(setViajeBorrador).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'SK',
+    }));
+
+    expect(setCiudadInicialBorrador).toHaveBeenCalledWith(expect.objectContaining({
+      paisCodigo: 'SK',
+    }));
+  });
 });

@@ -1,8 +1,7 @@
 import React from 'react';
-import { MiniMapaRuta } from '@features/mapa/ui/components';
 import ContextCard from '../ContextCard';
 
-const VisorDestinoLayout = ({ isMobile, styles, paradas, sections }) => {
+const VisorDestinoLayout = ({ isMobile, styles, paradas, sections, MapRoutePreview }) => {
   return (
     <div style={styles.destinoBody(isMobile)}>
       {sections.context}
@@ -10,7 +9,7 @@ const VisorDestinoLayout = ({ isMobile, styles, paradas, sections }) => {
       {paradas.length === 1 && (
         <div style={{ marginBottom: '24px' }}>
           <ContextCard icon="📍" label="Ubicacion" style={{ gridColumn: 'span 2' }}>
-            <MiniMapaRuta paradas={paradas} />
+            {MapRoutePreview ? <MapRoutePreview paradas={paradas} /> : null}
           </ContextCard>
         </div>
       )}

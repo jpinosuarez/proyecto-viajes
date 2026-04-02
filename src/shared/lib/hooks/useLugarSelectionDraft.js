@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { COUNTRIES_DATA, getFlagUrl } from '@shared/lib/utils/countryUtils';
+import { COUNTRIES_DATA, getFlagUrl, normalizeCountryCode } from '@shared/lib/utils/countryUtils';
 
 export function useLugarSelectionDraft({
   closeBuscador,
@@ -13,7 +13,7 @@ export function useLugarSelectionDraft({
     const coordenadasLugar = Array.isArray(lugar.coordinates) ? lugar.coordinates : null;
 
     if (lugar.isCountry) {
-      const codigoPais = (lugar.code || lugar.countryCode || '').toUpperCase();
+      const codigoPais = normalizeCountryCode(lugar.code || lugar.countryCode || '') || '';
       const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
         code: codigoPais,
@@ -34,7 +34,7 @@ export function useLugarSelectionDraft({
         _selectionId: `${Date.now()}`,
       };
     } else {
-      const codigoPais = (lugar.countryCode || lugar.code || '').toUpperCase();
+      const codigoPais = normalizeCountryCode(lugar.countryCode || lugar.code || '') || '';
       const paisInfo = COUNTRIES_DATA.find((c) => c.code === codigoPais);
       datosPais = {
         code: codigoPais,

@@ -1,3 +1,3 @@
-// Public API for share feature (foundation phase).
-export { default as ShareStoryButton } from './ui/ShareStoryButton';
-export { default as StoryExportTemplate } from './ui/StoryExportTemplate';
+// Public API for share feature (thin compatibility layer).
+export { default as ShareStoryButton } from '@shared/ui/components/ShareStoryButton';
+export { default as StoryExportTemplate } from '@shared/ui/components/StoryExportTemplate';
