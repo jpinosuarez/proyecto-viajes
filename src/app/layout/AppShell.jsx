@@ -14,6 +14,7 @@ import AppModalsManager from './AppModalsManager';
 import AppScaffold from './AppScaffold';
 
 import { CelebrationQueue } from '@features/gamification/ui/components';
+import { ENABLE_GAMIFICATION } from '@shared/config';
 import PWAUpdatePrompt from '@shared/ui/components/PWAUpdatePrompt';
 import OfflineBanner from '@shared/ui/components/OfflineBanner';
 
@@ -175,11 +176,13 @@ function AppShell() {
             onLugarSeleccionado={onLugarSeleccionado}
             pushToast={pushToast}
           />
-          <CelebrationQueue
-            celebrations={celebrations}
-            onDismiss={dismissCelebration}
-            onDismissAll={dismissAll}
-          />
+          {ENABLE_GAMIFICATION && (
+            <CelebrationQueue
+              celebrations={celebrations}
+              onDismiss={dismissCelebration}
+              onDismissAll={dismissAll}
+            />
+          )}
           <PWAUpdatePrompt />
           <OfflineBanner />
         </>

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getTravelerLevel } from './travelerLevel';
 import { buildStats, evaluateAchievements, getAchievementsWithProgress } from './achievementsEngine';
+import { ENABLE_GAMIFICATION } from '@shared/config';
 
 const STORAGE_KEY = 'keeptrip-achievements';
+const EMPTY_STATS = Object.freeze({});
 
 const readPersisted = () => {
   try {
@@ -34,6 +36,8 @@ export const useAchievements = ({ paisesVisitados, bitacora, todasLasParadas }) 
   const stopCount = todasLasParadas.length;
 
   useEffect(() => {
+    if (!ENABLE_GAMIFICATION) return;
+
     const stats = buildStats(paisesVisitados, bitacora, todasLasParadas);
     const unlocked = evaluateAchievements(stats);
     const currentLevel = getTravelerLevel(countryCount);
@@ -85,12 +89,12 @@ export const useAchievements = ({ paisesVisitados, bitacora, todasLasParadas }) 
 
   // Always-available data (not dependent on celebrations)
   const stats = useMemo(
-    () => buildStats(paisesVisitados, bitacora, todasLasParadas),
+    () => (ENABLE_GAMIFICATION ? buildStats(paisesVisitados, bitacora, todasLasParadas) : EMPTY_STATS),
     [paisesVisitados, bitacora, todasLasParadas],
   );
 
   const achievementsWithProgress = useMemo(
-    () => getAchievementsWithProgress(stats),
+    () => (ENABLE_GAMIFICATION ? getAchievementsWithProgress(stats) : []),
     [stats],
   );
 

@@ -20,7 +20,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useOutletContext } from 'react-router-dom';
 import PageLoader from '@shared/ui/components/PageLoader';
-import { ENABLE_IMMERSIVE_VIEWER, ENABLE_INVITATIONS } from '@shared/config';
+import { ENABLE_IMMERSIVE_VIEWER, ENABLE_INVITATIONS, ENABLE_GAMIFICATION } from '@shared/config';
 
 import AuthGuard from './AuthGuard';
 import AdminGuard from './AdminGuard';
@@ -153,7 +153,7 @@ function AppRouter() {
             <Route path="mapa"       element={<MapRoute />} />
             <Route
               path="explorer"
-              element={ENABLE_IMMERSIVE_VIEWER ? <ExplorerRoute /> : <Navigate to="/dashboard" replace />}
+              element={ENABLE_GAMIFICATION ? <ExplorerRoute /> : <Navigate to="/dashboard" replace />}
             />
             <Route
               path="invitations"
