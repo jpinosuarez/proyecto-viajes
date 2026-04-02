@@ -40,4 +40,11 @@ export const contextCardStyles = {
     borderRadius: RADIUS.md,
     overflow: 'hidden',
   },
+  flagsWrap: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '6px',
+    rowGap: '6px',
+  },
 };

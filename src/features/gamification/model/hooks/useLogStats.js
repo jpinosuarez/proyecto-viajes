@@ -1,48 +1,15 @@
 import { useMemo } from 'react';
-import { COUNTRIES_DB } from '../../../../assets/sellos';
+import { calculateTripDays } from '@shared/lib/utils/viajeUtils';
 
-const getContinents = (countryCodes) => {
-  const continents = new Set();
-  const lookup = new Map(COUNTRIES_DB.map((country) => [country.code, country.continente]));
-
-  countryCodes.forEach((code) => {
-    const continent = lookup.get(code);
-    if (continent) continents.add(continent);
-  });
-
-  return continents;
-};
-
-const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const EMPTY_TRIPS = [];
 const EMPTY_TRIP_DATA = {};
 
-const getTripDuration = (tripDetails) => {
-  if (!tripDetails?.startDate || !tripDetails?.endDate) {
-    return 1;
-  }
-
-  const startDate = new Date(tripDetails.startDate);
-  const endDate = new Date(tripDetails.endDate);
-
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return 1;
-  }
-
-  const diffInDays = Math.ceil((endDate - startDate) / DAY_IN_MS) + 1;
-  return diffInDays > 0 ? diffInDays : 1;
-};
-
-const countTripCities = (tripDetails) => {
-  if (!tripDetails?.cities) {
-    return 0;
-  }
-
-  return tripDetails.cities
-    .split(',')
-    .map((city) => city.trim())
-    .filter(Boolean)
-    .length;
+const getTripStops = (trip, tripDetails) => {
+  if (Array.isArray(tripDetails?.paradas)) return tripDetails.paradas;
+  if (Array.isArray(trip?.paradas)) return trip.paradas;
+  if (tripDetails?.paradas && typeof tripDetails.paradas === 'object') return Object.values(tripDetails.paradas);
+  if (trip?.paradas && typeof trip.paradas === 'object') return Object.values(trip.paradas);
+  return [];
 };
 
 export const useLogStats = (trips = [], tripData = {}) => {
@@ -52,72 +19,47 @@ export const useLogStats = (trips = [], tripData = {}) => {
   return useMemo(() => {
     if (safeTrips.length === 0) {
       return {
-        tripCount: 0,
+        worldExploredPercentage: '0.0',
+        uniqueCountries: 0,
+        completedTrips: 0,
         totalDays: 0,
-        totalCities: 0,
-        percentOfWorld: 0,
-        averageRating: null,
-        continents: 0,
-        longestTrip: 0,
-        totalPhotos: 0,
+        totalStops: 0,
       };
     }
 
     let totalDays = 0;
-    let totalCities = 0;
-    let ratingSum = 0;
-    let ratedTripCount = 0;
-    let longestDays = 0;
-    let totalPhotos = 0;
-    const continentCodes = new Set();
+    let totalStops = 0;
+    const countryCodes = new Set();
 
     safeTrips.forEach((trip) => {
       const tripDetails = safeTripData[trip.id];
+      const stops = getTripStops(trip, tripDetails);
+      const stopsCount = Number(trip.totalParadas || tripDetails?.totalParadas || (Array.isArray(stops) ? stops.length : 0) || 0);
+      const startDate = tripDetails?.fechaInicio || tripDetails?.startDate || trip.fechaInicio || trip.startDate;
+      const endDate = tripDetails?.fechaFin || tripDetails?.endDate || trip.fechaFin || trip.endDate;
 
-      const duration = getTripDuration(tripDetails);
-      totalDays += duration;
-      if (duration > longestDays) longestDays = duration;
+      totalDays += calculateTripDays(startDate, endDate);
 
-      totalCities += countTripCities(tripDetails);
+      totalStops += stopsCount;
 
-      const rating = Number(tripDetails?.rating);
-      if (!Number.isNaN(rating) && rating > 0) {
-        ratingSum += rating;
-        ratedTripCount += 1;
-      }
+      stops.forEach((stop) => {
+        const stopCountryCode = stop?.paisCodigo || stop?.countryCode || stop?.code;
+        if (stopCountryCode) countryCodes.add(stopCountryCode);
+      });
 
-      // gather country codes for continents lookup
-      if (tripDetails?.code) {
-        continentCodes.add(tripDetails.code);
-      } else if (trip.code) {
-        continentCodes.add(trip.code);
-      }
-
-      // count photos if present in trip record itself or details
-      if (Array.isArray(tripDetails?.gallery)) totalPhotos += tripDetails.gallery.length;
-      else if (Array.isArray(tripDetails?.fotos)) totalPhotos += tripDetails.fotos.length;
-      else if (Array.isArray(trip.gallery)) totalPhotos += trip.gallery.length;
-      else if (Array.isArray(trip.fotos)) totalPhotos += trip.fotos.length;
+      const tripCountryCode = tripDetails?.paisCodigo || tripDetails?.countryCode || tripDetails?.code || trip?.paisCodigo || trip?.countryCode || trip?.code;
+      if (tripCountryCode) countryCodes.add(tripCountryCode);
     });
 
-    const averageRating = ratedTripCount > 0 ? ratingSum / ratedTripCount : 0;
-
-    // Calculate % of World (ISO 3166-1: 195 recognized countries) — return pure integer for narrative strength
-    const uniqueCountries = continentCodes.size;
-    const percentOfWorld = Math.round((uniqueCountries / 195) * 100);
-
-    // convert continent codes to count via achievementsEngine helper
-    const continents = getContinents([...continentCodes]).size;
+    const uniqueCountries = countryCodes.size;
+    const worldExploredPercentage = ((uniqueCountries / 195) * 100).toFixed(1);
 
     return {
-      tripCount: safeTrips.length,
+      worldExploredPercentage,
+      uniqueCountries,
+      completedTrips: safeTrips.length,
       totalDays,
-      totalCities,
-      percentOfWorld,
-      averageRating: averageRating > 0 ? averageRating.toFixed(1) : null,
-      continents,
-      longestTrip: longestDays,
-      totalPhotos,
+      totalStops,
     };
   }, [safeTrips, safeTripData]);
 };

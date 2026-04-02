@@ -1,4 +1,5 @@
 import { EXTERNAL_API_TIMEOUT_MS } from '@shared/lib/utils/viajeUtils';
+import { ENABLE_WEATHER_API } from '@shared/config/featureFlags';
 
 const conTimeout = async (fn, fallbackValue, timeoutMs = EXTERNAL_API_TIMEOUT_MS) => {
   try {
@@ -24,6 +25,7 @@ const mapearCodigoClima = (code) => {
 };
 
 export const obtenerClimaHistorico = async (lat, lng, fecha) => {
+  if (!ENABLE_WEATHER_API) return null;
   if (lat == null || lng == null || !fecha) return null;
 
   try {
@@ -43,6 +45,7 @@ export const obtenerClimaHistorico = async (lat, lng, fecha) => {
 };
 
 export const obtenerClimaHistoricoSeguro = async (lat, lng, fecha) => {
+  if (!ENABLE_WEATHER_API) return null;
   if (lat == null || lng == null || !fecha) return null;
   return conTimeout(() => obtenerClimaHistorico(lat, lng, fecha), null);
 };

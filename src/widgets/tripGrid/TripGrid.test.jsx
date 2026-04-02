@@ -50,7 +50,7 @@ vi.mock('lucide-react', () => {
 });
 
 vi.mock('@widgets/travelStats/ui/TravelStatsWidget', () => ({
-  default: ({ stats, ariaLabel, variant }) => (
+  default: ({ stats, ariaLabel }) => (
     <div data-testid="travel-stats" role="region" aria-label={ariaLabel}>
       {stats?.map((stat, idx) => (
         <div key={idx} data-testid={`stat-${stat.label}`}>
@@ -153,11 +153,11 @@ describe.skip('TripGrid', () => {
     expect(within(statsRegion).getByText('2')).toBeInTheDocument();
     expect(within(statsRegion).getByText('5')).toBeInTheDocument();
     expect(within(statsRegion).getByText('3')).toBeInTheDocument();
-    expect(within(statsRegion).getByText('4.0★')).toBeInTheDocument();
-    expect(within(statsRegion).getByText('stats.tripsCompleted')).toBeInTheDocument();
+    expect(within(statsRegion).getByText('stats.worldExploredPercentage')).toBeInTheDocument();
+    expect(within(statsRegion).getByText('stats.uniqueCountries')).toBeInTheDocument();
+    expect(within(statsRegion).getByText('stats.completedTrips')).toBeInTheDocument();
     expect(within(statsRegion).getByText('stats.totalDays')).toBeInTheDocument();
-    expect(within(statsRegion).getByText('stats.registeredCities')).toBeInTheDocument();
-    expect(within(statsRegion).getByText('stats.averageRating')).toBeInTheDocument();
+    expect(within(statsRegion).getByText('stats.totalStops')).toBeInTheDocument();
   });
 
   it('updates log stats when the search filter changes visible trips', () => {
@@ -183,19 +183,23 @@ describe.skip('TripGrid', () => {
     );
 
     const statsRegion = screen.getByRole('region', { name: 'stats.tripSummary' });
-    const tripCountLabel = within(statsRegion).getByText('stats.tripsCompleted');
+    const worldLabel = within(statsRegion).getByText('stats.worldExploredPercentage');
+    const uniqueCountriesLabel = within(statsRegion).getByText('stats.uniqueCountries');
+    const tripsLabel = within(statsRegion).getByText('stats.completedTrips');
     const totalDaysLabel = within(statsRegion).getByText('stats.totalDays');
-    const totalCitiesLabel = within(statsRegion).getByText('stats.registeredCities');
+    const totalStopsLabel = within(statsRegion).getByText('stats.totalStops');
 
     expect(screen.getByText('bentogrid.searchResults')).toBeInTheDocument();
-    expect(tripCountLabel).toBeInTheDocument();
+    expect(worldLabel).toBeInTheDocument();
+    expect(uniqueCountriesLabel).toBeInTheDocument();
+    expect(tripsLabel).toBeInTheDocument();
     expect(totalDaysLabel).toBeInTheDocument();
-    expect(totalCitiesLabel).toBeInTheDocument();
-    expect(tripCountLabel.previousSibling).toHaveTextContent('1');
+    expect(totalStopsLabel).toBeInTheDocument();
+    expect(worldLabel.previousSibling).toHaveTextContent('0.0%');
+    expect(uniqueCountriesLabel.previousSibling).toHaveTextContent('0');
+    expect(tripsLabel.previousSibling).toHaveTextContent('1');
     expect(totalDaysLabel.previousSibling).toHaveTextContent('2');
-    expect(totalCitiesLabel.previousSibling).toHaveTextContent('1');
-    expect(within(statsRegion).queryByText('stats.averageRating')).not.toBeInTheDocument();
-    expect(within(statsRegion).queryByText('4.0★')).not.toBeInTheDocument();
+    expect(totalStopsLabel.previousSibling).toHaveTextContent('1');
     expect(screen.getByTestId('trip-card-trip-2')).toBeInTheDocument();
     expect(screen.queryByTestId('trip-card-trip-1')).not.toBeInTheDocument();
   });

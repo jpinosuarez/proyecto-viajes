@@ -1,4 +1,6 @@
 import { useCallback, useState } from 'react';
+import { construirBanderasViaje, construirCiudadesViaje } from '@shared/lib/utils/viajeUtils';
+import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 
 
 function isDraftMeaningful(data, paradas = []) {
@@ -8,6 +10,23 @@ function isDraftMeaningful(data, paradas = []) {
   const hasParadas = Array.isArray(paradas) && paradas.length > 0;
   const hasText = String(data?.texto || '').trim().length > 0;
   return hasTitle || hasLocation || hasParadas || hasText;
+}
+
+function rebuildStoryMetadata(datosViaje = {}, paradas = []) {
+  const safeParadas = Array.isArray(paradas) ? paradas : [];
+  const uniqueCodes = [
+    ...new Set(safeParadas.map((parada) => parada?.paisCodigo || parada?.countryCode).filter(Boolean)),
+  ];
+  const rebuiltFlags = uniqueCodes.map((code) => getFlagUrl(code)).filter(Boolean);
+  const fallbackFlags = construirBanderasViaje(datosViaje.code || datosViaje.paisCodigo || '', safeParadas);
+  const freshFlags = rebuiltFlags.length > 0 ? rebuiltFlags : fallbackFlags;
+
+  return {
+    ...datosViaje,
+    banderas: freshFlags,
+    flags: freshFlags,
+    ciudades: construirCiudadesViaje(safeParadas),
+  };
 }
 
 export function useViajeCrudHandlers({
@@ -51,7 +70,8 @@ export function useViajeCrudHandlers({
           return null;
         }
 
-        const nuevoId = await guardarNuevoViaje(datosViaje, todasLasParadasLocal);
+        const datosViajeConStory = rebuildStoryMetadata(datosViaje, todasLasParadasLocal);
+        const nuevoId = await guardarNuevoViaje(datosViajeConStory, todasLasParadasLocal);
         console.log('[useViajeCrudHandlers] nuevoId devuelto de guardarNuevoViaje:', nuevoId);
         if (nuevoId) {
           setViajeBorrador(null);
@@ -60,7 +80,8 @@ export function useViajeCrudHandlers({
         return nuevoId || null;
       }
 
-      const okViaje = await actualizarDetallesViaje(id, datosViaje);
+      const datosViajeConStory = rebuildStoryMetadata(datosViaje, paradasNuevas);
+      const okViaje = await actualizarDetallesViaje(id, datosViajeConStory);
       let okParadas = true;
 
       if (paradasNuevas && paradasNuevas.length > 0) {
@@ -84,7 +105,15 @@ export function useViajeCrudHandlers({
       pushToast('Error al guardar el viaje', 'error');
       return null;
     }
-  }, [ciudadInicialBorrador, guardarNuevoViaje, actualizarDetallesViaje, agregarParada, pushToast]);
+  }, [
+    ciudadInicialBorrador,
+    guardarNuevoViaje,
+    actualizarDetallesViaje,
+    agregarParada,
+    pushToast,
+    setViajeBorrador,
+    setCiudadInicialBorrador,
+  ]);
 
   // PHASE 1: Explicit UI cleanup (only called by user close action)
   const closeTripEditor = useCallback(() => {
@@ -112,9 +141,10 @@ export function useViajeCrudHandlers({
     if (isSavingViewer) return false;
     setIsSavingViewer(true);
     const { paradasNuevas, ...datosViaje } = datosCombinados;
+    const datosViajeConStory = rebuildStoryMetadata(datosViaje, paradasNuevas);
 
     try {
-      const okViaje = await actualizarDetallesViaje(id, datosViaje);
+      const okViaje = await actualizarDetallesViaje(id, datosViajeConStory);
       let okParadas = true;
 
       if (paradasNuevas && paradasNuevas.length > 0) {

@@ -60,6 +60,8 @@ export const tripStyles = {
     display: 'flex',
     gap: '6px',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: '6px',
   },
 
   // State-of-the-art Floating Pills
@@ -120,11 +122,43 @@ export const tripStyles = {
     fontWeight: '800',
     color: 'white',
     textShadow: '0 2px 8px rgba(0,0,0,0.7)',
-    whiteSpace: 'nowrap',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    whiteSpace: 'normal',
     lineHeight: 1.1,
     letterSpacing: '-0.5px'
+  },
+
+  fallbackAuraContainer: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+  },
+
+  fallbackAuraTrack: {
+    display: 'grid',
+    width: '100%',
+    height: '100%',
+    filter: 'blur(1px)',
+    transform: 'scale(1.05)',
+    transformOrigin: 'center',
+  },
+
+  fallbackAuraFlag: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+
+  fallbackAuraOverlay: {
+    position: 'absolute',
+    inset: 0,
+    background: 'rgba(15, 23, 42, 0.5)',
+    pointerEvents: 'none',
   },
 
   metaRow: {

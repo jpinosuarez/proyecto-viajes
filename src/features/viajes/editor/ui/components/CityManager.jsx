@@ -7,6 +7,14 @@ import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { parseFlexibleDate, formatDateSlash } from '@shared/lib/utils/viajeUtils';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const createStopInstanceId = (feature) => {
+  const baseId = feature.id || `${feature.text}-${feature.center?.[0]}-${feature.center?.[1]}`;
+  const uuid = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  return `temp-${baseId}-${uuid}`;
+};
 
 
 
@@ -34,21 +42,26 @@ const CityManager = ({ t, paradas, setParadas }) => {
   const agregarCiudad = (feature) => {
     const contextCountry = feature.context?.find(c => c.id.startsWith('country'));
     const countryCode = contextCountry?.short_code?.toUpperCase();
-    const tempId = feature.id || `${feature.text}-${feature.center?.[0]}-${feature.center?.[1]}`;
 
-    const nuevaParada = {
-      id: `temp-${tempId}`,
-      nombre: feature.text,
-      coordenadas: feature.center,
-      fechaLlegada: '', 
-      fechaSalida: '', 
-      fecha: new Date().toISOString().split('T')[0], 
-      paisCodigo: countryCode, 
-      flag: getFlagUrl(countryCode), // Guardar URL SVG
-      transporte: null,
-      notaCorta: ''
-    };
-    setParadas([...paradas, nuevaParada]);
+    setParadas((prevParadas) => {
+      const generatedId = createStopInstanceId(feature);
+
+      const nuevaParada = {
+        id: generatedId,
+        nombre: feature.text,
+        coordenadas: feature.center,
+        fechaLlegada: '',
+        fechaSalida: '',
+        fecha: new Date().toISOString().split('T')[0],
+        paisCodigo: countryCode,
+        flag: getFlagUrl(countryCode), // Guardar URL SVG
+        transporte: null,
+        notaCorta: '',
+      };
+
+      return [...prevParadas, nuevaParada];
+    });
+
     setBusqueda('');
     setResultados([]);
   };

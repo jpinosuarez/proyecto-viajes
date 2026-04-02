@@ -1,416 +1,139 @@
-import { COLORS, RADIUS, SHADOWS, TRANSITIONS, SPACING, ANIMATION_DELAYS } from '@shared/config';
+import { COLORS, RADIUS, SHADOWS, SPACING } from '@shared/config';
 
-// Hardening: text overflow + i18n support
+const cardBase = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  gap: SPACING.sm,
+  borderRadius: RADIUS.xl,
+  padding: SPACING.lg,
+  minWidth: 0,
+  minHeight: 0,
+  background: 'rgba(255, 255, 255, 0.78)',
+  border: `1px solid rgba(15, 23, 42, 0.08)`,
+  boxShadow: SHADOWS.sm,
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+};
+
 export const styles = {
   shell: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
     width: '100%',
   },
-  heroContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-  },
-  heroLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    letterSpacing: '0.08em',
-    color: COLORS.textSecondary,
-    opacity: 0.7,
-    margin: 0,
-  },
-  heroValue: {
-    fontSize: 'clamp(1.8rem, 4vw, 2.5rem)',
-    fontWeight: 900,
-    color: COLORS.atomicTangerine,
-    lineHeight: 0.9,
-    letterSpacing: '-0.04em',
-    margin: 0,
-  },
-  secondaryGrid: {
+  gridMobile: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(100px, 12vw, 140px), 1fr))',
-    gap: '12px 16px',
+    gap: SPACING.md,
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gridAutoRows: 'minmax(120px, auto)',
+    alignItems: 'stretch',
     width: '100%',
   },
-  secondaryStat: {
+  gridDesktop: {
+    display: 'grid',
+    gap: SPACING.md,
+    gridTemplateColumns: 'minmax(0, 1.15fr) repeat(2, minmax(0, 1fr))',
+    gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
+    alignItems: 'stretch',
+    width: '100%',
+  },
+  card: cardBase,
+  heroCard: {
+    background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.16), rgba(69, 176, 168, 0.12))',
+    minHeight: '220px',
+    boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+    border: '1px solid rgba(255, 107, 53, 0.14)',
+  },
+  cardBody: {
     display: 'flex',
     flexDirection: 'column',
     gap: SPACING.xs,
-    alignItems: 'flex-start',
-    minWidth: 0, /* /harden: allow shrinking below content in flex */
-    minHeight: 0,
+    minWidth: 0,
   },
   value: {
-    fontSize: 'clamp(1.3rem, 1.8vw, 1.6rem)',
-    fontWeight: 900,
-    color: COLORS.charcoalBlue,
+    fontSize: 'clamp(1.5rem, 3.4vw, 2rem)',
     lineHeight: 1,
-    letterSpacing: '-0.02em',
+    fontWeight: 900,
+    letterSpacing: '-0.04em',
+    color: COLORS.charcoalBlue,
     margin: 0,
     minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
+  },
+  heroValue: {
+    fontSize: 'clamp(2.6rem, 6vw, 4rem)',
+    color: COLORS.atomicTangerine,
   },
   label: {
     fontSize: '0.75rem',
-    fontWeight: 600,
-    color: COLORS.textSecondary,
-    letterSpacing: '0.04em',
-    margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    hyphens: 'auto',
-  },
-  compactContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-    gap: '24px',
-    width: '100%',
-  },
-
-  // HOME VARIANT: Horizontal layout with hero on left, secondary on right
-  homeShell: (isMobile) => ({
-    display: 'flex',
-    flexDirection: isMobile ? 'column' : 'row',
-    alignItems: isMobile ? 'flex-start' : 'center',
-    gap: isMobile ? SPACING.sm : SPACING.lg,
-    width: '100%',
-    justifyContent: isMobile ? 'flex-start' : 'space-between',
-  }),
-  homeHeroContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    flexShrink: 0,
-    /* PHASE 1: Visual hierarchy via subtle divider (no card) */
-    borderRight: `1px solid ${COLORS.border}`,
-    paddingRight: SPACING.lg,
-    marginRight: SPACING.lg,
-  },
-  homeHeroLabel: {
-    fontSize: '0.75rem',
     fontWeight: 700,
-    letterSpacing: '0.1em',
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
     color: COLORS.textSecondary,
-    opacity: 0.65,
     margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
   },
-  homeHeroValue: {
-    /* PHASE 2: Reduce clamp floor for mobile fit (was 1.5rem, now 1.25rem) */
-    fontSize: 'clamp(1.25rem, 4vw, 3rem)',
-    fontWeight: 900,
-    color: COLORS.atomicTangerine,
-    lineHeight: 0.85,
-    letterSpacing: '-0.05em',
-    margin: 0,
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
+  hint: {
+    fontSize: '0.72rem',
+    lineHeight: 1.45,
+    color: COLORS.textSecondary,
+    opacity: 0.68,
   },
-  homeSecondaryGrid: (isMobile) => ({
-    display: 'grid',
-    /* PHASE 2: Tighter mobile grid to ensure all 4 stats visible without scroll */
-    gridTemplateColumns: isMobile
-      ? 'repeat(2, 1fr)'
-      : 'repeat(auto-fit, minmax(clamp(80px, 20vw, 120px), 1fr))',
-    gap: isMobile ? SPACING.xs : `${SPACING.md} ${SPACING.lg}`,
-    alignItems: 'start',
-    flex: 1,
-    width: '100%',
-  }),
-  homeSecondaryStat: {
+  emptyState: {
     display: 'flex',
     flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    minWidth: 0, /* /harden: prevent overflow from overflowing flex container */
-    width: '100%',
+    gap: SPACING.sm,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    background: 'rgba(255, 255, 255, 0.65)',
+    border: `1px dashed rgba(15, 23, 42, 0.12)`,
   },
-
-  // TRIPS VARIANT: Compact for TripCommandBar header
-  tripsShell: {
-    display: 'grid',
-    gridTemplateColumns: '1fr repeat(3, 1fr)',
-    alignItems: 'center',
-    gap: SPACING.md,
-    width: '100%',
-  },
-  tripsHeroContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    /* PHASE 1: Subtle divider on trips variant too */
-    borderRight: `1px solid ${COLORS.border}`,
-    paddingRight: SPACING.md,
-  },
-  tripsHeroLabel: {
-    fontSize: '0.75rem',
+  emptyStateTitle: {
+    fontSize: '0.85rem',
     fontWeight: 700,
-    letterSpacing: '0.1em',
-    color: COLORS.textSecondary,
-    opacity: 0.6,
-    margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  },
-  tripsHeroValue: {
-    fontSize: 'clamp(1.8rem, 3vw, 2.6rem)',
-    fontWeight: 900,
-    color: COLORS.atomicTangerine,
-    lineHeight: 0.85,
-    letterSpacing: '-0.04em',
-    margin: 0,
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  },
-  tripsSecondaryGrid: {
-    /* PHASE 2: Removed display:contents for cross-browser compatibility */
-    /* Using grid layout directly on parent (tripsShell) instead */
-    display: 'contents',
-  },
-  tripsSecondaryStat: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    minWidth: 0,
-    minHeight: 0,
-  },
-  tripsValue: {
-    fontSize: 'clamp(1.4rem, 2.2vw, 1.8rem)',
-    fontWeight: 900,
     color: COLORS.charcoalBlue,
-    lineHeight: 0.9,
-    letterSpacing: '-0.02em',
-    margin: 0,
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  },
-  tripsLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    color: COLORS.textSecondary,
-    letterSpacing: '0.04em',
-    margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    hyphens: 'auto',
-  },
-
-  /* /harden: wrapper for stat display to handle overflow */
-  statDisplayWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    minWidth: 0,
-    width: '100%',
-  },
-
-  /* PHASE 3: Aspirational Empty State */
-  emptyStateContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.md,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    paddingLeft: SPACING.sm,
-    minHeight: '120px',
-  },
-  emptyStateLabel: {
-    fontSize: 'clamp(0.875rem, 2vw, 1rem)',
-    fontWeight: 600,
-    color: COLORS.textSecondary,
-    opacity: 0.75,
-    letterSpacing: '0.03em',
-    margin: 0,
   },
   emptyStateMessage: {
-    fontSize: 'clamp(0.75rem, 1.8vw, 0.875rem)',
-    fontWeight: 400,
+    fontSize: '0.8rem',
     color: COLORS.textSecondary,
-    opacity: 0.6,
     lineHeight: 1.5,
-    letterSpacing: '0.02em',
-    margin: 0,
-    maxWidth: '280px',
-    wordBreak: 'break-word',
-    overflowWrap: 'break-word',
   },
-
-  /* PHASE 5: Traveler's Biography Layout — Strict NO backgrounds, NO borders */
-  /* Pure semantic grouping via whitespace, typography, and dividers */
-  biographySection: (isMobile) => ({
-    display: 'flex',
-    flexDirection: isMobile ? 'column' : 'row',
-    gap: isMobile ? SPACING.lg : SPACING.xl,
-    width: '100%',
-    alignItems: isMobile ? 'flex-start' : 'center',
-    /* Desktop: subtle vertical divider between Hero and Biography */
-    paddingLeft: !isMobile ? SPACING.lg : 0,
-    borderLeft: !isMobile ? `1px solid ${COLORS.border}` : 'none',
-  }),
-  biographyGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.md,
-    flex: 1,
-    minWidth: 0, /* Allow shrinking */
-    paddingRight: SPACING.md,
+  heroPositionMobile: {
+    gridColumn: '1 / -1',
+    gridRow: '1',
   },
-  groupTitle: {
-    fontSize: 'clamp(0.75rem, 1.5vw, 0.875rem)',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    color: COLORS.mutedTeal,
-    opacity: 0.65,
-    margin: 0,
-    textTransform: 'uppercase',
+  uniqueCountriesPositionMobile: {
+    gridColumn: '1',
+    gridRow: '2',
   },
-  groupStats: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(70px, 15vw, 100px), 1fr))',
-    gap: `${SPACING.md} ${SPACING.lg}`,
-    width: '100%',
-    alignItems: 'start',
+  completedTripsPositionMobile: {
+    gridColumn: '2',
+    gridRow: '2',
   },
-  groupDivider: {
-    fontSize: '0.75rem',
-    color: COLORS.mutedTeal,
-    opacity: 0.25,
-    margin: '0',
-    alignSelf: 'stretch',
-    display: 'flex',
-    alignItems: 'center',
+  totalDaysPositionMobile: {
+    gridColumn: '1',
+    gridRow: '3',
   },
-  biographyHeroContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    flexShrink: 0,
+  totalStopsPositionMobile: {
+    gridColumn: '2',
+    gridRow: '3',
   },
-  biographyHeroLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    color: COLORS.textSecondary,
-    opacity: 0.6,
-    margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
+  heroPositionDesktop: {
+    gridColumn: '1',
+    gridRow: '1 / span 2',
+    minHeight: '100%',
   },
-  biographyHeroValue: {
-    /* Large, bold, tangerine — the "wow" metric */
-    fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-    fontWeight: 900,
-    color: COLORS.atomicTangerine,
-    lineHeight: 0.9,
-    letterSpacing: '-0.05em',
-    margin: 0,
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
+  uniqueCountriesPositionDesktop: {
+    gridColumn: '2',
+    gridRow: '1',
   },
-  biographyStat: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.xs,
-    alignItems: 'flex-start',
-    minWidth: 0,
-    width: '100%',
+  completedTripsPositionDesktop: {
+    gridColumn: '3',
+    gridRow: '1',
   },
-  biographyStatValue: {
-    /* Bold, dark, excellent contrast against secondary labels */
-    fontSize: 'clamp(1.1rem, 2.2vw, 1.4rem)',
-    fontWeight: 900,
-    color: COLORS.charcoalBlue,
-    lineHeight: 1,
-    letterSpacing: '-0.02em',
-    margin: 0,
-    minWidth: 0,
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
+  totalDaysPositionDesktop: {
+    gridColumn: '2',
+    gridRow: '2',
   },
-  biographyStatLabel: {
-    /* Subtle, secondary label — perfect contrast */
-    fontSize: '0.7rem',
-    fontWeight: 600,
-    color: COLORS.textSecondary,
-    letterSpacing: '0.03em',
-    margin: 0,
-    maxWidth: '100%',
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    hyphens: 'auto',
-    opacity: 0.7,
-  },
-
-  /* ── MOBILE COMPACT: 2-col grid (replaces verbose biography on mobile) ── */
-  mobileCompactShell: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: SPACING.sm,
-    width: '100%',
-  },
-  mobileHeroRow: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: SPACING.sm,
-  },
-  mobileHeroValue: {
-    fontSize: 'clamp(1.4rem, 5vw, 1.8rem)',
-    fontWeight: 900,
-    color: COLORS.atomicTangerine,
-    lineHeight: 1,
-    letterSpacing: '-0.02em',
-  },
-  mobileHeroLabel: {
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    opacity: 0.6,
-  },
-  mobileStatsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: `${SPACING.xs} ${SPACING.md}`,
-    width: '100%',
-  },
-  mobileStatCell: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1px',
-    padding: `${SPACING.xs} 0`,
-  },
-  mobileStatValue: {
-    fontSize: 'clamp(1.1rem, 4vw, 1.4rem)',
-    fontWeight: 800,
-    color: COLORS.charcoalBlue,
-    lineHeight: 1.1,
-    letterSpacing: '-0.01em',
-  },
-  mobileStatLabel: {
-    fontSize: '0.68rem',
-    fontWeight: 600,
-    color: COLORS.textSecondary,
-    opacity: 0.65,
-    lineHeight: 1.2,
+  totalStopsPositionDesktop: {
+    gridColumn: '3',
+    gridRow: '2',
   },
 };

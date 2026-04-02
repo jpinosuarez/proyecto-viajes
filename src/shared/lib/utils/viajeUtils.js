@@ -117,6 +117,105 @@ export const formatDateRange = (start, end) => {
   return `${fmtShort.format(s)} – ${fmtYear.format(e)}`;
 };
 
+/**
+ * Formatea fechas para metadata narrativa de tarjetas.
+ * - mismo mes/año: "abril 2026"
+ * - distinto mes/mismo año: "abril - mayo 2026"
+ * - distinto año: "dic 2025 - ene 2026"
+ */
+export const formatStorytellingDate = (startDate, endDate, language = 'es') => {
+  const locale = language || 'es';
+  const toDate = (value) => {
+    const iso = parseFlexibleDate(value) || value;
+    if (!iso || typeof iso !== 'string') return null;
+    const date = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const start = toDate(startDate);
+  if (!start) return '';
+
+  const end = toDate(endDate);
+  const monthLong = new Intl.DateTimeFormat(locale, { month: 'long' });
+  const monthShort = new Intl.DateTimeFormat(locale, { month: 'short' });
+
+  if (!end) {
+    return `${monthLong.format(start)} ${start.getFullYear()}`;
+  }
+
+  if (start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()) {
+    return `${monthLong.format(start)} ${start.getFullYear()}`;
+  }
+
+  if (start.getFullYear() === end.getFullYear()) {
+    return `${monthLong.format(start)} - ${monthLong.format(end)} ${start.getFullYear()}`;
+  }
+
+  const normalizeShortMonth = (date) => monthShort.format(date).replace('.', '');
+  return `${normalizeShortMonth(start)} ${start.getFullYear()} - ${normalizeShortMonth(end)} ${end.getFullYear()}`;
+};
+
+/**
+ * Resume ciudades para pills de metadata.
+ */
+export const formatCitiesSummary = (paradas = [], t) => {
+  const translate =
+    typeof t === 'function'
+      ? t
+      : (key, options = {}) => {
+          if (key === 'and') return options.defaultValue ?? '&';
+          if (key === 'andMore') {
+            const city = options.city ?? '';
+            const count = Number(options.count) || 0;
+            return `${city} & ${count} more`;
+          }
+          return options.defaultValue ?? key;
+        };
+
+  const cityNames = [...new Set(
+    (Array.isArray(paradas) ? paradas : [])
+      .map((parada) => {
+        if (typeof parada === 'string') return parada.trim();
+        if (!parada || typeof parada !== 'object') return '';
+        return String(parada.nombre || parada.name || parada.city || '').trim();
+      })
+      .filter(Boolean)
+  )];
+
+  if (cityNames.length === 0) return '';
+  if (cityNames.length === 1) return cityNames[0];
+  if (cityNames.length === 2) {
+    return `${cityNames[0]} ${translate('and', { ns: 'common', defaultValue: '&' })} ${cityNames[1]}`;
+  }
+
+  return translate('andMore', {
+    ns: 'common',
+    city: cityNames[0],
+    count: cityNames.length - 1,
+    defaultValue: '{{city}} & {{count}} more',
+  });
+};
+
+/**
+ * Calcula duración inclusiva del viaje.
+ */
+export const calculateTripDays = (startDate, endDate) => {
+  const toDate = (value) => {
+    const iso = parseFlexibleDate(value) || value;
+    if (!iso || typeof iso !== 'string') return null;
+    const date = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const start = toDate(startDate);
+  const end = toDate(endDate);
+  if (!start || !end) return 0;
+
+  const diffInMs = end.getTime() - start.getTime();
+  const diffInDays = Math.floor(diffInMs / 86400000) + 1;
+  return Math.max(1, diffInDays);
+};
+
 export const FOTO_DEFAULT_URL =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%231f2937'/><stop offset='100%' stop-color='%230f766e'/></linearGradient></defs><rect width='1200' height='800' fill='url(%23g)'/><circle cx='180' cy='160' r='90' fill='rgba(255,255,255,0.15)'/><path d='M100 650 L420 360 L600 560 L780 420 L1100 700 L100 700 Z' fill='rgba(255,255,255,0.18)'/><text x='80' y='120' fill='white' font-size='56' font-family='Arial, sans-serif' opacity='0.9'>Viaje</text></svg>";
 

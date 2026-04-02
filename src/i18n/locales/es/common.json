@@ -14,6 +14,10 @@
   "retry": "Reintentar",
   "goHome": "Ir al inicio",
   "add": "Agregar",
+  "and": "&",
+  "andMore": "{{city}} & {{count}} más",
+  "days_one": "{{count}} día",
+  "days_other": "{{count}} días",
   "open": "Abrir",
   "addCaption": "Agregar caption...",
   "confirm": {

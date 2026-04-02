@@ -1,29 +1,70 @@
 import React, { useRef } from 'react';
 import { motion as Motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Compass, Calendar, MapPin, Trash2 } from 'lucide-react';
+import { Compass, Calendar, MapPin, Trash2, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { tripStyles as styles } from './TripCard.styles';
-import DocumentaryFlagHero from '@shared/ui/components/DocumentaryFlagHero';
-import { FOTO_DEFAULT_URL } from '@shared/lib/utils/viajeUtils';
+import {
+  FOTO_DEFAULT_URL,
+  formatStorytellingDate,
+  formatCitiesSummary,
+  calculateTripDays,
+} from '@shared/lib/utils/viajeUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
+
+const getAuraGridStyle = (count) => {
+  if (count <= 1) {
+    return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
+  }
+
+  if (count === 2) {
+    return { gridTemplateColumns: '1fr', gridTemplateRows: '1fr 1fr' };
+  }
+
+  return { gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' };
+};
+
+const getAuraFlagStyle = (count, index) => {
+  if (count === 3 && index === 2) {
+    return { gridColumn: '1 / span 2' };
+  }
+
+  return null;
+};
 
 /**
  * Cinematic TripCard (2026 Restyle)
  * Features full-bleed images, floating glass pills, and 3D parallax on desktop hovering.
  */
 const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' }) => {
-  const { t, i18n } = useTranslation(['countries', 'dashboard']);
+  const { t, i18n } = useTranslation(['countries', 'dashboard', 'common']);
   const flags =
     (Array.isArray(trip.banderas) && trip.banderas.filter(Boolean).length > 0 && trip.banderas.filter(Boolean)) ||
     (Array.isArray(trip.flags) && trip.flags.filter(Boolean).length > 0 && trip.flags.filter(Boolean)) ||
     (trip.flag ? [trip.flag] : []);
+  const auraFlags = (flags.length > 0 ? flags : [FOTO_DEFAULT_URL]).slice(0, 4);
+  const auraGridStyle = getAuraGridStyle(auraFlags.length);
   const coverUrl = trip.foto || '';
   const isDefaultPhoto = !coverUrl || coverUrl === FOTO_DEFAULT_URL;
-  const cityLabel = t('tripCard.cityLabel', {
-    ns: 'dashboard',
-    count: Number(trip.paradaCount) || 0,
-    defaultValue: Number(trip.paradaCount) === 1 ? 'ciudad' : 'ciudades',
-  });
+
+  const startDate = trip.fechaInicio || trip.startDate || trip.date || null;
+  const endDate = trip.fechaFin || trip.endDate || null;
+  const parsedCities = String(trip.ciudades || '')
+    .split(',')
+    .map((city) => city.trim())
+    .filter(Boolean)
+    .map((city) => ({ nombre: city }));
+  const paradas = Array.isArray(trip.paradas) && trip.paradas.length > 0 ? trip.paradas : parsedCities;
+
+  const datePillText = formatStorytellingDate(startDate, endDate, i18n.language) || '—';
+  const citiesPillText = formatCitiesSummary(paradas, t) || '—';
+  const daysCount = calculateTripDays(startDate, endDate);
+  const durationPillText = daysCount
+    ? t('days', {
+        ns: 'common',
+        count: daysCount,
+        defaultValue: `${daysCount} days`,
+      })
+    : '—';
 
   const countryCode = trip.paisCodigo || trip.code || trip.countryCode || null;
   const localizedCountryName = getLocalizedCountryName(countryCode, i18n.language, t);
@@ -108,7 +149,20 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
               loading="lazy"
             />
           ) : (
-            <DocumentaryFlagHero banderas={flags} />
+            <div style={styles.fallbackAuraContainer} aria-hidden="true">
+              <div style={{ ...styles.fallbackAuraTrack, ...auraGridStyle }}>
+                {auraFlags.map((flag, idx) => (
+                  <img
+                    key={`${flag}-${idx}`}
+                    src={flag}
+                    alt=""
+                    style={{ ...styles.fallbackAuraFlag, ...getAuraFlagStyle(auraFlags.length, idx) }}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              <div style={styles.fallbackAuraOverlay} />
+            </div>
           )}
         </Motion.div>
         <div style={styles.overlay} />
@@ -117,7 +171,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
       <div style={styles.topContent}>
         <div style={styles.flagsRow}>
           {flags.length > 0 ? (
-            flags.slice(0, 3).map((flag, idx) => (
+            flags.map((flag, idx) => (
               <img key={idx} src={flag} alt="Bandera" style={styles.flagImg} loading="lazy" />
             ))
           ) : (
@@ -147,21 +201,15 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
       <div style={styles.bottomContent}>
         <h4 style={styles.title}>{title}</h4>
         <div style={styles.metaRow}>
-          {(trip.fechaInicio || trip.startDate) && (
-            <span style={styles.glassPill}>
-              <Calendar size={12} /> {trip.fechaInicio || trip.startDate}
-            </span>
-          )}
-          {trip.paradaCount > 0 && (
-            <span style={styles.glassPill}>
-              📍 {trip.paradaCount} {cityLabel}
-            </span>
-          )}
-          {trip.ciudades && (
-            <span style={styles.glassPill}>
-              <MapPin size={12} /> {trip.ciudades.split(',')[0]}
-            </span>
-          )}
+          <span style={styles.glassPill}>
+            <Calendar size={14} /> {datePillText}
+          </span>
+          <span style={styles.glassPill}>
+            <MapPin size={14} /> {citiesPillText}
+          </span>
+          <span style={styles.glassPill}>
+            <Clock size={14} /> {durationPillText}
+          </span>
         </div>
       </div>
     </Motion.div>
