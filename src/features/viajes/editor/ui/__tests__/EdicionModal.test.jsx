@@ -74,7 +74,7 @@ describe('EdicionModal (borrador)', () => {
     // Esperar que el input del título tenga el título generado
     await waitFor(() => {
       const input = screen.getByPlaceholderText(/tripTitlePlaceholder/i);
-      expect(input).toHaveValue('Escapada a Barcelona');
+      expect(input).toHaveValue('editor:autoTitle.oneCity');
     });
 
     // La galería del servidor no debe mostrarse para borradores
@@ -159,6 +159,7 @@ describe('EdicionModal (borrador)', () => {
     const { rerender } = render(
       <EdicionModal
         viaje={{ id: 'new', nombreEspanol: 'Chile', code: 'CL', titulo: '', fechaInicio: '2024-03-01', fechaFin: '2024-03-02' }}
+        ciudadInicial={{ nombre: 'Santiago', coordenadas: [-70.6693, -33.4489], paisCodigo: 'CL' }}
         esBorrador={true}
         onClose={vi.fn()}
         onSave={onSave}
@@ -185,6 +186,7 @@ describe('EdicionModal (borrador)', () => {
     rerender(
       <EdicionModal
         viaje={{ id: 'new', nombreEspanol: 'Argentina', code: 'AR', titulo: '', fechaInicio: '2024-04-01', fechaFin: '2024-04-03' }}
+        ciudadInicial={{ nombre: 'Buenos Aires', coordenadas: [-58.3816, -34.6037], paisCodigo: 'AR' }}
         esBorrador={true}
         onClose={vi.fn()}
         onSave={onSave}
@@ -210,7 +212,7 @@ describe('EdicionModal (borrador)', () => {
     await user.click(document.body);
   });
 
-  test('borrador de pais (sin ciudad inicial) permite crear viaje', async () => {
+  test('borrador de pais (sin ciudad inicial) mantiene crear viaje deshabilitado', async () => {
     const onSave = vi.fn(async () => 'pais-new-id');
 
     render(
@@ -237,19 +239,8 @@ describe('EdicionModal (borrador)', () => {
       .getAllByRole('button')
       .find((btn) => /button\.createTrip/i.test(btn.textContent || ''));
     expect(createBtn).toBeTruthy();
-    createBtn.click();
-
-    await waitFor(() => {
-      expect(onSave).toHaveBeenCalledTimes(1);
-      expect(onSave).toHaveBeenCalledWith(
-        'new',
-        expect.objectContaining({
-          nombreEspanol: 'Argentina',
-          code: 'AR',
-          latlng: [0, 0],
-        })
-      );
-    });
+    expect(createBtn).toBeDisabled();
+    expect(onSave).not.toHaveBeenCalled();
   });
 });
 

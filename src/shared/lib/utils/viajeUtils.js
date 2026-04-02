@@ -173,7 +173,9 @@ export const generarTituloInteligente = (nombreBase, paradas = [], t) => {
   const resolveCountryName = (code) => {
     const normalizedCode = normalizeCountryCode(code);
     if (!normalizedCode) return '';
-    const localized = getLocalizedCountryName(normalizedCode, 'es', translate);
+    const localized = typeof t === 'function'
+      ? getLocalizedCountryName(normalizedCode, 'es', translate)
+      : getLocalizedCountryName(normalizedCode, 'es');
     return localized && localized !== normalizedCode ? localized : normalizedCode;
   };
 

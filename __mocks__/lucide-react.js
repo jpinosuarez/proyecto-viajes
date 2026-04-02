@@ -1,6 +1,6 @@
 import React from 'react';
 
-const createIconComponent = (name) => 
+const createIconComponent = (name) =>
   React.forwardRef((props, ref) => 
     React.createElement('span', { 'data-testid': `icon-${name}`, ...props, ref })
   );
@@ -17,6 +17,7 @@ export const Menu = createIconComponent('Menu');
 export const Bell = createIconComponent('Bell');
 export const Heart = createIconComponent('Heart');
 export const Share2 = createIconComponent('Share2');
+export const Share = createIconComponent('Share');
 export const Trash2 = createIconComponent('Trash2');
 export const Star = createIconComponent('Star');
 export const Clock = createIconComponent('Clock');
@@ -25,3 +26,43 @@ export const Upload = createIconComponent('Upload');
 export const Download = createIconComponent('Download');
 export const Eye = createIconComponent('Eye');
 export const EyeOff = createIconComponent('EyeOff');
+export const AlertTriangle = createIconComponent('AlertTriangle');
+export const CheckCircle2 = createIconComponent('CheckCircle2');
+export const CircleAlert = createIconComponent('CircleAlert');
+export const Info = createIconComponent('Info');
+export const LayoutGrid = createIconComponent('LayoutGrid');
+export const List = createIconComponent('List');
+export const LoaderCircle = createIconComponent('LoaderCircle');
+export const Save = createIconComponent('Save');
+export const Globe = createIconComponent('Globe');
+export const Sparkles = createIconComponent('Sparkles');
+export const WifiOff = createIconComponent('WifiOff');
+export const ArrowRight = createIconComponent('ArrowRight');
+export const Compass = createIconComponent('Compass');
+export const Map = createIconComponent('Map');
+export const BarChart2 = createIconComponent('BarChart2');
+export const Camera = createIconComponent('Camera');
+export const CalendarDays = createIconComponent('CalendarDays');
+export const ChevronLeft = createIconComponent('ChevronLeft');
+export const ChevronRight = createIconComponent('ChevronRight');
+export const Navigation = createIconComponent('Navigation');
+export const Calendar = createIconComponent('Calendar');
+export const User = createIconComponent('User');
+export const Disc = createIconComponent('Disc');
+export const MapPinned = createIconComponent('MapPinned');
+export const Image = createIconComponent('Image');
+export const Trophy = createIconComponent('Trophy');
+export const Target = createIconComponent('Target');
+export const ArrowUp = createIconComponent('ArrowUp');
+export const ArrowDown = createIconComponent('ArrowDown');
+export const RefreshCcw = createIconComponent('RefreshCcw');
+export const HelpCircle = createIconComponent('HelpCircle');
+export const Instagram = createIconComponent('Instagram');
+export const Loader2 = createIconComponent('Loader2');
+export const TrendingUp = createIconComponent('TrendingUp');
+export const Wifi = createIconComponent('Wifi');
+export const AlertCircle = createIconComponent('AlertCircle');
+export const RefreshCw = createIconComponent('RefreshCw');
+export const Edit3 = createIconComponent('Edit3');
+export const ArrowLeft = createIconComponent('ArrowLeft');
+export const Globe2 = createIconComponent('Globe2');
