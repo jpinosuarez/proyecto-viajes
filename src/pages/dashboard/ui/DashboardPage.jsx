@@ -18,7 +18,7 @@ import EmptyDashboardState from './components/EmptyDashboardState';
 import TripCard from '@widgets/tripGrid/ui/TripCard';
 import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
-const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, loading = false, isError = false, fetchError = null }) => {
+const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isError = false, fetchError = null }) => {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,6 +26,8 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   const { t } = useTranslation('dashboard');
   const { t: tNav } = useTranslation('nav');
   const { width, height } = useWindowSize();
+  const isDesktop = width >= 1024;
+  const isMobileLayout = !isDesktop;
   useDocumentTitle(tNav('home'));
 
   const name = usuario?.displayName ? usuario.displayName.split(' ')[0] : t('fallbackName');
@@ -39,14 +41,14 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   }, [log]);
 
   const recentTripsLimit = useMemo(() => {
-    if (isMobile) return 2;
+    if (isMobileLayout) return 2;
     if (width >= 1500 && height >= 880) return 3;
-    return 2;
-  }, [height, isMobile, width]);
+    return recentTrips.length;
+  }, [height, isMobileLayout, recentTrips.length, width]);
 
   const visibleRecentTrips = useMemo(
-    () => recentTrips.slice(0, recentTripsLimit),
-    [recentTrips, recentTripsLimit]
+    () => (isDesktop ? recentTrips : recentTrips.slice(0, recentTripsLimit)),
+    [isDesktop, recentTrips, recentTripsLimit]
   );
   const isNewTraveler = log.length === 0;
   const [mapRenderKey, setMapRenderKey] = useState(0);
@@ -65,7 +67,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
 
 
   const mapFallback = (
-    <div style={styles.mapErrorFallback(isMobile)} role="status" aria-live="polite">
+    <div style={styles.mapErrorFallback(isMobileLayout)} role="status" aria-live="polite">
       <div style={styles.mapErrorBackdrop} aria-hidden="true">
         <div style={styles.mapErrorGlowA} />
         <div style={styles.mapErrorGlowB} />
@@ -92,73 +94,78 @@ const DashboardPage = ({ countriesVisited = [], log = [], isMobile = false, load
   };
 
   return (
-    <div style={styles.dashboardContainer(isMobile)}>
-      {/* Welcome area (Traveler Identity Bento) */}
-      <div style={styles.welcomeContainer}>
+    <div style={styles.dashboardContainer(isDesktop)}>
+      <div style={styles.welcomeContainer(isDesktop)}>
         <WelcomeBento 
           name={name}
-          logStatsDashboard={logStatsDashboard}
-          isMobile={isMobile}
+          isMobile={isMobileLayout}
           isNewTraveler={isNewTraveler}
           onNewTrip={openBuscador}
         />
       </div>
 
-      {/* Main grid: map + recents */}
-      <div style={styles.mainGrid(isMobile)}>
-  {/* Map Section with Real Title */}
-  <div style={styles.mapSection}>
-    <h3 style={styles.mapSectionTitle}>{t('explorationMap')}</h3>
-    <div style={styles.mapCard(isMobile)}>
-      <ErrorBoundary fallback={mapFallback}>
-        <HomeMap key={mapRenderKey} paisesVisitados={countriesVisited} isMobile={isMobile} />
-      </ErrorBoundary>
-    </div>
-  </div>
-  {/* Recents Section */}
-  <div style={styles.recentsContainer}>
-          <div style={styles.sectionHeader}>
-            <h2 style={styles.sectionTitle}>{t('recentAdventures')}</h2>
-            {!isNewTraveler && (
-              <button
-                onClick={() => navigate('/trips')}
-                style={styles.viewAllBtn}
-                aria-label={t('viewAllTripSummary')}
-              >
-                {t('viewAll')} <ArrowRight size={14} />
-              </button>
-            )}
-          </div>
+      <div style={styles.statsContainer(isDesktop)}>
+        <TravelStatsWidget
+          logStats={logStatsDashboard}
+          ariaLabel={t('stats.tripSummary')}
+          variant="hero"
+          isMobile={isMobileLayout}
+        />
+      </div>
 
-          <div style={styles.cardsList(isMobile)} className="custom-scroll">
-            {loading ? (
-              <SkeletonList count={2} Component={TripCardSkeleton} />
-            ) : isError ? (
-              <div style={styles.dashboardErrorCard} role="status" aria-live="polite">
-                <WifiOff size={18} color={COLORS.warning} />
-                <p style={styles.dashboardErrorText}>
-                  {t('loadTripsError')}
-                </p>
-                {fetchError?.message && (
-                  <p style={styles.dashboardErrorHint}>{fetchError.message}</p>
-                )}
-              </div>
-            ) : !isNewTraveler ? (
-              visibleRecentTrips.map((trip) => (
-                <TripCard 
-                  key={trip.id} 
-                  trip={trip} 
-                  isMobile={isMobile} 
-                  variant="home"
-                  onClick={() => openTripEditor(trip.id)} 
-                />
-              ))
-            ) : (
-              <div style={{ gridColumn: '1 / -1', minWidth: 0, minHeight: 0, width: '100%' }}>
-                <EmptyDashboardState />
-              </div>
-            )}
+      <div style={styles.mapContainer(isDesktop)}>
+        <div style={styles.mapSection}>
+          <h3 style={styles.mapSectionTitle}>{t('explorationMap')}</h3>
+          <div style={styles.mapCard(isDesktop)}>
+            <ErrorBoundary fallback={mapFallback}>
+              <HomeMap key={mapRenderKey} paisesVisitados={countriesVisited} isMobile={isMobileLayout} />
+            </ErrorBoundary>
           </div>
+        </div>
+      </div>
+
+      <div style={styles.recentsContainer(isDesktop)}>
+        <div style={styles.sectionHeader}>
+          <h2 style={styles.sectionTitle}>{t('recentAdventures')}</h2>
+          {!isNewTraveler && (
+            <button
+              onClick={() => navigate('/trips')}
+              style={styles.viewAllBtn}
+              aria-label={t('viewAllTripSummary')}
+            >
+              {t('viewAll')} <ArrowRight size={14} />
+            </button>
+          )}
+        </div>
+
+        <div style={styles.cardsList(isDesktop)} className="custom-scroll">
+          {loading ? (
+            <SkeletonList count={2} Component={TripCardSkeleton} />
+          ) : isError ? (
+            <div style={styles.dashboardErrorCard} role="status" aria-live="polite">
+              <WifiOff size={18} color={COLORS.warning} />
+              <p style={styles.dashboardErrorText}>
+                {t('loadTripsError')}
+              </p>
+              {fetchError?.message && (
+                <p style={styles.dashboardErrorHint}>{fetchError.message}</p>
+              )}
+            </div>
+          ) : !isNewTraveler ? (
+            visibleRecentTrips.map((trip) => (
+              <TripCard 
+                key={trip.id} 
+                trip={trip} 
+                isMobile={isMobileLayout} 
+                variant="home"
+                onClick={() => openTripEditor(trip.id)} 
+              />
+            ))
+          ) : (
+            <div style={{ gridColumn: '1 / -1', minWidth: 0, minHeight: 0, width: '100%' }}>
+              <EmptyDashboardState />
+            </div>
+          )}
         </div>
       </div>
     </div>

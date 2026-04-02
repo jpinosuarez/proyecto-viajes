@@ -1,88 +1,144 @@
 import { COLORS, SHADOWS, RADIUS } from '@shared/config';
 
 export const styles = {
-  dashboardContainer: (isMobile) => ({
+  dashboardContainer: (isDesktop) => ({
     width: '100%',
+    boxSizing: 'border-box',
+    minWidth: 0,
+    ...(isDesktop
+      ? {
+          height: '100vh',
+          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: '350px minmax(0, 1fr)',
+          gridTemplateRows: 'min-content minmax(0, 1fr)',
+          gap: '10px',
+          padding: '12px 16px 10px',
+        }
+      : {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          padding: '12px 12px 0',
+          height: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+        }),
+  }),
+
+  welcomeContainer: (isDesktop) => ({
+    minWidth: 0,
+    ...(isDesktop
+      ? {
+          gridColumn: '1',
+          gridRow: '1',
+          alignSelf: 'start',
+        }
+      : {
+          width: '100%',
+        }),
+  }),
+
+  statsContainer: (isDesktop) => ({
+    minWidth: 0,
+    ...(isDesktop
+      ? {
+          gridColumn: '2',
+          gridRow: '1',
+          alignSelf: 'start',
+        }
+      : {
+          width: '100%',
+        }),
+  }),
+
+  recentsContainer: (isDesktop) => ({
     display: 'flex',
     flexDirection: 'column',
-    gap: isMobile ? '8px' : '12px',
-    padding: isMobile ? '12px 12px 0' : '16px 18px 0',
-    height: '100%',
-    flex: 1,
-    overflowY: isMobile ? 'auto' : 'hidden',
-    overflowX: 'hidden',
-    WebkitOverflowScrolling: isMobile ? 'touch' : undefined,
-    boxSizing: 'border-box',
+    gap: '8px',
+    minWidth: 0,
+    ...(isDesktop
+      ? {
+          gridColumn: '1',
+          gridRow: '2',
+          minHeight: 0,
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        }
+      : {
+          width: '100%',
+        }),
   }),
 
-  welcomeContainer: {
-    flexShrink: 0,
+  mapContainer: (isDesktop) => ({
+    minWidth: 0,
+    ...(isDesktop
+      ? {
+          gridColumn: '2',
+          gridRow: '2',
+          minHeight: 0,
+          height: '100%',
+        }
+      : {
+          width: '100%',
+        }),
+  }),
+
+  mapSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
     width: '100%',
-    overflowX: 'visible',
-    overflowY: 'visible',
+    height: '100%',
+    minWidth: 0,
+    minHeight: 0,
   },
 
-  mainGrid: (isMobile) => ({
-    display: isMobile ? 'flex' : 'grid',
-    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
-    flexDirection: isMobile ? 'column' : undefined,
-    gap: isMobile ? '10px' : '12px',
-    alignItems: isMobile ? undefined : 'stretch',
-    flex: isMobile ? '0 0 auto' : 1,
-    minHeight: 0,
-    minWidth: 0,
-  }),
-mapSection: {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '6px',
-  flex: 1,
-  minWidth: 0,
-  minHeight: 0,
-  overflowX: 'hidden',
-  overflowY: 'hidden',
-  width: '100%',
-  height: '100%',
-  position: 'relative',
-},
-mapSectionTitle: {
-  margin: 0,
-  fontSize: '0.8rem',
-  fontWeight: '800',
-  color: COLORS.charcoalBlue,
-  textTransform: 'uppercase',
-  letterSpacing: '0.4px',
-  lineHeight: 1,
-  flex: '0 0 auto',
-},
+  mapSectionTitle: {
+    margin: 0,
+    fontSize: '0.8rem',
+    fontWeight: '800',
+    color: COLORS.charcoalBlue,
+    textTransform: 'uppercase',
+    letterSpacing: '0.4px',
+    lineHeight: 1,
+    flexShrink: 0,
+  },
 
-  mapCard: (isMobile) => ({
+  mapCard: (isDesktop) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: isMobile ? '0 0 auto' : 1,
-    height: isMobile ? '220px' : undefined,
     borderRadius: RADIUS.xl,
-    overflowX: 'hidden',
-    overflowY: 'hidden',
+    overflow: 'hidden',
     width: '100%',
     minWidth: 0,
     minHeight: 0,
     boxShadow: SHADOWS.md,
     backgroundColor: COLORS.background,
     position: 'relative',
+    ...(isDesktop
+      ? {
+          flex: 1,
+          height: '100%',
+        }
+      : {
+          height: '350px',
+          minHeight: '350px',
+        }),
   }),
 
   mapErrorFallback: (isMobile) => ({
     position: 'relative',
     width: '100%',
     height: '100%',
-    minHeight: isMobile ? '160px' : '220px',
+    minHeight: isMobile ? '200px' : '220px',
     display: 'flex',
     justifyContent: 'center',
     padding: '16px',
-    overflowX: 'hidden',
-    overflowY: 'hidden',
+    overflow: 'hidden',
     color: COLORS.textPrimary,
     background: `linear-gradient(160deg, ${COLORS.background} 0%, ${COLORS.surface} 56%, #f1f5f9 100%)`,
     border: `1px solid ${COLORS.border}`,
@@ -165,17 +221,6 @@ mapSectionTitle: {
     boxShadow: `0 10px 20px ${COLORS.atomicTangerine}40`,
   },
 
-  recentsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: '0 0 auto',
-    gap: '6px',
-    minWidth: 0,
-    overflowX: 'visible',
-    overflowY: 'visible',
-    width: '100%',
-  },
-
   sectionHeader: {
     display: 'flex',
     alignItems: 'center',
@@ -208,24 +253,29 @@ mapSectionTitle: {
     color: COLORS.atomicTangerine,
     padding: '10px 16px',
     minHeight: '44px',
-    minWidth: 'auto',
     borderRadius: RADIUS.sm,
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
 
-  cardsList: (isMobile) => ({
+  cardsList: (isDesktop) => ({
     display: 'grid',
-    gridTemplateColumns: isMobile
-      ? 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))'
-      : 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
+    gridTemplateColumns: isDesktop
+      ? 'repeat(1, minmax(0, 1fr))'
+      : 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))',
     alignItems: 'stretch',
-    gap: isMobile ? '8px' : '10px',
-    overflowX: 'visible',
-    overflowY: 'visible',
+    gap: isDesktop ? '10px' : '8px',
     minWidth: 0,
     minHeight: 0,
-    flex: isMobile ? '0 0 auto' : 1,
+    ...(isDesktop
+      ? {
+          flex: '0 0 auto',
+          height: 'auto',
+          overflow: 'visible',
+        }
+      : {
+          overflow: 'visible',
+        }),
   }),
 
   dashboardErrorCard: {
@@ -257,5 +307,4 @@ mapSectionTitle: {
     color: COLORS.textSecondary,
     overflowWrap: 'anywhere',
   },
-
 };

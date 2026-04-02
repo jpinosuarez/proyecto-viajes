@@ -143,9 +143,7 @@ export const tripStyles = {
     display: 'grid',
     width: '100%',
     height: '100%',
-    filter: 'blur(1px)',
-    transform: 'scale(1.05)',
-    transformOrigin: 'center',
+    filter: 'blur(1px) scale(1.05)',
   },
 
   fallbackAuraFlag: {

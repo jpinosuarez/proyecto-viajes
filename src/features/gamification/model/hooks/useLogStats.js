@@ -27,27 +27,32 @@ export const useLogStats = (trips = [], tripData = {}) => {
       };
     }
 
+    const viajes = safeTrips.map((trip) => {
+      const tripDetails = safeTripData[trip.id] || {};
+      return { ...trip, ...tripDetails };
+    });
+
+    const totalStops = viajes.reduce(
+      (acc, viaje) => acc + (Array.isArray(viaje.paradas) ? viaje.paradas.length : (viaje.totalParadas || 0)),
+      0
+    );
+
     let totalDays = 0;
-    let totalStops = 0;
     const countryCodes = new Set();
 
-    safeTrips.forEach((trip) => {
-      const tripDetails = safeTripData[trip.id];
-      const stops = getTripStops(trip, tripDetails);
-      const stopsCount = Number(trip.totalParadas || tripDetails?.totalParadas || (Array.isArray(stops) ? stops.length : 0) || 0);
-      const startDate = tripDetails?.fechaInicio || tripDetails?.startDate || trip.fechaInicio || trip.startDate;
-      const endDate = tripDetails?.fechaFin || tripDetails?.endDate || trip.fechaFin || trip.endDate;
+    viajes.forEach((viaje) => {
+      const stops = getTripStops(viaje, viaje);
+      const startDate = viaje.fechaInicio || viaje.startDate;
+      const endDate = viaje.fechaFin || viaje.endDate;
 
       totalDays += calculateTripDays(startDate, endDate);
-
-      totalStops += stopsCount;
 
       stops.forEach((stop) => {
         const stopCountryCode = stop?.paisCodigo || stop?.countryCode || stop?.code;
         if (stopCountryCode) countryCodes.add(stopCountryCode);
       });
 
-      const tripCountryCode = tripDetails?.paisCodigo || tripDetails?.countryCode || tripDetails?.code || trip?.paisCodigo || trip?.countryCode || trip?.code;
+      const tripCountryCode = viaje.paisCodigo || viaje.countryCode || viaje.code;
       if (tripCountryCode) countryCodes.add(tripCountryCode);
     });
 

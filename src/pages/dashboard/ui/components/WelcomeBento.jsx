@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Compass } from 'lucide-react';
 import { motion as Motion } from 'framer-motion';
 import { welcomeStyles as styles } from './WelcomeBento.styles';
-import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
-const WelcomeBento = ({ name, logStatsDashboard, isMobile, isNewTraveler, onNewTrip }) => {
+const WelcomeBento = ({ name, isMobile, isNewTraveler, onNewTrip }) => {
   const { t } = useTranslation('dashboard');
 
   return (
@@ -47,18 +46,6 @@ const WelcomeBento = ({ name, logStatsDashboard, isMobile, isNewTraveler, onNewT
           )}
         </div>
       </div>
-
-      {/* Stats only render for returning travelers */}
-      {!isNewTraveler && (
-        <div style={styles.statsSection}>
-          <TravelStatsWidget
-            logStats={logStatsDashboard}
-            ariaLabel={t('stats.tripSummary')}
-            variant="home"
-            isMobile={isMobile}
-          />
-        </div>
-      )}
     </div>
   );
 };

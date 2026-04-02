@@ -3,10 +3,10 @@ import { COLORS, RADIUS, SHADOWS, SPACING } from '@shared/config';
 const cardBase = {
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'space-between',
-  gap: SPACING.sm,
+  justifyContent: 'flex-start',
+  gap: '4px',
   borderRadius: RADIUS.xl,
-  padding: SPACING.lg,
+  padding: '12px',
   minWidth: 0,
   minHeight: 0,
   background: 'rgba(255, 255, 255, 0.78)',
@@ -20,7 +20,7 @@ export const styles = {
   shell: {
     width: '100%',
   },
-  gridMobile: {
+  heroGridMobile: {
     display: 'grid',
     gap: SPACING.md,
     gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -28,29 +28,54 @@ export const styles = {
     alignItems: 'stretch',
     width: '100%',
   },
-  gridDesktop: {
+  heroGridDesktop: {
     display: 'grid',
-    gap: SPACING.md,
+    gap: SPACING.xs,
     gridTemplateColumns: 'minmax(0, 1.15fr) repeat(2, minmax(0, 1fr))',
     gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
     alignItems: 'stretch',
     width: '100%',
   },
+  compactGridMobile: {
+    display: 'grid',
+    gap: SPACING.sm,
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gridAutoRows: 'minmax(92px, auto)',
+    alignItems: 'stretch',
+    width: '100%',
+  },
+  compactGridDesktop: {
+    display: 'grid',
+    gap: SPACING.sm,
+    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+    alignItems: 'stretch',
+    width: '100%',
+  },
   card: cardBase,
+  compactCard: {
+    padding: '10px',
+    gap: '4px',
+    borderRadius: RADIUS.lg,
+  },
   heroCard: {
     background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.16), rgba(69, 176, 168, 0.12))',
-    minHeight: '220px',
-    boxShadow: '0 16px 40px rgba(15, 23, 42, 0.12)',
+    minHeight: '100px',
+    padding: '12px',
+    boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)',
     border: '1px solid rgba(255, 107, 53, 0.14)',
+  },
+  compactHeroCard: {
+    minHeight: 'auto',
+    boxShadow: SHADOWS.sm,
   },
   cardBody: {
     display: 'flex',
     flexDirection: 'column',
-    gap: SPACING.xs,
+    gap: '3px',
     minWidth: 0,
   },
   value: {
-    fontSize: 'clamp(1.5rem, 3.4vw, 2rem)',
+    fontSize: 'clamp(1.25rem, 3vw, 1.7rem)',
     lineHeight: 1,
     fontWeight: 900,
     letterSpacing: '-0.04em',
@@ -59,20 +84,26 @@ export const styles = {
     minWidth: 0,
   },
   heroValue: {
-    fontSize: 'clamp(2.6rem, 6vw, 4rem)',
+    fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
     color: COLORS.atomicTangerine,
   },
+  compactValue: {
+    fontSize: 'clamp(1.15rem, 2.6vw, 1.5rem)',
+  },
+  compactHeroValue: {
+    fontSize: 'clamp(1.35rem, 3vw, 1.8rem)',
+  },
   label: {
-    fontSize: '0.75rem',
+    fontSize: '0.68rem',
     fontWeight: 700,
-    letterSpacing: '0.06em',
+    letterSpacing: '0.04em',
     textTransform: 'uppercase',
     color: COLORS.textSecondary,
     margin: 0,
   },
   hint: {
-    fontSize: '0.72rem',
-    lineHeight: 1.45,
+    fontSize: '0.66rem',
+    lineHeight: 1.3,
     color: COLORS.textSecondary,
     opacity: 0.68,
   },
@@ -135,5 +166,45 @@ export const styles = {
   totalStopsPositionDesktop: {
     gridColumn: '3',
     gridRow: '2',
+  },
+  compactHeroPositionDesktop: {
+    gridColumn: '1',
+    gridRow: '1',
+  },
+  compactUniqueCountriesPositionDesktop: {
+    gridColumn: '2',
+    gridRow: '1',
+  },
+  compactCompletedTripsPositionDesktop: {
+    gridColumn: '3',
+    gridRow: '1',
+  },
+  compactTotalDaysPositionDesktop: {
+    gridColumn: '4',
+    gridRow: '1',
+  },
+  compactTotalStopsPositionDesktop: {
+    gridColumn: '5',
+    gridRow: '1',
+  },
+  compactHeroPositionMobile: {
+    gridColumn: '1 / -1',
+    gridRow: '1',
+  },
+  compactUniqueCountriesPositionMobile: {
+    gridColumn: '1',
+    gridRow: '2',
+  },
+  compactCompletedTripsPositionMobile: {
+    gridColumn: '2',
+    gridRow: '2',
+  },
+  compactTotalDaysPositionMobile: {
+    gridColumn: '1',
+    gridRow: '3',
+  },
+  compactTotalStopsPositionMobile: {
+    gridColumn: '2',
+    gridRow: '3',
   },
 };

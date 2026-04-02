@@ -7,6 +7,8 @@ import TripCommandBar from './components/TripCommandBar';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
+import { useLogStats } from '@features/gamification/model';
+import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
 const TripsPage = () => {
   const { t, i18n } = useTranslation(['dashboard', 'countries']);
@@ -63,6 +65,8 @@ const TripsPage = () => {
     });
   }, [trips, tripData, activeFilter, searchTerm, i18n.language, t]);
 
+  const tripsLogStats = useLogStats(trips, tripData);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflowY: 'auto', overflowX: 'hidden' }}>
       <TripCommandBar 
@@ -70,6 +74,15 @@ const TripsPage = () => {
         onFilterChange={setActiveFilter}
         isMobile={isMobile}
       />
+
+      <div style={{ marginBottom: isMobile ? '10px' : '8px' }}>
+        <TravelStatsWidget
+          logStats={tripsLogStats}
+          ariaLabel={t('stats.tripSummary')}
+          variant="compact"
+          isMobile={isMobile}
+        />
+      </div>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: isMobile ? 'max(env(safe-area-inset-bottom), 20px)' : '0px' }}>
         <TripGrid 

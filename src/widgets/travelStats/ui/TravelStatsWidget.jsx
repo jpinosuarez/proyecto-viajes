@@ -9,28 +9,42 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US').format(Math.round(value));
 };
 
-const StatCard = ({ stat, hero = false, style, index }) => (
+const StatCard = ({ stat, hero = false, compact = false, style, index }) => (
   <Motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: ANIMATION_DELAYS.fast + index * 0.06, duration: 0.35 }}
-    style={{ ...styles.card, ...(hero ? styles.heroCard : null), ...style }}
+    style={{
+      ...styles.card,
+      ...(compact ? styles.compactCard : null),
+      ...(hero ? styles.heroCard : null),
+      ...(compact && hero ? styles.compactHeroCard : null),
+      ...style,
+    }}
   >
     <div style={styles.cardBody}>
-      <span style={{ ...styles.value, ...(hero ? styles.heroValue : null) }}>
+      <span
+        style={{
+          ...styles.value,
+          ...(compact ? styles.compactValue : null),
+          ...(hero ? styles.heroValue : null),
+          ...(compact && hero ? styles.compactHeroValue : null),
+        }}
+      >
         {stat.displayValue}
       </span>
       <span style={styles.label}>{stat.label}</span>
+      {stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
     </div>
-    {stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
   </Motion.div>
 );
 
-const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false }) => {
+const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false, variant = 'hero' }) => {
   const { t } = useTranslation('dashboard');
+  const isCompact = variant === 'compact';
 
   const safeValue = (value) => (typeof value === 'number' && !Number.isNaN(value) ? value : 0);
-  const isDesktopLayout = !isMobile && typeof window !== 'undefined' ? window.innerWidth >= 768 : !isMobile;
+  const isDesktopLayout = !isMobile;
 
   const stats = React.useMemo(() => {
     if (!logStats) return null;
@@ -83,43 +97,62 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false }) => 
       hero: true,
       mobilePosition: styles.heroPositionMobile,
       desktopPosition: styles.heroPositionDesktop,
+      compactMobilePosition: styles.compactHeroPositionMobile,
+      compactDesktopPosition: styles.compactHeroPositionDesktop,
       stat: stats.worldExploredPercentage,
     },
     {
       key: 'uniqueCountries',
       mobilePosition: styles.uniqueCountriesPositionMobile,
       desktopPosition: styles.uniqueCountriesPositionDesktop,
+      compactMobilePosition: styles.compactUniqueCountriesPositionMobile,
+      compactDesktopPosition: styles.compactUniqueCountriesPositionDesktop,
       stat: stats.uniqueCountries,
     },
     {
       key: 'completedTrips',
       mobilePosition: styles.completedTripsPositionMobile,
       desktopPosition: styles.completedTripsPositionDesktop,
+      compactMobilePosition: styles.compactCompletedTripsPositionMobile,
+      compactDesktopPosition: styles.compactCompletedTripsPositionDesktop,
       stat: stats.completedTrips,
     },
     {
       key: 'totalDays',
       mobilePosition: styles.totalDaysPositionMobile,
       desktopPosition: styles.totalDaysPositionDesktop,
+      compactMobilePosition: styles.compactTotalDaysPositionMobile,
+      compactDesktopPosition: styles.compactTotalDaysPositionDesktop,
       stat: stats.totalDays,
     },
     {
       key: 'totalStops',
       mobilePosition: styles.totalStopsPositionMobile,
       desktopPosition: styles.totalStopsPositionDesktop,
+      compactMobilePosition: styles.compactTotalStopsPositionMobile,
+      compactDesktopPosition: styles.compactTotalStopsPositionDesktop,
       stat: stats.totalStops,
     },
   ];
 
+  const gridStyle = isDesktopLayout
+    ? (isCompact ? styles.compactGridDesktop : styles.heroGridDesktop)
+    : (isCompact ? styles.compactGridMobile : styles.heroGridMobile);
+
   return (
     <section role="region" aria-label={ariaLabel} style={styles.shell} data-density={isMobile ? 'mobile' : 'desktop'}>
-      <div style={isDesktopLayout ? styles.gridDesktop : styles.gridMobile}>
+      <div style={gridStyle}>
         {cards.map((card, index) => (
           <StatCard
             key={card.key}
             stat={card.stat}
             hero={card.hero}
-            style={isDesktopLayout ? card.desktopPosition : card.mobilePosition}
+            compact={isCompact}
+            style={
+              isDesktopLayout
+                ? (isCompact ? card.compactDesktopPosition : card.desktopPosition)
+                : (isCompact ? card.compactMobilePosition : card.mobilePosition)
+            }
             index={index}
           />
         ))}
