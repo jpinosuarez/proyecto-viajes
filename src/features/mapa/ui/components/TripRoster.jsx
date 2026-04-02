@@ -3,7 +3,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp, Globe2, MapPin } from 'lucide-react';
 import { useAuth } from '@app/providers';
-import { useLogStats } from '@shared/lib/hooks/useLogStats';
+import { useLogStats } from '@features/gamification/model/hooks';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '@shared/config';
 import TripRosterItem from './TripRosterItem';
 

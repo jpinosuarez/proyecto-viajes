@@ -1,4 +1,6 @@
 export { default as AccordionSection } from './AccordionSection';
+export { default as CityManager } from './CityManager';
+export { default as CuratedCoverPicker } from './CuratedCoverPicker';
 export { default as EdicionContextSection } from './EdicionContextSection';
 export { default as EdicionGallerySection } from './EdicionGallerySection';
 export { default as EdicionHeaderSection } from './EdicionHeaderSection';

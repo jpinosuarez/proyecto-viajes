@@ -24,7 +24,7 @@ import {
   construirViajePayload,
   getTodayIsoDate
 } from '@shared/lib/utils/viajeUtils';
-import { validarViaje, validarCoordenadas } from '../../../../schemas/viajeSchema';
+import { validarViaje, validarCoordenadas } from '@entities/viajes/model';
 import { logger } from '@shared/lib/utils/logger';
 
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;

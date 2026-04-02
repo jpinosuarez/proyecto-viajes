@@ -1,5 +1,5 @@
 import React from 'react';
-import MiniMapaRuta from '@shared/ui/components/MiniMapaRuta';
+import { MiniMapaRuta } from '@features/mapa/ui/components';
 import ContextCard from '../ContextCard';
 
 const VisorDestinoLayout = ({ isMobile, styles, paradas, sections }) => {

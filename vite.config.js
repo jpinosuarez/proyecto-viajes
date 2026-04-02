@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const baseAliases = {
   '@app': path.resolve(__dirname, 'src/app'),
+  '@entities': path.resolve(__dirname, 'src/entities'),
   '@features': path.resolve(__dirname, 'src/features'),
   '@shared': path.resolve(__dirname, 'src/shared'),
   '@widgets': path.resolve(__dirname, 'src/widgets'),

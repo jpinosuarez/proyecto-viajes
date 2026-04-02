@@ -1,21 +1,5 @@
 import { useMemo } from 'react';
-
-let getContinents;
-let getContinentsResolved = false;
-
-const resolveGetContinents = () => {
-  if (getContinentsResolved) return;
-  getContinentsResolved = true;
-  try {
-    // eslint-disable-next-line global-require, import/no-dynamic-require
-    ({ getContinents } = require('@features/gamification/model/achievementsEngine'));
-  } catch {
-    getContinents = (codes) => new Set(codes);
-  }
-};
-
-// Resolve on module load
-resolveGetContinents();
+import { getContinents } from '../achievementsEngine';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 const EMPTY_TRIPS = [];

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useLogStats } from '../useLogStats';
+import { useLogStats } from './useLogStats';
 
 describe('useLogStats', () => {
   it('returns an empty summary when trips are empty', () => {

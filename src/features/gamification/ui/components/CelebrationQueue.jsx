@@ -192,7 +192,8 @@ const cardStyles = {
   },
   btn: {
     border: 'none', borderRadius: RADIUS.md,
-    padding: '10px 24px',
+    padding: '12px 24px',
+    minHeight: '44px',
     color: 'white',
     fontWeight: '800', fontSize: '0.9rem',
     fontFamily: FONTS.heading,

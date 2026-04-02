@@ -14,7 +14,7 @@ import { COUNTRIES_DB } from '../../../assets/sellos/index';
 import { ACHIEVEMENTS } from './achievementDefinitions';
 
 /** Build a continents Set from an array of ISO-3 country codes. */
-const getContinents = (countryCodes) => {
+export const getContinents = (countryCodes) => {
   const continents = new Set();
   const lookup = new Map(COUNTRIES_DB.map((s) => [s.code, s.continente]));
   for (const code of countryCodes) {

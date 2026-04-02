@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import ConfirmModal from '@shared/ui/modals/ConfirmModal';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
 import { BentoCardSkeleton } from '@shared/ui/components';
-import UserMenuBottomSheet from '@shared/ui/components/UserMenuBottomSheet';
+import UserMenuBottomSheet from '@widgets/userMenu/ui/UserMenuBottomSheet';
 import { COLORS, RADIUS, SHADOWS } from '@shared/config';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 

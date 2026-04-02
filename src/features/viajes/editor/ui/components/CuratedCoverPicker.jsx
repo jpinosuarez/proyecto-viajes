@@ -138,6 +138,7 @@ const styles = {
   row: { display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '6px' },
   card: (disabled) => ({
     minWidth: '140px',
+    minHeight: '44px',
     borderRadius: '14px',
     border: `1px solid ${COLORS.border}`,
     background: COLORS.surface,

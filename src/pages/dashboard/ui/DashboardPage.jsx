@@ -8,7 +8,7 @@ import { COLORS } from '@shared/config';
 import { styles } from './DashboardPage.styles';
 import { HomeMap } from '@features/mapa';
 import { ErrorBoundary } from '@shared/ui/components/ErrorBoundary';
-import { useLogStats } from '@shared/lib/hooks/useLogStats';
+import { useLogStats } from '@features/gamification/model/hooks';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { SkeletonList, TripCardSkeleton } from '@shared/ui/components/Skeletons';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';

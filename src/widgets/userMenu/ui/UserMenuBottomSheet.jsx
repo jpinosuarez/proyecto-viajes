@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import BottomSheet from './BottomSheet';
+import BottomSheet from '@shared/ui/components/BottomSheet';
 import { useAuth } from '@app/providers/AuthContext';
 import { useUI } from '@app/providers/UIContext';
 
@@ -60,6 +60,7 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     width: '100%',
+    minHeight: '44px',
     padding: '14px 16px',
     borderRadius: '14px',
     border: '1px solid rgba(0,0,0,0.08)',

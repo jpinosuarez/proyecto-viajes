@@ -13,7 +13,7 @@ import { Outlet } from 'react-router-dom';
 import AppModalsManager from './AppModalsManager';
 import AppScaffold from './AppScaffold';
 
-import CelebrationQueue from '@shared/ui/components/CelebrationQueue';
+import { CelebrationQueue } from '@features/gamification/ui/components';
 import PWAUpdatePrompt from '@shared/ui/components/PWAUpdatePrompt';
 import OfflineBanner from '@shared/ui/components/OfflineBanner';
 
