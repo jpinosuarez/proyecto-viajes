@@ -11,13 +11,11 @@ service firebase.storage {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Helper: emails con permisos de curacion (mantener en sync con VITE_ADMIN_EMAILS).
+    // Helper: check if user is in the admins allowlist (managed in Firestore).
+    // The /admins/{uid} document must exist for the user to have curation permissions.
     function isCuracionAdmin() {
       return request.auth != null
-        && request.auth.token.email in [
-          'pinosuarezjoaquin@gmail.com',
-          'otro@tu-dominio.com'
-        ];
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
 
     // Helper: solo permitir imagenes y con tamano maximo de 5 MB.
