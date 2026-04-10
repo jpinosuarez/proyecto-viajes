@@ -20,7 +20,13 @@ dist-ssr
 
 # Test results / Playwright artifacts
 test-results/
+test-results/**/*.json
+.last-run.json
 playwright-report/
+
+# Firebase Emulator & Local Debug Artifacts
+firestore-debug.log
+*.log
 
 # Editor directories and files
 .vscode/*

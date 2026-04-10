@@ -1,5 +1,0 @@
-
-> proyecto-viajes@0.0.0 test:e2e
-> firebase emulators:exec --only auth,firestore,storage --project keeptrip-app-b06b3 "npx playwright test" e2e/invitations.spec.ts -g invitee accepts invitation and sees shared viaje
-
-error: unknown option '-g'
