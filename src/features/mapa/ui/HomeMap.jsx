@@ -7,11 +7,25 @@ import { setMapLanguage } from '@shared/lib/geo';
 
 const WORLD_BOUNDS = [[-170, -56], [170, 72]];
 const MAP_OCEAN_COLOR = '#e0e6ed';
-const MIN_WORLD_ZOOM = -4;
-const WORLD_VERTICAL_PADDING = 6;
-const WORLD_TARGET_ASPECT = 0.82;
+const MIN_WORLD_ZOOM = -2; // Permite a mapbox hacer zoom-out en pantallas estrechas (mobile)
+const WORLD_VERTICAL_PADDING = 20;
+
+// Estilo en blanco para eliminar TODOS los tags geográficos y nombres por defecto de Mapbox
+const BLANK_STYLE = {
+  version: 8,
+  name: 'Blank',
+  sources: {},
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      paint: { 'background-color': MAP_OCEAN_COLOR }
+    }
+  ]
+};
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+
 const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   const { i18n, t } = useTranslation('dashboard');
   const [hoverInfo, setHoverInfo] = useState(null);
@@ -29,19 +43,8 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   }, []);
 
   const fitWorld = useCallback(map => {
-    const container = map.getContainer();
-    const width = container?.clientWidth || 0;
-    const height = container?.clientHeight || 0;
-    const targetInnerWidth = Math.min(width, Math.max(height * WORLD_TARGET_ASPECT, 1));
-    const sidePadding = Math.max((width - targetInnerWidth) / 2, 0);
-
     map.fitBounds(WORLD_BOUNDS, {
-      padding: {
-        top: WORLD_VERTICAL_PADDING,
-        right: sidePadding,
-        bottom: WORLD_VERTICAL_PADDING,
-        left: sidePadding,
-      },
+      padding: WORLD_VERTICAL_PADDING,
       duration: 0,
     });
   }, []);
@@ -52,12 +55,10 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
     map.setMinZoom(MIN_WORLD_ZOOM);
     setMapLanguage(map, i18n.language);
 
-    // Keep the full Mercator world fully framed inside the available viewport.
     try {
       fitWorld(map);
     } catch (error) {
       console.error('fitBounds failed:', error);
-      // Fallback to initialViewState if fitBounds fails
     }
   }, [fitWorld, i18n.language]);
 
@@ -86,6 +87,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   }, [fitWorld]);
 
   const listaPaises = paisesVisitados.length > 0 ? paisesVisitados : ['EMPTY_LIST'];
+
   return (
     <div
       ref={mapContainerRef}
@@ -94,18 +96,16 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         minWidth: 0,
         height: '100%',
         minHeight: 0,
-        position: 'relative',
+        position: 'relative', // Contenedor original restaurado
         backgroundColor: MAP_OCEAN_COLOR,
         borderRadius: RADIUS.xl,
         overflow: 'hidden',
-        margin: 0,
-        padding: 0
       }}
     >
       <Map
         style={{ width: '100%', minWidth: 0, height: '100%', minHeight: 0 }}
         initialViewState={{ longitude: 0, latitude: 15, zoom: 1.5 }}
-        mapStyle="mapbox://styles/mapbox/light-v11"
+        mapStyle={BLANK_STYLE}
         mapboxAccessToken={MAPBOX_TOKEN}
         projection="mercator"
         reuseMaps
@@ -113,7 +113,7 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         interactive={true}
         renderWorldCopies={false}
         minZoom={MIN_WORLD_ZOOM}
-        maxZoom={3}
+        maxZoom={4}
         boxZoom={false}
         keyboard={false}
         scrollZoom={false}
@@ -127,10 +127,37 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
         onResize={handleMapResize}
         onMouseMove={onHover}
         interactiveLayerIds={['country-fills']}
-        attributionControl={false}>
+        attributionControl={false}
+      >
         <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
-          <Layer id="country-fills" type="fill" source-layer="country_boundaries" paint={{ 'fill-color': COLORS.atomicTangerine, 'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], listaPaises, 0.8, 0] }} />
-          <Layer id="borders" type="line" source-layer="country_boundaries" paint={{ 'line-color': '#cbd5e1', 'line-width': 0.5, 'line-opacity': 0.6 }} />      
+          {/* Base blanca para masas continentales (oculta océano de los bounds de cada país) */}
+          <Layer 
+            id="country-base" 
+            type="fill" 
+            source-layer="country_boundaries" 
+            paint={{ 'fill-color': '#ffffff', 'fill-opacity': 1 }} 
+          />
+          <Layer 
+            id="country-fills" 
+            type="fill" 
+            source-layer="country_boundaries" 
+            paint={{ 
+              'fill-color': COLORS.atomicTangerine, 
+              // Mantenemos la solución que arregló el renderizado de los países visitados
+              'fill-opacity': [
+                'case', 
+                ['in', ['get', 'iso_3166_1_alpha_3'], ['literal', listaPaises]], 
+                0.8, 
+                0
+              ] 
+            }} 
+          />
+          <Layer 
+            id="borders" 
+            type="line" 
+            source-layer="country_boundaries" 
+            paint={{ 'line-color': '#cbd5e1', 'line-width': 0.5, 'line-opacity': 0.6 }} 
+          />      
         </Source>
         {hoverInfo && (
           <Popup

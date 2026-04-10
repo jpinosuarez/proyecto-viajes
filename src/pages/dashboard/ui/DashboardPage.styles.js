@@ -10,16 +10,16 @@ export const styles = {
           height: '100vh',
           overflow: 'hidden',
           display: 'grid',
-          gridTemplateColumns: '350px minmax(0, 1fr)',
+          gridTemplateColumns: 'minmax(350px, 5fr) minmax(400px, 7fr)',
           gridTemplateRows: 'min-content minmax(0, 1fr)',
-          gap: '10px',
-          padding: '12px 16px 10px',
+          gap: '24px',
+          padding: '24px',
         }
       : {
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
-          padding: '12px 12px 0',
+          gap: '16px',
+          padding: '16px',
           height: 'auto',
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -33,7 +33,7 @@ export const styles = {
       ? {
           gridColumn: '1',
           gridRow: '1',
-          alignSelf: 'start',
+          alignSelf: 'stretch',
         }
       : {
           width: '100%',
@@ -46,7 +46,7 @@ export const styles = {
       ? {
           gridColumn: '2',
           gridRow: '1',
-          alignSelf: 'start',
+          alignSelf: 'stretch',
         }
       : {
           width: '100%',
@@ -64,8 +64,7 @@ export const styles = {
           gridRow: '2',
           minHeight: 0,
           height: '100%',
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          overflow: 'hidden',
         }
       : {
           width: '100%',
@@ -97,6 +96,8 @@ export const styles = {
   },
 
   mapSectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
     margin: 0,
     fontSize: '0.8rem',
     fontWeight: '800',
@@ -105,6 +106,7 @@ export const styles = {
     letterSpacing: '0.4px',
     lineHeight: 1,
     flexShrink: 0,
+    minHeight: '44px',
   },
 
   mapCard: (isDesktop) => ({
@@ -117,7 +119,7 @@ export const styles = {
     minWidth: 0,
     minHeight: 0,
     boxShadow: SHADOWS.md,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.background, // Handled internally by map ocean trick
     position: 'relative',
     ...(isDesktop
       ? {
@@ -125,8 +127,10 @@ export const styles = {
           height: '100%',
         }
       : {
-          height: '350px',
-          minHeight: '350px',
+          width: '100%',
+          height: '240px',
+          minHeight: '240px',
+          flexShrink: 0,
         }),
   }),
 
@@ -223,11 +227,13 @@ export const styles = {
 
   sectionHeader: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     flexShrink: 0,
     gap: '8px',
     marginTop: 0,
+    paddingTop: 0,
+    minHeight: '44px',
   },
 
   sectionTitle: {
@@ -259,25 +265,44 @@ export const styles = {
     flexShrink: 0,
   },
 
-  cardsList: (isDesktop) => ({
-    display: 'grid',
-    gridTemplateColumns: isDesktop
-      ? 'repeat(1, minmax(0, 1fr))'
-      : 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))',
-    alignItems: 'stretch',
-    gap: isDesktop ? '10px' : '8px',
-    minWidth: 0,
-    minHeight: 0,
-    ...(isDesktop
-      ? {
-          flex: '0 0 auto',
-          height: 'auto',
-          overflow: 'visible',
-        }
-      : {
-          overflow: 'visible',
-        }),
-  }),
+  cardsList: (isDesktop, count = 0) => {
+    let gridTemplateColumns = 'repeat(1, minmax(0, 1fr))';
+    let gridTemplateRows = 'minmax(0, 1fr)';
+
+    if (isDesktop) {
+      if (count === 1) {
+        gridTemplateColumns = 'minmax(0, 1fr)';
+        gridTemplateRows = 'minmax(0, 1fr)';
+      } else if (count === 2) {
+        gridTemplateColumns = 'minmax(0, 1fr)';
+        gridTemplateRows = 'repeat(2, minmax(0, 1fr))';
+      } else if (count >= 3) {
+        gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+        gridTemplateRows = 'repeat(2, minmax(0, 1fr))';
+      }
+    } else {
+      gridTemplateColumns = 'repeat(auto-fit, minmax(min(180px, 100%), 1fr))';
+      gridTemplateRows = 'auto';
+    }
+
+    return {
+      display: 'grid',
+      gridTemplateColumns,
+      gridTemplateRows,
+      alignItems: 'stretch',
+      gap: '12px',
+      minWidth: 0,
+      minHeight: 0,
+      ...(isDesktop
+        ? {
+            flex: 1,
+            overflow: 'hidden',
+          }
+        : {
+            overflow: 'visible',
+          }),
+    };
+  },
 
   dashboardErrorCard: {
     gridColumn: '1 / -1',

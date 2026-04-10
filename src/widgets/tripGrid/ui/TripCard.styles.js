@@ -9,7 +9,7 @@ export const tripStyles = {
       minWidth: isGrid ? 'auto' : (isMobile ? undefined : '160px'),
       width: isGrid || isHome ? '100%' : (isMobile ? '100%' : '160px'),
       height: isGrid ? '280px' : isHome ? '100%' : '220px',
-      minHeight: isHome ? '180px' : undefined,
+      minHeight: isHome ? '120px' : undefined,
       borderRadius: isMobile ? RADIUS.lg : RADIUS.xl,
       overflow: 'hidden',
       cursor: 'pointer',
@@ -149,6 +149,8 @@ export const tripStyles = {
   fallbackAuraFlag: {
     width: '100%',
     height: '100%',
+    minWidth: 0,
+    minHeight: 0,
     objectFit: 'cover',
   },
 

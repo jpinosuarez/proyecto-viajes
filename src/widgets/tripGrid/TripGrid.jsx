@@ -78,6 +78,8 @@ const TripGrid = ({
                 <Motion.div 
                   key={trip.id} 
                   layout
+                  initial="hidden"
+                  animate="visible"
                   variants={{
                     hidden: { opacity: 0, scale: 0.9, y: 30 },
                     visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } }

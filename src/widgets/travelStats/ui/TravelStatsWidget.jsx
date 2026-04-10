@@ -30,35 +30,47 @@ const StatCard = ({ stat, hero = false, compact = false, style, index }) => {
         style={{
           ...styles.cardBody,
           ...(hero ? styles.heroCardBody : styles.secondaryCardBody),
+          // Apply clustered override only to secondary cards in compact view
+          ...(compact && !hero ? styles.compactSecondaryCardBody : null),
         }}
       >
         {isSecondary ? (
-          <div style={styles.secondaryValueRow}>
-            <span style={styles.secondaryIcon} aria-hidden="true">{stat.icon}</span>
+          <>
+            <div style={{
+              ...styles.secondaryTextLayout,
+              // Apply expansion control and zero flexibility for proper clustering
+              ...(compact ? styles.compactSecondaryTextLayout : null)
+            }}>
+              <span
+                style={{
+                  ...styles.value,
+                  ...(compact ? styles.compactValue : null),
+                }}
+              >
+                {stat.displayValue}
+              </span>
+              <span style={styles.secondaryLabel}>{stat.label}</span>
+            </div>
+            <div style={styles.secondaryIconBadge} aria-hidden="true">
+              <span style={styles.secondaryIcon}>{stat.icon}</span>
+            </div>
+          </>
+        ) : (
+          <>
             <span
               style={{
                 ...styles.value,
                 ...(compact ? styles.compactValue : null),
+                ...(hero ? styles.heroValue : null),
+                ...(compact && hero ? styles.compactHeroValue : null),
               }}
             >
               {stat.displayValue}
             </span>
-          </div>
-        ) : (
-          <span
-            style={{
-              ...styles.value,
-              ...(compact ? styles.compactValue : null),
-              ...(hero ? styles.heroValue : null),
-              ...(compact && hero ? styles.compactHeroValue : null),
-            }}
-          >
-            {stat.displayValue}
-          </span>
+            <span style={hero ? styles.label : styles.secondaryLabel}>{stat.label}</span>
+            {hero && stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
+          </>
         )}
-
-        <span style={hero ? styles.label : styles.secondaryLabel}>{stat.label}</span>
-        {hero && stat.hint ? <span style={styles.hint}>{stat.hint}</span> : null}
       </div>
     </Motion.div>
   );
@@ -79,27 +91,31 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, isMobile = false, varia
     return {
       worldExploredPercentage: {
         label: t('stats.worldExploredPercentage'),
-        hint: t('stats.worldExploredPercentageHint'),
-        displayValue: `${Number.isNaN(worldPercentage) ? 0 : worldPercentage.toFixed(1)}%`,
+        displayValue: `${Number.isNaN(worldPercentage) ? 0 : Math.round(worldPercentage)}%`,
       },
       uniqueCountries: {
         label: t('stats.uniqueCountries'),
-        icon: <Globe size={14} strokeWidth={2} />,
-        displayValue: formatNumber(safeValue(logStats.uniqueCountries)),
+        icon: <Globe size={24} strokeWidth={2} />,
+        displayValue: (
+          <span>
+            {formatNumber(safeValue(logStats.uniqueCountries))}
+            <span style={{ opacity: 0.7, fontSize: '0.75em', fontWeight: 500 }}>/195</span>
+          </span>
+        ),
       },
       completedTrips: {
         label: t('stats.completedTrips'),
-        icon: <Compass size={14} strokeWidth={2} />,
+        icon: <Compass size={24} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.completedTrips)),
       },
       totalDays: {
         label: t('stats.totalDays'),
-        icon: <Calendar size={14} strokeWidth={2} />,
+        icon: <Calendar size={24} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.totalDays)),
       },
       totalStops: {
         label: t('stats.totalStops'),
-        icon: <MapPin size={14} strokeWidth={2} />,
+        icon: <MapPin size={24} strokeWidth={2} />,
         displayValue: formatNumber(safeValue(logStats.totalStops)),
       },
     };

@@ -69,13 +69,8 @@ const TripsPage = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflowY: 'auto', overflowX: 'hidden' }}>
-      <TripCommandBar 
-        activeFilter={activeFilter} 
-        onFilterChange={setActiveFilter}
-        isMobile={isMobile}
-      />
-
-      <div style={{ marginBottom: isMobile ? '10px' : '8px' }}>
+      {/* 1. Stats Bar at the top. Increased bottom margin to let it breathe. */}
+      <div style={{ marginBottom: isMobile ? '16px' : '16px', marginTop: '4px' }}>
         <TravelStatsWidget
           logStats={tripsLogStats}
           ariaLabel={t('stats.tripSummary')}
@@ -83,7 +78,17 @@ const TripsPage = () => {
           isMobile={isMobile}
         />
       </div>
+
+      {/* 2. Filters Bar below the Stats Bar. Added bottom margin. */}
+      <div style={{ marginBottom: isMobile ? '16px' : '16px' }}>
+        <TripCommandBar 
+          activeFilter={activeFilter} 
+          onFilterChange={setActiveFilter}
+          isMobile={isMobile}
+        />
+      </div>
       
+      {/* 3. Trips Grid */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: isMobile ? 'max(env(safe-area-inset-bottom), 20px)' : '0px' }}>
         <TripGrid 
           trips={filteredTrips} 

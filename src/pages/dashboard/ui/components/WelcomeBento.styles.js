@@ -3,8 +3,10 @@ import { COLORS, SHADOWS, RADIUS } from '@shared/config';
 export const welcomeStyles = {
   pageHeader: (isMobile) => ({
     width: '100%',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
+    justifyContent: 'space-between',
     gap: isMobile ? '10px' : '12px',
     padding: isMobile ? '16px' : '20px',
     position: 'relative',

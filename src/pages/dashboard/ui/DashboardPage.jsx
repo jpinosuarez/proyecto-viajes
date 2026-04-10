@@ -42,9 +42,8 @@ const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isErr
 
   const recentTripsLimit = useMemo(() => {
     if (isMobileLayout) return 2;
-    if (width >= 1500 && height >= 880) return 3;
-    return recentTrips.length;
-  }, [height, isMobileLayout, recentTrips.length, width]);
+    return Math.min(recentTrips.length, 4);
+  }, [isMobileLayout, recentTrips.length]);
 
   const visibleRecentTrips = useMemo(
     () => (isDesktop ? recentTrips : recentTrips.slice(0, recentTripsLimit)),
@@ -138,7 +137,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isErr
           )}
         </div>
 
-        <div style={styles.cardsList(isDesktop)} className="custom-scroll">
+        <div style={styles.cardsList(isDesktop, visibleRecentTrips.length)} className="custom-scroll">
           {loading ? (
             <SkeletonList count={2} Component={TripCardSkeleton} />
           ) : isError ? (
@@ -152,15 +151,28 @@ const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isErr
               )}
             </div>
           ) : !isNewTraveler ? (
-            visibleRecentTrips.map((trip) => (
-              <TripCard 
-                key={trip.id} 
-                trip={trip} 
-                isMobile={isMobileLayout} 
-                variant="home"
-                onClick={() => openTripEditor(trip.id)} 
-              />
-            ))
+            visibleRecentTrips.map((trip, index) => {
+              const isThreeItems = visibleRecentTrips.length === 3;
+              const isFirstOfThree = isThreeItems && index === 0;
+              return (
+                <div 
+                  key={trip.id} 
+                  style={{ 
+                    minHeight: 0, 
+                    height: '100%', 
+                    gridColumn: isDesktop && isFirstOfThree ? '1 / -1' : undefined,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <TripCard 
+                    trip={trip} 
+                    isMobile={isMobileLayout} 
+                    variant="home"
+                    onClick={() => openTripEditor(trip.id)} 
+                  />
+                </div>
+              );
+            })
           ) : (
             <div style={{ gridColumn: '1 / -1', minWidth: 0, minHeight: 0, width: '100%' }}>
               <EmptyDashboardState />
