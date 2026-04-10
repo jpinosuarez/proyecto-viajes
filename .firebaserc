@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "keeptrip-app-b06b3",
+    "staging": "keeptrip-app-staging"
+  }
+}

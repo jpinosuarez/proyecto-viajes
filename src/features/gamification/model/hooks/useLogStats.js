@@ -32,10 +32,11 @@ export const useLogStats = (trips = [], tripData = {}) => {
       return { ...trip, ...tripDetails };
     });
 
-    const totalStops = viajes.reduce(
-      (acc, viaje) => acc + (Array.isArray(viaje.paradas) ? viaje.paradas.length : (viaje.totalParadas || 0)),
-      0
-    );
+    const totalStops = viajes.reduce((acc, viaje) => {
+      const stops = getTripStops(viaje, viaje);
+      if (stops.length > 0) return acc + stops.length;
+      return acc + (Number.isFinite(viaje.totalParadas) ? viaje.totalParadas : 0);
+    }, 0);
 
     let totalDays = 0;
     const countryCodes = new Set();

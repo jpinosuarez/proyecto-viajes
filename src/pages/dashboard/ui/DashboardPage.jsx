@@ -18,7 +18,7 @@ import EmptyDashboardState from './components/EmptyDashboardState';
 import TripCard from '@widgets/tripGrid/ui/TripCard';
 import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
 
-const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isError = false, fetchError = null }) => {
+const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading = false, isError = false, fetchError = null }) => {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,12 +54,16 @@ const DashboardPage = ({ countriesVisited = [], log = [], loading = false, isErr
 
   // dashboard stats
   const tripDataMap = useMemo(() => {
-    const m = {};
-    log.forEach((t) => {
-      if (t.id) m[t.id] = t;
+    if (logData && typeof logData === 'object' && !Array.isArray(logData)) {
+      return logData;
+    }
+
+    const fallbackMap = {};
+    log.forEach((trip) => {
+      if (trip?.id) fallbackMap[trip.id] = trip;
     });
-    return m;
-  }, [log]);
+    return fallbackMap;
+  }, [log, logData]);
 
   const logStatsDashboard = useLogStats(log, tripDataMap);
 

@@ -60,4 +60,24 @@ describe('useLogStats', () => {
     expect(result.current.totalStops).toBe(4);
     expect(result.current.uniqueCountries).toBe(1);
   });
+
+  it('counts stops when paradas are stored as object map', () => {
+    const trips = [{ id: 'trip-1' }];
+    const tripData = {
+      'trip-1': {
+        fechaInicio: '2026-04-01',
+        fechaFin: '2026-04-01',
+        paradas: {
+          p1: { paisCodigo: 'CL' },
+          p2: { paisCodigo: 'PE' },
+          p3: { paisCodigo: 'CL' },
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useLogStats(trips, tripData));
+
+    expect(result.current.totalStops).toBe(3);
+    expect(result.current.uniqueCountries).toBe(2);
+  });
 });
