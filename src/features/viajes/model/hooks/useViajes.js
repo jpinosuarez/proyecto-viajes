@@ -27,6 +27,9 @@ import {
 import { validarViaje, validarCoordenadas } from '@entities/viajes/model';
 import { logger } from '@shared/lib/utils/logger';
 
+const isImageDataUrl = (value) =>
+  typeof value === 'string' && value.trim().startsWith('data:image/');
+
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
 const obtenerCoordenadasViaje = ({ datosViaje = {}, viajeActual = null, paradas = [] }) => {
@@ -355,7 +358,7 @@ export const useViajes = () => {
     let fotoFinal = datosViajeNormalizados.foto;
     let creditoFinal = datosViajeNormalizados.fotoCredito || null;
     const fotoFileOptimizada = datosViajeNormalizados.fotoFile || null;
-    const esFotoBase64 = fotoFinal && typeof fotoFinal === 'string' && fotoFinal.startsWith('data:image');
+    const esFotoBase64 = isImageDataUrl(fotoFinal);
     const esFotoParaStorage = !!fotoFileOptimizada || !!esFotoBase64;
 
     const banderas = construirBanderasViaje(datosViajeNormalizados.code, paradas);
@@ -458,7 +461,7 @@ export const useViajes = () => {
             storage,
             userId: usuario.uid,
             viajeId,
-            foto: fotoFileOptimizada || datosViaje.foto
+            foto: fotoFileOptimizada || fotoFinal
           });
           if (url) {
             await actualizarViaje({ db, userId: usuario.uid, viajeId, data: { foto: url } });
@@ -525,9 +528,7 @@ export const useViajes = () => {
         if (!url) throw new Error('No se pudo subir la imagen optimizada');
         dataToSave.foto = url;
       } else if (
-        dataToSave.foto &&
-        typeof dataToSave.foto === 'string' &&
-        dataToSave.foto.startsWith('data:image')
+        isImageDataUrl(dataToSave.foto)
       ) {
         logger.debug('Subiendo nueva foto (base64)', { viajeId: id });
         const url = await subirFotoViaje({

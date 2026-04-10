@@ -13,6 +13,9 @@ import { getDownloadURL, ref, uploadBytes, uploadString } from 'firebase/storage
 import { compressImage } from '@shared/lib/utils/imageUtils';
 import { logger } from '@shared/lib/utils/logger';
 
+const isImageDataUrl = (value) =>
+  typeof value === 'string' && value.trim().startsWith('data:image/');
+
 export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
   const stopUnsubscribers = new Map();
   const stopsByTrip = new Map();
@@ -209,8 +212,8 @@ export const subirFotoViaje = async ({ storage, userId, viajeId, foto }) => {
       return await getDownloadURL(storageRef);
     }
 
-    if (typeof foto === 'string' && foto.startsWith('data:image')) {
-      await uploadString(storageRef, foto, 'data_url');
+    if (isImageDataUrl(foto)) {
+      await uploadString(storageRef, foto.trim(), 'data_url');
       return await getDownloadURL(storageRef);
     }
 
