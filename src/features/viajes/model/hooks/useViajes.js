@@ -264,7 +264,7 @@ export const useViajes = () => {
             return;
           }
           console.log('[E2E DEBUG] Shared viajeSnap loaded successfully!', { ownerId, viajeId, data: viajeSnap.data() });
-          upsertSharedViaje({ ownerId, viaje: { id: viajeSnap.id, ...viajeSnap.data() } });
+          upsertSharedViaje({ ownerId, viaje: { ...viajeSnap.data(), id: viajeSnap.id } });
         }, (sharedViajeError) => {
           logger.error('Error en viaje compartido', {
             error: sharedViajeError.message,

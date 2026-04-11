@@ -23,6 +23,7 @@ export function useEdicionModalLifecycle({
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
   const [isHydratingStops, setIsHydratingStops] = useState(false);
+  const language = i18n.language;
 
   const titlePulseRef = useRef(null);
   const prevViajeIdRef = useRef(null);
@@ -69,7 +70,6 @@ export function useEdicionModalLifecycle({
       setGalleryFiles([]);
       setGalleryPortada(0);
       setCaptionDrafts({});
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsTituloAuto(true);
       setIsHydratingStops(false);
       limpiarGaleriaRef.current();
@@ -163,8 +163,8 @@ export function useEdicionModalLifecycle({
           const loaded = snap.docs.map((d) => {
             const data = d.data();
             return {
-              id: d.id,
               ...data,
+              id: d.id,
               flag: data.flag || (data.paisCodigo ? getFlagUrl(data.paisCodigo) : ''),
             };
           });
@@ -173,7 +173,7 @@ export function useEdicionModalLifecycle({
 
           // Restore auto-title mode if the saved title identically matches the generated one for these stops
           if (!esBorrador && viaje.titulo) {
-            const tituloEsperado = generarTituloInteligente(paradasOrdenadas, tRef.current, i18n.language);
+            const tituloEsperado = generarTituloInteligente(paradasOrdenadas, tRef.current, language);
             if (viaje.titulo === tituloEsperado) {
               setIsTituloAuto(true);
             }
@@ -193,6 +193,7 @@ export function useEdicionModalLifecycle({
   }, [
     ciudadInicial,
     esBorrador,
+    language,
     setCaptionDrafts,
     setFormData,
     setGalleryFiles,
@@ -234,33 +235,31 @@ export function useEdicionModalLifecycle({
       hasHydratedRef.current = true;
 
       if (isTituloAuto) {
-        const tituloAuto = generarTituloInteligente(paradas, tRef.current, i18n.language);
+        const tituloAuto = generarTituloInteligente(paradas, tRef.current, language);
         if (tituloAuto !== currentFormData.titulo) {
           setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setTitlePulse(true);
           if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
           titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
         }
       }
     }
-  }, [esBorrador, formData?.id, formData?.nombreEspanol, isTituloAuto, paradas, setFormData, viaje?.id, viaje?.nombreEspanol]);
+  }, [esBorrador, formData?.id, formData?.nombreEspanol, isTituloAuto, language, paradas, setFormData, viaje?.id, viaje?.nombreEspanol]);
 
   // Effect 2 (Reactive Engine): reacciona a paradas + modo auto después de hidratar
   useEffect(() => {
     if (!hasHydratedRef.current || !isTituloAuto) return;
 
     const currentFormData = formDataRef.current || {};
-    const tituloAuto = generarTituloInteligente(paradas, tRef.current, i18n.language);
+    const tituloAuto = generarTituloInteligente(paradas, tRef.current, language);
 
     if (tituloAuto !== currentFormData.titulo) {
       setFormData((prev) => ({ ...prev, titulo: tituloAuto }));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitlePulse(true);
       if (titlePulseRef.current) clearTimeout(titlePulseRef.current);
       titlePulseRef.current = setTimeout(() => setTitlePulse(false), 900);
     }
-  }, [paradas, isTituloAuto, setFormData]);
+  }, [isTituloAuto, language, paradas, setFormData]);
 
   useEffect(() => {
     return () => {
@@ -335,10 +334,10 @@ export function useEdicionModalLifecycle({
         },
       ]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ciudadInicial,
     esBorrador,
+    paradas.length,
     setFormData,
     setParadas,
     viaje,
