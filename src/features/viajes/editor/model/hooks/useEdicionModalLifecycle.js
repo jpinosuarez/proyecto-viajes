@@ -23,6 +23,7 @@ export function useEdicionModalLifecycle({
   const [isTituloAuto, setIsTituloAuto] = useState(true);
   const [titlePulse, setTitlePulse] = useState(false);
   const [isHydratingStops, setIsHydratingStops] = useState(false);
+
   const titlePulseRef = useRef(null);
   const prevViajeIdRef = useRef(null);
   const initSignatureRef = useRef(null);
@@ -167,7 +168,16 @@ export function useEdicionModalLifecycle({
               flag: data.flag || (data.paisCodigo ? getFlagUrl(data.paisCodigo) : ''),
             };
           });
-          setParadas(loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)));
+          const paradasOrdenadas = loaded.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+          setParadas(paradasOrdenadas);
+
+          // Restore auto-title mode if the saved title identically matches the generated one for these stops
+          if (!esBorrador && viaje.titulo) {
+            const tituloEsperado = generarTituloInteligente(paradasOrdenadas, tRef.current, i18n.language);
+            if (viaje.titulo === tituloEsperado) {
+              setIsTituloAuto(true);
+            }
+          }
         } catch {
           setParadas([]);
         } finally {
@@ -204,6 +214,7 @@ export function useEdicionModalLifecycle({
       initializedParadasRef.current = false; // Reset flag on unmount
       hasHydratedRef.current = false;
       hasHydratedStopsRef.current = false;
+      initSignatureRef.current = null;
     };
   }, [setCaptionDrafts, setFormData, setGalleryFiles, setGalleryPortada, setParadas]);
 

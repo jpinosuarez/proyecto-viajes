@@ -1,5 +1,5 @@
 import React from 'react';
-import { LoaderCircle, CalendarDays, MapPinned } from 'lucide-react';
+import { LoaderCircle, CalendarDays, MapPinned, Sparkles } from 'lucide-react';
 import { getCountryFlagEmoji, getFlagUrl, normalizeCountryCode } from '@shared/lib/utils/countryUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { styles } from './EdicionHeaderSection.styles';
@@ -16,6 +16,7 @@ const EdicionHeaderSection = ({
   paradas = [],
   onTituloChange,
   onToggleTituloAuto,
+  onRegenerateTitle,
 }) => {
   const titleTextareaRef = React.useRef(null);
   const [titleFontSize, setTitleFontSize] = React.useState(isMobile ? 20 : 22);
@@ -143,6 +144,19 @@ const EdicionHeaderSection = ({
         </div>
 
         <div style={styles.content}>
+          {!esBorrador && !isTituloAuto && (
+            <button
+              type="button"
+              onClick={onRegenerateTitle}
+              disabled={isBusy}
+              style={styles.regenerateBtn(isBusy)}
+              aria-label={t('editor.header.regenerateTitleBtn', { defaultValue: 'Generar título automático' })}
+            >
+              <Sparkles size={14} />
+              {t('editor.header.regenerateTitleBtn', { defaultValue: 'Generar título automático' })}
+            </button>
+          )}
+
           <textarea
             id="trip-title-editor-input"
             name="titulo"

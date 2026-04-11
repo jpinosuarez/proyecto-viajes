@@ -30,7 +30,7 @@ import { validarViaje, validarCoordenadas } from '@entities/viajes/model';
 import { logger } from '@shared/lib/utils/logger';
 
 const isImageDataUrl = (value) =>
-  typeof value === 'string' && value.trim().startsWith('data:image/');
+  typeof value === 'string' && value.trim().startsWith('data:image/') && value.includes(';base64,');
 
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
@@ -665,7 +665,7 @@ export const useViajes = () => {
         delete next[id];
         return next;
       });
-      setTodasLasParadas((prev) => prev.filter((p) => p.viajeId !== id));
+      setTodasLasParadas((prev) => prev.filter((p) => p.viajeId !== id && p.tripId !== id));
       
       logger.info('Viaje eliminado exitosamente', { viajeId: id });
       toast.success('Eliminado correctamente');

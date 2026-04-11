@@ -14,7 +14,7 @@ import { compressImage } from '@shared/lib/utils/imageUtils';
 import { logger } from '@shared/lib/utils/logger';
 
 const isImageDataUrl = (value) =>
-  typeof value === 'string' && value.trim().startsWith('data:image/');
+  typeof value === 'string' && value.trim().startsWith('data:image/') && value.includes(';base64,');
 
 export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
   const stopUnsubscribers = new Map();

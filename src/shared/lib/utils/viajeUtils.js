@@ -243,15 +243,20 @@ export const construirBitacoraData = (viajes = [], todasLasParadas = []) => {
 
 export const obtenerPaisesVisitados = (bitacora = [], todasLasParadas = []) => {
   const codigos = new Set();
+  const viajesConParadas = new Set();
 
-  bitacora.forEach((viaje) => {
-    const iso3 = getCountryISO3(viaje.code);
+  todasLasParadas.forEach((parada) => {
+    if (parada.viajeId) viajesConParadas.add(parada.viajeId);
+    if (parada.tripId) viajesConParadas.add(parada.tripId);
+    const iso3 = getCountryISO3(parada.paisCodigo);
     if (iso3) codigos.add(iso3);
   });
 
-  todasLasParadas.forEach((parada) => {
-    const iso3 = getCountryISO3(parada.paisCodigo);
-    if (iso3) codigos.add(iso3);
+  bitacora.forEach((viaje) => {
+    if (!viajesConParadas.has(viaje.id)) {
+      const iso3 = getCountryISO3(viaje.code);
+      if (iso3) codigos.add(iso3);
+    }
   });
 
   return [...codigos].filter(Boolean);

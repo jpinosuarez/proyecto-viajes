@@ -96,13 +96,18 @@ const CityManager = ({ t, paradas, setParadas, setDeletedStopIds }) => {
   };
 
   const eliminarParada = (index) => {
-    const stopToDelete = paradas[index];
+    setParadas((prev) => {
+      const stopToDelete = prev[index];
 
-    setParadas((prev) => prev.filter((_, i) => i !== index));
+      if (stopToDelete && isPersistedStop(stopToDelete.id) && typeof setDeletedStopIds === 'function') {
+        // Defer side-effect to keep this updater pure from nested state updates.
+        setTimeout(() => {
+          setDeletedStopIds((dPrev) => [...new Set([...(dPrev || []), stopToDelete.id])]);
+        }, 0);
+      }
 
-    if (isPersistedStop(stopToDelete?.id) && typeof setDeletedStopIds === 'function') {
-      setDeletedStopIds((prev) => [...new Set([...(prev || []), stopToDelete.id])]);
-    }
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   return (
