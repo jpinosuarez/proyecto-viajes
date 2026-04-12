@@ -3,6 +3,7 @@ import { db, storage } from '@shared/firebase';
 import { doc as fbDoc, query as fbQuery, where as fbWhere, onSnapshot as fbOnSnapshot, collection as fbCollection, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@app/providers/AuthContext';
 import { useToast } from '@app/providers/ToastContext';
+import { useTranslation } from 'react-i18next';
 import { obtenerClimaHistoricoSeguro } from '@shared/api/services/external/weatherService';
 import {
   suscribirViajesConParadas,
@@ -10,6 +11,7 @@ import {
   actualizarViaje,
   crearParada,
   actualizarParada,
+  eliminarParada as eliminarParadaRepo,
   eliminarViaje,
   subirFotoViaje,
   applyStopsBatchMutations
@@ -29,7 +31,7 @@ import { validarViaje, validarCoordenadas } from '@entities/viajes/model';
 import { logger } from '@shared/lib/utils/logger';
 
 const isImageDataUrl = (value) =>
-  typeof value === 'string' && value.trim().startsWith('data:image/');
+  typeof value === 'string' && value.trim().startsWith('data:image/') && value.includes(';base64,');
 
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 
@@ -87,6 +89,7 @@ const validarDatosViaje = ({ datosViaje = {}, viajeActual = null, paradas = [], 
 export const useViajes = () => {
   const { usuario } = useAuth();
   const { pushToast } = useToast();
+  const { t, i18n } = useTranslation();
   const toast = {
     success: (message) => pushToast(message, 'success'),
     error: (message) => pushToast(message, 'error'),
@@ -109,6 +112,15 @@ export const useViajes = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fetchError, setFetchError] = useState(null);
+
+  const bitacoraDataHydrated = useMemo(
+    () => construirBitacoraData(bitacora, todasLasParadas),
+    [bitacora, todasLasParadas]
+  );
+
+  useEffect(() => {
+    setBitacoraData(bitacoraDataHydrated);
+  }, [bitacoraDataHydrated]);
 
   useEffect(() => {
     const userUid = usuario?.uid;
@@ -255,7 +267,7 @@ export const useViajes = () => {
             return;
           }
           console.log('[E2E DEBUG] Shared viajeSnap loaded successfully!', { ownerId, viajeId, data: viajeSnap.data() });
-          upsertSharedViaje({ ownerId, viaje: { id: viajeSnap.id, ...viajeSnap.data() } });
+          upsertSharedViaje({ ownerId, viaje: { ...viajeSnap.data(), id: viajeSnap.id } });
         }, (sharedViajeError) => {
           logger.error('Error en viaje compartido', {
             error: sharedViajeError.message,
@@ -347,7 +359,7 @@ export const useViajes = () => {
       titulo: tituloPersonalizado
     };
 
-    const titulo = generarTituloInteligente(datosViajeNormalizados.nombreEspanol, paradas);
+    const titulo = generarTituloInteligente(paradas, t, i18n.language || 'es');
     const validacion = validarDatosViaje({ datosViaje: datosViajeNormalizados, paradas, tituloGenerado: titulo });
     if (!validacion.esValido) {
       logger.warn('Trip validation failed before save', {
@@ -656,7 +668,7 @@ export const useViajes = () => {
         delete next[id];
         return next;
       });
-      setTodasLasParadas((prev) => prev.filter((p) => p.viajeId !== id));
+      setTodasLasParadas((prev) => prev.filter((p) => p.viajeId !== id && p.tripId !== id));
       
       logger.info('Viaje eliminado exitosamente', { viajeId: id });
       toast.success('Eliminado correctamente');
@@ -674,6 +686,18 @@ export const useViajes = () => {
     }
   };
 
+  const eliminarParada = async (viajeId, paradaId) => {
+    if (!usuario || !viajeId || !paradaId) return false;
+
+    try {
+      await eliminarParadaRepo({ db, userId: usuario.uid, viajeId, paradaId });
+      return true;
+    } catch (err) {
+      logger.error('Error eliminando parada', { error: err.message, viajeId, paradaId });
+      return false;
+    }
+  };
+
   return {
     paisesVisitados,
     bitacora,
@@ -681,6 +705,7 @@ export const useViajes = () => {
     todasLasParadas,
     guardarNuevoViaje,
     agregarParada,
+    eliminarParada,
     actualizarParada: async (paradaData, viajeId) => {
       if (!usuario || !viajeId || !paradaData?.id) return false;
       try {

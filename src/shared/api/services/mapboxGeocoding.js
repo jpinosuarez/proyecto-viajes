@@ -10,8 +10,6 @@ const cache = new Map();
 const activeRequests = new Map();
 
 const CACHE_TTL_MS = 1000 * 60 * 60; // 60 minutes
-const OPERATIONAL_WARNING_COOLDOWN_MS = 30 * 1000;
-let lastOperationalWarningTimestamp = 0;
 
 const bindAbortSignal = (promise, signal) => {
   if (!signal) return promise;
@@ -42,11 +40,6 @@ export const fetchGeocoding = async ({ query, language, types = 'country,place,l
   ensureOperationalFlagsListener();
   const currentLevel = Number(getOperationalFlagsSnapshot()?.level || 0);
   if (currentLevel >= 1) {
-    const now = Date.now();
-    if (now - lastOperationalWarningTimestamp > OPERATIONAL_WARNING_COOLDOWN_MS) {
-      console.warn('[OPERATIONAL] Geocoding is currently disabled by Admin.');
-      lastOperationalWarningTimestamp = now;
-    }
     return [];
   }
 
