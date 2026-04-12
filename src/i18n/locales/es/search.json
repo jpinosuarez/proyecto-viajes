@@ -6,6 +6,7 @@
   "clear": "Limpiar búsqueda",
   "popularTitle": "DESTINOS POPULARES",
   "loading": "Buscando en el mapa... 🌍",
+  "pausedMessage": "Búsqueda temporalmente pausada mientras estabilizamos los servicios del mapa. Tus viajes guardados siguen disponibles.",
   "noResults": "No pudimos encontrar '{{term}}'. Intenta buscar países, ciudades o destinos populares.",
   "emptyHelp": "Puedes buscar por nombre, país o ciudad.",
   "minChars": "Escribe al menos 3 caracteres para buscar",

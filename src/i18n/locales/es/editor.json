@@ -117,6 +117,7 @@
     "tripNeedsStop": "El viaje debe tener al menos un destino.",
     "tripNeedsTitle": "El viaje debe tener un titulo.",
     "tripNeedsStartDate": "El viaje debe tener fecha de inicio.",
+    "tripCreationPausedOperational": "La creación de viajes está pausada temporalmente mientras estabilizamos la búsqueda en mapa. Aún puedes editar viajes existentes.",
     "unsupportedFormat": "Solo se aceptan fotos JPG o PNG. Elige otro archivo e intenta de nuevo.",
     "optimizationFailed": "No pudimos preparar esa foto. Prueba con otra imagen.",
     "saveFailed": "No pudimos guardar tu viaje. Revisa tu conexión e intenta de nuevo.",

@@ -4,8 +4,10 @@ import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
 import { isMapStyleLoaded, setMapLanguage } from '@shared/lib/geo';
+import { useOperationalFlags } from '@shared/lib';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { OperationalMapFallback } from '@shared/ui/components';
 
 import TripRoster from './components/TripRoster';
 import MapEmptyState from './components/MapEmptyState';
@@ -34,6 +36,14 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   const mapRef = useRef(null);
   const spinGlobeRef = useRef(null);
   const { isMobile } = useWindowSize(768);
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+  const isWebGLDisabled = operationalLevel >= 2;
+  const mapShieldMessage = t(
+    'map.shieldOverlay',
+    'Interactive maps are resting. Your journey data remains safe.'
+  );
 
   const [viewState, setViewState] = useState(() => ({
     longitude: 0,
@@ -189,96 +199,100 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
       background: '#e0f2fe',
       position: 'relative',
     }}>
-      {/* Full-bleed Mapbox */}
-      <Map
-        ref={mapRef}
-        {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        onClick={onMapClick}
-        interactiveLayerIds={['unclustered-point']}
-        mapStyle="mapbox://styles/mapbox/light-v11"
-        mapboxAccessToken={MAPBOX_TOKEN}
-        projection={isMobile ? 'mercator' : 'globe'}
-        minZoom={1}
-        maxZoom={20}
-        doubleClickZoom={true}
-        scrollZoom={true}
-        dragPan={true}
-        onLoad={onMapLoad}
-        reuseMaps
-        attributionControl={false}
-      >
-        {/* Atmosphere */}
-        <Layer
-          id="sky"
-          type="sky"
-          paint={{
-            'sky-type': 'atmosphere',
-            'sky-atmosphere-sun': [0.0, 0.0],
-            'sky-atmosphere-sun-intensity': 5,
-          }}
-        />
-
-        {/* Visited countries fill */}
-        <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
-          <Layer
-            id="country-fills"
-            type="fill"
-            source-layer="country_boundaries"
-            paint={{
-              'fill-color': COLORS.atomicTangerine,
-              'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], listaPaises, 0.6, 0],
-            }}
-          />
-        </Source>
-
-        {/* Trip stop markers with clustering */}
-        <Source
-          id="paradas"
-          type="geojson"
-          data={stopsGeoJson}
-          cluster={true}
-          clusterMaxZoom={14}
-          clusterRadius={50}
+      {isWebGLDisabled ? (
+        <OperationalMapFallback message={mapShieldMessage} borderRadius={RADIUS.xl} />
+      ) : (
+        /* Full-bleed Mapbox */
+        <Map
+          ref={mapRef}
+          {...viewState}
+          onMove={(evt) => setViewState(evt.viewState)}
+          onClick={onMapClick}
+          interactiveLayerIds={['unclustered-point']}
+          mapStyle="mapbox://styles/mapbox/light-v11"
+          mapboxAccessToken={MAPBOX_TOKEN}
+          projection={isMobile ? 'mercator' : 'globe'}
+          minZoom={1}
+          maxZoom={20}
+          doubleClickZoom={true}
+          scrollZoom={true}
+          dragPan={true}
+          onLoad={onMapLoad}
+          reuseMaps
+          attributionControl={false}
         >
+          {/* Atmosphere */}
           <Layer
-            id="clusters"
-            type="circle"
-            filter={['has', 'point_count']}
+            id="sky"
+            type="sky"
             paint={{
-              'circle-color': COLORS.charcoalBlue,
-              'circle-radius': ['step', ['get', 'point_count'], 15, 5, 20, 10, 30],
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#fff',
+              'sky-type': 'atmosphere',
+              'sky-atmosphere-sun': [0.0, 0.0],
+              'sky-atmosphere-sun-intensity': 5,
             }}
           />
-          <Layer
-            id="cluster-count"
-            type="symbol"
-            filter={['has', 'point_count']}
-            layout={{
-              'text-field': '{point_count_abbreviated}',
-              'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-              'text-size': 12,
-            }}
-            paint={{ 'text-color': '#ffffff' }}
-          />
-          <Layer
-            id="unclustered-point"
-            type="circle"
-            filter={['!', ['has', 'point_count']]}
-            paint={{
-              'circle-color': COLORS.atomicTangerine,
-              'circle-radius': 7,
-              'circle-stroke-width': 2.5,
-              'circle-stroke-color': 'white',
-            }}
-          />
-        </Source>
 
-        <FullscreenControl position="top-right" />
-        <NavigationControl position="top-right" />
-      </Map>
+          {/* Visited countries fill */}
+          <Source id="world" type="vector" url="mapbox://mapbox.country-boundaries-v1">
+            <Layer
+              id="country-fills"
+              type="fill"
+              source-layer="country_boundaries"
+              paint={{
+                'fill-color': COLORS.atomicTangerine,
+                'fill-opacity': ['match', ['get', 'iso_3166_1_alpha_3'], listaPaises, 0.6, 0],
+              }}
+            />
+          </Source>
+
+          {/* Trip stop markers with clustering */}
+          <Source
+            id="paradas"
+            type="geojson"
+            data={stopsGeoJson}
+            cluster={true}
+            clusterMaxZoom={14}
+            clusterRadius={50}
+          >
+            <Layer
+              id="clusters"
+              type="circle"
+              filter={['has', 'point_count']}
+              paint={{
+                'circle-color': COLORS.charcoalBlue,
+                'circle-radius': ['step', ['get', 'point_count'], 15, 5, 20, 10, 30],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#fff',
+              }}
+            />
+            <Layer
+              id="cluster-count"
+              type="symbol"
+              filter={['has', 'point_count']}
+              layout={{
+                'text-field': '{point_count_abbreviated}',
+                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                'text-size': 12,
+              }}
+              paint={{ 'text-color': '#ffffff' }}
+            />
+            <Layer
+              id="unclustered-point"
+              type="circle"
+              filter={['!', ['has', 'point_count']]}
+              paint={{
+                'circle-color': COLORS.atomicTangerine,
+                'circle-radius': 7,
+                'circle-stroke-width': 2.5,
+                'circle-stroke-color': 'white',
+              }}
+            />
+          </Source>
+
+          <FullscreenControl position="top-right" />
+          <NavigationControl position="top-right" />
+        </Map>
+      )}
 
       {/* ── OVERLAY LAYER ─────────────────────────────────────────────── */}
       <div style={{

@@ -1,48 +1,27 @@
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import fs from 'fs';
 import { beforeAll, afterAll, beforeEach, test, describe } from 'vitest';
-import { createConnection } from 'net';
 
 let testEnv;
 const projectId = 'proyecto-viajes-test';
-let isEmulatorAvailable = false;
-
-// Check if Firestore emulator is available before running tests
-async function checkEmulatorAvailable(host, port) {
-  return new Promise((resolve) => {
-    const conn = createConnection({ host, port });
-    conn.on('connect', () => {
-      conn.destroy();
-      resolve(true);
-    });
-    conn.on('error', () => {
-      resolve(false);
-    });
-    conn.setTimeout(1000, () => {
-      conn.destroy();
-      resolve(false);
-    });
-  });
-}
+const FOUNDER_UID = 'a8364UsA6crjJrIRfHmlmsNeSrtI';
+const env = globalThis.process?.env ?? {};
+const emulatorHostConfig = env.FIRESTORE_EMULATOR_HOST || '';
+const shouldRunRulesSuite = Boolean(emulatorHostConfig);
 
 beforeAll(async () => {
+  if (!shouldRunRulesSuite) return;
+
   const rules = fs.readFileSync('./firestore.rules', 'utf8');
-  // connect to local emulator at default ports used by this project
-  const emulatorHostConfig = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
   const [emulatorHost, emulatorPortString] = emulatorHostConfig.split(':');
-  const emulatorPort = process.env.FIRESTORE_EMULATOR_PORT
-    ? Number(process.env.FIRESTORE_EMULATOR_PORT)
-    : Number(emulatorPortString || '8080');
+  const emulatorPort = env.FIRESTORE_EMULATOR_PORT
+    ? Number(env.FIRESTORE_EMULATOR_PORT)
+    : Number(emulatorPortString || '8081');
 
-  // Check if emulator is available before trying to initialize
-  isEmulatorAvailable = await checkEmulatorAvailable(emulatorHost, emulatorPort);
-
-  if (isEmulatorAvailable) {
-    testEnv = await initializeTestEnvironment({
-      projectId,
-      firestore: { host: emulatorHost, port: emulatorPort, rules }
-    });
-  }
+  testEnv = await initializeTestEnvironment({
+    projectId,
+    firestore: { host: emulatorHost, port: emulatorPort, rules }
+  });
 });
 
 afterAll(async () => {
@@ -53,8 +32,8 @@ beforeEach(async () => {
   if (testEnv) await testEnv.clearFirestore();
 });
 
-// Skip all tests if emulator is not available
-const describeIfEmulator = isEmulatorAvailable ? describe : describe.skip;
+// Skip all tests unless they are executed with an emulator-backed environment.
+const describeIfEmulator = shouldRunRulesSuite ? describe : describe.skip;
 
 describeIfEmulator('Firestore Rules', () => {
   test('invitee puede agregar su uid a sharedWith, pero no modificar otros campos', async () => {
@@ -186,5 +165,39 @@ describeIfEmulator('Firestore Rules', () => {
     const viajeRef = ownerDb.doc('usuarios/ownerUid/viajes/viaje5');
 
     await assertFails(viajeRef.set({ titulo: 'Trip', ownerId: 'somebodyElse', sharedWith: [] }, { merge: false }));
+  });
+
+  test('operational flags can be read by anyone and written only by founder uid', async () => {
+    await testEnv.withSecurityRulesDisabled(async (admin) => {
+      const adminDb = admin.firestore();
+      await adminDb.doc('system/operational_flags').set({
+        level: 0,
+        app_readonly_mode: false,
+        app_maintenance_mode: false,
+      });
+    });
+
+    const anonymousDb = testEnv.unauthenticatedContext().firestore();
+    const authenticatedDb = testEnv.authenticatedContext('normalUserUid').firestore();
+    const founderDb = testEnv.authenticatedContext(FOUNDER_UID).firestore();
+
+    await assertSucceeds(anonymousDb.doc('system/operational_flags').get());
+    await assertSucceeds(authenticatedDb.doc('system/operational_flags').get());
+
+    await assertFails(
+      authenticatedDb.doc('system/operational_flags').set({
+        level: 2,
+        app_readonly_mode: false,
+        app_maintenance_mode: false,
+      })
+    );
+
+    await assertSucceeds(
+      founderDb.doc('system/operational_flags').set({
+        level: 3,
+        app_readonly_mode: true,
+        app_maintenance_mode: false,
+      })
+    );
   });
 });

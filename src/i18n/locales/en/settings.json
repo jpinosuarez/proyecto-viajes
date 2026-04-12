@@ -47,5 +47,47 @@
   "deleteAccountNeedsRelogin": "Please log out and log back in to delete your account.",
   "legacyData": "Legacy & Data",
   "legacyDataDesc": "Your logbook belongs to you. Download it anytime.",
-  "exportJSON": "Export trips (JSON)"
+  "exportJSON": "Export trips (JSON)",
+  "operationalControls": {
+    "sectionTitle": "Operational controls",
+    "title": "Contingency shield",
+    "description": "Switch the global degradation level in real time.",
+    "loading": "Loading operational state...",
+    "fetchError": "Could not read the current operational state.",
+    "currentLevelLabel": "Active level",
+    "levelBadge": "Level {{level}}: {{levelName}}",
+    "levelLabel": "Level {{level}}: {{levelName}}",
+    "applyLabel": "Apply",
+    "activeLabel": "Active",
+    "applyLevelLabel": "Apply level {{level}} {{levelName}}",
+    "confirmTitle": "Confirm operational change",
+    "confirmMessage": "You are changing the operational state from {{from}} to {{to}}. This impacts all active explorers.",
+    "confirmButton": "Apply level",
+    "toast": {
+      "success": "Operational level updated to {{levelName}}.",
+      "error": "Could not update the operational level. Please try again."
+    },
+    "levels": {
+      "0": {
+        "name": "Normal",
+        "description": "All services are active."
+      },
+      "1": {
+        "name": "Geocoding Off",
+        "description": "Location searches are disabled."
+      },
+      "2": {
+        "name": "Hard Kill",
+        "description": "WebGL maps are disabled, visual fallback is active."
+      },
+      "3": {
+        "name": "Read-Only",
+        "description": "Writes are blocked to protect operational costs."
+      },
+      "4": {
+        "name": "Maintenance Blackout",
+        "description": "Global maintenance mode for critical contingencies."
+      }
+    }
+  }
 }

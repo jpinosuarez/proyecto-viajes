@@ -3,7 +3,15 @@ import { Calendar, MapPin } from 'lucide-react';
 import { COLORS } from '@shared/config';
 import CityManager from './CityManager';
 
-const EdicionParadasSection = ({ styles, t, paradas, setParadas, fechaRangoDisplay, sinParadas }) => {
+const EdicionParadasSection = ({
+  styles,
+  t,
+  paradas,
+  setParadas,
+  fechaRangoDisplay,
+  sinParadas,
+  isReadOnlyMode = false,
+}) => {
   return (
     <div style={styles.section}>
       <label style={styles.label}>
@@ -14,7 +22,7 @@ const EdicionParadasSection = ({ styles, t, paradas, setParadas, fechaRangoDispl
           {`📅 ${fechaRangoDisplay}`}
         </span>
       )}
-      <CityManager t={t} paradas={paradas} setParadas={setParadas} />
+      <CityManager t={t} paradas={paradas} setParadas={setParadas} isReadOnlyMode={isReadOnlyMode} />
       {sinParadas && (
         <div
           style={{

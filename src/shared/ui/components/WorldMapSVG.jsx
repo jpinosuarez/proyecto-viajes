@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import * as d3geo from 'd3-geo';
 import * as topojson from 'topojson-client';
 
@@ -12,10 +12,10 @@ const VISITED_IDS = new Set(['764', '250', '032', '380', '392', '724']);
 // Named pins in [longitude, latitude]
 const PINS = [
   { name: 'Bangkok', coords: [100.5, 13.75] },
-  { name: 'París', coords: [2.35, 48.86] },
+  { name: 'Paris', coords: [2.35, 48.86] },
   { name: 'Patagonia', coords: [-68.5, -51.0] },
-  { name: 'Tokio', coords: [139.7, 35.69] },
-  { name: 'Roma', coords: [12.5, 41.9] },
+  { name: 'Tokyo', coords: [139.7, 35.69] },
+  { name: 'Rome', coords: [12.5, 41.9] },
 ];
 
 // Route arcs [[from_lng,from_lat],[to_lng,to_lat]]
@@ -32,26 +32,27 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
   const [geoData, setGeoData] = useState(null);
   const [hoveredCountry, setHoveredCountry] = useState(null);
   const [pinsReady, setPinsReady] = useState(false);
-  const projRef = useRef(null);
 
   // Measure container
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(([entry]) => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       setDims({ w: Math.round(width), h: Math.round(height) });
     });
-    obs.observe(el);
-    return () => obs.disconnect();
+
+    observer.observe(element);
+    return () => observer.disconnect();
   }, []);
 
   // Fetch TopoJSON
   useEffect(() => {
     fetch(GEO_URL)
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then((world) => setGeoData(world))
-      .catch(() => { }); // silently fail — map just won't show
+      .catch(() => {}); // silently fail — map just won't show
   }, []);
 
   const { w, h } = dims;
@@ -63,13 +64,12 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
     .translate([w / 2, h * 0.55])
     .center([10, 12]);
 
-  projRef.current = projection;
   const pathGen = d3geo.geoPath().projection(projection);
 
   // Convert geo coords → SVG px. Returns null if outside viewport.
   const project = (coords) => {
-    const pt = projection(coords);
-    return pt ?? null;
+    const point = projection(coords);
+    return point ?? null;
   };
 
   // Build arc path between two points
@@ -81,8 +81,8 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
   useEffect(() => {
     if (geoData) {
       // small delay so pins animate in after countries
-      const t = setTimeout(() => setPinsReady(true), 600);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setPinsReady(true), 600);
+      return () => clearTimeout(timer);
     }
   }, [geoData]);
 
@@ -94,7 +94,7 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
         height={h}
         viewBox={`0 0 ${w} ${h}`}
         style={{ display: 'block' }}
-        aria-label="Mapa mundial interactivo con destinos visitados"
+        aria-label="Interactive world map with visited destinations"
       >
         {/* Ocean background */}
         <rect width={w} height={h} fill="#EFF6FF" rx="12" />
@@ -116,8 +116,8 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                     fillOpacity={isVisited ? (isHovered ? 0.8 : 0.5) : 0.75}
                     stroke="#fff"
                     strokeWidth={0.4}
-                    style={{ 
-                      cursor: isVisited ? 'pointer' : 'default', 
+                    style={{
+                      cursor: isVisited ? 'pointer' : 'default',
                       transition: 'fill-opacity 0.3s ease',
                       filter: isVisited && isHovered ? `drop-shadow(0 0 4px ${color}40)` : 'none'
                     }}
@@ -128,12 +128,12 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
               })}
 
               {/* Flight arc routes */}
-              {ROUTES.map((route, i) => {
-                const d = buildArc(route.from, route.to);
-                return d ? (
-                  <motion.path
-                    key={i}
-                    d={d}
+              {ROUTES.map((route, index) => {
+                const path = buildArc(route.from, route.to);
+                return path ? (
+                  <Motion.path
+                    key={index}
+                    d={path}
                     fill="none"
                     stroke={color}
                     strokeWidth={1.2}
@@ -142,19 +142,19 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                     strokeLinecap="round"
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ delay: 0.3 + i * 0.5, duration: 1.4, ease: 'easeInOut' }}
+                    transition={{ delay: 0.3 + index * 0.5, duration: 1.4, ease: 'easeInOut' }}
                   />
                 ) : null;
               })}
 
               {/* Destination Pins (Lens Markers) */}
               <AnimatePresence>
-                {pinsReady && PINS.map((pin, i) => {
-                  const pt = project(pin.coords);
-                  if (!pt) return null;
-                  const [px, py] = pt;
+                {pinsReady && PINS.map((pin, index) => {
+                  const point = project(pin.coords);
+                  if (!point) return null;
+                  const [px, py] = point;
                   return (
-                    <motion.g 
+                    <Motion.g
                       key={pin.name}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.98 }}
@@ -162,39 +162,43 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                     >
                       {/* Invisible touch target (44x44) */}
                       <circle cx={px} cy={py} r={22} fill="transparent" />
-                      
+
                       {/* Pulse ring */}
-                      <motion.circle
-                        cx={px} cy={py} r={9}
+                      <Motion.circle
+                        cx={px}
+                        cy={py}
+                        r={9}
                         fill="none"
                         stroke={color}
                         strokeWidth={1.5}
                         animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
-                        transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
+                        transition={{ duration: 2.5, repeat: Infinity, delay: index * 0.4, ease: 'easeOut' }}
                         style={{ transformOrigin: `${px}px ${py}px` }}
                       />
-                      
+
                       {/* Lens Base (Shadow) */}
                       <circle cx={px} cy={py} r={6} fill="white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
-                      
+
                       {/* Pin dot */}
-                      <motion.circle
-                        cx={px} cy={py} r={4.5}
+                      <Motion.circle
+                        cx={px}
+                        cy={py}
+                        r={4.5}
                         fill={color}
                         stroke="white"
                         strokeWidth={1.5}
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.6 + i * 0.18, type: 'spring', damping: 12, stiffness: 240 }}
+                        transition={{ delay: 0.6 + index * 0.18, type: 'spring', damping: 12, stiffness: 240 }}
                         style={{ transformOrigin: `${px}px ${py}px` }}
                       />
 
                       {/* Glassmorphic Label Pill */}
                       <foreignObject x={px - 35} y={py - 32} width={70} height={20} style={{ pointerEvents: 'none' }}>
-                        <motion.div
+                        <Motion.div
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.8 + i * 0.18 }}
+                          transition={{ delay: 0.8 + index * 0.18 }}
                           style={{
                             display: 'flex',
                             justifyContent: 'center',
@@ -207,17 +211,19 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                             boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                           }}
                         >
-                          <span style={{ 
-                            fontSize: '8px', 
-                            fontWeight: '800', 
-                            color: '#1E2D3D',
-                            fontFamily: "'Plus Jakarta Sans', sans-serif"
-                          }}>
+                          <span
+                            style={{
+                              fontSize: '8px',
+                              fontWeight: '800',
+                              color: '#1E2D3D',
+                              fontFamily: "'Plus Jakarta Sans', sans-serif"
+                            }}
+                          >
                             {pin.name.toUpperCase()}
                           </span>
-                        </motion.div>
+                        </Motion.div>
                       </foreignObject>
-                    </motion.g>
+                    </Motion.g>
                   );
                 })}
               </AnimatePresence>
@@ -236,11 +242,14 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
       {/* Static Context Overlay (Fixed Glassmorphic Card) */}
       <AnimatePresence>
         {hoveredCountry && geoData && (() => {
-          const countryFeature = topojson.feature(geoData, geoData.objects.countries).features.find(f => String(f.id) === hoveredCountry);
-          const countryName = countryFeature?.properties?.name || 'Destino Guardado';
-          
+          const countryFeature = topojson
+            .feature(geoData, geoData.objects.countries)
+            .features.find((feature) => String(feature.id) === hoveredCountry);
+
+          const countryName = countryFeature?.properties?.name || 'Saved destination';
+
           return (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -250,7 +259,7 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                 left: '16px',
                 background: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(12px)',
-                border: `1px solid rgba(255,255,255,0.5)`,
+                border: '1px solid rgba(255,255,255,0.5)',
                 borderRadius: '16px',
                 padding: '12px 20px',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
@@ -261,16 +270,18 @@ export const WorldMapSVG = ({ color = '#FF6B35' }) => {
                 gap: '2px'
               }}
             >
-              <span style={{ fontSize: '10px', fontWeight: '600', color: color, letterSpacing: '1px' }}>DESTINO VISITADO</span>
-              <span style={{ 
-                fontSize: '18px', 
-                fontWeight: '800', 
-                color: '#1E2D3D',
-                fontFamily: "'Plus Jakarta Sans', sans-serif"
-              }}>
+              <span style={{ fontSize: '10px', fontWeight: '600', color, letterSpacing: '1px' }}>VISITED DESTINATION</span>
+              <span
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '800',
+                  color: '#1E2D3D',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif"
+                }}
+              >
                 {countryName}
               </span>
-            </motion.div>
+            </Motion.div>
           );
         })()}
       </AnimatePresence>

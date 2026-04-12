@@ -13,6 +13,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { auth, db } from '@shared/firebase';
+import { assertOperationalWritesEnabled } from '@shared/lib/hooks/useOperationalFlags';
 import { logger } from '@shared/lib/utils/logger';
 
 /**
@@ -25,6 +26,8 @@ import { logger } from '@shared/lib/utils/logger';
  */
 
 export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null, inviteeUid = null, viajeId }) => {
+  assertOperationalWritesEnabled();
+
   const database = _db || db;
   const payload = {
     inviterId: inviterId || null,
@@ -61,6 +64,8 @@ export const createInvitation = async ({ db: _db, inviterId, inviteeEmail = null
 };
 
 export const acceptInvitation = async ({ db: _db, invitationId, acceptorUid }) => {
+  assertOperationalWritesEnabled();
+
   const database = _db || db;
   try {
     const topLevelInvRef = doc(database, 'invitations', invitationId);
@@ -160,6 +165,8 @@ export const acceptInvitation = async ({ db: _db, invitationId, acceptorUid }) =
 };
 
 export const declineInvitation = async ({ db: _db, invitationId, declinerUid }) => {
+  assertOperationalWritesEnabled();
+
   const database = _db || db;
   try {
     const invitationRef = doc(database, 'invitations', invitationId);

@@ -16,7 +16,7 @@ import { COLORS, RADIUS, SHADOWS, BUTTONS } from '@shared/config';
  */
 const MapEmptyState = () => {
   const { t } = useTranslation('dashboard');
-  const { openBuscador } = useUI();
+  const { openBuscador, isReadOnlyMode } = useUI();
 
   return (
     <div style={{
@@ -94,10 +94,13 @@ const MapEmptyState = () => {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openBuscador}
+          disabled={isReadOnlyMode}
           style={{
             ...BUTTONS.primary,
             width: '100%',
             maxWidth: '260px',
+            opacity: isReadOnlyMode ? 0.55 : 1,
+            cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
           }}
         >
           <Plus size={18} strokeWidth={2.5} />

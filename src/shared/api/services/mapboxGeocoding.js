@@ -1,3 +1,8 @@
+import {
+  ensureOperationalFlagsListener,
+  getOperationalFlagsSnapshot,
+} from '@shared/lib/hooks/useOperationalFlags';
+
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 // In-memory cache for Mapbox geocoding
@@ -5,6 +10,8 @@ const cache = new Map();
 const activeRequests = new Map();
 
 const CACHE_TTL_MS = 1000 * 60 * 60; // 60 minutes
+const OPERATIONAL_WARNING_COOLDOWN_MS = 30 * 1000;
+let lastOperationalWarningTimestamp = 0;
 
 const bindAbortSignal = (promise, signal) => {
   if (!signal) return promise;
@@ -31,6 +38,17 @@ const bindAbortSignal = (promise, signal) => {
 
 export const fetchGeocoding = async ({ query, language, types = 'country,place,locality', signal }) => {
   if (!query || query.length < 3) return [];
+
+  ensureOperationalFlagsListener();
+  const currentLevel = Number(getOperationalFlagsSnapshot()?.level || 0);
+  if (currentLevel >= 1) {
+    const now = Date.now();
+    if (now - lastOperationalWarningTimestamp > OPERATIONAL_WARNING_COOLDOWN_MS) {
+      console.warn('[OPERATIONAL] Geocoding is currently disabled by Admin.');
+      lastOperationalWarningTimestamp = now;
+    }
+    return [];
+  }
 
   const normalizedLanguage = language || 'en';
   const cacheKey = `${query.toLowerCase()}_${normalizedLanguage}_${types}`;

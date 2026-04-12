@@ -5,7 +5,9 @@ import mapboxgl from 'mapbox-gl';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS } from '@shared/config';
+import { useOperationalFlags } from '@shared/lib';
 import { setMapLanguage, generateCurvedRoute } from '@shared/lib/geo';
+import { OperationalMapFallback } from '@shared/ui/components';
 import { routeMapStyles as s } from './RouteMap.styles';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -16,7 +18,15 @@ const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
  * se da únicamente con el highlight del Marker (sin flyTo).
  */
 const RouteMap = ({ paradas, activeIndex = 0, hoveredIndex = null, onMarkerHover, onMarkerHoverEnd, onMarkerClick, isModal = false }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation('dashboard');
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+  const isWebGLDisabled = operationalLevel >= 2;
+  const mapShieldMessage = t(
+    'map.shieldOverlay',
+    'Interactive maps are resting. Your journey data remains safe.'
+  );
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -87,100 +97,107 @@ const RouteMap = ({ paradas, activeIndex = 0, hoveredIndex = null, onMarkerHover
 
   return (
     <div style={containerStyle}>
-      <Map
-        ref={mapRef}
-        initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
-        mapStyle="mapbox://styles/mapbox/light-v11"
-        mapboxAccessToken={MAPBOX_TOKEN}
-        projection="mercator"
-        onLoad={handleMapLoad}
-        scrollZoom={false}
-        dragRotate={false}
-        reuseMaps
-      >
-        {/* Línea de ruta curvada */}
-        {rutaGeoJSON && (
-          <Source id="ruta-route" type="geojson" data={rutaGeoJSON}>
-            <Layer
-              id="ruta-route-line"
-              type="line"
-              paint={{
-                'line-color': COLORS.atomicTangerine,
-                'line-width': 2.5,
-                'line-dasharray': [4, 3],
-                'line-opacity': 0.75,
-              }}
-              layout={{
-                'line-cap': 'round',
-                'line-join': 'round',
-              }}
-            />
-          </Source>
-        )}
-
-        {/* Pin Markers con número de orden */}
-        {paradas.map((p, i) => {
-          if (!p.coordenadas) return null;
-          const isActive = i === activeIndex;
-          const isHovered = i === hoveredIndex;
-          const highlighted = isActive || isHovered;
-          return (
-            <Marker
-              key={p.id || i}
-              longitude={p.coordenadas[0]}
-              latitude={p.coordenadas[1]}
-              anchor="bottom"
-              style={{ zIndex: highlighted ? 10 : 1 }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  transform: highlighted ? 'scale(1.4)' : 'scale(1)',
-                  opacity: highlighted ? 1 : 0.6,
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
+      {isWebGLDisabled ? (
+        <OperationalMapFallback
+          message={mapShieldMessage}
+          borderRadius={isModal ? 0 : RADIUS.xl}
+        />
+      ) : (
+        <Map
+          ref={mapRef}
+          initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
+          mapStyle="mapbox://styles/mapbox/light-v11"
+          mapboxAccessToken={MAPBOX_TOKEN}
+          projection="mercator"
+          onLoad={handleMapLoad}
+          scrollZoom={false}
+          dragRotate={false}
+          reuseMaps
+        >
+          {/* Línea de ruta curvada */}
+          {rutaGeoJSON && (
+            <Source id="ruta-route" type="geojson" data={rutaGeoJSON}>
+              <Layer
+                id="ruta-route-line"
+                type="line"
+                paint={{
+                  'line-color': COLORS.atomicTangerine,
+                  'line-width': 2.5,
+                  'line-dasharray': [4, 3],
+                  'line-opacity': 0.75,
                 }}
-                onMouseEnter={() => onMarkerHover?.(i)}
-                onMouseLeave={() => onMarkerHoverEnd?.()}
-                onClick={() => onMarkerClick?.(i)}
-              >
-                {/* Pin */}
-                <div style={{
-                  width: highlighted ? '30px' : '22px',
-                  height: highlighted ? '30px' : '22px',
-                  borderRadius: '50% 50% 50% 0',
-                  transform: 'rotate(-45deg)',
-                  background: highlighted ? COLORS.atomicTangerine : COLORS.textSecondary,
-                  border: highlighted ? '3px solid white' : '2px solid rgba(255,255,255,0.6)',
-                  boxShadow: highlighted ? SHADOWS.glow : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.3s ease',
-                }}>
-                  <span style={{
-                    transform: 'rotate(45deg)',
-                    color: 'white',
-                    fontSize: highlighted ? '0.7rem' : '0.6rem',
-                    fontWeight: '800',
-                    lineHeight: 1,
-                  }}>
-                    {i + 1}
-                  </span>
-                </div>
-              </div>
-            </Marker>
-          );
-        })}
+                layout={{
+                  'line-cap': 'round',
+                  'line-join': 'round',
+                }}
+              />
+            </Source>
+          )}
 
-        <NavigationControl position="top-right" />
-      </Map>
+          {/* Pin Markers con número de orden */}
+          {paradas.map((p, i) => {
+            if (!p.coordenadas) return null;
+            const isActive = i === activeIndex;
+            const isHovered = i === hoveredIndex;
+            const highlighted = isActive || isHovered;
+            return (
+              <Marker
+                key={p.id || i}
+                longitude={p.coordenadas[0]}
+                latitude={p.coordenadas[1]}
+                anchor="bottom"
+                style={{ zIndex: highlighted ? 10 : 1 }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transform: highlighted ? 'scale(1.4)' : 'scale(1)',
+                    opacity: highlighted ? 1 : 0.6,
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={() => onMarkerHover?.(i)}
+                  onMouseLeave={() => onMarkerHoverEnd?.()}
+                  onClick={() => onMarkerClick?.(i)}
+                >
+                  {/* Pin */}
+                  <div style={{
+                    width: highlighted ? '30px' : '22px',
+                    height: highlighted ? '30px' : '22px',
+                    borderRadius: '50% 50% 50% 0',
+                    transform: 'rotate(-45deg)',
+                    background: highlighted ? COLORS.atomicTangerine : COLORS.textSecondary,
+                    border: highlighted ? '3px solid white' : '2px solid rgba(255,255,255,0.6)',
+                    boxShadow: highlighted ? SHADOWS.glow : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.3s ease',
+                  }}>
+                    <span style={{
+                      transform: 'rotate(45deg)',
+                      color: 'white',
+                      fontSize: highlighted ? '0.7rem' : '0.6rem',
+                      fontWeight: '800',
+                      lineHeight: 1,
+                    }}>
+                      {i + 1}
+                    </span>
+                  </div>
+                </div>
+              </Marker>
+            );
+          })}
+
+          <NavigationControl position="top-right" />
+        </Map>
+      )}
 
       {/* Label de parada activa */}
       <AnimatePresence mode="wait">
-        {activeName && (
+        {!isWebGLDisabled && activeName && (
           <Motion.div
             key={activeName}
             initial={{ opacity: 0, y: 8 }}

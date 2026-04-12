@@ -47,5 +47,47 @@
   "deleteAccountNeedsRelogin": "Por favor cierra sesión y vuelve a ingresar para eliminar tu cuenta.",
   "legacyData": "Legado & Datos",
   "legacyDataDesc": "Tus viajes son tuyos. Descárgalos cuando quieras.",
-  "exportJSON": "Exportar viajes (JSON)"
+  "exportJSON": "Exportar viajes (JSON)",
+  "operationalControls": {
+    "sectionTitle": "Controles operativos",
+    "title": "Escudo de contingencia",
+    "description": "Cambia el nivel global de degradación en caliente.",
+    "loading": "Cargando estado operativo...",
+    "fetchError": "No pudimos leer el estado operativo actual.",
+    "currentLevelLabel": "Nivel activo",
+    "levelBadge": "Nivel {{level}}: {{levelName}}",
+    "levelLabel": "Nivel {{level}}: {{levelName}}",
+    "applyLabel": "Aplicar",
+    "activeLabel": "Activo",
+    "applyLevelLabel": "Aplicar nivel {{level}} {{levelName}}",
+    "confirmTitle": "Confirmar cambio operativo",
+    "confirmMessage": "Vas a cambiar el estado de {{from}} a {{to}}. Esta acción impacta a todos los exploradores activos.",
+    "confirmButton": "Aplicar nivel",
+    "toast": {
+      "success": "Nivel operativo actualizado a {{levelName}}.",
+      "error": "No se pudo actualizar el nivel operativo. Intenta de nuevo."
+    },
+    "levels": {
+      "0": {
+        "name": "Normal",
+        "description": "Todos los servicios activos."
+      },
+      "1": {
+        "name": "Geocoding Off",
+        "description": "Búsquedas de ubicaciones deshabilitadas."
+      },
+      "2": {
+        "name": "Hard Kill",
+        "description": "Mapas WebGL apagados, fallback visual activo."
+      },
+      "3": {
+        "name": "Read-Only",
+        "description": "Escrituras bloqueadas para proteger costos."
+      },
+      "4": {
+        "name": "Maintenance Blackout",
+        "description": "Modo mantenimiento global para contingencias críticas."
+      }
+    }
+  }
 }

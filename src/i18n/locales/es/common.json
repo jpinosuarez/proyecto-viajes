@@ -52,5 +52,13 @@
     "updateAvailable": "Nueva versión disponible",
     "update": "Actualizar",
     "later": "Luego"
+  },
+  "operational": {
+    "readOnlyBanner": "Keeptrip está en modo solo lectura. Tus datos están seguros, pero las ediciones están en pausa.",
+    "readOnlyBlockedAction": "Keeptrip está en modo solo lectura. Tus datos están seguros, pero las ediciones están en pausa.",
+    "maintenanceLabel": "Modo mantenimiento",
+    "maintenanceMessage": "Explorer's Rest: Estamos actualizando los motores. Tus viajes están seguros en la bóveda. Volvemos enseguida.",
+    "maintenanceHint": "No necesitas hacer nada. Restableceremos las rutas cuando completemos las verificaciones del sistema.",
+    "dataSafe": "El escudo de integridad de datos está activo."
   }
 }

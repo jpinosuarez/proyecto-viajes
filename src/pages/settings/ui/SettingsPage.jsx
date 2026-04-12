@@ -22,15 +22,17 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { auth, storage } from '@shared/firebase';
+import { OperationalControlsSection } from '@features/admin-controls';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { deleteUser } from 'firebase/auth';
 import { compressImage } from '@shared/lib/utils/imageUtils';
 
 const DEBOUNCE_MS = 800;
+const FOUNDER_UID_FALLBACK = 'FOUNDER_UID_HERE';
 
 /* ── Reusable iOS-style Settings Row ─────────────────────────────────── */
 const SettingsRow = ({
-  icon: Icon,
+  icon: RowIcon,
   label,
   description,
   onClick,
@@ -38,6 +40,14 @@ const SettingsRow = ({
   trailing,
   isLast = false,
 }) => {
+  const iconNode = RowIcon
+    ? React.createElement(RowIcon, {
+      size: 16,
+      color: danger ? COLORS.danger : COLORS.atomicTangerine,
+      strokeWidth: 2,
+    })
+    : null;
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -78,7 +88,7 @@ const SettingsRow = ({
         justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <Icon size={16} color={danger ? COLORS.danger : COLORS.atomicTangerine} strokeWidth={2} />
+        {iconNode}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -225,7 +235,7 @@ const LanguageToggle = ({ currentLang, onToggle }) => {
 };
 
 /* ── Main SettingsPage ───────────────────────────────────────────────── */
-const SettingsPage = ({ log = [] }) => {
+const SettingsPage = () => {
   const {
     usuario: user,
     actualizarPerfilUsuario: updateUserProfile,
@@ -237,6 +247,10 @@ const SettingsPage = ({ log = [] }) => {
   const { t: tNav } = useTranslation('nav');
   const { isMobile } = useWindowSize(768);
   useDocumentTitle(tNav('settings'));
+
+  const founderUid = import.meta.env.VITE_FOUNDER_UID || FOUNDER_UID_FALLBACK;
+  const hasFounderUidAccess = Boolean(user?.uid && user.uid === founderUid);
+  const canManageOperationalFlags = Boolean(isAdmin || hasFounderUidAccess);
 
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [photoUrl, setPhotoUrl] = useState(user?.photoURL || '');
@@ -309,17 +323,6 @@ const SettingsPage = ({ log = [] }) => {
       setIsDeletingAccount(false);
       setShowDeleteConfirm(false);
     }
-  };
-
-  const handleExport = () => {
-    const data = JSON.stringify(log, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `keeptrip-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const initials = user?.displayName?.trim()?.[0]?.toUpperCase() || '';
@@ -584,6 +587,21 @@ const SettingsPage = ({ log = [] }) => {
           />
         </GroupCard>
       </Motion.div>
+
+      {/* ── Operational Controls (Admin Only) ── */}
+      {canManageOperationalFlags && (
+        <Motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', damping: 20, stiffness: 120, delay: 0.08 }}
+        >
+          <OperationalControlsSection
+            canManageOperationalFlags={canManageOperationalFlags}
+            currentUser={user}
+            onNotify={pushToast}
+          />
+        </Motion.div>
+      )}
 
       {/* ── Account Group ── */}
       <Motion.div

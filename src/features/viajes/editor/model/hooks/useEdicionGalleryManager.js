@@ -1,22 +1,50 @@
 import { useCallback } from 'react';
+import { useOperationalFlags } from '@shared/lib';
 
 export function useEdicionGalleryManager({ galeria, captionDrafts, setCaptionDrafts, pushToast, t }) {
+  const {
+    flags: { level: operationalLevel, appReadonlyMode },
+  } = useOperationalFlags();
+  const isReadOnlyMode = Boolean(appReadonlyMode) || operationalLevel >= 3;
+
   const handleSetPortadaExistente = useCallback(
     async (fotoId) => {
+      if (isReadOnlyMode) {
+        pushToast(
+          t(
+            'common:operational.readOnlyBlockedAction',
+            'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+          ),
+          'info'
+        );
+        return;
+      }
+
       const ok = await galeria.cambiarPortada(fotoId);
       if (!ok) pushToast(t('error.coverUpdateFailed'), 'error');
     },
-    [galeria, pushToast, t]
+    [galeria, isReadOnlyMode, pushToast, t]
   );
 
   const handleEliminarFoto = useCallback(
     async (fotoId) => {
+      if (isReadOnlyMode) {
+        pushToast(
+          t(
+            'common:operational.readOnlyBlockedAction',
+            'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+          ),
+          'info'
+        );
+        return;
+      }
+
       const confirm = window.confirm(t('confirm.deletePhoto'));
       if (!confirm) return;
       const ok = await galeria.eliminar(fotoId);
       if (!ok) pushToast(t('error.photoDeleteFailed'), 'error');
     },
-    [galeria, pushToast, t]
+    [galeria, isReadOnlyMode, pushToast, t]
   );
 
   const handleCaptionChange = useCallback((fotoId, value) => {
@@ -25,6 +53,17 @@ export function useEdicionGalleryManager({ galeria, captionDrafts, setCaptionDra
 
   const handleCaptionSave = useCallback(
     async (foto) => {
+      if (isReadOnlyMode) {
+        pushToast(
+          t(
+            'common:operational.readOnlyBlockedAction',
+            'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+          ),
+          'info'
+        );
+        return;
+      }
+
       const draft = captionDrafts[foto.id];
       if (draft === undefined) return;
 
@@ -41,7 +80,7 @@ export function useEdicionGalleryManager({ galeria, captionDrafts, setCaptionDra
 
       pushToast(t('toast.captionUpdated'), 'success', 1500);
     },
-    [captionDrafts, galeria, pushToast, t]
+    [captionDrafts, galeria, isReadOnlyMode, pushToast, t]
   );
 
   return {

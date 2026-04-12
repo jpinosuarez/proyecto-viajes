@@ -7,6 +7,7 @@ import { useAuth } from '@app/providers/AuthContext';
 import { useToast } from '@app/providers/ToastContext';
 import { useUpload } from '@app/providers/UploadContext';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { useOperationalFlags } from '@shared/lib';
 import { useTranslation } from 'react-i18next';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
 import { useGaleriaViaje } from '@shared/lib/hooks/useGaleriaViaje';
@@ -21,6 +22,10 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const { usuario } = useAuth();
   const { pushToast } = useToast();
   const { t } = useTranslation(['editor', 'countries']);
+  const {
+    flags: { level: operationalLevel, appReadonlyMode },
+  } = useOperationalFlags();
+  const isReadOnlyMode = Boolean(appReadonlyMode) || operationalLevel >= 3;
 
   // useUpload puede no estar disponible en tests aislados; usar fallback seguro
   let iniciarSubida = () => {};
@@ -49,7 +54,6 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const [galleryFiles, setGalleryFiles] = useState([]);
   const [galleryPortada, setGalleryPortada] = useState(0);
   const [captionDrafts, setCaptionDrafts] = useState({});
-  const [hasTried, setHasTried] = useState(false);
 
   const handlePortadaChange = (value) => {
     if (typeof value === 'number') {
@@ -127,6 +131,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
     pushToast,
     t,
   });
+  const firstGalleryPhotoUrl = galeria?.fotos?.[0]?.url || null;
 
   // Auto-set first photo as cover when gallery goes from 0→1 photos
   useEffect(() => {
@@ -135,17 +140,16 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
 
     // Transition from 0→1+ photos: auto-set first photo as portada
     if (prevLength === 0 && currentGalleryLength > 0 && !formData.portadaUrl) {
-      const firstPhotoUrl = galeria.fotos[0]?.url;
-      if (firstPhotoUrl) {
+      if (firstGalleryPhotoUrl) {
         setFormData((prev) => ({
           ...prev,
-          portadaUrl: firstPhotoUrl,
+          portadaUrl: firstGalleryPhotoUrl,
         }));
       }
     }
 
     previousGalleryLengthRef.current = currentGalleryLength;
-  }, [galeria?.fotos?.length, formData.portadaUrl]);
+  }, [galeria?.fotos?.length, firstGalleryPhotoUrl, formData.portadaUrl]);
 
   if (!viaje) return null;
 
@@ -160,7 +164,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   const hasValidStops = Array.isArray(paradas) && paradas.length > 0;
   const hasValidTitle = Boolean((headerFormData?.titulo || '').trim());
   const hasValidStartDate = Boolean((formData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
-  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isBusy;
+  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isBusy && !isReadOnlyMode;
 
   return (
     <AnimatePresence>
@@ -207,6 +211,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               setParadas={setParadas}
               fechaRangoDisplay={fechaRangoDisplay}
               sinParadas={sinParadas}
+              isReadOnlyMode={isReadOnlyMode}
             />
 
             {/* Photo gallery */}
@@ -226,6 +231,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               onCaptionSave={handleCaptionSave}
               onSetPortadaExistente={handleSetPortadaExistente}
               onEliminarFoto={handleEliminarFoto}
+              isReadOnlyMode={isReadOnlyMode}
             />
           </div>
           <div style={styles.stickyFooter}>
@@ -238,29 +244,39 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
                 transition={{ duration: 0.15 }}
               >{t('button.cancel')}</Motion.button>
               <Motion.button
-                onClick={() => { setHasTried(true); handleSave(); }}
+                onClick={handleSave}
                 disabled={!canSave}
                 whileHover={canSave ? { scale: 1.02, boxShadow: '0 4px 20px rgba(255,107,53,0.35)' } : {}}
                 whileTap={canSave ? { scale: 0.97 } : {}}
                 transition={{ duration: 0.15 }}
                 aria-disabled={!canSave}
                 aria-label={
-                  !hasValidStops
-                    ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
-                    : !hasValidTitle
-                      ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
-                      : !hasValidStartDate
-                        ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
-                        : undefined
+                  isReadOnlyMode
+                    ? t(
+                        'common:operational.readOnlyBlockedAction',
+                        'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+                      )
+                    : !hasValidStops
+                      ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                      : !hasValidTitle
+                        ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                        : !hasValidStartDate
+                          ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                          : undefined
                 }
                 title={
-                  !hasValidStops
-                    ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
-                    : !hasValidTitle
-                      ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
-                      : !hasValidStartDate
-                        ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
-                        : ''
+                  isReadOnlyMode
+                    ? t(
+                        'common:operational.readOnlyBlockedAction',
+                        'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+                      )
+                    : !hasValidStops
+                      ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                      : !hasValidTitle
+                        ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                        : !hasValidStartDate
+                          ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                          : ''
                 }
                 style={{
                   ...styles.saveBtn(isBusy, isMobile),

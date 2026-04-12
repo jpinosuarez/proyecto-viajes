@@ -1,13 +1,25 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, Marker } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
+import { useOperationalFlags } from '@shared/lib';
 import { generateCurvedRoute } from '@shared/lib/geo';
+import { OperationalMapFallback } from '@shared/ui/components';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const MiniMapaRuta = ({ paradas }) => {
+  const { t } = useTranslation('dashboard');
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+  const isWebGLDisabled = operationalLevel >= 2;
+  const mapShieldMessage = t(
+    'map.shieldOverlay',
+    'Interactive maps are resting. Your journey data remains safe.'
+  );
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -54,97 +66,101 @@ const MiniMapaRuta = ({ paradas }) => {
       overflow: 'hidden',
       border: `1px solid ${COLORS.border}`,
     }}>
-      <Map
-        ref={mapRef}
-        initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
-        mapStyle="mapbox://styles/mapbox/light-v11"
-        mapboxAccessToken={MAPBOX_TOKEN}
-        projection="mercator"
-        interactive={false}
-        attributionControl={false}
-        onLoad={handleMapLoad}
-      >
-        {/* Línea de ruta curvada */}
-        {rutaGeoJSON && (
-          <Source id="ruta" type="geojson" data={rutaGeoJSON}>
-            <Layer
-              id="ruta-line"
-              type="line"
-              paint={{
-                'line-color': COLORS.atomicTangerine,
-                'line-width': 2.5,
-                'line-dasharray': [4, 3],
-                'line-opacity': 0.75,
-              }}
-              layout={{
-                'line-cap': 'round',
-                'line-join': 'round',
-              }}
-            />
-          </Source>
-        )}
+      {isWebGLDisabled ? (
+        <OperationalMapFallback message={mapShieldMessage} borderRadius={RADIUS.lg} />
+      ) : (
+        <Map
+          ref={mapRef}
+          initialViewState={{ longitude: 0, latitude: 20, zoom: 1.5 }}
+          mapStyle="mapbox://styles/mapbox/light-v11"
+          mapboxAccessToken={MAPBOX_TOKEN}
+          projection="mercator"
+          interactive={false}
+          attributionControl={false}
+          onLoad={handleMapLoad}
+        >
+          {/* Línea de ruta curvada */}
+          {rutaGeoJSON && (
+            <Source id="ruta" type="geojson" data={rutaGeoJSON}>
+              <Layer
+                id="ruta-line"
+                type="line"
+                paint={{
+                  'line-color': COLORS.atomicTangerine,
+                  'line-width': 2.5,
+                  'line-dasharray': [4, 3],
+                  'line-opacity': 0.75,
+                }}
+                layout={{
+                  'line-cap': 'round',
+                  'line-join': 'round',
+                }}
+              />
+            </Source>
+          )}
 
-        {/* Markers con labels */}
-        {paradas.map((p, i) => {
-          if (!p.coordenadas) return null;
-          return (
-            <Marker
-              key={p.id || i}
-              longitude={p.coordenadas[0]}
-              latitude={p.coordenadas[1]}
-              anchor="bottom"
-            >
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}>
-                {/* Nombre */}
+          {/* Markers con labels */}
+          {paradas.map((p, i) => {
+            if (!p.coordenadas) return null;
+            return (
+              <Marker
+                key={p.id || i}
+                longitude={p.coordenadas[0]}
+                latitude={p.coordenadas[1]}
+                anchor="bottom"
+              >
                 <div style={{
-                  ...GLASS.dark,
-                  borderRadius: RADIUS.full,
-                  padding: '2px 8px',
-                  fontSize: '0.6rem',
-                  fontWeight: '700',
-                  color: 'white',
-                  whiteSpace: 'nowrap',
-                  marginBottom: '3px',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  boxShadow: SHADOWS.sm,
-                  maxWidth: '120px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {p.nombre}
-                </div>
-                {/* Pin */}
-                <div style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50% 50% 50% 0',
-                  transform: 'rotate(-45deg)',
-                  background: COLORS.charcoalBlue,
-                  border: '2px solid white',
-                  boxShadow: SHADOWS.md,
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
                 }}>
-                  <span style={{
-                    transform: 'rotate(45deg)',
+                  {/* Nombre */}
+                  <div style={{
+                    ...GLASS.dark,
+                    borderRadius: RADIUS.full,
+                    padding: '2px 8px',
+                    fontSize: '0.6rem',
+                    fontWeight: '700',
                     color: 'white',
-                    fontSize: '0.5rem',
-                    fontWeight: '800',
-                    lineHeight: 1,
+                    whiteSpace: 'nowrap',
+                    marginBottom: '3px',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    boxShadow: SHADOWS.sm,
+                    maxWidth: '120px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}>
-                    {i + 1}
-                  </span>
+                    {p.nombre}
+                  </div>
+                  {/* Pin */}
+                  <div style={{
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50% 50% 50% 0',
+                    transform: 'rotate(-45deg)',
+                    background: COLORS.charcoalBlue,
+                    border: '2px solid white',
+                    boxShadow: SHADOWS.md,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <span style={{
+                      transform: 'rotate(45deg)',
+                      color: 'white',
+                      fontSize: '0.5rem',
+                      fontWeight: '800',
+                      lineHeight: 1,
+                    }}>
+                      {i + 1}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Marker>
-          );
-        })}
-      </Map>
+              </Marker>
+            );
+          })}
+        </Map>
+      )}
     </div>
   );
 };

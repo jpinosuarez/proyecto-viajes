@@ -6,7 +6,7 @@ import { useUI } from '@app/providers/UIContext';
 import { useTranslation } from 'react-i18next';
 
 const MobileCreateFab = () => {
-  const { openBuscador } = useUI();
+  const { openBuscador, isReadOnlyMode } = useUI();
   const { t } = useTranslation('nav');
 
   return (
@@ -18,6 +18,7 @@ const MobileCreateFab = () => {
       transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.2 }}
       onClick={openBuscador}
       aria-label={t('nav:addTrip')}
+      disabled={isReadOnlyMode}
       style={{
         position: 'fixed',
         bottom: '24px',
@@ -33,7 +34,8 @@ const MobileCreateFab = () => {
         justifyContent: 'center',
         boxShadow: `0 8px 24px ${COLORS.atomicTangerine}60, 0 4px 12px rgba(0,0,0,0.2)`,
         zIndex: 1000, 
-        cursor: 'pointer',
+        cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
+        opacity: isReadOnlyMode ? 0.55 : 1,
       }}
     >
       <Plus size={26} strokeWidth={2.5} />

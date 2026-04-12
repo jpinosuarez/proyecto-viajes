@@ -10,6 +10,15 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isFounder() {
+      return isAuthenticated() && request.auth.uid == 'a8364UsA6crjJrIRfHmlmsNeSrtI';
+    }
+
+    match /system/operational_flags {
+      allow read: if true;
+      allow write: if isFounder();
+    }
+
     match /usuarios/{userId} {
       allow read, write: if isOwner(userId);
 

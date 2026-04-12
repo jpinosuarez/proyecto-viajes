@@ -116,6 +116,7 @@
     "tripNeedsStop": "A trip must include at least one destination.",
     "tripNeedsTitle": "A trip must include a title.",
     "tripNeedsStartDate": "A trip must include a start date.",
+    "tripCreationPausedOperational": "Trip creation is temporarily paused while map search is stabilized. You can still edit existing trips.",
     "unsupportedFormat": "Only JPG or PNG photos are accepted. Choose a different file and try again.",
     "optimizationFailed": "We couldn't prepare that photo. Try a different image.",
     "saveFailed": "We couldn't save your log. Check your connection and try again.",

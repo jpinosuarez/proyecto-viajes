@@ -7,7 +7,7 @@ import { COLORS, SHADOWS, RADIUS } from '@shared/config';
 
 const GhostEmptyState = () => {
   const { t } = useTranslation('dashboard');
-  const { openBuscador } = useUI();
+  const { openBuscador, isReadOnlyMode } = useUI();
 
   return (
     <div style={{
@@ -85,6 +85,7 @@ const GhostEmptyState = () => {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={openBuscador}
+          disabled={isReadOnlyMode}
           style={{
             background: `linear-gradient(135deg, ${COLORS.atomicTangerine}, #ff9a4d)`,
             color: '#fff',
@@ -99,8 +100,9 @@ const GhostEmptyState = () => {
             justifyContent: 'center',
             gap: '8px',
             boxShadow: `0 6px 20px ${COLORS.atomicTangerine}35`,
-            cursor: 'pointer',
+            cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
             letterSpacing: '0.01em',
+            opacity: isReadOnlyMode ? 0.55 : 1,
           }}
         >
           <Plus size={20} strokeWidth={2.5} />

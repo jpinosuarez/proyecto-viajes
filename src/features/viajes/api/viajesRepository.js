@@ -11,6 +11,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes, uploadString } from 'firebase/storage';
+import { assertOperationalWritesEnabled } from '@shared/lib/hooks/useOperationalFlags';
 import { compressImage } from '@shared/lib/utils/imageUtils';
 import { logger } from '@shared/lib/utils/logger';
 
@@ -123,6 +124,8 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
 };
 
 export const guardarViajeConParadas = async ({ db, userId, viaje, paradas = [] }) => {
+  assertOperationalWritesEnabled();
+
   const batch = writeBatch(db);
   const viajeRef = doc(collection(db, `usuarios/${userId}/viajes`));
   batch.set(viajeRef, viaje);
@@ -148,16 +151,28 @@ export const guardarViajeConParadas = async ({ db, userId, viaje, paradas = [] }
 };
 
 export const actualizarViaje = ({ db, userId, viajeId, data }) =>
-  updateDoc(doc(db, `usuarios/${userId}/viajes`, viajeId), data);
+  {
+    assertOperationalWritesEnabled();
+    return updateDoc(doc(db, `usuarios/${userId}/viajes`, viajeId), data);
+  };
 
 export const crearParada = ({ db, userId, viajeId, data }) =>
-  addDoc(collection(db, `usuarios/${userId}/viajes/${viajeId}/paradas`), data);
+  {
+    assertOperationalWritesEnabled();
+    return addDoc(collection(db, `usuarios/${userId}/viajes/${viajeId}/paradas`), data);
+  };
 
 export const actualizarParada = ({ db, userId, viajeId, paradaId, data }) =>
-  updateDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId), data);
+  {
+    assertOperationalWritesEnabled();
+    return updateDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId), data);
+  };
 
 export const eliminarParada = ({ db, userId, viajeId, paradaId }) =>
-  deleteDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId));
+  {
+    assertOperationalWritesEnabled();
+    return deleteDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId));
+  };
 
 const sanitizeStopPayload = (stop = {}) => {
   const {
@@ -201,6 +216,8 @@ const hasStopChanges = (nextPayload, currentPayload = {}) => {
 };
 
 export const applyStopsBatchMutations = async ({ db, userId, tripId, draftStops = [], existingStops = [] }) => {
+  assertOperationalWritesEnabled();
+
   const batch = writeBatch(db);
   const stopsRef = collection(db, `usuarios/${userId}/viajes/${tripId}/paradas`);
   let hasChanges = false;
@@ -291,6 +308,8 @@ export const applyStopsBatchMutations = async ({ db, userId, tripId, draftStops 
 };
 
 export const eliminarViaje = async ({ db, userId, viajeId }) => {
+  assertOperationalWritesEnabled();
+
   // Firestore deleteDoc resolves even if the document doesn't exist.
   // We check after deletion to ensure the document is gone.
   const primaryRef = doc(db, `usuarios/${userId}/viajes`, viajeId);
@@ -320,6 +339,8 @@ export const eliminarViaje = async ({ db, userId, viajeId }) => {
 };
 
 export const subirFotoViaje = async ({ storage, userId, viajeId, foto }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const storageRef = ref(storage, `usuarios/${userId}/viajes/${viajeId}/portada.jpg`);
 

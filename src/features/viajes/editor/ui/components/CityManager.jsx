@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowUp, ArrowDown, Plus, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
+import { useOperationalFlags } from '@shared/lib';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { parseFlexibleDate } from '@shared/lib/utils/viajeUtils';
@@ -18,13 +19,22 @@ const createStopInstanceId = (feature) => {
 
 
 
-const CityManager = ({ t, paradas, setParadas }) => {
-  const { i18n } = useTranslation();
+const CityManager = ({ t, paradas, setParadas, isReadOnlyMode = false }) => {
+  const { i18n, t: searchT } = useTranslation(['search', 'common']);
+  const {
+    flags: { level: operationalLevel, appReadonlyMode },
+  } = useOperationalFlags();
+  const isReadOnlyActive = isReadOnlyMode || Boolean(appReadonlyMode) || operationalLevel >= 3;
+  const isSearchPaused = operationalLevel >= 1;
+  const shouldBlockSearchResults = isSearchPaused || isReadOnlyActive;
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const visibleSearchResults = shouldBlockSearchResults ? [] : searchResults;
   
   // Búsqueda reactiva (3 chars)
   useEffect(() => {
+    if (isSearchPaused) return;
+
     if (searchQuery.length < 3) {
         return;
     }
@@ -40,9 +50,11 @@ const CityManager = ({ t, paradas, setParadas }) => {
         } catch (e) { console.error(e); }
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, i18n.language, i18n.resolvedLanguage]);
+  }, [searchQuery, i18n.language, i18n.resolvedLanguage, isSearchPaused]);
 
   const agregarCiudad = (feature) => {
+    if (isReadOnlyActive) return;
+
     const contextCountry = feature.context?.find(c => c.id.startsWith('country'));
     const countryCode = contextCountry?.short_code?.toUpperCase();
 
@@ -70,6 +82,8 @@ const CityManager = ({ t, paradas, setParadas }) => {
   };
 
   const moverParada = (index, direccion) => {
+    if (isReadOnlyActive) return;
+
     const nuevas = [...paradas];
     const item = nuevas.splice(index, 1)[0];
     nuevas.splice(index + direccion, 0, item);
@@ -77,6 +91,8 @@ const CityManager = ({ t, paradas, setParadas }) => {
   };
 
   const actualizarDato = (index, campo, valor) => {
+    if (isReadOnlyActive) return;
+
     const nuevas = [...paradas];
     nuevas[index][campo] = valor;
     // Sincronizar fecha canónica: parsear texto flexible → ISO, actualizar .fecha
@@ -88,6 +104,8 @@ const CityManager = ({ t, paradas, setParadas }) => {
   };
 
   const eliminarParada = (index) => {
+    if (isReadOnlyActive) return;
+
     const nuevas = [...paradas];
     nuevas.splice(index, 1);
     setParadas(nuevas);
@@ -107,13 +125,32 @@ const CityManager = ({ t, paradas, setParadas }) => {
             }}
             placeholder={t('citymanager.searchPlaceholder') || 'Type the city name...'}
             style={styles.searchInput}
+            disabled={isSearchPaused || isReadOnlyActive}
           />
         </div>
       </div>
 
-      {searchResults.length > 0 && (
+      {isSearchPaused && (
+        <div style={styles.pausedState}>
+          {searchT(
+            'search:pausedMessage',
+            'Search temporarily paused while we stabilize map services. Your saved trips remain available.'
+          )}
+        </div>
+      )}
+
+      {isReadOnlyActive && (
+        <div style={styles.readOnlyState}>
+          {searchT(
+            'common:operational.readOnlyBanner',
+            'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+          )}
+        </div>
+      )}
+
+      {visibleSearchResults.length > 0 && (
         <div style={styles.resultsList}>
-          {searchResults.map((res, resIdx) => {
+          {visibleSearchResults.map((res, resIdx) => {
             // Extraer país para el icono en resultados
             const contextCountry = res.context?.find(c => c.id.startsWith('country'));
             const code = contextCountry?.short_code?.toUpperCase();
@@ -148,8 +185,13 @@ const CityManager = ({ t, paradas, setParadas }) => {
                 <button
                   type="button"
                   onClick={() => agregarCiudad(res)}
-                  style={styles.addButton}
+                  style={{
+                    ...styles.addButton,
+                    opacity: isReadOnlyActive ? 0.55 : 1,
+                    cursor: isReadOnlyActive ? 'not-allowed' : 'pointer',
+                  }}
                   aria-label={t('button.add') || '+ Agregar destino'}
+                  disabled={isReadOnlyActive}
                 >
                   <Plus size={14} /> {t('button.add', '+ Agregar destino')}
                 </button>
@@ -172,7 +214,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                     type="button"
                     data-testid="editor-stop-move-up"
                     aria-label={t('citymanager.moveStopUp', 'Move stop up')}
-                    disabled={index === 0}
+                    disabled={index === 0 || isReadOnlyActive}
                     onClick={() => moverParada(index, -1)}
                     style={styles.actionBtn}
                   >
@@ -182,7 +224,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                     type="button"
                     data-testid="editor-stop-move-down"
                     aria-label={t('citymanager.moveStopDown', 'Move stop down')}
-                    disabled={index === paradas.length - 1}
+                    disabled={index === paradas.length - 1 || isReadOnlyActive}
                     onClick={() => moverParada(index, 1)}
                     style={styles.actionBtn}
                   >
@@ -194,6 +236,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                     aria-label={t('citymanager.deleteStop', 'Delete stop')}
                     onClick={() => eliminarParada(index)}
                     style={{...styles.actionBtn, color:COLORS.danger, background:'#FEF2F2'}}
+                    disabled={isReadOnlyActive}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -217,7 +260,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                         }
                       }}
                       style={styles.nativeDateInput}
-                      disabled={false}
+                      disabled={isReadOnlyActive}
                     />
                 </div>
                 <div style={styles.dateGroup}>
@@ -236,7 +279,7 @@ const CityManager = ({ t, paradas, setParadas }) => {
                         }
                       }}
                       style={styles.nativeDateInput}
-                      disabled={false}
+                      disabled={isReadOnlyActive}
                     />
                 </div>
             </div>
@@ -254,6 +297,26 @@ const styles = {
   inputWrapper: { flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px', background: COLORS.background, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, padding: '0 12px' },
   searchInput: { border: 'none', background: 'transparent', padding: '12px 0', width: '100%', outline: 'none', fontSize: '1rem' },
   resultsList: { background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, overflow: 'hidden', maxHeight: '180px', overflowY: 'auto', boxShadow: SHADOWS.md },
+  pausedState: {
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: RADIUS.md,
+    padding: '12px 14px',
+    background: 'rgba(255, 107, 53, 0.08)',
+    color: COLORS.charcoalBlue,
+    fontWeight: 600,
+    fontSize: '0.88rem',
+    textAlign: 'center',
+  },
+  readOnlyState: {
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: RADIUS.md,
+    padding: '12px 14px',
+    background: 'rgba(44, 62, 80, 0.08)',
+    color: COLORS.charcoalBlue,
+    fontWeight: 600,
+    fontSize: '0.88rem',
+    textAlign: 'center',
+  },
   resultItem: { padding: '12px 15px', borderBottom: `1px solid ${COLORS.background}`, cursor: 'pointer', fontSize: '0.9rem', display:'flex', justifyContent:'space-between', alignItems:'center', ':hover': { background: COLORS.background } },
   addButton: { background: 'transparent', border: `1.5px solid ${COLORS.atomicTangerine}`, borderRadius: RADIUS.full, minHeight: '44px', minWidth: '44px', padding: '10px 14px', color: COLORS.atomicTangerine, fontSize: '0.75rem', fontWeight: '700', cursor: 'pointer', transition: TRANSITIONS.fast, outline: 'none', display: 'flex', alignItems: 'center', gap: '6px', '&:hover': { background: 'rgba(255, 107, 53, 0.05)', }, '&:active': { transform: 'translateY(1px)' } },
   

@@ -20,6 +20,7 @@ const EdicionGallerySection = ({
   onSetPortadaExistente,
   onEliminarFoto,
   portadaUrl, // NUEVO: url actual de portada
+  isReadOnlyMode = false,
 }) => {
   // Auto-cover: si no hay portada y se sube la primera foto, asignarla automáticamente
   const prevFotosCount = useRef(galeria.fotos.length);
@@ -50,19 +51,20 @@ const EdicionGallerySection = ({
                   type="text"
                   value={captionDrafts[f.id] ?? (f.caption || '')}
                   onChange={(e) => onCaptionChange(f.id, e.target.value)}
-                  onBlur={() => onCaptionSave(f)}
-                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                  onBlur={() => !isReadOnlyMode && onCaptionSave(f)}
+                  onKeyDown={(e) => e.key === 'Enter' && !isReadOnlyMode && e.currentTarget.blur()}
                   placeholder={t('labels.captionPlaceholder')}
                   style={styles.captionInput}
                   aria-label={t('labels.captionPlaceholder')}
                   maxLength={200}
+                  disabled={isReadOnlyMode}
                 />
                 <div style={styles.galleryActionsRow}>
                   <button
                     type="button"
                     style={styles.galleryActionBtn(f.esPortada)}
                     onClick={() => onSetPortadaExistente(f.id)}
-                    disabled={isBusy}
+                    disabled={isBusy || isReadOnlyMode}
                     aria-label={f.esPortada ? t('gallery.currentCover') : t('gallery.setCover')}
                   >
                     {/* fill sólido cuando es portada, outline cuando no — único indicador necesario */}
@@ -72,7 +74,7 @@ const EdicionGallerySection = ({
                     type="button"
                     style={styles.galleryDangerBtn}
                     onClick={() => onEliminarFoto(f.id)}
-                    disabled={isBusy}
+                    disabled={isBusy || isReadOnlyMode}
                     aria-label={t('gallery.deletePhoto')}
                   >
                     <Trash2 size={14} />
@@ -92,7 +94,7 @@ const EdicionGallerySection = ({
         portadaIndex={portadaIndex}
         onPortadaChange={onPortadaChange}
         maxFiles={1}
-        disabled={isBusy || galeria.uploading}
+        disabled={isBusy || galeria.uploading || isReadOnlyMode}
         isMobile={isMobile}
       />
       <span style={styles.inlineInfo}>

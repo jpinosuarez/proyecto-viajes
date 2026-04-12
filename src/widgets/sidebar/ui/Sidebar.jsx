@@ -161,7 +161,7 @@ const Sidebar = () => {
   useInjectNavStyles();
   const { logout } = useAuth();
   const { t } = useTranslation('nav');
-  const { openBuscador: openTripSearch } = useUI();
+  const { openBuscador: openTripSearch, isReadOnlyMode } = useUI();
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -288,6 +288,7 @@ const Sidebar = () => {
       <Motion.button
         type="button"
         onClick={openTripSearch}
+        disabled={isReadOnlyMode}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.88 }}
         style={{
@@ -299,10 +300,11 @@ const Sidebar = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
           color: '#fff',
           boxShadow: `0 4px 20px ${COLORS.atomicTangerine}70`,
           flexShrink: 0,
+          opacity: isReadOnlyMode ? 0.55 : 1,
+          cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
         }}
         aria-label={t('addTrip')}
       >

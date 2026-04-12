@@ -5,6 +5,7 @@ import { Search, X, HelpCircle } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS, TRANSITIONS } from '@shared/config';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { useToast } from '@app/providers/ToastContext';
+import { useOperationalFlags } from '@shared/lib';
 import { useDebounce } from '../../model/useDebounce';
 import { useSearchHistory } from '../../model/useSearchHistory';
 import RichResultCard from './RichResultCard';
@@ -22,6 +23,10 @@ const SearchPalette = ({
   const { t, i18n } = useTranslation(['search', 'common']);
   const { pushToast } = useToast();
   const { isMobile } = useWindowSize(768);
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+  const isSearchPaused = operationalLevel >= 1;
   const inputRef = useRef(null);
   const abortControllerRef = useRef(null);
   const lastMapboxErrorRef = useRef(0);
@@ -42,6 +47,13 @@ const SearchPalette = ({
 
   // Fetch Mapbox results when debounced query changes
   useEffect(() => {
+    if (isSearchPaused) {
+      abortControllerRef.current?.abort();
+      setLoading(false);
+      setMapboxResults([]);
+      return;
+    }
+
     // Only run searches once the user has typed at least 3 characters.
     // This prevents the UI from flashing a "no results" state on short queries.
     if (!debouncedQuery || debouncedQuery.length < 3) {
@@ -111,7 +123,7 @@ const SearchPalette = ({
     return () => {
       controller.abort();
     };
-  }, [debouncedQuery, i18n.language, pushToast, t]);
+  }, [debouncedQuery, i18n.language, isSearchPaused, pushToast, t]);
 
   // Combine and group results
   const allResults = useMemo(() => {
@@ -201,8 +213,8 @@ const SearchPalette = ({
   if (!isOpen) return null;
 
   const trimmedQuery = query.trim();
-  const showQueryTooShort = trimmedQuery.length > 0 && trimmedQuery.length < 3;
-  const showNoResults = trimmedQuery.length >= 3 && !loading && allResults.length === 0;
+  const showQueryTooShort = !isSearchPaused && trimmedQuery.length > 0 && trimmedQuery.length < 3;
+  const showNoResults = !isSearchPaused && trimmedQuery.length >= 3 && !loading && allResults.length === 0;
 
   const styles = {
     overlay: {
@@ -293,6 +305,16 @@ const SearchPalette = ({
       padding: '40px 20px',
       color: COLORS.textSecondary,
     },
+    pausedState: {
+      textAlign: 'center',
+      padding: '18px 20px',
+      marginBottom: '8px',
+      borderRadius: RADIUS.md,
+      border: `1px solid ${COLORS.border}`,
+      backgroundColor: 'rgba(255, 107, 53, 0.07)',
+      color: COLORS.charcoalBlue,
+      fontWeight: 600,
+    },
     resultsList: {
       display: 'flex',
       flexDirection: 'column',
@@ -350,6 +372,7 @@ const SearchPalette = ({
                 autoFocus={!isMobile}
                 style={styles.input}
                 aria-label="Search"
+                disabled={isSearchPaused}
               />
               {query && (
                 <button
@@ -390,6 +413,17 @@ const SearchPalette = ({
                 <div>
                   <span style={styles.helpKey}>Esc</span> Close
                 </div>
+              </div>
+            )}
+
+            {isSearchPaused && (
+              <div style={styles.pausedState}>
+                <p>
+                  {t(
+                    'search:pausedMessage',
+                    'Search temporarily paused while we stabilize map services. Your saved trips remain available.'
+                  )}
+                </p>
               </div>
             )}
 

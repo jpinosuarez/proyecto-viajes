@@ -82,3 +82,36 @@ This policy is mandatory for every AI agent and developer working on Keeptrip. F
 4. **Step 4: Execute.** Write clean, documented, and tested code.
 
 **If you encounter ambiguity, ASK. Do not guess on brand-critical features.**
+
+---
+
+## 🚨 6. EMERGENCY RUNBOOK (UNIFIED KILL SWITCH)
+
+### 6.1 Operational Levels (0-4)
+Keeptrip uses five operational levels to reduce cost and risk during incidents.
+
+- **Level 0 — Normal:** All systems active. Geocoding ON, Mapbox WebGL ON, Firebase writes ON.
+- **Level 1 — Soft Kill:** Geocoding OFF. City search calls to Mapbox Geocoding are blocked.
+- **Level 2 — Hard Kill:** Mapbox WebGL OFF. Interactive maps are replaced by operational visual fallbacks.
+- **Level 3 — Read-Only:** Firebase writes OFF for product mutations (save/add/delete/upload actions blocked).
+- **Level 4 — Blackout:** Full app blackout. Router intercepts app routes and displays maintenance screen.
+
+### 6.2 Firestore Control Plane
+The source of truth is the Firestore document:
+
+- **Path:** `system/operational_flags`
+- **Key fields:**
+    - `level` (integer from 0 to 4)
+    - `app_readonly_mode` (boolean)
+    - `app_maintenance_mode` (boolean)
+
+Runtime behavior is driven by a singleton listener (`useOperationalFlags`) so all active sessions react quickly to level updates.
+
+### 6.3 Level 4 Escape Hatch (Founder/Admin Recovery)
+To avoid founder lockout during blackout:
+
+- The maintenance screen keeps an **Escape Hatch**.
+- If the current user is Founder/Admin, the screen renders `OperationalControlsSection` directly in blackout mode.
+- This allows lowering level back to `0` without needing access to `/settings`.
+
+Operational intent: even under global blackout, authorized operators always retain an in-app recovery path.

@@ -1,5 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useToast } from './ToastContext';
+import { useOperationalFlags } from '@shared/lib';
 
 const UIContext = createContext(null);
 const SearchContext = createContext(null);
@@ -19,6 +22,15 @@ const readMapStyle = () => {
 };
 
 export const UIProvider = ({ children }) => {
+  const { t } = useTranslation('common');
+  const { pushToast } = useToast();
+  const {
+    flags: { level: operationalLevel, appReadonlyMode, appMaintenanceMode },
+  } = useOperationalFlags();
+
+  const isReadOnlyMode = Boolean(appReadonlyMode) || Number(operationalLevel || 0) >= 3;
+  const isMaintenanceMode = Boolean(appMaintenanceMode) || Number(operationalLevel || 0) >= 4;
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   
@@ -51,7 +63,20 @@ export const UIProvider = ({ children }) => {
     () => {
       // Backward compatibility: alias mostrarBuscador → searchPaletteOpen
       const mostrarBuscador = searchPaletteOpen;
-      const openBuscador = () => setSearchPaletteOpen(true);
+      const openBuscador = () => {
+        if (!isReadOnlyMode) {
+          setSearchPaletteOpen(true);
+          return;
+        }
+
+        pushToast(
+          t(
+            'operational.readOnlyBlockedAction',
+            'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+          ),
+          'info'
+        );
+      };
       const closeBuscador = () => setSearchPaletteOpen(false);
 
       return {
@@ -79,6 +104,8 @@ export const UIProvider = ({ children }) => {
         setCiudadInicialBorrador,
         confirmarEliminacion,
         setConfirmarEliminacion,
+        isReadOnlyMode,
+        isMaintenanceMode,
         // Map style (Guardrail #2)
         mapStyle,
         setMapStyle,
@@ -93,8 +120,12 @@ export const UIProvider = ({ children }) => {
       viajeBorrador,
       ciudadInicialBorrador,
       confirmarEliminacion,
+      isReadOnlyMode,
+      isMaintenanceMode,
       mapStyle,
       setMapStyle,
+      pushToast,
+      t,
     ]
   );
 

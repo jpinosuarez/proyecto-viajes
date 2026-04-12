@@ -12,6 +12,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes, deleteObject } from 'firebase/storage';
+import { assertOperationalWritesEnabled } from '@shared/lib/hooks/useOperationalFlags';
 import { compressImage } from '@shared/lib/utils/imageUtils';
 import { logger } from '@shared/lib/utils/logger';
 
@@ -41,6 +42,8 @@ export const subirFotoGaleria = async ({
   metadata = {}, 
   esPortada = false 
 }) => {
+  assertOperationalWritesEnabled();
+
   try {
     // Si fileObj viene del uploader, puede ser un File puro o un objeto con la propiedad .file
     const actualFile = fileObj instanceof File ? fileObj : fileObj?.file;
@@ -129,6 +132,8 @@ export const subirFotosMultiples = async ({
   files, 
   portadaIndex = 0 
 }) => {
+  assertOperationalWritesEnabled();
+
   try {
     logger.info('Subiendo múltiples fotos', { 
       viajeId, 
@@ -212,6 +217,8 @@ export const obtenerFotosViaje = async ({ db, userId, viajeId }) => {
  * @returns {Promise<boolean>}
  */
 export const actualizarPortada = async ({ db, userId, viajeId, fotoId }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const batch = writeBatch(db);
 
@@ -262,6 +269,8 @@ export const actualizarPortada = async ({ db, userId, viajeId, fotoId }) => {
  * @returns {Promise<boolean>}
  */
 export const eliminarFoto = async ({ storage, db, userId, viajeId, fotoId }) => {
+  assertOperationalWritesEnabled();
+
   try {
     // Obtener datos de la foto antes de eliminar
     const fotos = await obtenerFotosViaje({ db, userId, viajeId });
@@ -318,6 +327,8 @@ export const eliminarFoto = async ({ storage, db, userId, viajeId, fotoId }) => 
  * @returns {Promise<boolean>}
  */
 export const actualizarCaptionFoto = async ({ db, userId, viajeId, fotoId, caption }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const fotoRef = doc(db, `usuarios/${userId}/viajes/${viajeId}/fotos/${fotoId}`);
     await updateDoc(fotoRef, { 
@@ -347,6 +358,8 @@ export const actualizarCaptionFoto = async ({ db, userId, viajeId, fotoId, capti
  * @returns {Promise<boolean>}
  */
 export const reordenarFotos = async ({ db, userId, viajeId, ordenamiento }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const batch = writeBatch(db);
 
@@ -374,6 +387,8 @@ export const reordenarFotos = async ({ db, userId, viajeId, ordenamiento }) => {
  * Actualiza el contador de fotos en el documento del viaje
  */
 const actualizarContadorFotos = async ({ db, userId, viajeId }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const fotos = await obtenerFotosViaje({ db, userId, viajeId });
     const viajeRef = doc(db, `usuarios/${userId}/viajes/${viajeId}`);
@@ -395,6 +410,8 @@ const actualizarContadorFotos = async ({ db, userId, viajeId }) => {
  * Actualiza la URL de portada en el documento del viaje
  */
 const actualizarPortadaViaje = async ({ db, userId, viajeId, fotoUrl }) => {
+  assertOperationalWritesEnabled();
+
   try {
     const viajeRef = doc(db, `usuarios/${userId}/viajes/${viajeId}`);
     await updateDoc(viajeRef, { 

@@ -1,3 +1,5 @@
+import { useOperationalFlags } from '@shared/lib';
+
 function resolveSavedTripId(saveResult, tripId) {
   if (typeof saveResult === 'string' && saveResult.trim()) return saveResult;
   if (saveResult && typeof saveResult === 'object' && typeof saveResult.id === 'string') return saveResult.id;
@@ -24,6 +26,10 @@ export function useEdicionModalSave({
   onClose,
   onAfterSave,
 }) {
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+
   const handleSave = async () => {
     const normalizeIsoDate = (value) => {
       if (!value && value !== 0) return null;
@@ -35,11 +41,25 @@ export function useEdicionModalSave({
 
     if (isProcessingImage || isSaving || isUploading) return;
 
+    const existingStops = viaje?.paradas || viaje?.destinos || [];
+    const isPersistedTrip = Boolean(viaje?.id && viaje.id !== 'new');
+
+    if (!isPersistedTrip && operationalLevel >= 1) {
+      pushToast(
+        t(
+          'error.tripCreationPausedOperational',
+          'Trip creation is temporarily paused while map search is stabilized. You can still edit existing trips.'
+        ),
+        'warning'
+      );
+      return null;
+    }
+
     const hasValidStops = Array.isArray(paradas) && paradas.length > 0;
     const hasValidTitle = Boolean((formData?.titulo || '').trim());
     const hasValidStartDate = Boolean((formData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
 
-    if (!hasValidStops) {
+    if (!isPersistedTrip && !hasValidStops) {
       pushToast(t('error.tripNeedsStop', 'El viaje debe tener al menos un destino'), 'error');
       return null;
     }
@@ -94,8 +114,6 @@ export function useEdicionModalSave({
       // we are inside useEdicionModalSave, and the actual editor has `viaje.paradas`. 
       // The stops on the modal itself are modified as `paradas`.
       // We pass the unedited stops (if available) as the 3rd param to cleanly diff.
-      const existingStops = viaje?.paradas || viaje?.destinos || [];
-      const isPersistedTrip = Boolean(viaje?.id && viaje.id !== 'new');
       const saveResult = isPersistedTrip
         ? await onSave(viaje.id, savePayload, existingStops)
         : await onSave(viaje.id, savePayload);

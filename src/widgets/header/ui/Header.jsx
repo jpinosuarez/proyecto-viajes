@@ -35,7 +35,7 @@ const COMPACT_LOGO_ROUTES = ['/trips', '/map'];
 
 const Header = ({ isMobile = false, invitationsCount = 0 }) => {
   const { usuario: user, login, logout } = useAuth();
-  const { openBuscador: openTripSearch, openUserMenu } = useUI();
+  const { openBuscador: openTripSearch, openUserMenu, isReadOnlyMode } = useUI();
   const { busqueda: query, setBusqueda: setQuery, limpiarBusqueda: clearQuery } = useSearch();
   const { t } = useTranslation(['nav', 'common']);
   const [failedPhoto, setFailedPhoto] = useState(null);
@@ -201,6 +201,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
           <Motion.button
             type="button"
             onClick={openTripSearch}
+            disabled={isReadOnlyMode}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             style={{
@@ -210,7 +211,6 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
               padding: '10px 20px',
               borderRadius: RADIUS.full,
               fontWeight: '800',
-              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -219,6 +219,8 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
               minHeight: '40px',
               whiteSpace: 'nowrap',
               transition: 'box-shadow 0.2s ease',
+              opacity: isReadOnlyMode ? 0.55 : 1,
+              cursor: isReadOnlyMode ? 'not-allowed' : 'pointer',
             }}
           >
             <Plus size={16} />

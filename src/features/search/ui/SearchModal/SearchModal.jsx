@@ -6,6 +6,7 @@ import { COLORS, RADIUS } from '@shared/config';
 import { styles } from "./SearchModal.styles";
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { useOperationalFlags } from '@shared/lib';
 import { useDebounce } from '../../model/useDebounce';
 import { fetchGeocoding } from '@shared/api/services/mapboxGeocoding';
 
@@ -33,6 +34,10 @@ const SearchModal = ({
 }) => {
   const { t, i18n } = useTranslation(['search', 'common']);
   const { isMobile } = useWindowSize(768);
+  const {
+    flags: { level: operationalLevel },
+  } = useOperationalFlags();
+  const isSearchPaused = operationalLevel >= 1;
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -54,6 +59,13 @@ const SearchModal = ({
   useDebounce(query, 300, setDebouncedQuery);
 
   useEffect(() => {
+    if (isSearchPaused) {
+      abortControllerRef.current?.abort();
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
     if (!debouncedQuery) {
       abortControllerRef.current?.abort();
       setResults([]);
@@ -116,7 +128,7 @@ const SearchModal = ({
     })();
 
     return () => controller.abort();
-  }, [debouncedQuery, onSearchError, onNoResults, i18n.language]);
+  }, [debouncedQuery, isSearchPaused, onSearchError, onNoResults, i18n.language]);
 
   const handleSelectPopular = (dest) => {
     const name = t(`search:popular.${dest.key}`);
@@ -191,6 +203,7 @@ const SearchModal = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label={t('search:inputAria')}
+              disabled={isSearchPaused}
             />
             {query && (
               <button type="button" onClick={() => setQuery("")} style={styles.clearButton} aria-label={t('search:clear')}>
@@ -200,6 +213,25 @@ const SearchModal = ({
           </div>
 
           <div style={styles.listaContainer(isMobile)} className="custom-scroll">
+            {isSearchPaused && (
+              <div style={{
+                margin: '16px 20px',
+                padding: '14px 16px',
+                borderRadius: RADIUS.md,
+                border: `1px solid ${COLORS.border}`,
+                background: 'rgba(255, 107, 53, 0.08)',
+                color: COLORS.charcoalBlue,
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                textAlign: 'center',
+              }}>
+                {t(
+                  'search:pausedMessage',
+                  'Search temporarily paused while we stabilize map services. Your saved trips remain available.'
+                )}
+              </div>
+            )}
+
             {/* Popular destinations — no query */}
             {!query && (
               <div style={{ padding: "20px" }}>
@@ -223,7 +255,7 @@ const SearchModal = ({
             )}
 
             {/* Minimum characters hint */}
-            {query && query.length < 3 && !loading && (
+            {query && query.length < 3 && !loading && !isSearchPaused && (
               <div style={{
                 textAlign: 'center',
                 padding: '24px 20px',
@@ -236,7 +268,7 @@ const SearchModal = ({
             )}
 
             {/* Skeleton loading state */}
-            {loading && (
+            {loading && !isSearchPaused && (
               <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[0, 1, 2].map(i => (
                   <div
@@ -255,7 +287,7 @@ const SearchModal = ({
             )}
 
             {/* Empty state */}
-            {results.length === 0 && query && query.length >= 3 && !loading && (
+            {results.length === 0 && query && query.length >= 3 && !loading && !isSearchPaused && (
               <div style={styles.emptyState}>
                 <Search size={44} style={styles.emptyIcon} />
                 <div style={styles.emptyText}>{t('search:noResults', { term: query })}</div>

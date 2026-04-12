@@ -53,6 +53,14 @@
     "update": "Update",
     "later": "Later"
   },
+  "operational": {
+    "readOnlyBanner": "Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.",
+    "readOnlyBlockedAction": "Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.",
+    "maintenanceLabel": "Maintenance Mode",
+    "maintenanceMessage": "Explorer's Rest: We are upgrading the engines. Your trips are safe in the vault. We'll be right back.",
+    "maintenanceHint": "No action is needed from your side. We will restore routes as soon as system checks are complete.",
+    "dataSafe": "Data integrity shield is active."
+  },
   "profile": {
     "editTitle": "Edit Profile",
     "close": "Close",

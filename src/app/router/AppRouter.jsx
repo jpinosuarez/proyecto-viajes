@@ -20,7 +20,9 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useOutletContext } from 'react-router-dom';
 import PageLoader from '@shared/ui/components/PageLoader';
+import { MaintenanceScreen } from '@shared/ui/components';
 import { ENABLE_IMMERSIVE_VIEWER, ENABLE_INVITATIONS, ENABLE_GAMIFICATION } from '@shared/config';
+import { useOperationalFlags } from '@shared/lib';
 
 import AuthGuard from './AuthGuard';
 import AdminGuard from './AdminGuard';
@@ -128,6 +130,20 @@ function SettingsRoute() {
 
 // ── Router principal ───────────────────────────────────────────────────────────
 function AppRouter() {
+  const {
+    flags: { level, appMaintenanceMode },
+    loading,
+  } = useOperationalFlags();
+
+  if (loading) {
+    return <PageLoader />;
+  }
+
+  const isMaintenanceMode = Boolean(appMaintenanceMode) || Number(level || 0) >= 4;
+  if (isMaintenanceMode) {
+    return <MaintenanceScreen />;
+  }
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>

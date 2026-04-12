@@ -6,6 +6,7 @@ import { COLORS } from '@shared/config';
 import { styles } from './EditorFocusPanel.styles';
 import { styles as edicionModalStyles } from './EdicionModal.styles';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
+import { useOperationalFlags } from '@shared/lib';
 import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycle';
 import { useEdicionModalSave } from '../model/hooks/useEdicionModalSave';
 import { useAuth } from '@app/providers/AuthContext';
@@ -49,6 +50,10 @@ const EditorFocusPanel = ({
 }) => {
   const { t } = useTranslation(['editor', 'countries']);
   const { isMobile } = useWindowSize(768);
+  const {
+    flags: { level: operationalLevel, appReadonlyMode },
+  } = useOperationalFlags();
+  const isReadOnlyMode = Boolean(appReadonlyMode) || operationalLevel >= 3;
   const { usuario } = useAuth();
   const uploadCtx = useUpload();
   const usuarioUid = usuario?.uid || null;
@@ -160,6 +165,8 @@ const EditorFocusPanel = ({
 
   // Manual save wrapper with loading state
   const handleSaveWithLoading = async () => {
+    if (!canSave) return;
+
     setIsSavingManual(true);
     try {
       const savedId = await handleSaveManual();
@@ -290,7 +297,7 @@ const EditorFocusPanel = ({
   const hasValidStops = Array.isArray(effectiveParadas) && effectiveParadas.length > 0;
   const hasValidTitle = Boolean((formDataWithFallback?.titulo || '').trim());
   const hasValidStartDate = Boolean((effectiveFormData?.fechaInicio || viaje?.fechaInicio || '').toString().trim());
-  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isSavingManual;
+  const canSave = hasValidStops && hasValidTitle && hasValidStartDate && !isSavingManual && !isReadOnlyMode;
 
   return (
     <>
@@ -345,6 +352,7 @@ const EditorFocusPanel = ({
               setParadas={effectiveSetParadas}
               fechaRangoDisplay={`${effectiveFormData.fechaInicio} - ${effectiveFormData.fechaFin}`}
               sinParadas={effectiveParadas.length === 0}
+              isReadOnlyMode={isReadOnlyMode}
             />
           )}
 
@@ -366,6 +374,7 @@ const EditorFocusPanel = ({
               onCaptionSave={safeOnCaptionSave}
               onSetPortadaExistente={safeOnSetPortadaExistente}
               onEliminarFoto={safeOnEliminarFoto}
+              isReadOnlyMode={isReadOnlyMode}
             />
           )}
 
@@ -389,22 +398,32 @@ const EditorFocusPanel = ({
             }}
             aria-disabled={!canSave}
             aria-label={
-              !hasValidStops
-                ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
-                : !hasValidTitle
-                  ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
-                  : !hasValidStartDate
-                    ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
-                    : undefined
+              isReadOnlyMode
+                ? t(
+                    'common:operational.readOnlyBlockedAction',
+                    'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+                  )
+                : !hasValidStops
+                  ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                  : !hasValidTitle
+                    ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                    : !hasValidStartDate
+                      ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                      : undefined
             }
             title={
-              !hasValidStops
-                ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
-                : !hasValidTitle
-                  ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
-                  : !hasValidStartDate
-                    ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
-                    : ''
+              isReadOnlyMode
+                ? t(
+                    'common:operational.readOnlyBlockedAction',
+                    'Keeptrip is in Read-Only mode. Your data is safe, but edits are paused.'
+                  )
+                : !hasValidStops
+                  ? t('error.tripNeedsStop', 'El viaje debe tener al menos un destino')
+                  : !hasValidTitle
+                    ? t('error.tripNeedsTitle', 'El viaje debe tener un titulo')
+                    : !hasValidStartDate
+                      ? t('error.tripNeedsStartDate', 'El viaje debe tener fecha de inicio')
+                      : ''
             }
           >
             {isSavingManual && <LoaderCircle size={16} className="spin" />}

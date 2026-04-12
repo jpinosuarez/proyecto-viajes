@@ -103,6 +103,7 @@
   },
   "explorationMap": "Exploration Map",
   "map": {
+    "shieldOverlay": "Interactive maps are resting. Your journey data remains safe.",
     "emptyState": {
       "title": "Your world awaits",
       "subtitle": "Every explorer starts here. Drop your first pin and watch your story unfold.",
