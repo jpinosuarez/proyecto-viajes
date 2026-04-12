@@ -83,11 +83,11 @@ function AppModalsManager({
   const {
     isSavingModal,
     isSavingViewer,
-    viajesEliminando,
-    handleGuardarModal,
-    handleGuardarDesdeVisor,
-    solicitarEliminarViaje,
-    handleDeleteViaje,
+    deletingTripIds,
+    handleSaveModal,
+    handleSaveFromViewer,
+    requestTripDelete,
+    handleDeleteTrip,
   } = crud;
 
   // ── EdicionModal: ?editing=<id> para viajes existentes, viajeBorrador para nuevos ──
@@ -193,7 +193,7 @@ function AppModalsManager({
               viaje={viajeParaEditar}
               bitacoraData={bitacoraData}
               onClose={closeEditor}
-              onSave={handleGuardarModal}
+              onSave={handleSaveModal}
               isSaving={isSavingModal}
               esBorrador={esBorrador}
               ciudadInicial={ciudadInicialBorrador}
@@ -218,10 +218,10 @@ function AppModalsManager({
                 tripData={bitacoraData}
                 MapRoutePreview={MiniMapaRuta}
                 onClose={() => navigate('/trips')}
-                onSave={handleGuardarDesdeVisor}
-                onDelete={solicitarEliminarViaje}
+                onSave={handleSaveFromViewer}
+                onDelete={requestTripDelete}
                 isSaving={isSavingViewer}
-                isDeleting={!!(tripId && viajesEliminando.has(tripId))}
+                isDeleting={!!(tripId && deletingTripIds.has(tripId))}
               />
             </Suspense>
           )}
@@ -234,9 +234,9 @@ function AppModalsManager({
         message="Esta accion eliminara el viaje y sus recuerdos asociados de forma permanente. No se puede deshacer."
         confirmText="Eliminar"
         cancelText="Cancelar"
-        onConfirm={handleDeleteViaje}
+        onConfirm={handleDeleteTrip}
         onClose={() => setConfirmarEliminacion(null)}
-        isLoading={!!(confirmarEliminacion && viajesEliminando.has(confirmarEliminacion))}
+        isLoading={!!(confirmarEliminacion && deletingTripIds.has(confirmarEliminacion))}
       />
     </>
   );

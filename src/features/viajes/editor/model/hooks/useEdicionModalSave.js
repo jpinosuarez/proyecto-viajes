@@ -1,7 +1,7 @@
-function resolveSavedViajeId(saveResult, viajeId) {
+function resolveSavedTripId(saveResult, tripId) {
   if (typeof saveResult === 'string' && saveResult.trim()) return saveResult;
   if (saveResult && typeof saveResult === 'object' && typeof saveResult.id === 'string') return saveResult.id;
-  if (saveResult === true && viajeId && viajeId !== 'new') return viajeId;
+  if (saveResult === true && tripId && tripId !== 'new') return tripId;
   return null;
 }
 
@@ -25,7 +25,7 @@ export function useEdicionModalSave({
   onAfterSave,
 }) {
   const handleSave = async () => {
-    const normalizeDate = (value) => {
+    const normalizeIsoDate = (value) => {
       if (!value && value !== 0) return null;
       if (typeof value === 'number' && !Number.isFinite(value)) return null;
       const date = new Date(value);
@@ -55,7 +55,7 @@ export function useEdicionModalSave({
     }
 
     try {
-      const payload = {
+      const savePayload = {
         ...formData,
         // Borrador: defensa final para no perder destino por orden de renders.
         code: formData.code || viaje?.code || ciudadInicial?.paisCodigo || '',
@@ -68,44 +68,52 @@ export function useEdicionModalSave({
           viaje?.coordenadas ||
           ciudadInicial?.coordenadas ||
           null,
+        newStops: paradas,
         paradasNuevas: paradas,
       };
 
       // Normalize date fields to prevent invalid values (Infinity / NaN) from
       // being written to Firestore and corrupting trip timestamps.
-      const safeFechaInicio = normalizeDate(payload.fechaInicio) || normalizeDate(viaje?.fechaInicio);
-      const safeFechaFin = normalizeDate(payload.fechaFin) || normalizeDate(viaje?.fechaFin);
+      const safeFechaInicio = normalizeIsoDate(savePayload.fechaInicio) || normalizeIsoDate(viaje?.fechaInicio);
+      const safeFechaFin = normalizeIsoDate(savePayload.fechaFin) || normalizeIsoDate(viaje?.fechaFin);
 
-      if (safeFechaInicio) payload.fechaInicio = safeFechaInicio;
-      if (safeFechaFin) payload.fechaFin = safeFechaFin;
+      if (safeFechaInicio) savePayload.fechaInicio = safeFechaInicio;
+      if (safeFechaFin) savePayload.fechaFin = safeFechaFin;
 
       // If after normalization we still have invalid dates, strip them to allow
       // server-side defaults or validation to handle the case.
-      if (!payload.fechaInicio) delete payload.fechaInicio;
-      if (!payload.fechaFin) delete payload.fechaFin;
+      if (!savePayload.fechaInicio) delete savePayload.fechaInicio;
+      if (!savePayload.fechaFin) delete savePayload.fechaFin;
 
       // Ensure legacy photo field is updated when portadaUrl is set.
-      if (payload.portadaUrl) {
-        payload.foto = payload.portadaUrl;
-        payload.fotoPortada = payload.portadaUrl;
+      if (savePayload.portadaUrl) {
+        savePayload.foto = savePayload.portadaUrl;
+        savePayload.fotoPortada = savePayload.portadaUrl;
       }
 
-      const saveResult = await onSave(viaje.id, payload);
-      const savedViajeId = resolveSavedViajeId(saveResult, viaje?.id);
+      // we are inside useEdicionModalSave, and the actual editor has `viaje.paradas`. 
+      // The stops on the modal itself are modified as `paradas`.
+      // We pass the unedited stops (if available) as the 3rd param to cleanly diff.
+      const existingStops = viaje?.paradas || viaje?.destinos || [];
+      const isPersistedTrip = Boolean(viaje?.id && viaje.id !== 'new');
+      const saveResult = isPersistedTrip
+        ? await onSave(viaje.id, savePayload, existingStops)
+        : await onSave(viaje.id, savePayload);
+      const savedTripId = resolveSavedTripId(saveResult, viaje?.id);
 
-      if (!savedViajeId) {
+      if (!savedTripId) {
         pushToast(t('error.saveFailed'), 'error');
         return null;
       }
 
       if (galleryFiles.length > 0) {
-        console.log('Subiendo a viajeId:', savedViajeId, 'con files:', galleryFiles.length, 'portadaIndex:', galleryPortada);
+        console.log('Subiendo a viajeId:', savedTripId, 'con files:', galleryFiles.length, 'portadaIndex:', galleryPortada);
         console.log('Referencia a iniciarSubida:', iniciarSubida?.toString?.());
 
         if (hasUploadContext) {
           try {
             pushToast(t('toast.uploadingPhotos'), 'info');
-            await iniciarSubida(savedViajeId, galleryFiles, galleryPortada);
+            await iniciarSubida(savedTripId, galleryFiles, galleryPortada);
             pushToast(t('toast.uploadingPhotosDone'), 'success');
           } catch (uploadError) {
             console.error('Upload error:', uploadError);
@@ -120,12 +128,12 @@ export function useEdicionModalSave({
 
       limpiarEstado();
       if (onAfterSave) {
-        onAfterSave(savedViajeId);
+        onAfterSave(savedTripId);
       } else {
         onClose();
       }
 
-      return savedViajeId;
+      return savedTripId;
     } catch (error) {
       console.error('Error en useEdicionModalSave:', error);
       // Preferimos mostrar mensaje descriptivo si está disponible, sino mensaje genérico

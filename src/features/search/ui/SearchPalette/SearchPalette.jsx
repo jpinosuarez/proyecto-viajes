@@ -10,7 +10,7 @@ import { useSearchHistory } from '../../model/useSearchHistory';
 import RichResultCard from './RichResultCard';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+import { fetchGeocoding } from '@shared/api/services/mapboxGeocoding';
 
 const SearchPalette = ({ 
   isOpen, 
@@ -58,15 +58,11 @@ const SearchPalette = ({
 
     (async () => {
       try {
-        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          debouncedQuery
-        )}.json?types=country,place,locality&language=${i18n.language}&access_token=${MAPBOX_TOKEN}`;
-
-        const res = await fetch(endpoint, { signal: controller.signal });
-        if (!res.ok) {
-          throw new Error(`Mapbox geocoding failed with status ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await fetchGeocoding({
+          query: debouncedQuery,
+          language: i18n.language,
+          signal: controller.signal,
+        });
 
         const processed = (data.features || []).map((feat) => {
           const countryContext =

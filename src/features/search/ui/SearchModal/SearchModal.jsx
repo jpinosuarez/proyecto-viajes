@@ -7,8 +7,7 @@ import { styles } from "./SearchModal.styles";
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { useDebounce } from '../../model/useDebounce';
-
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+import { fetchGeocoding } from '@shared/api/services/mapboxGeocoding';
 
 /**
  * Static popular destinations — names resolved via i18n t() hook.
@@ -70,12 +69,12 @@ const SearchModal = ({
 
     (async () => {
       try {
-        const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(debouncedQuery)}.json?types=country,place,locality&language=${i18n.language}&access_token=${MAPBOX_TOKEN}`;
-        const res = await fetch(endpoint, { signal: controller.signal });
-        if (!res.ok) {
-          throw new Error(`Mapbox geocoding failed with status ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await fetchGeocoding({
+          query: debouncedQuery,
+          language: i18n.language,
+          signal: controller.signal,
+        });
+        
         if (controller.signal.aborted) return;
         const processed = (data.features || []).map((feat) => {
           const countryContext =

@@ -40,9 +40,8 @@ export function useAppShellComposition({
     isError,
     guardarNuevoViaje,
     actualizarDetallesViaje,
-    actualizarParadaHook,
+    updateStopsBatch,
     eliminarViaje,
-    agregarParada,
   } = viajes;
 
   const { isAdmin, isMobile } = permissions;
@@ -52,18 +51,17 @@ export function useAppShellComposition({
   const {
     isSavingModal,
     isSavingViewer,
-    viajesEliminando,
-    isDeletingViaje,
-    handleGuardarModal,
-    handleGuardarDesdeVisor,
-    solicitarEliminarViaje,
-    handleDeleteViaje,
+    deletingTripIds,
+    isDeletingTrip,
+    handleSaveModal,
+    handleSaveFromViewer,
+    requestTripDelete,
+    handleDeleteTrip,
   } = useViajeCrudHandlers({
     guardarNuevoViaje,
     actualizarDetallesViaje,
-    actualizarParadaHook,
+    updateStopsBatch,
     eliminarViaje,
-    agregarParada,
     ciudadInicialBorrador,
     setViajeBorrador,
     setCiudadInicialBorrador,
@@ -112,11 +110,11 @@ export function useAppShellComposition({
   const crudController = {
     isSavingModal,
     isSavingViewer,
-    viajesEliminando,
-    handleGuardarModal,
-    handleGuardarDesdeVisor,
-    solicitarEliminarViaje,
-    handleDeleteViaje,
+    deletingTripIds,
+    handleSaveModal,
+    handleSaveFromViewer,
+    requestTripDelete,
+    handleDeleteTrip,
   };
 
   const activeViewController = {
@@ -134,8 +132,8 @@ export function useAppShellComposition({
       bitacoraData,
     },
     crud: {
-      solicitarEliminarViaje,
-      isDeletingViaje,
+      solicitarEliminarViaje: requestTripDelete,
+      isDeletingViaje: isDeletingTrip,
     },
     gamification: {
       achievementsWithProgress,

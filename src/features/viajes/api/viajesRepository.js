@@ -4,6 +4,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
   updateDoc,
@@ -53,7 +54,6 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
     const paradasRef = collection(db, `usuarios/${userId}/viajes/${tripId}/paradas`);
     const unsubscribeStops = onSnapshot(
       paradasRef,
-      { includeMetadataChanges: true },
       (paradasSnap) => {
         const tripStops = paradasSnap.docs.map((parada) => ({
           id: parada.id,
@@ -76,7 +76,6 @@ export const suscribirViajesConParadas = ({ db, userId, onData, onError }) => {
 
   const unsubscribeTrips = onSnapshot(
     q,
-    { includeMetadataChanges: true },
     (snapshot) => {
       currentTrips = snapshot.docs
         .map((item) => {
@@ -159,6 +158,137 @@ export const actualizarParada = ({ db, userId, viajeId, paradaId, data }) =>
 
 export const eliminarParada = ({ db, userId, viajeId, paradaId }) =>
   deleteDoc(doc(db, `usuarios/${userId}/viajes/${viajeId}/paradas`, paradaId));
+
+const sanitizeStopPayload = (stop = {}) => {
+  const {
+    id: _id,
+    viajeId: _viajeId,
+    tripId: _tripId,
+    ownerId: _ownerId,
+    ...payload
+  } = stop;
+
+  Object.keys(payload).forEach((key) => {
+    if (payload[key] === undefined) {
+      delete payload[key];
+    }
+  });
+
+  payload.tipo = payload.tipo || 'place';
+  return payload;
+};
+
+const areValuesEqual = (a, b) => {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+
+  return a === b;
+};
+
+const hasStopChanges = (nextPayload, currentPayload = {}) => {
+  const keys = new Set([...Object.keys(nextPayload), ...Object.keys(currentPayload)]);
+  for (const key of keys) {
+    if (!areValuesEqual(nextPayload[key], currentPayload[key])) {
+      return true;
+    }
+  }
+  return false;
+};
+
+export const applyStopsBatchMutations = async ({ db, userId, tripId, draftStops = [], existingStops = [] }) => {
+  const batch = writeBatch(db);
+  const stopsRef = collection(db, `usuarios/${userId}/viajes/${tripId}/paradas`);
+  let hasChanges = false;
+
+  // Use Firestore as canonical source to avoid silent data loss when existingStops is malformed.
+  const existingSnapshot = await getDocs(stopsRef);
+  const currentStopMap = new Map(
+    existingSnapshot.docs.map((docSnap) => [docSnap.id, { id: docSnap.id, ...docSnap.data() }])
+  );
+
+  // Keep caller-provided data as fallback only when not present in Firestore snapshot.
+  if (Array.isArray(existingStops)) {
+    existingStops
+      .filter((stop) => stop?.id)
+      .forEach((stop) => {
+        if (!currentStopMap.has(stop.id)) {
+          currentStopMap.set(stop.id, stop);
+        }
+      });
+  }
+
+  const incomingPersistedIds = new Set();
+  const stopsToCreate = [];
+  const stopsToUpdate = [];
+
+  for (const draftStop of draftStops) {
+    const rawStopId = draftStop?.id;
+    const isNewStop = !rawStopId || String(rawStopId).startsWith('temp-');
+    const sanitizedPayload = sanitizeStopPayload(draftStop);
+
+    if (isNewStop) {
+      stopsToCreate.push(sanitizedPayload);
+      continue;
+    }
+
+    incomingPersistedIds.add(rawStopId);
+    const currentStop = currentStopMap.get(rawStopId);
+
+    if (!currentStop) {
+      // Unknown persisted id: prefer set/merge over dropping data.
+      stopsToUpdate.push({ id: rawStopId, payload: sanitizedPayload, useSetMerge: true });
+      continue;
+    }
+
+    const currentPayload = sanitizeStopPayload(currentStop);
+    if (hasStopChanges(sanitizedPayload, currentPayload)) {
+      stopsToUpdate.push({ id: rawStopId, payload: sanitizedPayload, useSetMerge: false });
+    }
+  }
+
+  const stopsToDelete = [];
+  for (const [currentStopId] of currentStopMap.entries()) {
+    if (!incomingPersistedIds.has(currentStopId)) {
+      stopsToDelete.push(currentStopId);
+    }
+  }
+
+  for (const newStopPayload of stopsToCreate) {
+    batch.set(doc(stopsRef), newStopPayload);
+    hasChanges = true;
+  }
+
+  for (const stopToUpdate of stopsToUpdate) {
+    const stopRef = doc(stopsRef, stopToUpdate.id);
+    if (stopToUpdate.useSetMerge) {
+      batch.set(stopRef, stopToUpdate.payload, { merge: true });
+    } else {
+      batch.update(stopRef, stopToUpdate.payload);
+    }
+    hasChanges = true;
+  }
+
+  for (const stopIdToDelete of stopsToDelete) {
+    batch.delete(doc(stopsRef, stopIdToDelete));
+    hasChanges = true;
+  }
+
+  if (hasChanges) {
+    await batch.commit();
+  }
+
+  return {
+    hasChanges,
+    created: stopsToCreate.length,
+    updated: stopsToUpdate.length,
+    deleted: stopsToDelete.length,
+  };
+};
 
 export const eliminarViaje = async ({ db, userId, viajeId }) => {
   // Firestore deleteDoc resolves even if the document doesn't exist.

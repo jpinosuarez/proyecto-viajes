@@ -2,224 +2,213 @@ import { useCallback, useState } from 'react';
 import { construirBanderasViaje, construirCiudadesViaje } from '@shared/lib/utils/viajeUtils';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 
-
-function isDraftMeaningful(data, paradas = []) {
+function isDraftMeaningful(data, stops = []) {
   const title = String(data?.titulo || '').trim();
   const hasTitle = title.length > 0;
   const hasLocation = Array.isArray(data?.coordenadas) && data.coordenadas.some(Boolean);
-  const hasParadas = Array.isArray(paradas) && paradas.length > 0;
+  const hasStops = Array.isArray(stops) && stops.length > 0;
   const hasText = String(data?.texto || '').trim().length > 0;
-  return hasTitle || hasLocation || hasParadas || hasText;
+  return hasTitle || hasLocation || hasStops || hasText;
 }
 
-function rebuildStoryMetadata(datosViaje = {}, paradas = []) {
-  const safeParadas = Array.isArray(paradas) ? paradas : [];
+function rebuildStoryMetadata(tripData = {}, stops = []) {
+  const safeStops = Array.isArray(stops) ? stops : [];
   const uniqueCodes = [
-    ...new Set(safeParadas.map((parada) => parada?.paisCodigo || parada?.countryCode).filter(Boolean)),
+    ...new Set(safeStops.map((stop) => stop?.paisCodigo || stop?.countryCode).filter(Boolean)),
   ];
   const rebuiltFlags = uniqueCodes.map((code) => getFlagUrl(code)).filter(Boolean);
-  const fallbackFlags = construirBanderasViaje(datosViaje.code || datosViaje.paisCodigo || '', safeParadas);
-  const freshFlags = rebuiltFlags.length > 0 ? rebuiltFlags : fallbackFlags;
+  const fallbackFlags = construirBanderasViaje(tripData.code || tripData.paisCodigo || '', safeStops);
+  const finalFlags = rebuiltFlags.length > 0 ? rebuiltFlags : fallbackFlags;
 
   return {
-    ...datosViaje,
-    banderas: freshFlags,
-    flags: freshFlags,
-    ciudades: construirCiudadesViaje(safeParadas),
+    ...tripData,
+    banderas: finalFlags,
+    flags: finalFlags,
+    ciudades: construirCiudadesViaje(safeStops),
   };
 }
 
 export function useViajeCrudHandlers({
-  guardarNuevoViaje,
-  actualizarDetallesViaje,
-  actualizarParadaHook,
-  eliminarViaje,
-  agregarParada,
-  ciudadInicialBorrador,
-  setViajeBorrador,
-  setCiudadInicialBorrador,
+  guardarNuevoViaje: createTrip,
+  actualizarDetallesViaje: updateTripDetails,
+  updateStopsBatch,
+  eliminarViaje: deleteTrip,
+  ciudadInicialBorrador: initialDraftCity,
+  setViajeBorrador: setDraftTrip,
+  setCiudadInicialBorrador: setInitialDraftCity,
   pushToast,
-  confirmarEliminacion,
-  setConfirmarEliminacion,
+  confirmarEliminacion: pendingDeleteTripId,
+  setConfirmarEliminacion: setPendingDeleteTripId,
   onAfterDelete,
 }) {
   const [isSavingModal, setIsSavingModal] = useState(false);
   const [isSavingViewer, setIsSavingViewer] = useState(false);
-  const [viajesEliminando, setViajesEliminando] = useState(new Set());
+  const [deletingTripIds, setDeletingTripIds] = useState(new Set());
 
-  const isDeletingViaje = useCallback((id) => viajesEliminando.has(id), [viajesEliminando]);
+  const isDeletingTrip = useCallback((id) => deletingTripIds.has(id), [deletingTripIds]);
 
-  // PHASE 1: Pure database persistence (no UI side-effects)
-  const saveTripToDb = useCallback(async (id, datosCombinados) => {
-    // Aseguramos que valores falsy de id se traten como nuevo viaje para no fallar
-    const targetId = id || 'new';
-    const { paradasNuevas, ...datosViaje } = datosCombinados;
-
-    console.log('[useViajeCrudHandlers] saveTripToDb targetId:', targetId, 'datosViaje:', datosViaje);
+  const saveTripToDb = useCallback(async (id, formPayload, existingStops = []) => {
+    const targetTripId = id || 'new';
+    const newStops = formPayload?.newStops || formPayload?.paradasNuevas || [];
+    const { newStops: _newStops, paradasNuevas: _legacyNewStops, ...tripData } = formPayload || {};
 
     try {
-      if (targetId === 'new') {
-        const todasLasParadasLocal = [...(paradasNuevas || [])];
-        if (ciudadInicialBorrador) {
-          const yaExiste = todasLasParadasLocal.some((p) => p.nombre === ciudadInicialBorrador.nombre);
-          if (!yaExiste) todasLasParadasLocal.unshift(ciudadInicialBorrador);
+      if (targetTripId === 'new') {
+        const localStops = [...newStops];
+
+        if (initialDraftCity) {
+          const alreadyExists = localStops.some((stop) => stop.nombre === initialDraftCity.nombre);
+          if (!alreadyExists) localStops.unshift(initialDraftCity);
         }
 
-        // Pre-flight: don't persist an empty draft (title + stops absent)
-        if (!isDraftMeaningful(datosViaje, todasLasParadasLocal)) {
+        if (!isDraftMeaningful(tripData, localStops)) {
           return null;
         }
 
-        const datosViajeConStory = rebuildStoryMetadata(datosViaje, todasLasParadasLocal);
-        const nuevoId = await guardarNuevoViaje(datosViajeConStory, todasLasParadasLocal);
-        console.log('[useViajeCrudHandlers] nuevoId devuelto de guardarNuevoViaje:', nuevoId);
-        if (nuevoId) {
-          setViajeBorrador(null);
-          setCiudadInicialBorrador(null);
+        const tripDataWithStory = rebuildStoryMetadata(tripData, localStops);
+        const createdTripId = await createTrip(tripDataWithStory, localStops);
+
+        if (createdTripId) {
+          setDraftTrip(null);
+          setInitialDraftCity(null);
         }
-        return nuevoId || null;
+
+        return createdTripId || null;
       }
 
-      const datosViajeConStory = rebuildStoryMetadata(datosViaje, paradasNuevas);
-      const okViaje = await actualizarDetallesViaje(id, datosViajeConStory);
-      let okParadas = true;
+      const tripDataWithStory = rebuildStoryMetadata(tripData, newStops);
+      const isTripUpdated = await updateTripDetails(targetTripId, tripDataWithStory);
 
-      if (paradasNuevas && paradasNuevas.length > 0) {
-        const nuevasReales = paradasNuevas.filter((p) => p.id && p.id.toString().startsWith('temp'));
-        for (const parada of nuevasReales) {
-          const okParada = await agregarParada(parada, id);
-          if (!okParada) okParadas = false;
-        }
+      let areStopsUpdated = true;
+      if (newStops.length > 0) {
+        areStopsUpdated = await updateStopsBatch(newStops, targetTripId, existingStops);
       }
 
-      if (okViaje && okParadas) {
-        return id;
+      if (isTripUpdated && areStopsUpdated) {
+        return targetTripId;
       }
 
-      if (okViaje && !okParadas) {
+      if (isTripUpdated && !areStopsUpdated) {
         pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
-        return id;
+        return targetTripId;
       }
+
       return null;
     } catch {
       pushToast('Error al guardar el viaje', 'error');
       return null;
     }
   }, [
-    ciudadInicialBorrador,
-    guardarNuevoViaje,
-    actualizarDetallesViaje,
-    agregarParada,
+    initialDraftCity,
+    createTrip,
+    updateTripDetails,
+    updateStopsBatch,
     pushToast,
-    setViajeBorrador,
-    setCiudadInicialBorrador,
+    setDraftTrip,
+    setInitialDraftCity,
   ]);
 
-  // PHASE 1: Explicit UI cleanup (only called by user close action)
   const closeTripEditor = useCallback(() => {
-    setViajeBorrador(null);
-    setCiudadInicialBorrador(null);
-  }, [setViajeBorrador, setCiudadInicialBorrador]);
+    setDraftTrip(null);
+    setInitialDraftCity(null);
+  }, [setDraftTrip, setInitialDraftCity]);
 
-  const handleGuardarModal = useCallback(
-    async (id, datosCombinados) => {
-      if (isSavingModal) return null;
-      setIsSavingModal(true);
+  const handleSaveModal = useCallback(async (id, formPayload, existingStops = []) => {
+    if (isSavingModal) return null;
 
-      try {
-        // PHASE 1: Delegate to pure DB function, no UI cleanup here
-        const result = await saveTripToDb(id, datosCombinados);
-        return result;
-      } finally {
-        setIsSavingModal(false);
-      }
-    },
-    [isSavingModal, saveTripToDb]
-  );
+    setIsSavingModal(true);
+    try {
+      return await saveTripToDb(id, formPayload, existingStops);
+    } finally {
+      setIsSavingModal(false);
+    }
+  }, [isSavingModal, saveTripToDb]);
 
-  const handleGuardarDesdeVisor = useCallback(async (id, datosCombinados) => {
+  const handleSaveFromViewer = useCallback(async (id, formPayload, existingStops = []) => {
     if (isSavingViewer) return false;
+
     setIsSavingViewer(true);
-    const { paradasNuevas, ...datosViaje } = datosCombinados;
-    const datosViajeConStory = rebuildStoryMetadata(datosViaje, paradasNuevas);
+
+    const newStops = formPayload?.newStops || formPayload?.paradasNuevas || [];
+    const { newStops: _newStops, paradasNuevas: _legacyNewStops, ...tripData } = formPayload || {};
+    const tripDataWithStory = rebuildStoryMetadata(tripData, newStops);
 
     try {
-      const okViaje = await actualizarDetallesViaje(id, datosViajeConStory);
-      let okParadas = true;
+      const isTripUpdated = await updateTripDetails(id, tripDataWithStory);
+      let areStopsUpdated = true;
 
-      if (paradasNuevas && paradasNuevas.length > 0) {
-        for (const parada of paradasNuevas) {
-          const isNew = parada.id && parada.id.toString().startsWith('temp');
-          if (isNew) {
-            const okParada = await agregarParada(parada, id);
-            if (!okParada) okParadas = false;
-          } else if (parada.id) {
-            const okParada = await actualizarParadaHook(parada, id);
-            if (!okParada) okParadas = false;
-          }
-        }
+      if (newStops.length > 0) {
+        areStopsUpdated = await updateStopsBatch(newStops, id, existingStops);
       }
 
-      if (okViaje && okParadas) {
+      if (isTripUpdated && areStopsUpdated) {
         return id;
       }
 
-      if (okViaje && !okParadas) {
+      if (isTripUpdated && !areStopsUpdated) {
         pushToast('El viaje se actualizo, pero algunas paradas no se pudieron guardar', 'error');
         return id;
       }
+
       return false;
     } finally {
       setIsSavingViewer(false);
     }
-  }, [isSavingViewer, actualizarDetallesViaje, agregarParada, actualizarParadaHook, pushToast]);
+  }, [isSavingViewer, updateTripDetails, updateStopsBatch, pushToast]);
 
-  const solicitarEliminarViaje = useCallback((id) => {
-    if (!id || viajesEliminando.has(id)) return;
-    setConfirmarEliminacion(id);
-  }, [viajesEliminando, setConfirmarEliminacion]);
+  const requestTripDelete = useCallback((id) => {
+    if (!id || deletingTripIds.has(id)) return;
+    setPendingDeleteTripId(id);
+  }, [deletingTripIds, setPendingDeleteTripId]);
 
-  const handleDeleteViaje = useCallback(async () => {
-    const id = confirmarEliminacion;
-    if (!id || viajesEliminando.has(id)) return false;
+  const handleDeleteTrip = useCallback(async () => {
+    const tripId = pendingDeleteTripId;
+    if (!tripId || deletingTripIds.has(tripId)) return false;
 
-    setViajesEliminando((prev) => {
+    setDeletingTripIds((prev) => {
       const next = new Set(prev);
-      next.add(id);
+      next.add(tripId);
       return next;
     });
 
     try {
-      const ok = await eliminarViaje(id);
-      if (!ok) return false;
+      const isDeleted = await deleteTrip(tripId);
+      if (!isDeleted) return false;
       onAfterDelete?.();
       return true;
     } finally {
-      setConfirmarEliminacion(null);
-      setViajesEliminando((prev) => {
+      setPendingDeleteTripId(null);
+      setDeletingTripIds((prev) => {
         const next = new Set(prev);
-        next.delete(id);
+        next.delete(tripId);
         return next;
       });
     }
   }, [
-    confirmarEliminacion,
-    viajesEliminando,
-    eliminarViaje,
+    pendingDeleteTripId,
+    deletingTripIds,
+    deleteTrip,
     onAfterDelete,
-    setConfirmarEliminacion,
+    setPendingDeleteTripId,
   ]);
 
   return {
     isSavingModal,
     isSavingViewer,
-    viajesEliminando,
-    isDeletingViaje,
+    deletingTripIds,
+    isDeletingTrip,
     saveTripToDb,
     closeTripEditor,
-    handleGuardarModal,
-    handleGuardarDesdeVisor,
-    solicitarEliminarViaje,
-    handleDeleteViaje,
+    handleSaveModal,
+    handleSaveFromViewer,
+    requestTripDelete,
+    handleDeleteTrip,
+    // Legacy aliases kept to avoid breaking existing callers.
+    viajesEliminando: deletingTripIds,
+    isDeletingViaje: isDeletingTrip,
+    handleGuardarModal: handleSaveModal,
+    handleGuardarDesdeVisor: handleSaveFromViewer,
+    solicitarEliminarViaje: requestTripDelete,
+    handleDeleteViaje: handleDeleteTrip,
   };
 }

@@ -42,28 +42,37 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
   }));
 
   const [selectedTrip, setSelectedTrip] = useState(null);
+  const stops = useMemo(() => (Array.isArray(paradas) ? paradas : []), [paradas]);
 
   const isEmptyMap = paises.length === 0;
 
-  // ── Unique stops for markers ─────────────────────────────────────────
-  const paradasUnicas = useMemo(() => {
-    const seen = new Set();
-    return paradas.filter((p) => {
-      const key = `${p.coordenadas[0]},${p.coordenadas[1]}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
+  const coordinateHash = useMemo(
+    () => stops.map((stop) => `${stop.id}-${stop.coordenadas?.[0]}-${stop.coordenadas?.[1]}`).join('|'),
+    [stops]
+  );
+
+  const { stopsGeoJson } = useMemo(() => {
+    const seenCoordinates = new Set();
+    const uniqueStops = stops.filter((stop) => {
+      if (!stop.coordenadas) return false;
+      const key = `${stop.coordenadas[0]},${stop.coordenadas[1]}`;
+      if (seenCoordinates.has(key)) return false;
+      seenCoordinates.add(key);
       return true;
     });
-  }, [paradas]);
 
-  const paradasGeoJSON = useMemo(() => ({
-    type: 'FeatureCollection',
-    features: paradasUnicas.map((p) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: p.coordenadas },
-      properties: { id: p.id, name: p.nombre, tripId: p.tripId || p.viajeId },
-    })),
-  }), [paradasUnicas]);
+    const nextGeoJson = {
+      type: 'FeatureCollection',
+      metadata: { coordinateHash },
+      features: uniqueStops.map((stop) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: stop.coordenadas },
+        properties: { id: stop.id, name: stop.nombre, tripId: stop.tripId || stop.viajeId },
+      })),
+    };
+
+    return { stopsGeoJson: nextGeoJson };
+  }, [coordinateHash, stops]);
 
   const listaPaises = paises.length > 0 ? paises : ['EMPTY'];
 
@@ -137,7 +146,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
     setSelectedTrip(trip);
 
     // Find the first parada belonging to this trip
-    const tripParada = paradas.find(
+    const tripParada = stops.find(
       (p) => (p.tripId || p.viajeId) === trip.id
     );
 
@@ -168,23 +177,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         });
       }
     }
-  }, [paradas]);
-
-  // Locate Me (geolocation)
-  const handleLocateMe = useCallback(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        mapRef.current?.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
-          zoom: 8,
-          duration: 1600,
-          essential: true,
-        });
-      },
-      () => { /* silent fail — geolocation denied */ }
-    );
-  }, []);
+  }, [stops]);
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
@@ -243,7 +236,7 @@ function MapaView({ paises = [], paradas = [], trips = [], tripData = {} }) {
         <Source
           id="paradas"
           type="geojson"
-          data={paradasGeoJSON}
+          data={stopsGeoJson}
           cluster={true}
           clusterMaxZoom={14}
           clusterRadius={50}

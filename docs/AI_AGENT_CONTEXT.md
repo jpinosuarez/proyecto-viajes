@@ -38,6 +38,25 @@ Keeptrip is not a "folder-by-type" project. It is a **Domain-Driven** project:
 
 ---
 
+## 💸 2.1 COST-AWARE ARCHITECTURE & API SECURITY (CORE POLICY)
+This policy is mandatory for every AI agent and developer working on Keeptrip. Financial scalability is a first-class architectural concern and must be protected with the same rigor as reliability and performance.
+
+### Financial Prime Directive
+- Before proposing or writing code, proactively audit for **Silent Cost Leaks**.
+- Silent Cost Leaks include redundant API calls, infinite render-trigger loops, and Firestore read/write amplification.
+- Any solution that is functionally correct but cost-unsafe is considered non-compliant.
+
+### Firebase & Firestore Strict Rules
+- **Zero N+1 Writes:** Never update document collections inside loops. Always use dirty-checking (diffing) and `writeBatch` for atomic and efficient multi-document updates.
+- **Listener Hygiene:** `onSnapshot` listeners must depend on stable primitives (for example `user.uid`), never on mutable objects, broad contexts, or unstable references.
+- **No Metadata Loops:** Do not use `{ includeMetadataChanges: true }` in snapshot listeners unless there is a documented and approved offline-first conflict-resolution requirement.
+
+### Mapbox & External API Strict Rules
+- **Shared Caching:** All geocoding and external fetch flows must use standalone ES module singletons with in-memory caching and in-flight request deduplication.
+- **Render Pressure Defense:** Interactive 3D map surfaces (including `MapaView`) must apply strict memoization strategies (for example coordinate hash keys) to prevent parent state churn from forcing expensive WebGL redraws.
+
+---
+
 ## 🎨 3. UI/UX & DESIGN SYSTEM
 - **Mobile-First:** Minimum Touch Target is **44x44px** (Actions: 56px).
 - **Design Tokens:** Use `theme.js` (e.g., `props.theme.colors.atomicTangerine`, `props.theme.shadows.float`).

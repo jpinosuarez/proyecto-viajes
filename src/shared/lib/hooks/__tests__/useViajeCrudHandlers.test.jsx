@@ -7,9 +7,8 @@ function buildParams(overrides = {}) {
   return {
     guardarNuevoViaje: vi.fn(),
     actualizarDetallesViaje: vi.fn(),
-    actualizarParadaHook: vi.fn(),
+    updateStopsBatch: vi.fn(),
     eliminarViaje: vi.fn(),
-    agregarParada: vi.fn(),
     ciudadInicialBorrador: null,
     setViajeBorrador: vi.fn(),
     setCiudadInicialBorrador: vi.fn(),
@@ -40,7 +39,7 @@ describe('useViajeCrudHandlers', () => {
 
     expect(response).toBe('trip-1');
     expect(params.guardarNuevoViaje).toHaveBeenCalledTimes(1);
-    expect(params.guardarNuevoViaje.mock.calls[0][0]).toEqual({ titulo: 'Mi viaje' });
+    expect(params.guardarNuevoViaje.mock.calls[0][0]).toEqual(expect.objectContaining({ titulo: 'Mi viaje' }));
     expect(params.guardarNuevoViaje.mock.calls[0][1][0]).toMatchObject({ nombre: 'Madrid' });
     expect(params.setViajeBorrador).toHaveBeenCalledWith(null);
     expect(params.setCiudadInicialBorrador).toHaveBeenCalledWith(null);

@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
-import { parseFlexibleDate, formatDateSlash } from '@shared/lib/utils/viajeUtils';
+import { parseFlexibleDate } from '@shared/lib/utils/viajeUtils';
+import { fetchGeocoding } from '@shared/api/services/mapboxGeocoding';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const createStopInstanceId = (feature) => {
   const baseId = feature.id || `${feature.text}-${feature.center?.[0]}-${feature.center?.[1]}`;
   const uuid = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -20,24 +20,27 @@ const createStopInstanceId = (feature) => {
 
 const CityManager = ({ t, paradas, setParadas }) => {
   const { i18n } = useTranslation();
-  const [busqueda, setBusqueda] = useState('');
-  const [resultados, setResultados] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   
   // Búsqueda reactiva (3 chars)
   useEffect(() => {
-    if (busqueda.length < 3) {
+    if (searchQuery.length < 3) {
         return;
     }
     const timer = setTimeout(async () => {
         try {
             const lang = (i18n.resolvedLanguage || i18n.language || 'es').split('-')[0];
-            const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(busqueda)}.json?types=place&language=${encodeURIComponent(lang)}&access_token=${MAPBOX_TOKEN}`);
-            const data = await res.json();
-            setResultados(data.features || []);
+            const data = await fetchGeocoding({
+              query: searchQuery,
+              language: lang,
+              types: 'place',
+            });
+            setSearchResults(data.features || []);
         } catch (e) { console.error(e); }
     }, 300);
     return () => clearTimeout(timer);
-  }, [busqueda, i18n.language, i18n.resolvedLanguage]);
+  }, [searchQuery, i18n.language, i18n.resolvedLanguage]);
 
   const agregarCiudad = (feature) => {
     const contextCountry = feature.context?.find(c => c.id.startsWith('country'));
@@ -62,8 +65,8 @@ const CityManager = ({ t, paradas, setParadas }) => {
       return [...prevParadas, nuevaParada];
     });
 
-    setBusqueda('');
-    setResultados([]);
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   const moverParada = (index, direccion) => {
@@ -96,11 +99,11 @@ const CityManager = ({ t, paradas, setParadas }) => {
         <div style={styles.inputWrapper}>
           <Search size={16} color={COLORS.textSecondary} />
           <input
-            value={busqueda}
+            value={searchQuery}
             onChange={(e) => {
               const value = e.target.value;
-              setBusqueda(value);
-              if (value.length < 3) setResultados([]);
+              setSearchQuery(value);
+              if (value.length < 3) setSearchResults([]);
             }}
             placeholder={t('citymanager.searchPlaceholder') || 'Type the city name...'}
             style={styles.searchInput}
@@ -108,9 +111,9 @@ const CityManager = ({ t, paradas, setParadas }) => {
         </div>
       </div>
 
-      {resultados.length > 0 && (
+      {searchResults.length > 0 && (
         <div style={styles.resultsList}>
-          {resultados.map((res, resIdx) => {
+          {searchResults.map((res, resIdx) => {
             // Extraer país para el icono en resultados
             const contextCountry = res.context?.find(c => c.id.startsWith('country'));
             const code = contextCountry?.short_code?.toUpperCase();

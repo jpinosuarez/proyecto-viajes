@@ -11,7 +11,8 @@ import {
   crearParada,
   actualizarParada,
   eliminarViaje,
-  subirFotoViaje
+  subirFotoViaje,
+  applyStopsBatchMutations
 } from '../../api/viajesRepository';
 import {
   FOTO_DEFAULT_URL,
@@ -110,7 +111,8 @@ export const useViajes = () => {
   const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
-    if (!usuario) {
+    const userUid = usuario?.uid;
+    if (!userUid) {
       logger.debug('Usuario no autenticado, limpiando estado de viajes');
       pendingTripIdsRef.current.clear();
       setBitacora([]);
@@ -123,8 +125,8 @@ export const useViajes = () => {
     }
 
     // Configurar userId en el logger para contexto global
-    logger.setUserId(usuario.uid);
-    logger.info('Suscribiendo a viajes del usuario', { userId: usuario.uid });
+    logger.setUserId(userUid);
+    logger.info('Suscribiendo a viajes del usuario', { userId: userUid });
 
     setLoading(true);
     setError(null);
@@ -132,27 +134,27 @@ export const useViajes = () => {
 
     const unsubscribe = suscribirViajesConParadas({
       db,
-      userId: usuario.uid,
+      userId: userUid,
       onData: ({ viajes, paradas }) => {
         logger.debug('Datos de viajes actualizados', { 
           totalViajes: viajes.length, 
           totalParadas: paradas.length 
         });
         // anexar ownerId para mantener consistencia entre viajes personales y compartidos
-        const viajesConOwner = viajes.map((v) => ({ ...v, ownerId: usuario.uid }));
+        const viajesConOwner = viajes.map((v) => ({ ...v, ownerId: userUid }));
         const confirmedTripIds = new Set(viajesConOwner.map((viaje) => viaje.id));
         for (const tripId of confirmedTripIds) {
           pendingTripIdsRef.current.delete(tripId);
         }
-        const paradasConOwner = paradas.map((p) => ({ ...p, ownerId: usuario.uid }));
+        const paradasConOwner = paradas.map((p) => ({ ...p, ownerId: userUid }));
         // Actualización funcional para NO perder los viajes compartidos que
         // upsertSharedViaje ya haya insertado (race condition: el listener
         // personal puede dispararse después que el listener compartido).
         setBitacora((prev) => {
-          const compartidos = prev.filter((item) => item.ownerId !== usuario.uid);
+          const compartidos = prev.filter((item) => item.ownerId !== userUid);
           const pendingPersonal = prev.filter(
             (item) =>
-              item.ownerId === usuario.uid &&
+              item.ownerId === userUid &&
               pendingTripIdsRef.current.has(item.id) &&
               !viajesConOwner.some((viaje) => viaje.id === item.id)
           );
@@ -161,7 +163,7 @@ export const useViajes = () => {
           return next;
         });
         setTodasLasParadas((prev) => {
-          const compartidasPrev = prev.filter((item) => item.ownerId !== usuario.uid);
+          const compartidasPrev = prev.filter((item) => item.ownerId !== userUid);
           return [...paradasConOwner, ...compartidasPrev];
         });
         setFetchError(null);
@@ -171,7 +173,7 @@ export const useViajes = () => {
         logger.error('Error en suscripción de viajes', {
           error: snapshotError.message,
           stack: snapshotError.stack,
-          userId: usuario.uid
+          userId: userUid
         });
         notifyErrorThrottled(
           'viajes-subscription',
@@ -188,8 +190,8 @@ export const useViajes = () => {
     const upsertSharedViaje = ({ ownerId, viaje }) => {
       const key = `${ownerId}/${viaje.id}`;
       setBitacora((prev) => {
-        const personales = prev.filter((item) => item.ownerId === usuario.uid);
-        const compartidos = prev.filter((item) => item.ownerId !== usuario.uid && `${item.ownerId}/${item.id}` !== key);
+        const personales = prev.filter((item) => item.ownerId === userUid);
+        const compartidos = prev.filter((item) => item.ownerId !== userUid && `${item.ownerId}/${item.id}` !== key);
         const next = [...personales, ...compartidos, { ...viaje, ownerId }];
         setBitacoraData(construirBitacoraData(next));
         return next;
@@ -210,15 +212,16 @@ export const useViajes = () => {
 
     const upsertSharedParadas = ({ ownerId, viajeId, paradas }) => {
       setTodasLasParadas((prev) => {
-        const personales = prev.filter((item) => item.ownerId === usuario.uid);
-        const otherShared = prev.filter((item) => item.ownerId !== usuario.uid && !(item.ownerId === ownerId && item.viajeId === viajeId));
+        const personales = prev.filter((item) => item.ownerId === userUid);
+        const otherShared = prev.filter((item) => item.ownerId !== userUid && !(item.ownerId === ownerId && item.viajeId === viajeId));
         return [...personales, ...otherShared, ...paradas];
       });
     };
 
     const acceptedInvitationsQ = fbQuery(
       fbCollection(db, 'invitations'),
-      fbWhere('inviteeUid', '==', usuario.uid)
+      fbWhere('inviteeUid', '==', userUid),
+      fbWhere('status', '==', 'accepted')
     );
 
     const unsubShared = fbOnSnapshot(acceptedInvitationsQ, (snap) => {
@@ -228,10 +231,10 @@ export const useViajes = () => {
       snap.docs.forEach((docSnap) => {
         const invitation = docSnap.data() || {};
         console.log('[E2E DEBUG] Found invitation doc:', { id: docSnap.id, status: invitation.status, inviteeUid: invitation.inviteeUid });
-        if (invitation.status !== 'accepted') return;
+        
         const ownerId = invitation.inviterId;
         const viajeId = invitation.viajeId;
-        if (!ownerId || !viajeId || ownerId === usuario.uid) {
+        if (!ownerId || !viajeId || ownerId === userUid) {
            console.warn('[E2E DEBUG] Accepted invitation skipped due to missing ownerId/viajeId or owner is current user', { invitation });
            return;
         }
@@ -258,7 +261,7 @@ export const useViajes = () => {
             error: sharedViajeError.message,
             ownerId,
             viajeId,
-            userId: usuario.uid
+            userId: userUid
           });
           console.error('[E2E DEBUG] Error loading shared viajeSnap', sharedViajeError.message);
           notifyErrorThrottled(
@@ -281,7 +284,7 @@ export const useViajes = () => {
             error: sharedParadasError.message,
             ownerId,
             viajeId,
-            userId: usuario.uid
+            userId: userUid
           });
           notifyErrorThrottled(
             'shared-stops-subscription',
@@ -306,7 +309,7 @@ export const useViajes = () => {
     }, (sharedInvitationsError) => {
       logger.error('Error en suscripción de invitaciones aceptadas', {
         error: sharedInvitationsError.message,
-        userId: usuario.uid
+        userId: userUid
       });
       notifyErrorThrottled(
         'shared-invitations-subscription',
@@ -323,7 +326,7 @@ export const useViajes = () => {
       }
       sharedTripListeners.clear();
     };
-  }, [usuario, notifyErrorThrottled]);
+  }, [usuario?.uid, notifyErrorThrottled]);
 
   const paisesVisitados = useMemo(
     () => obtenerPaisesVisitados(bitacora, todasLasParadas),
@@ -695,6 +698,22 @@ export const useViajes = () => {
     },
     actualizarDetallesViaje,
     eliminarViaje: eliminar,
+    updateStopsBatch: async (newStops, tripId, existingStops) => {
+      if (!usuario || !tripId) return false;
+      try {
+        await applyStopsBatchMutations({
+          db,
+          userId: usuario.uid,
+          tripId,
+          draftStops: newStops,
+          existingStops
+        });
+        return true;
+      } catch (err) {
+        logger.error('Error applying writeBatch to stops', { error: err.message, tripId });
+        return false;
+      }
+    },
     loading,
     error,
     fetchError,
