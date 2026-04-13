@@ -4,7 +4,7 @@ import { beforeAll, afterAll, beforeEach, test, describe } from 'vitest';
 
 let testEnv;
 const projectId = 'proyecto-viajes-test';
-const FOUNDER_UID = 'a8364UsA6crjJrIRfHmlmsNeSrtI';
+const FOUNDER_UID = 'f8a2ANPUI4VW8SOzUmcJtFumOFSm';
 const env = globalThis.process?.env ?? {};
 const emulatorHostConfig = env.FIRESTORE_EMULATOR_HOST || '';
 const shouldRunRulesSuite = Boolean(emulatorHostConfig);
