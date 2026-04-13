@@ -725,16 +725,45 @@ export const useViajes = () => {
     eliminarViaje: eliminar,
     updateStopsBatch: async (newStops, tripId, existingStops) => {
       if (!usuario || !tripId) return false;
+
+      const userId = usuario.uid;
+      const isTargetTripStop = (stop) => {
+        const belongsToTrip = stop?.viajeId === tripId || stop?.tripId === tripId;
+        const belongsToUser = !stop?.ownerId || stop.ownerId === userId;
+        return belongsToTrip && belongsToUser;
+      };
+
+      const previousTripStops = (Array.isArray(todasLasParadas) ? todasLasParadas : [])
+        .filter(isTargetTripStop);
+
+      const optimisticStops = (Array.isArray(newStops) ? newStops : []).map((stop, index) => ({
+        ...stop,
+        id: stop?.id || `optimistic-${tripId}-${index}`,
+        viajeId: tripId,
+        ownerId: userId,
+      }));
+
+      // Optimistic update: keeps dashboard cards in sync with edited stops instantly.
+      setTodasLasParadas((prev) => {
+        const untouchedStops = (Array.isArray(prev) ? prev : []).filter((stop) => !isTargetTripStop(stop));
+        return [...untouchedStops, ...optimisticStops];
+      });
+
       try {
         await applyStopsBatchMutations({
           db,
-          userId: usuario.uid,
+          userId,
           tripId,
           draftStops: newStops,
           existingStops
         });
         return true;
       } catch (err) {
+        // Rollback local optimistic state if persistence fails.
+        setTodasLasParadas((prev) => {
+          const untouchedStops = (Array.isArray(prev) ? prev : []).filter((stop) => !isTargetTripStop(stop));
+          return [...untouchedStops, ...previousTripStops];
+        });
         logger.error('Error applying writeBatch to stops', { error: err.message, tripId });
         return false;
       }
