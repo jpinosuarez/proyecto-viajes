@@ -11,7 +11,15 @@ service cloud.firestore {
     }
 
     function isFounder() {
-      return isAuthenticated() && request.auth.uid == 'a8364UsA6crjJrIRfHmlmsNeSrtI';
+      return isAuthenticated()
+        && request.auth.uid in [
+          // Local/dev founder UID (.env.local)
+          'f8a2ANPUI4VW8SOzUmcJtFumOFSm',
+          // Staging founder UID
+          '8qWhUsYQBXO3bCiMXen8qiIYAUA2',
+          // Production founder UID
+          '9dyI5iXXJRSTwO350Vnv3utZff52'
+        ];
     }
 
     match /system/operational_flags {
