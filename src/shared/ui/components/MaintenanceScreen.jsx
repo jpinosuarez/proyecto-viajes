@@ -20,10 +20,13 @@ const MaintenanceScreen = () => {
   return (
     <div
       style={{
+        height: '100dvh',
         minHeight: '100dvh',
         width: '100%',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         padding: '24px',
         background:
@@ -33,6 +36,7 @@ const MaintenanceScreen = () => {
       <div
         style={{
           width: 'min(94vw, 760px)',
+          margin: '0 auto',
           borderRadius: RADIUS.xl,
           border: `1px solid ${COLORS.border}`,
           background: 'rgba(255, 255, 255, 0.94)',
