@@ -30,6 +30,12 @@ firestore-debug.log
 .emulator-data/
 *.log
 
+# Lighthouse local artifacts
+.lighthouse-temp/
+.lighthouse-temp-*/
+.lighthouse-profile-*/
+lighthouse/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
