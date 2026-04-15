@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { styles } from './EditorFocusPanel.styles';
 import { styles as edicionModalStyles } from './EdicionModal.styles';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycle';
 import { useEdicionModalSave } from '../model/hooks/useEdicionModalSave';
 import { useAuth } from '@app/providers/AuthContext';

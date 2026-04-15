@@ -1,5 +1,6 @@
 {
   "greeting": "¡Hola, {{name}}! Bienvenido a tus aventuras.",
+  "preparingLogbook": "Preparando tus aventuras...",
   "welcomeSubtitle": "Cada rincón del mundo espera tu próxima aventura.",
   "countries": "Países",
   "trips": "Viajes",
@@ -103,6 +104,7 @@
   },
   "explorationMap": "Tu Mundo",
   "map": {
+    "tapToExploreMap": "Toca para explorar el mapa",
     "shieldOverlay": "Los mapas interactivos están en pausa. Tus datos de viaje siguen seguros.",
     "emptyState": {
       "title": "Tu mundo te espera",

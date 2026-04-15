@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './ToastContext';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 
 const UIContext = createContext(null);
 const SearchContext = createContext(null);

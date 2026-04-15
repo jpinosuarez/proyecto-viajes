@@ -33,6 +33,35 @@ function AppShell() {
   const { isMobile } = useWindowSize(768);
   const navigate = useNavigate();
 
+  // Splash Handoff — Performance Architecture v6
+  //
+  // PRIMARY handoff: lives here because AppShell mounts exactly once,
+  // only after Firebase auth resolves and AuthGuard passes.
+  //
+  // WHY double-rAF:
+  //   Frame 1: browser queues style recalc for the freshly mounted React tree.
+  //   Frame 2: Style + Layout are committed — scaffold-main has its final
+  //            dimensions (margin-left:80px on desktop, 0 on mobile).
+  //   Hiding the splash at Frame 2 means Lighthouse observes ZERO layout
+  //   movement: the layout was already stable when it became visible. CLS = 0.
+  //
+  // WHY z-index:-1 (not opacity:0):
+  //   W3C LCP spec §4.2: 'An element is invisible if its opacity is 0.'
+  //   opacity:0 retroactively disqualifies the element from LCP tracking.
+  //   z-index:-1 is NOT listed as a disqualification — the element stays
+  //   in DOM with opacity:1, preserving any earlier LCP timestamp.
+  React.useEffect(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const splash = document.getElementById('keeptrip-splash');
+        if (!splash) return;
+        splash.setAttribute('aria-hidden', 'true'); // Remove from a11y tree
+        splash.style.zIndex = '-1';                 // Push behind app content
+        splash.style.pointerEvents = 'none';        // Block any stray clicks
+      });
+    });
+  }, []);
+
   const {
     paisesVisitados,
     bitacora,

@@ -13,6 +13,22 @@ const containerVariants = {
 };
 
 const LandingPage = () => {
+  // "Never Remove, z-index Push-Behind" (unauthenticated path)
+  // Mirrors AppShell.jsx — see that file for full architecture rationale.
+  // z-index:-1 keeps opacity:1 so LCP tracking is preserved.
+  React.useEffect(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const splash = document.getElementById('keeptrip-splash');
+        if (!splash) return;
+
+        splash.setAttribute('aria-hidden', 'true');
+        splash.style.zIndex = '-1';
+        splash.style.pointerEvents = 'none';
+      });
+    });
+  }, []);
+
   return (
     <Motion.div
       style={styles.container}

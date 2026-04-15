@@ -35,7 +35,7 @@ const ConfirmModal = ({
         <div style={styles.iconWrap}>
           <AlertTriangle size={22} />
         </div>
-        <h3 style={styles.title}>{title}</h3>
+        <h2 id="confirm-modal-title" style={styles.title}>{title}</h2>
         <p style={styles.message}>{message}</p>
       </div>
 
@@ -73,7 +73,7 @@ const ConfirmModal = ({
           exit={{ opacity: 0 }}
         >
           <Motion.div
-            style={styles.modal}
+            style={styles.modal} role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title"
             onClick={(event) => event.stopPropagation()}
             initial={{ opacity: 0, y: 28, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

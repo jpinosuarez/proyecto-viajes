@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { setMapLanguage } from '@shared/lib/geo';
 import { OperationalMapFallback } from '@shared/ui/components';
 

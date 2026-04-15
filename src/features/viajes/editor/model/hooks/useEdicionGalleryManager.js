@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 
 export function useEdicionGalleryManager({ galeria, captionDrafts, setCaptionDrafts, pushToast, t }) {
   const {

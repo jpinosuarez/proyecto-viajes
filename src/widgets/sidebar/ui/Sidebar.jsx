@@ -24,7 +24,7 @@ import { useAuth } from '@app/providers/AuthContext';
 import { useUI } from '@app/providers/UIContext';
 import { COLORS, SHADOWS, RADIUS, ENABLE_GAMIFICATION } from '@shared/config';
 import { useTranslation } from 'react-i18next';
-import { mediaStyles } from './Sidebar.styles';
+import './Sidebar.css';
 
 const URL_MAP = {
   home:     '/dashboard',
@@ -42,16 +42,7 @@ const MENU_ITEMS = (t) => [
   { id: 'config',   icon: Settings,   label: t('adjust') },
 ];
 
-function useInjectNavStyles() {
-  useEffect(() => {
-    const id = 'keeptrip-nav-styles';
-    if (document.getElementById(id)) return;
-    const el = document.createElement('style');
-    el.id = id;
-    el.textContent = mediaStyles;
-    document.head.appendChild(el);
-  }, []);
-}
+// Removed useInjectNavStyles to prevent layout shift. CSS is loaded natively.
 
 // ─────────────────────────────────────────────
 // Glassmorphic Tooltip (Refinement #1)
@@ -158,7 +149,6 @@ const RailButton = ({ item, active, onClick }) => {
 };
 
 const Sidebar = () => {
-  useInjectNavStyles();
   const { logout } = useAuth();
   const { t } = useTranslation('nav');
   const { openBuscador: openTripSearch, isReadOnlyMode } = useUI();
@@ -275,7 +265,7 @@ const Sidebar = () => {
               />
             </Motion.div>
             <span className="mobile-tab-label" style={{
-              color: active ? COLORS.atomicTangerine : COLORS.textSecondary,
+              color: active ? COLORS.charcoalBlue : COLORS.textSecondary,
               fontWeight: active ? 700 : 500,
             }}>
               {item.label}

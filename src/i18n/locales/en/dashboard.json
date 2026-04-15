@@ -1,5 +1,6 @@
 {
   "greeting": "Hello, {{name}}! Welcome to your Travel Log.",
+  "preparingLogbook": "Preparing your adventures...",
   "welcomeSubtitle": "The map awaits your next story.",
   "countries": "Countries",
   "trips": "Trips",
@@ -103,6 +104,7 @@
   },
   "explorationMap": "Exploration Map",
   "map": {
+    "tapToExploreMap": "Tap to explore the map",
     "shieldOverlay": "Interactive maps are resting. Your journey data remains safe.",
     "emptyState": {
       "title": "Your world awaits",

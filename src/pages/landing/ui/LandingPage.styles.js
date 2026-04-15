@@ -18,7 +18,7 @@ export const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg")',
+    backgroundImage: 'url("/world-map-blank.opt.svg")',
     backgroundSize: 'cover',
     backgroundPosition: 'center 15%',
     opacity: 0.15, // Increased opacity to make it a purposeful design element (Iteration 2)

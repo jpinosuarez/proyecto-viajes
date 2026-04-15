@@ -4,7 +4,7 @@ import Map, { Source, Layer, Marker } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { generateCurvedRoute } from '@shared/lib/geo';
 import { OperationalMapFallback } from '@shared/ui/components';
 

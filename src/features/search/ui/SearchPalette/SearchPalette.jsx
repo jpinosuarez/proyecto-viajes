@@ -5,7 +5,7 @@ import { Search, X, HelpCircle } from 'lucide-react';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS, TRANSITIONS } from '@shared/config';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { useToast } from '@app/providers/ToastContext';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useDebounce } from '../../model/useDebounce';
 import { useSearchHistory } from '../../model/useSearchHistory';
 import RichResultCard from './RichResultCard';

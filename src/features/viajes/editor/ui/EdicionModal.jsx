@@ -7,7 +7,7 @@ import { useAuth } from '@app/providers/AuthContext';
 import { useToast } from '@app/providers/ToastContext';
 import { useUpload } from '@app/providers/UploadContext';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useTranslation } from 'react-i18next';
 import { formatDateRange } from '@shared/lib/utils/viajeUtils';
 import { useGaleriaViaje } from '@shared/lib/hooks/useGaleriaViaje';

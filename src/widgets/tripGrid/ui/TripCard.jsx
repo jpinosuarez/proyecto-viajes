@@ -35,7 +35,7 @@ const getAuraFlagStyle = (count, index) => {
  * Cinematic TripCard (2026 Restyle)
  * Features full-bleed images, floating glass pills, and 3D parallax on desktop hovering.
  */
-const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' }) => {
+const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list', priorityImage = false }) => {
   const { t, i18n } = useTranslation(['countries', 'dashboard', 'common']);
   const flags =
     (Array.isArray(trip.banderas) && trip.banderas.filter(Boolean).length > 0 && trip.banderas.filter(Boolean)) ||
@@ -125,7 +125,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
           onClick();
         }
       }}
-      initial={{ opacity: 0, y: 15 }}
+      initial={priorityImage ? false : { opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       whileHover={!isMobile ? { scale: 1.02, zIndex: 10 } : {}}
@@ -146,7 +146,8 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
               src={coverUrl} 
               alt={title || t('tripCoverAlt', { ns: 'dashboard', defaultValue: 'Portada del viaje' })} 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              loading="lazy"
+              loading={priorityImage ? "eager" : "lazy"}
+              fetchpriority={priorityImage ? "high" : undefined}
             />
           ) : (
             <div style={styles.fallbackAuraContainer} aria-hidden="true">
@@ -157,7 +158,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
                     src={flag}
                     alt=""
                     style={{ ...styles.fallbackAuraFlag, ...getAuraFlagStyle(auraFlags.length, idx) }}
-                    loading="lazy"
+                    loading={priorityImage ? "eager" : "lazy"}
                   />
                 ))}
               </div>
@@ -172,7 +173,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list' 
         <div style={styles.flagsRow}>
           {flags.length > 0 ? (
             flags.map((flag, idx) => (
-              <img key={idx} src={flag} alt="Bandera" style={styles.flagImg} loading="lazy" />
+              <img key={idx} src={flag} alt="Bandera" style={styles.flagImg} loading={priorityImage ? "eager" : "lazy"} />
             ))
           ) : (
              <div style={styles.glassPill}>

@@ -1,12 +1,19 @@
 import React, { useEffect } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX } from '@shared/config';
 import { TIER_COLORS } from '@features/gamification';
 import { useTranslation } from 'react-i18next';
 
-const fireConfetti = (color) => {
+let confettiLoader;
+
+const getConfetti = async () => {
+  confettiLoader ||= import('canvas-confetti').then((mod) => mod.default);
+  return confettiLoader;
+};
+
+const fireConfetti = async (color) => {
   if (typeof window === 'undefined') return;
+  const confetti = await getConfetti();
   const end = Date.now() + 2500;
   const colors = [color || COLORS.atomicTangerine, '#FFD700', '#FF6B35', '#10B981'];
 
@@ -132,7 +139,7 @@ const CelebrationQueue = ({ celebrations, onDismiss, onDismissAll }) => {
       const color = current.type === 'level-up'
         ? current.data.color
         : TIER_COLORS[current.data.tier];
-      fireConfetti(color);
+      void fireConfetti(color);
     }
   }, [current]);
 

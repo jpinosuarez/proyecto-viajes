@@ -23,14 +23,24 @@ const InteractiveCardStack = ({ isMobile = false }) => {
   let heroData = t('landing:mockTrips.hero', { returnObjects: true });
   
   // High-fidelity fallback in case i18n is not ready or key is missing
+  const quality = 80;
+  const width = isMobile ? 600 : 1200;
   const fallbackHero = [
-    { id: '1', titulo: 'Misterios de Kioto', paisCodigo: 'JP', fechaInicio: '2024-10-02', fechaFin: '2024-10-16', ciudades: 'Kioto, Nara, Osaka', coverUrl: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=90' },
-    { id: '2', titulo: 'Expedición Patagonia', paisCodigo: 'AR', fechaInicio: '2025-01-11', fechaFin: '2025-01-21', ciudades: 'El Calafate, El Chalten, Ushuaia', coverUrl: 'https://images.unsplash.com/photo-1526761122248-c31c93f8b2b9?auto=format&fit=crop&w=1200&q=90' },
-    { id: '3', titulo: 'Fin de semana en Paris', paisCodigo: 'FR', fechaInicio: '2025-03-08', fechaFin: '2025-03-12', ciudades: 'Paris, Versalles', coverUrl: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=90' }
+    { id: '1', titulo: 'Misterios de Kioto', paisCodigo: 'JP', fechaInicio: '2024-10-02', fechaFin: '2024-10-16', ciudades: 'Kioto, Nara, Osaka', coverUrl: `https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=${width}&q=${quality}` },
+    { id: '2', titulo: 'Expedición Patagonia', paisCodigo: 'AR', fechaInicio: '2025-01-11', fechaFin: '2025-01-21', ciudades: 'El Calafate, El Chalten, Ushuaia', coverUrl: `https://images.unsplash.com/photo-1526761122248-c31c93f8b2b9?auto=format&fit=crop&w=${width}&q=${quality}` },
+    { id: '3', titulo: 'Fin de semana en Paris', paisCodigo: 'FR', fechaInicio: '2025-03-08', fechaFin: '2025-03-12', ciudades: 'Paris, Versalles', coverUrl: `https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=${width}&q=${quality}` }
   ];
 
-  // Robust array validation
-  const HERO_CARDS = Array.isArray(heroData) && heroData.length > 0 ? heroData : fallbackHero;
+  // Robust array validation, enforcing mobile-friendly image widths
+  const HERO_CARDS = (Array.isArray(heroData) && heroData.length > 0 ? heroData : fallbackHero).map(card => {
+    if (card.coverUrl && card.coverUrl.includes('unsplash.com')) {
+      const fixedUrl = new URL(card.coverUrl);
+      fixedUrl.searchParams.set('w', width);
+      fixedUrl.searchParams.set('q', quality);
+      return { ...card, coverUrl: fixedUrl.toString() };
+    }
+    return card;
+  });
 
   const handleNextCard = () => {
     setActiveCardIndex((prev) => (prev + 1) % HERO_CARDS.length);
@@ -89,7 +99,7 @@ const InteractiveCardStack = ({ isMobile = false }) => {
                     <TripCard 
                       trip={mapLandingMockTripToCard(card)}
                       isMobile={isMobile} 
-                      variant="home" 
+                      variant="home" priorityImage={isFront} 
                     />
                   </div>
                 </Motion.div>

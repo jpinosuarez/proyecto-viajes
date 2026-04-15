@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ArrowUp, ArrowDown, Plus, Search, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS, TRANSITIONS } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { parseFlexibleDate } from '@shared/lib/utils/viajeUtils';

@@ -1,8 +1,9 @@
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { COLORS, RADIUS, SHADOWS, GLASS } from '@shared/config';
 
-export default function PWAUpdatePrompt() {
+function PWAUpdatePromptCore() {
   const { t } = useTranslation();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -24,6 +25,20 @@ export default function PWAUpdatePrompt() {
       </div>
     </div>
   );
+}
+
+export default function PWAUpdatePrompt() {
+  const [canRegister, setCanRegister] = useState(() => document.readyState === 'complete');
+
+  useEffect(() => {
+    if (canRegister) return;
+    const handleLoad = () => setCanRegister(true);
+    window.addEventListener('load', handleLoad);
+    return () => window.removeEventListener('load', handleLoad);
+  }, [canRegister]);
+
+  if (!canRegister) return null;
+  return <PWAUpdatePromptCore />;
 }
 
 const styles = {

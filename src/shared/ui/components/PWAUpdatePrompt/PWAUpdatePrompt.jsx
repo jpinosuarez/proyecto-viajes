@@ -1,14 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import styles from './PWAUpdatePrompt.styles';
 
-/**
- * PWAUpdatePrompt (Orchestrator)
- * Shows a floating toast when a new PWA version is available.
- * Mobile-First, accessible, animated.
- */
-const PWAUpdatePrompt = () => {
+const PWAUpdatePromptCore = () => {
   const { t } = useTranslation('common');
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -40,6 +35,25 @@ const PWAUpdatePrompt = () => {
       </div>
     </div>
   );
+};
+
+/**
+ * PWAUpdatePrompt (Orchestrator)
+ * Shows a floating toast when a new PWA version is available.
+ * Defers SW registration until window.onload to prevent TBT/CLS.
+ */
+const PWAUpdatePrompt = () => {
+  const [canRegister, setCanRegister] = useState(() => document.readyState === 'complete');
+
+  useEffect(() => {
+    if (canRegister) return;
+    const handleLoad = () => setCanRegister(true);
+    window.addEventListener('load', handleLoad);
+    return () => window.removeEventListener('load', handleLoad);
+  }, [canRegister]);
+
+  if (!canRegister) return null;
+  return <PWAUpdatePromptCore />;
 };
 
 export default PWAUpdatePrompt;

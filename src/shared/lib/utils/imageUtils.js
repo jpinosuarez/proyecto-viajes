@@ -1,4 +1,9 @@
-import imageCompression from 'browser-image-compression';
+let imageCompressionLoader;
+
+const getImageCompression = async () => {
+  imageCompressionLoader ||= import('browser-image-compression').then((mod) => mod.default);
+  return imageCompressionLoader;
+};
 
 /** Hard limit: reject files over 15 MB to prevent mobile memory crashes. */
 export const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -28,6 +33,8 @@ export const compressImage = async (file, maxWidth = 1920, quality = 0.8, onProg
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`El archivo supera el límite de ${Math.round(MAX_FILE_SIZE / 1024 / 1024)} MB.`);
   }
+
+  const imageCompression = await getImageCompression();
 
   const compressed = await imageCompression(file, {
     maxSizeMB: 0.5,

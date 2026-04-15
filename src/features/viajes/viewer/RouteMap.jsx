@@ -5,7 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS, SHADOWS, GLASS, FONTS } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { setMapLanguage, generateCurvedRoute } from '@shared/lib/geo';
 import { OperationalMapFallback } from '@shared/ui/components';
 import { routeMapStyles as s } from './RouteMap.styles';

@@ -20,9 +20,10 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useOutletContext } from 'react-router-dom';
 import PageLoader from '@shared/ui/components/PageLoader';
-import { MaintenanceScreen } from '@shared/ui/components';
+import { DashboardContentSkeleton } from '@shared/ui/components/DashboardSkeleton';
+import MaintenanceScreen from '@shared/ui/components/MaintenanceScreen';
 import { ENABLE_IMMERSIVE_VIEWER, ENABLE_INVITATIONS, ENABLE_GAMIFICATION } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 
 import AuthGuard from './AuthGuard';
 import AdminGuard from './AdminGuard';
@@ -32,8 +33,9 @@ import { useAuth } from '@app/providers';
 // ── Public ─────────────────────────────────────────────────────────────────────
 const LandingPage = lazy(() => import('@pages/landing'));
 
-// ── Protected pages (lazy) ─────────────────────────────────────────────────────
-const DashboardPage  = lazy(() => import('@pages/dashboard/ui/DashboardPage'));
+// Eager dynamic import (pipelines chunk download alongside Firebase Auth delay)
+const dashboardPromise = import('@pages/dashboard/ui/DashboardPage');
+const DashboardPage  = lazy(() => dashboardPromise);
 const TripsPage      = lazy(() => import('@pages/trips/ui/TripsPage'));
 const MapaView       = lazy(() => import('@features/mapa/ui').then((mod) => ({ default: mod.MapaView })));
 const TravelerHub    = lazy(() => import('@features/gamification/ui').then((mod) => ({ default: mod.TravelerHub })));
@@ -44,10 +46,14 @@ const suspenseFallback = <PageLoader />;
 // ── Raíz pública/autenticada ───────────────────────────────────────────────────
 function RootRoute() {
   const { usuario, cargando } = useAuth();
-  if (cargando) return <PageLoader />;
+  // Return null (not PageLoader) while auth is resolving:
+  // the #keeptrip-splash already covers the viewport, so a second
+  // overlay would create the jarring double-modal effect.
+  if (cargando) return null;
   if (usuario) return <Navigate to="/dashboard" replace />;
   return (
-    <Suspense fallback={suspenseFallback}>
+    <Suspense fallback={null}>
+      {/* null fallback: LandingPage chunk loads behind the splash screen */}
       <LandingPage />
     </Suspense>
   );
@@ -141,7 +147,9 @@ function AppRouter() {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
+    <Suspense fallback={null}>
+      {/* null fallback: cold-boot is covered by the native splash screen.
+          PageLoader is preserved per-route for in-app navigation (see suspenseFallback). */}
       <Routes>
         {/* Raíz: Landing o redirect a /dashboard */}
         <Route path="/" element={<RootRoute />} />

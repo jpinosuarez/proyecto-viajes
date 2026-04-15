@@ -1,4 +1,4 @@
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 
 function resolveSavedTripId(saveResult, tripId) {
   if (typeof saveResult === 'string' && saveResult.trim()) return saveResult;

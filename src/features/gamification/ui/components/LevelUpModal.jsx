@@ -1,7 +1,13 @@
 import React, { useEffect, useCallback } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
 import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX } from '@shared/config';
+
+let confettiLoader;
+
+const getConfetti = async () => {
+  confettiLoader ||= import('canvas-confetti').then((mod) => mod.default);
+  return confettiLoader;
+};
 
 /**
  * Modal celebratorio al subir de nivel.
@@ -10,8 +16,9 @@ import { COLORS, SHADOWS, RADIUS, FONTS, Z_INDEX } from '@shared/config';
  * @param {{ show: boolean, level: { icon: string, label: string, color: string } | null, onClose: () => void }} props
  */
 const LevelUpModal = ({ show, level, onClose }) => {
-  const fireConfetti = useCallback(() => {
+  const fireConfetti = useCallback(async () => {
     if (typeof window === 'undefined') return;
+    const confetti = await getConfetti();
     const duration = 2500;
     const end = Date.now() + duration;
 
@@ -44,7 +51,9 @@ const LevelUpModal = ({ show, level, onClose }) => {
   }, [level]);
 
   useEffect(() => {
-    if (show && level) fireConfetti();
+    if (show && level) {
+      void fireConfetti();
+    }
   }, [show, level, fireConfetti]);
 
   if (!level) return null;

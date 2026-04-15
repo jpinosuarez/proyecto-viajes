@@ -125,6 +125,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    modulePreload: false,
     // Mapbox GL es pesado por naturaleza y se entrega en chunk lazy dedicado.
     // Subimos el umbral para evitar warning de tamaño no accionable en CI.
     chunkSizeWarningLimit: 1800,

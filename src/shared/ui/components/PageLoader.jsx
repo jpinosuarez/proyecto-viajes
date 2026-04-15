@@ -1,45 +1,47 @@
 import React from 'react';
-import { BentoCardSkeleton } from './Skeletons';
-import { COLORS, SHADOWS, RADIUS } from '@shared/config';
 
 /**
- * Full-screen page loader used during route chunk loading.
- * Designed to feel premium and match Keeptrip's glassy layer system.
+ * PageLoader — Minimal in-app navigation loader.
+ *
+ * 2026 UX Practice: No full-screen dark overlays for secondary route loads.
+ * A small centered spinner on a transparent background keeps the user
+ * contextually aware they're inside the app — not facing a crash or block.
+ *
+ * Used by: TripsRoute, MapRoute, ExplorerRoute, SettingsRoute, InvitationsRoute
+ * (all protected routes during in-app lazy-chunk loading via React Suspense).
+ *
+ * NOT used during initial cold-boot: the native #keeptrip-splash covers that.
  */
 export default function PageLoader() {
   return (
     <div
+      aria-label="Cargando..."
+      role="status"
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(10px)',
-        zIndex: 13000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
+        background: 'transparent',
+        zIndex: 100,
       }}
     >
-      <div
-        style={{
-          width: 'min(420px, 90vw)',
-          padding: '24px',
-          borderRadius: RADIUS.xl,
-          boxShadow: SHADOWS.float,
-          background: 'rgba(255,255,255,0.92)',
-          border: `1px solid rgba(255,255,255,0.55)`,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '18px',
-        }}
-      >
-        <BentoCardSkeleton />
-        <div style={{ textAlign: 'center', color: COLORS.textSecondary, fontWeight: 600 }}>
-          Cargando contenido…
-        </div>
-      </div>
+      <div style={{
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        border: '3px solid #E2E8F0',
+        borderTopColor: '#FF6B35',
+        animation: 'keeptrip-spin 0.65s linear infinite',
+        flexShrink: 0,
+      }} />
+      {/* Scoped keyframes — no global CSS dependency */}
+      <style>{`
+        @keyframes keeptrip-spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

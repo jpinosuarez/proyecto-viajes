@@ -4,7 +4,7 @@ import Map, { Source, Layer, NavigationControl, FullscreenControl } from 'react-
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { COLORS, RADIUS } from '@shared/config';
 import { isMapStyleLoaded, setMapLanguage } from '@shared/lib/geo';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
 import { OperationalMapFallback } from '@shared/ui/components';

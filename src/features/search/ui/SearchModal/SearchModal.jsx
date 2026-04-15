@@ -6,7 +6,7 @@ import { COLORS, RADIUS } from '@shared/config';
 import { styles } from "./SearchModal.styles";
 import { getFlagUrl } from '@shared/lib/utils/countryUtils';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useDebounce } from '../../model/useDebounce';
 import { fetchGeocoding } from '@shared/api/services/mapboxGeocoding';
 

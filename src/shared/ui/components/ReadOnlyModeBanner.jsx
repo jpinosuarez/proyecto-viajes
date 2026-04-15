@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { COLORS, RADIUS, SHADOWS } from '@shared/config';
-import { useOperationalFlags } from '@shared/lib';
+import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 
 const ReadOnlyModeBanner = () => {
   const { t } = useTranslation('common');
