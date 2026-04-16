@@ -38,14 +38,17 @@ const LegalPage = () => {
   return (
     <main
       style={{
-        minHeight: '100dvh',
+        height: '100dvh',
         background: COLORS.background,
         padding: `${SPACING.lg} ${SPACING.md} ${SPACING['2xl']}`,
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
           width: '100%',
+          height: '100%',
           maxWidth: '920px',
           margin: '0 auto',
           background: COLORS.surface,
@@ -53,6 +56,8 @@ const LegalPage = () => {
           borderRadius: RADIUS.xl,
           boxShadow: SHADOWS.md,
           overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <header
@@ -131,7 +136,17 @@ const LegalPage = () => {
           })}
         </nav>
 
-        <div style={{ paddingTop: SPACING.lg }}>
+        <div
+          style={{
+            paddingTop: SPACING.lg,
+            minHeight: 0,
+            flex: 1,
+            display: 'flex',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           <LegalDocumentViewer docType={activeDoc} />
         </div>
       </div>

@@ -25,6 +25,9 @@ const LegalDocumentViewer = ({ docType = 'privacy' }) => {
         padding: `0 ${SPACING.lg} ${SPACING.xl}`,
         color: COLORS.textTertiary,
         lineHeight: 1.7,
+        minHeight: 0,
+        width: '100%',
+        overflowX: 'hidden',
       }}
     >
       <header style={{ marginBottom: SPACING.lg }}>

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { WifiOff, AlertTriangle, ArrowRight, Map } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -72,39 +72,6 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
 
 
 
-  // ── Global Interaction-Driven Lazy Hydration ──
-  // This automatically loads the Heavy Mapbox bundle upon genuine user interaction
-  // (scroll, touch, mouse movement) which achieves 2 things:
-  // 1. Excellent UX (no manual click required to load the map)
-  // 2. Unbeatable Lighthouse Score (idle testing never interacts, protecting the TTI/LCP paths)
-  useEffect(() => {
-    if (isMapRequested) return;
-
-    let interactionTriggered = false;
-
-    const handleInteraction = () => {
-      if (interactionTriggered) return;
-      interactionTriggered = true;
-      setIsMapRequested(true);
-      
-      events.forEach(eventName => {
-        window.removeEventListener(eventName, handleInteraction, { capture: true });
-      });
-    };
-
-    const events = ['scroll', 'mousemove', 'touchstart', 'keydown', 'wheel'];
-    
-    events.forEach(eventName => {
-      window.addEventListener(eventName, handleInteraction, { capture: true, passive: true, once: true });
-    });
-
-    return () => {
-      events.forEach(eventName => {
-        window.removeEventListener(eventName, handleInteraction, { capture: true });
-      });
-    };
-  }, [isMapRequested]);
-
   const mapFallback = (
     <div style={styles.mapErrorFallback(isMobileLayout)} role="status" aria-live="polite">
       <div style={styles.mapErrorBackdrop} aria-hidden="true">
@@ -126,13 +93,15 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
     </div>
   );
 
-  // Pure visual skeleton (no loading text) for the few ms before interaction triggers it
-  const mapSkeletonFallback = (
-    <div style={styles.mapErrorFallback(isMobileLayout)} role="presentation" aria-hidden="true">
-      <div style={styles.mapErrorBackdrop}>
+  const mapLoadingFallback = (
+    <div style={styles.mapErrorFallback(isMobileLayout)} role="status" aria-live="polite">
+      <div style={styles.mapErrorBackdrop} aria-hidden="true">
         <div style={styles.mapErrorGlowA} />
         <div style={styles.mapErrorGlowB} />
         <div style={styles.mapErrorGrid} />
+      </div>
+      <div style={styles.mapErrorPanel}>
+        <p style={styles.mapErrorText}>{t('mapLoading', { defaultValue: 'Cargando mapa...' })}</p>
       </div>
     </div>
   );
@@ -169,11 +138,36 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
           <div style={styles.mapCard(isDesktop)}>
             <ErrorBoundary fallback={mapFallback}>
               {isMapRequested ? (
-                <Suspense fallback={mapSkeletonFallback}>
+                <Suspense fallback={mapLoadingFallback}>
                   <HomeMap key={mapRenderKey} paisesVisitados={countriesVisited} isMobile={isMobileLayout} />
                 </Suspense>
               ) : (
-                mapSkeletonFallback
+                <div 
+                  style={{ ...styles.mapErrorFallback(isMobileLayout), cursor: 'pointer', width: '100%', height: '100%' }}
+                  onPointerDown={() => setIsMapRequested(true)}
+                  onClick={() => setIsMapRequested(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIsMapRequested(true);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t('map.tapToExploreMap')}
+                >
+                  <div style={styles.mapErrorBackdrop} aria-hidden="true">
+                    <div style={styles.mapErrorGlowA} />
+                    <div style={styles.mapErrorGlowB} />
+                    <div style={styles.mapErrorGrid} />
+                  </div>
+                  <div style={{ ...styles.mapErrorPanel, flexDirection: 'row', gap: '8px', cursor: 'pointer', backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
+                    <Map size={20} color={COLORS.primary} />
+                    <p style={{ ...styles.mapErrorText, color: COLORS.primary, fontWeight: 500, margin: 0 }}>
+                      {t('map.tapToExploreMap')}
+                    </p>
+                  </div>
+                </div>
               )}
             </ErrorBoundary>
           </div>

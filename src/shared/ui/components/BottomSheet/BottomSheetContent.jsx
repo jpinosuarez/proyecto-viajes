@@ -12,6 +12,8 @@ const BottomSheetContent = ({ children, style }) => (
       overflowY: 'auto',
       WebkitOverflowScrolling: 'touch',
       flex: 1,
+      minHeight: 0,
+      height: '100%',
       ...style,
     }}
     onTouchMove={(e) => {

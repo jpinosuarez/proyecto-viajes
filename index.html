@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes, maximum-scale=5" />
     <meta name="theme-color" content="#FF6B35" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -21,17 +21,14 @@
     <meta property="og:site_name" content="Keeptrip" />
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:domain" content="keeptrip.app" />
     <meta property="twitter:url" content="https://keeptrip.app/" />
     <meta property="twitter:title" content="Keeptrip — Tu pasaporte digital" />
     <meta property="twitter:description" content="Transforma tus rutas, fotos y destinos en una bitácora viva. Comparte tus aventuras con el mundo." />
     <meta property="twitter:image" content="https://keeptrip.app/og-image.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Firebase preconnects: eliminate DNS+TCP+TLS penalty on auth iframe (~790ms LCP saving) -->
     <link rel="preconnect" href="https://keeptrip-app-staging.firebaseapp.com" crossorigin />
     <link rel="preconnect" href="https://apis.google.com" crossorigin />
-    <!-- dns-prefetch only for user avatars: loaded post-auth, full preconnect would waste budget -->
     <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
     <style>
       body {
@@ -43,7 +40,6 @@
         min-height: 100vh;
         min-height: 100dvh;
       }
-      /* Native Splash Screen Styles */
       #keeptrip-splash {
         position: fixed;
         inset: 0;
@@ -79,7 +75,6 @@
       @keyframes spinSplash {
         to { transform: rotate(360deg); }
       }
-      /* Stop animation once splash is pushed behind app — saves GPU composite work */
       #keeptrip-splash[aria-hidden="true"] .splash-logo {
         animation: none;
       }

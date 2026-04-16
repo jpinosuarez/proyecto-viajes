@@ -10,15 +10,14 @@ export function DashboardContentSkeleton() {
   const isMobile = width < 768;
   const { t } = useTranslation('dashboard');
 
-  // Replicamos la tipografía y márgenes del h1 en WelcomeBento mitigando CLS
   const titleStyle = {
     margin: 0,
     fontSize: 'clamp(1.25rem, 2.2vw, 1.6rem)',
     fontWeight: '900',
     lineHeight: 1.18,
     letterSpacing: '-0.02em',
-    color: COLORS.charcoalBlue, // Visible para LCP de Lighthouse
-    minHeight: '2.36em', // Previene CLS contra texto largo que envuelve 2 líneas
+    color: COLORS.charcoalBlue,
+    minHeight: '2.36em',
     width: 'fit-content',
   };
 
@@ -55,7 +54,6 @@ export function DashboardContentSkeleton() {
           : { width: '100%' }
         )
       }}>
-        {/* Simulamos WelcomeBento */}
         <div style={{
           width: '100%',
           height: '100%',
@@ -71,9 +69,9 @@ export function DashboardContentSkeleton() {
           </div>
         </div>
       </div>
-      
+
       {/* Simuladores visuales vacíos para que la pantalla no se vea cortada */}
-      <div style={{ minWidth: 0, ...(isDesktop ? { gridColumn: '2', gridRow: '1', alignSelf: 'stretch' } : { width: '100%' }) }}>
+      <div style={{ minWidth: 0, ...(isDesktop ? { gridColumn: '2', gridRow: '1', alignSelf: 'start' } : { width: '100%' }) }}>
          <div style={{ width: '100%', height: '140px', backgroundColor: '#F8FAFC', borderRadius: RADIUS.xl, border: `1px solid ${COLORS.border}` }} className="animate-pulse" />
       </div>
       

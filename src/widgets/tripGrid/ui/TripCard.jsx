@@ -147,7 +147,7 @@ const TripCard = ({ trip, onClick, onDelete, isMobile = false, variant = 'list',
               alt={title || t('tripCoverAlt', { ns: 'dashboard', defaultValue: 'Portada del viaje' })} 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               loading={priorityImage ? "eager" : "lazy"}
-              fetchpriority={priorityImage ? "high" : undefined}
+              fetchPriority={priorityImage ? "high" : undefined}
             />
           ) : (
             <div style={styles.fallbackAuraContainer} aria-hidden="true">
