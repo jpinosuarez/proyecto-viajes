@@ -7,7 +7,7 @@
  *   - No `useState` attached to `window.addEventListener('scroll')`.
  *   - The animations run directly on the DOM via Framer's Motion Values.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, LogOut, User, X, Bell, Disc } from 'lucide-react';
 import {
@@ -19,8 +19,11 @@ import {
 import { useAuth } from '@app/providers/AuthContext';
 import { useSearch, useUI } from '@app/providers/UIContext';
 import { COLORS, RADIUS, Z_INDEX, ENABLE_INVITATIONS } from '@shared/config';
-import AuthModal from '@features/auth/ui/AuthModal';
 import { useTranslation } from 'react-i18next';
+
+// Lazy loading AuthModal prevents pulling `BottomSheet` (framer-motion) and `LegalDocumentViewer` into the critical parsing path.
+const authModalPromise = import('@features/auth/ui/AuthModal');
+const AuthModal = lazy(() => authModalPromise);
 
 const PAGE_TITLES = {
   '/dashboard':   'pageTitle.home',
@@ -366,11 +369,15 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
         )}
       </div>
 
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onContinue={login}
-      />
+      {isAuthModalOpen && (
+        <Suspense fallback={null}>
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+            onContinue={login}
+          />
+        </Suspense>
+      )}
 
       {/* Mobile Search Dropdown */}
       {isMobile && showSearch && isMobileSearchOpen && (

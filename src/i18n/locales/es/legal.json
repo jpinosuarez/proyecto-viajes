@@ -41,7 +41,7 @@
         "id": "scope",
         "title": "1. Alcance y objeto",
         "paragraphs": [
-          "Esta Politica aplica al uso de Keeptrip como aplicacion web progresiva para crear y gestionar bitacoras de viaje.",
+          "Esta Politica aplica al uso de Keeptrip como aplicacion web progresiva para crear y gestionar historias de viaje.",
           "Al utilizar Keeptrip, declaras haber leido esta Politica y comprender como tratamos tus datos personales."
         ]
       },
@@ -58,7 +58,7 @@
         "title": "3. Datos que recopilamos",
         "paragraphs": [
           "Datos de cuenta y autenticacion: nombre visible, correo electronico, identificador de usuario (UID) y foto de perfil proporcionados por Google OAuth.",
-          "Datos de uso del servicio: rutas, ciudades, fechas de viaje, descripciones y metadatos que guardas en tu bitacora.",
+          "Datos de uso del servicio: rutas, ciudades, fechas de viaje, descripciones y metadatos que guardas en tus historias.",
           "Contenido subido por el Explorador: fotografias y archivos relacionados almacenados para prestarte el servicio.",
           "Datos tecnicos minimos: informacion de dispositivo, navegador e IP necesaria para seguridad, entrega tecnica y prevencion de abuso.",
           "Datos de mapas: consultas y coordenadas necesarias para renderizado con Mapbox."
@@ -68,7 +68,7 @@
         "id": "purposes-basis",
         "title": "4. Finalidades y bases juridicas (GDPR)",
         "paragraphs": [
-          "Prestacion del servicio (art. 6.1.b GDPR): crear tu cuenta, mostrar tu bitacora, almacenar contenido y sincronizar tus datos.",
+          "Prestacion del servicio (art. 6.1.b GDPR): crear tu cuenta, mostrar tus viajes, almacenar contenido y sincronizar tus datos.",
           "Seguridad e integridad (art. 6.1.f GDPR): proteger la plataforma contra uso indebido, fraude o accesos no autorizados.",
           "Cumplimiento legal (art. 6.1.c GDPR): atender obligaciones legales y requerimientos de autoridades competentes.",
           "Mejora del producto en MVP (art. 6.1.f GDPR): mantener estabilidad y calidad tecnica del servicio sin perfilado comercial."

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, FONTS } from '@shared/config';
-import legalES from '../../../i18n/locales/es/legal.json';
 
 const DOC_MAP = {
   privacy: 'privacyPolicy',
@@ -11,8 +11,11 @@ const DOC_MAP = {
 const SECTION_SPACING = 24;
 
 const LegalDocumentViewer = ({ docType = 'privacy' }) => {
+  const { t } = useTranslation('legal');
   const documentKey = DOC_MAP[docType] || DOC_MAP.privacy;
-  const documentData = legalES[documentKey] || legalES.privacyPolicy;
+  
+  // Use returnObjects: true to extract the entire legal object tree for mapping
+  const documentData = t(documentKey, { returnObjects: true }) || {};
 
   const sections = useMemo(() => {
     if (!Array.isArray(documentData?.sections)) return [];

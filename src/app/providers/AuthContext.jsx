@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
-import { LoaderCircle } from 'lucide-react';
+
 import { 
   signInWithPopup, 
   signOut, 
@@ -149,22 +149,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {cargando ? (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#fff',
-          color: '#334155',
-          fontSize: 22,
-          fontWeight: 500
-        }}>
-          <LoaderCircle size={48} className="spin" style={{ marginBottom: 16, color: '#f59e42' }} />
-          Iniciando...
-        </div>
-      ) : children}
+      {children}
     </AuthContext.Provider>
   );
 };

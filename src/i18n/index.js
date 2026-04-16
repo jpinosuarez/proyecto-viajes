@@ -14,6 +14,7 @@ import galleryES from './locales/es/gallery.json';
 import shareES from './locales/es/share.json';
 import navES from './locales/es/nav.json';
 import countriesES from './locales/es/countries.json';
+import legalES from './locales/es/legal.json';
 
 // Diccionarios EN (placeholder — traducir con i18n Ally)
 import commonEN from './locales/en/common.json';
@@ -29,6 +30,7 @@ import navEN from './locales/en/nav.json';
 import countriesEN from './locales/en/countries.json';
 import searchES from './locales/es/search.json';
 import searchEN from './locales/en/search.json';
+import legalEN from './locales/en/legal.json';
 
 i18n
   .use(LanguageDetector)
@@ -48,6 +50,7 @@ i18n
         nav: navES,
         search: searchES,
         countries: countriesES,
+        legal: legalES,
       },
       en: {
         common: commonEN,
@@ -62,6 +65,7 @@ i18n
         nav: navEN,
         search: searchEN,
         countries: countriesEN,
+        legal: legalEN,
       },
     },
     fallbackLng: 'es',

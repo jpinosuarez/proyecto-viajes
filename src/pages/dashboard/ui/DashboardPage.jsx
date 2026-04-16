@@ -55,6 +55,19 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
 
   const [isMapRequested, setIsMapRequested] = useState(false);
 
+  // Performance architecture: Auto-load map payload after main thread is strictly idle.
+  // We defer the 1.6MB mapbox logic to never inflate LCP, FCP or TBT metrics.
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => setIsMapRequested(true), { timeout: 2000 });
+      } else {
+        setIsMapRequested(true);
+      }
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
   // dashboard stats
   const tripDataMap = useMemo(() => {
     if (logData && typeof logData === 'object' && !Array.isArray(logData)) {
@@ -143,29 +156,13 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
                 </Suspense>
               ) : (
                 <div 
-                  style={{ ...styles.mapErrorFallback(isMobileLayout), cursor: 'pointer', width: '100%', height: '100%' }}
-                  onPointerDown={() => setIsMapRequested(true)}
-                  onClick={() => setIsMapRequested(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setIsMapRequested(true);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
+                  style={{ ...styles.mapErrorFallback(isMobileLayout), width: '100%', height: '100%' }}
                   aria-label={t('map.tapToExploreMap')}
                 >
                   <div style={styles.mapErrorBackdrop} aria-hidden="true">
                     <div style={styles.mapErrorGlowA} />
                     <div style={styles.mapErrorGlowB} />
                     <div style={styles.mapErrorGrid} />
-                  </div>
-                  <div style={{ ...styles.mapErrorPanel, flexDirection: 'row', gap: '8px', cursor: 'pointer', backgroundColor: 'rgba(255, 255, 255, 0.9)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
-                    <Map size={20} color={COLORS.primary} />
-                    <p style={{ ...styles.mapErrorText, color: COLORS.primary, fontWeight: 500, margin: 0 }}>
-                      {t('map.tapToExploreMap')}
-                    </p>
                   </div>
                 </div>
               )}

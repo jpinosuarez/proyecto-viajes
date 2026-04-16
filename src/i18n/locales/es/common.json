@@ -8,7 +8,7 @@
   "logout": "Cerrar Sesión",
   "clearSearch": "Limpiar búsqueda",
   "clearFilter": "Borrar filtro",
-  "login": "Iniciar Sesión",
+  "login": "Acceder",
   "addTrip": "Añadir Viaje",
   "loading": "Cargando...",
   "retry": "Reintentar",
@@ -52,6 +52,12 @@
     "updateAvailable": "Nueva versión disponible",
     "update": "Actualizar",
     "later": "Luego"
+  },
+  "auth": {
+    "title": "Continúa tu ruta",
+    "description": "Regístrate o accede con tu perfil de Google para mantener siempre protegidas tus aventuras.",
+    "continueWithGoogle": "Continuar con Google",
+    "back": "Regresar"
   },
   "operational": {
     "readOnlyBanner": "Keeptrip está en modo solo lectura. Tus datos están seguros, pero las ediciones están en pausa.",
