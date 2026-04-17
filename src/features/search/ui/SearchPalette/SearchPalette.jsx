@@ -245,6 +245,7 @@ const SearchPalette = ({
     },
     header: {
       padding: '16px',
+      paddingTop: isMobile ? 'max(16px, var(--safe-area-inset-top, 16px))' : '16px',
       borderBottom: `1px solid ${COLORS.border}`,
       display: 'flex',
       alignItems: 'center',

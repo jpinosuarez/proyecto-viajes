@@ -388,7 +388,7 @@ const Header = ({ isMobile = false, invitationsCount = 0 }) => {
           transition={{ type: 'spring', damping: 20 }}
           style={{
             position: 'absolute',
-            top: '64px',
+            top: 'calc(64px + var(--safe-area-inset-top, 0px))',
             left: '16px',
             right: '16px',
             background: 'rgba(255,255,255,0.95)',

@@ -13,6 +13,7 @@ const styles = {
     justifyContent: 'center',
     minHeight: '56px', // Touch target >=44px
     padding: 'clamp(12px, 3vw, 20px)',
+    paddingBottom: 'max(clamp(12px, 3vw, 20px), env(safe-area-inset-bottom, 0px))',
     fontFamily: FONTS.sans || 'Inter, Plus Jakarta Sans, sans-serif',
     fontWeight: 600,
     fontSize: 'clamp(15px, 2vw, 18px)',

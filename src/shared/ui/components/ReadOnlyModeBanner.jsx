@@ -20,7 +20,7 @@ const ReadOnlyModeBanner = () => {
       aria-live="polite"
       style={{
         position: 'fixed',
-        top: '10px',
+        top: 'max(10px, env(safe-area-inset-top, 10px))',
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1300,

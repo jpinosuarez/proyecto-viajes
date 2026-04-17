@@ -22,7 +22,7 @@ const MobileCreateFab = () => {
       style={{
         position: 'fixed',
         bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
-        right: '24px',
+        right: 'max(24px, env(safe-area-inset-right, 24px))',
         width: '56px',
         height: '56px',
         borderRadius: '50%',

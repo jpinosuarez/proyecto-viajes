@@ -20,6 +20,27 @@
 
 ## 🤖 Part 1: AI Agent Autonomous Checklist
 
+**AI MAGIC TRIGGER:**
+> "AI: Run the `[Keeptrip Autonomous Pre-Flight]` trigger."
+
+*Instructions for the AI Agent: When the Human invokes the trigger above, you must execute steps 1 through 9 sequentially. Do not ask for permissions between these automated steps. Upon completion, you MUST output the following exact markdown table format and nothing else as your final report snippet:*
+
+```markdown
+### 📊 AI Autonomous Audit Report (Part 1)
+
+| Step | Task | Result | Notes |
+| :--- | :--- | :--- | :--- |
+| **1** | Static Analysis | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **2** | Unit Testing | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **3** | Security Rules | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **4** | E2E Verification | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **5** | Build Check | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **6** | Dependency Audit | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **7** | Environment Sync | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **8** | Deploy Staging | [✅ PASSED / ❌ FAILED] | [Summary] |
+| **9** | Performance (Lighthouse) | [✅ PASSED / ❌ FAILED] | Perf: X, A11y: X, BP: X, SEO: X (TBT: X, LCP: X) |
+```
+
 These steps are to be executed by the AI Agent independently to ensure code integrity.
 
 ### 1. Static Analysis & Linting
@@ -58,7 +79,9 @@ These steps are to be executed by the AI Agent independently to ensure code inte
 - [ ] Verify Hosting, Firestore rules, and Storage rules are deployed.
 
 ### 9. Automated Performance Audit (Lighthouse)
-- [ ] **Tooling:** Use the Lighthouse MCP Server to audit the Staging URL: `https://keeptrip-app-staging.web.app/dashboard`
+- [ ] **Tooling:** Run `npm run audit:performance`.
+- [ ] **Data Extraction:** The exact scores (Performance, Accessibility, Best Practices, SEO) and metrics (TBT, LCP, CLS) will be logged to the console by the script. Use them to fill the metric summary in your final report table.
+- [ ] **Zero-Footprint Policy:** The script is self-cleaning, but verify visually that you do not leave any `.lighthouse-tmp/` folders or `lighthouse-report.json` files behind.
 - [ ] **Targets:**
     - Performance: > 85
     - Accessibility: > 90

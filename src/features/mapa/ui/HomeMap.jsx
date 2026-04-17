@@ -7,10 +7,26 @@ import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { setMapLanguage } from '@shared/lib/geo';
 import { OperationalMapFallback } from '@shared/ui/components';
 
-const WORLD_BOUNDS = [[-170, -56], [170, 72]];
+// Desktop: full inhabited world (S. Argentina → N. Russia).
+// Asymmetric padding (top > bottom) compensates for Mercator's polar distortion,
+// visually trimming Greenland without altering the southern boundary.
+// Padding reduced (iteration 2) to avoid clipping at N/S extremes.
+const WORLD_BOUNDS_DESKTOP = [[-170, -58], [170, 74]];
+const WORLD_PADDING_DESKTOP = { top: 25, bottom: 10, left: 8, right: 8 };
+
+// Mobile: mapCard is fixed at 240px tall and full-width (~390px), ratio ≈ 1.6:1.
+// GEOMETRIC CONSTRAINT: In Mercator, the inhabited world width/height ratio is ~1.96:1,
+// which is always wider than the mobile container. With full longitude, width is the
+// binding constraint, and ~17px of ocean will appear at top/bottom (unavoidable).
+// Restoring full longitude range (-170/170) to eliminate the side clipping from iter.2.
+// Ocean vertical strips minimized by: max lat bounds + near-zero padding + slight top
+// asymmetry to counter Mercator's polar distortion and center on the inhabited world.
+const WORLD_BOUNDS_MOBILE = [[-170, -58], [170, 74]];
+const WORLD_PADDING_MOBILE = { top: 10, bottom: 2, left: 2, right: 2 };
+
 const MAP_OCEAN_COLOR = '#e0e6ed';
 const MIN_WORLD_ZOOM = -2; // Permite a mapbox hacer zoom-out en pantallas estrechas (mobile)
-const WORLD_VERTICAL_PADDING = 20;
+
 
 // Estilo en blanco para eliminar TODOS los tags geográficos y nombres por defecto de Mapbox
 const BLANK_STYLE = {
@@ -28,7 +44,7 @@ const BLANK_STYLE = {
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-const HomeMap = ({ paisesVisitados = [] }) => {
+const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
   const { i18n, t } = useTranslation('dashboard');
   const {
     flags: { level: operationalLevel },
@@ -40,6 +56,8 @@ const HomeMap = ({ paisesVisitados = [] }) => {
   );
   const [hoverInfo, setHoverInfo] = useState(null);
   const mapRef = useRef(null);
+  const isMobileRef = useRef(isMobile);
+  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
   const mapContainerRef = useRef(null);
 
   const onHover = useCallback(event => {
@@ -53,10 +71,14 @@ const HomeMap = ({ paisesVisitados = [] }) => {
   }, []);
 
   const fitWorld = useCallback(map => {
-    map.fitBounds(WORLD_BOUNDS, {
-      padding: WORLD_VERTICAL_PADDING,
-      duration: 0,
-    });
+    const mobile = isMobileRef.current;
+    map.fitBounds(
+      mobile ? WORLD_BOUNDS_MOBILE : WORLD_BOUNDS_DESKTOP,
+      {
+        padding: mobile ? WORLD_PADDING_MOBILE : WORLD_PADDING_DESKTOP,
+        duration: 0,
+      }
+    );
   }, []);
 
   const handleMapLoad = useCallback(e => {

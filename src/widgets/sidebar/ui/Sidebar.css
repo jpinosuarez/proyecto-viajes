@@ -2,7 +2,7 @@
 .mobile-tab-bar {
   display: none;
   position: fixed;
-  bottom: 16px;
+  bottom: max(8px, env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   width: min(92vw, 400px);

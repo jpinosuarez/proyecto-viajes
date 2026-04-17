@@ -421,7 +421,10 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '20px',
+    paddingTop: 'max(20px, env(safe-area-inset-top, 20px))',
+    paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
+    paddingLeft: 'max(20px, env(safe-area-inset-left, 20px))',
+    paddingRight: 'max(20px, env(safe-area-inset-right, 20px))',
   },
   lightboxContent: {
     maxWidth: '90vw',
@@ -451,8 +454,8 @@ const styles = {
   },
   closeBtn: {
     position: 'absolute',
-    top: '20px',
-    right: '20px',
+    top: 'max(20px, env(safe-area-inset-top, 20px))',
+    right: 'max(20px, env(safe-area-inset-right, 20px))',
     width: '48px',
     height: '48px',
     border: 'none',
@@ -467,7 +470,7 @@ const styles = {
   },
   counter: {
     position: 'absolute',
-    top: '20px',
+    top: 'max(20px, env(safe-area-inset-top, 20px))',
     left: '50%',
     transform: 'translateX(-50%)',
     ...GLASS.medium,
