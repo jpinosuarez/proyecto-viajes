@@ -149,7 +149,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
           ) : (
             <div className="relative w-full h-full overflow-hidden" aria-hidden="true">
               <div className={cn(
-                "grid w-full h-full blur-sm scale-105 opacity-30",
+                "grid w-full h-full blur-md scale-105 opacity-30",
                 auraFlags.length <= 1 ? "grid-cols-1 grid-rows-1" : 
                 auraFlags.length === 2 ? "grid-cols-1 grid-rows-2" : "grid-cols-2 grid-rows-2"
               )}>
@@ -166,7 +166,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
                   />
                 ))}
               </div>
-              <div className="absolute inset-0 bg-black/30" />
+              <div className="absolute inset-0 bg-black/40" />
             </div>
           )}
         </Motion.div>
@@ -202,10 +202,12 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
             className="pointer-events-auto bg-white/25 backdrop-blur-lg border border-white/30 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-md hover:bg-white/40 transition-colors cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               setIsMenuOpen((prev) => !prev);
             }}
             onTouchStart={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               setIsMenuOpen((prev) => !prev);
             }}
             aria-label={t('card.menu', { ns: 'dashboard', defaultValue: 'Abrir opciones de viaje' })}

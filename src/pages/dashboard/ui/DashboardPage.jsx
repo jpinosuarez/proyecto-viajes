@@ -213,7 +213,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full custom-scroll items-start min-w-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
           {loading ? (
             <SkeletonList count={2} Component={TripCardSkeleton} />
           ) : isError ? (
@@ -231,20 +231,22 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
               const enrichedTrip = tripDataMap[trip.id] || trip;
               const total = visibleRecentTrips.length;
               
-              // Edge case col-span logic
-              let colSpan = "col-span-1";
-              if (total === 1) colSpan = "col-span-full";
-              else if (total === 2) colSpan = "col-span-full";
-              else if (total === 3) {
-                if (index === 0) colSpan = "col-span-full";
-                else colSpan = "col-span-1";
+              // Dynamic Bento Grid Logic
+              let gridClasses = "col-span-1";
+              if (total === 1) {
+                gridClasses = "col-span-1 md:col-span-2 row-span-2 md:row-span-2";
+              } else if (total === 2) {
+                gridClasses = "col-span-1 md:col-span-2";
+              } else if (total === 3) {
+                if (index === 0) gridClasses = "col-span-1 md:col-span-2";
+                else gridClasses = "col-span-1";
               }
-              // total === 4 -> each is col-span-1 (2x2)
+              // total === 4 -> col-span-1 (default)
 
               return (
                 <div 
                   key={trip.id} 
-                  className={cn("min-h-0 h-full", colSpan)}
+                  className={cn("min-h-0 h-full", gridClasses)}
                 >
                   <TripCard 
                     trip={enrichedTrip} 

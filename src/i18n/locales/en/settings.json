@@ -1,5 +1,6 @@
 {
-  "accountTitle": "Account Settings",
+  "account": "Account",
+  "logout": "Log out",
   "settings": "Settings",
   "admin": "Administrator",
   "user": "Explorer",
@@ -47,7 +48,7 @@
   "deleteAccountNeedsRelogin": "Please log out and log back in to delete your account.",
   "legacyData": "Legacy & Data",
   "legacyDataDesc": "Your logbook belongs to you. Download it anytime.",
-  "exportJSON": "Export trips (JSON)",
+  "operational": "Operational",
   "operationalControls": {
     "sectionTitle": "Operational controls",
     "title": "Contingency shield",
