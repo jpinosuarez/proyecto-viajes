@@ -60,7 +60,7 @@ function AppModalsManager({
   onLugarSeleccionado,
   pushToast,
 }) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation('common');
   const match = useMatch('/trips/:id');
   const tripId = match?.params?.id;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -147,13 +147,13 @@ function AppModalsManager({
       aria-live="polite"
     >
       <p style={{ margin: 0, fontSize: '0.86rem', fontWeight: 600, lineHeight: 1.4 }}>
-        El buscador tuvo un tropiezo. Puedes cerrarlo y abrirlo de nuevo.
+        {t('modals.searchPalette.fallbackMessage')}
       </p>
       <button
         type="button"
         onClick={() => {
           closeSearchPalette();
-          pushToast?.('Buscador cerrado. Puedes abrirlo de nuevo cuando quieras.', 'info', 2400);
+          pushToast?.(t('modals.searchPalette.fallbackMessage'), 'info', 2400);
         }}
         style={{
           marginTop: 10,
@@ -167,7 +167,7 @@ function AppModalsManager({
           cursor: 'pointer',
         }}
       >
-        Cerrar buscador
+        {t('modals.searchPalette.closeButton')}
       </button>
     </div>
   );
@@ -234,10 +234,10 @@ function AppModalsManager({
 
       <ConfirmModal
         isOpen={!!confirmarEliminacion}
-        title={`Eliminar ${tituloViajeAEliminar}?`}
-        message="Esta accion eliminara el viaje y sus recuerdos asociados de forma permanente. No se puede deshacer."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
+        title={t('modals.deleteTrip.title', { tripName: tituloViajeAEliminar })}
+        message={t('modals.deleteTrip.message')}
+        confirmText={t('modals.deleteTrip.confirm')}
+        cancelText={t('modals.deleteTrip.cancel')}
         onConfirm={handleDeleteTrip}
         onClose={() => setConfirmarEliminacion(null)}
         isLoading={!!(confirmarEliminacion && deletingTripIds.has(confirmarEliminacion))}

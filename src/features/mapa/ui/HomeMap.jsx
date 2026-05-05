@@ -94,6 +94,13 @@ const HomeMap = ({ paisesVisitados = [], isMobile = false }) => {
     }
   }, [isMobile, fitWorld]);
 
+  // Sync map language when user changes language preference
+  useEffect(() => {
+    if (mapRef.current && i18n.language) {
+      setMapLanguage(mapRef.current, i18n.language);
+    }
+  }, [i18n.language]);
+
   const handleMapLoad = useCallback(e => {
     const map = e.target;
     mapRef.current = map;

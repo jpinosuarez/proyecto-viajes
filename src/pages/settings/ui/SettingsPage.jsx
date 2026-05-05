@@ -239,7 +239,7 @@ const SettingsPage = () => {
 
   return (
     <div className="w-full h-full box-border custom-scroll">
-      <div className="w-full max-w-[640px] mx-auto flex flex-col gap-6 p-4 md:p-6 pb-[100px] md:pb-20">
+      <div className="w-full max-w-[640px] mx-auto flex flex-col gap-6 p-4 md:p-6 pb-[max(100px,calc(20px+env(safe-area-inset-bottom,0)))] md:pb-[max(80px,calc(20px+env(safe-area-inset-bottom,0)))]">
 
         {/* ── Identity Card ── */}
         <Motion.div

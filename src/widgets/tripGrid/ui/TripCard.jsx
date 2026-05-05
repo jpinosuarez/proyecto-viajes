@@ -126,7 +126,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
       className={cn(
         "relative cursor-default group rounded-2xl shadow-md bg-charcoalBlue transition-shadow duration-300 border-0 overflow-hidden",
         isList ? "aspect-auto min-h-[120px]" : "h-full min-h-[250px]",
-        isMenuOpen ? "z-[60]" : "z-[1]"
+        isMenuOpen ? "z-dropdown" : "z-base"
       )}
     >
 
@@ -222,7 +222,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                 transition={{ duration: 0.15 }}
-                className="fixed w-[180px] bg-white/85 backdrop-blur-xl rounded-xl shadow-lg p-2 flex flex-col gap-1 z-[9999]"
+                className="fixed w-[180px] bg-white/85 backdrop-blur-xl rounded-xl shadow-lg p-2 flex flex-col gap-1 z-modal"
                 style={{
                   top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 0,
                   left: buttonRef.current ? buttonRef.current.getBoundingClientRect().left - 180 + buttonRef.current.getBoundingClientRect().width : 0,
