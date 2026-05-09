@@ -143,7 +143,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
   };
 
   return (
-    <div className="w-full box-border min-w-0 flex flex-col gap-4 p-4 h-auto overflow-y-auto overflow-x-hidden lg:h-[100dvh] lg:overflow-hidden lg:grid lg:grid-cols-[minmax(350px,5fr)_minmax(400px,7fr)] lg:grid-rows-[min-content_1fr] lg:gap-6 lg:p-6 pb-[max(20px,env(safe-area-inset-bottom,0))]">
+    <div className="w-full box-border min-w-0 grid h-[100dvh] overflow-hidden gap-4 p-4 grid-rows-[auto_auto_auto_minmax(0,1fr)] lg:grid-cols-[minmax(350px,5fr)_minmax(400px,7fr)] lg:grid-rows-[min-content_1fr] lg:gap-6 lg:p-6 pb-[max(20px,env(safe-area-inset-bottom,0))]">
       <div className="min-w-0 w-full lg:col-start-1 lg:row-start-1 lg:self-stretch">
         <WelcomeBento 
           name={name}
@@ -197,7 +197,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 min-w-0 w-full lg:col-start-1 lg:row-start-2 lg:min-h-0 lg:h-full lg:overflow-hidden">
+      <div className="flex flex-col gap-2 min-w-0 w-full min-h-0 lg:col-start-1 lg:row-start-2 lg:h-full lg:overflow-hidden">
         <div className="flex items-center justify-between flex-shrink-0 gap-2 min-h-[44px]">
           <h2 className="m-0 text-[0.8rem] font-extrabold text-charcoalBlue uppercase tracking-widest leading-none min-w-0 flex-1 font-heading">{t('recentAdventures')}</h2>
           {log.length > 0 && (
@@ -213,7 +213,7 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full min-h-0 auto-rows-fr">
           {loading ? (
             <SkeletonList count={2} Component={TripCardSkeleton} />
           ) : isError ? (
@@ -231,10 +231,10 @@ const DashboardPage = ({ countriesVisited = [], log = [], logData = {}, loading 
               const enrichedTrip = tripDataMap[trip.id] || trip;
               const total = visibleRecentTrips.length;
               
-              // Dynamic Bento Grid Logic
+              // Dynamic Bento Grid Logic (responsive col/row spans)
               let gridClasses = "col-span-1";
               if (total === 1) {
-                gridClasses = "col-span-1 md:col-span-2 row-span-2 md:row-span-2";
+                gridClasses = "col-span-1 md:col-span-2 md:row-span-2";
               } else if (total === 2) {
                 gridClasses = "col-span-1 md:col-span-2";
               } else if (total === 3) {

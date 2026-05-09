@@ -16,7 +16,7 @@ import {
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { cn } from '@shared/lib/utils/cn';
 
-const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant = 'list', priorityImage = false }) => {
+const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', priorityImage = false }) => {
   const { t, i18n } = useTranslation(['countries', 'dashboard', 'common']);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef(null);
@@ -125,7 +125,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
       onMouseLeave={handleMouseLeave}
       className={cn(
         "relative cursor-default group rounded-2xl shadow-md bg-charcoalBlue transition-shadow duration-300 border-0 overflow-hidden",
-        isList ? "aspect-auto min-h-[120px]" : "h-full min-h-[250px]",
+        isList ? "aspect-auto min-h-[120px]" : "h-full min-h-0",
         isMenuOpen ? "z-dropdown" : "z-base"
       )}
     >
@@ -149,7 +149,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
           ) : (
             <div className="relative w-full h-full overflow-hidden" aria-hidden="true">
               <div className={cn(
-                "grid w-full h-full blur-md scale-105 opacity-30",
+                "grid w-full h-full blur-sm scale-105 opacity-35",
                 auraFlags.length <= 1 ? "grid-cols-1 grid-rows-1" : 
                 auraFlags.length === 2 ? "grid-cols-1 grid-rows-2" : "grid-cols-2 grid-rows-2"
               )}>
@@ -166,7 +166,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
                   />
                 ))}
               </div>
-              <div className="absolute inset-0 bg-black/40" />
+              <div className="absolute inset-0 bg-slate-900/40" />
             </div>
           )}
         </Motion.div>
@@ -184,7 +184,7 @@ const TripCard = ({ trip, onClick, onEdit, onDelete, isMobile = false, variant =
                 key={idx} 
                 src={flag} 
                 alt="Bandera" 
-                className="w-6 h-6 object-cover rounded-full shadow-sm border border-white/20" 
+                className="w-6 h-6 object-cover rounded-full shadow-sm border border-white/20 opacity-90" 
                 loading={priorityImage ? "eager" : "lazy"} 
               />
             ))
