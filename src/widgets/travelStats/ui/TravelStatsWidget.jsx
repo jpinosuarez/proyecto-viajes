@@ -60,30 +60,33 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'compact', co
 
   return (
     <section role="region" aria-label={ariaLabel} className={containerClassName}>
-      <div className="w-full bg-gradient-to-r from-white/8 to-white/4 backdrop-blur-md shadow-lg border border-white/10 rounded-2xl p-4 md:p-5">
-        {/* Progress Bar Section */}
-        <div className="mb-4 pb-4 border-b border-white/5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold uppercase text-text-secondary tracking-wider">{t('stats.worldExploredPercentage')}</span>
-            <span className="text-lg font-black text-atomicTangerine">{Math.round(worldPct)}%</span>
-          </div>
-          <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
-            <div 
-              className="h-full rounded-full bg-gradient-to-r from-atomicTangerine to-mutedTeal transition-all duration-500" 
-              style={{ width: `${worldPct}%` }} 
-            />
-          </div>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {items.map((it) => (
-            <div key={it.key} className="flex flex-col items-start justify-start">
-              <div className="flex items-center gap-2 mb-1">
-                {it.icon}
-                <span className="text-xs font-bold uppercase text-text-secondary tracking-wide">{it.label}</span>
+      <div className="w-full bg-gradient-to-r from-white/8 to-white/4 backdrop-blur-md shadow-lg border border-white/10 rounded-2xl px-3 py-3 md:p-4">
+        {/* Single-Row Flex Layout: Mobile wraps, Desktop fixed row */}
+        <div className="flex flex-row flex-wrap md:flex-nowrap items-center justify-between gap-2 w-full">
+          {/* World Explored Mini Section - Left */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 min-w-[110px]">
+            <div className="space-y-0.5">
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-atomicTangerine to-mutedTeal transition-all duration-500" 
+                  style={{ width: `${worldPct}%` }}
+                />
               </div>
-              <span className="text-xl md:text-2xl font-black text-atomicTangerine drop-shadow-lg">{it.value}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">{t('stats.worldExploredPercentage')}</span>
+              <span className="text-xs font-black text-atomicTangerine drop-shadow-lg block">{Math.round(worldPct)}%</span>
+            </div>
+          </div>
+
+          {/* 4 Metrics - Horizontal Row */}
+          {items.map((it) => (
+            <div key={it.key} className="flex flex-col items-start flex-1 min-w-[80px]">
+              <div className="flex items-center gap-1 min-w-0">
+                {React.cloneElement(it.icon, { size: 16 })}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary truncate">
+                  {it.label}
+                </span>
+              </div>
+              <span className="text-xs font-black text-atomicTangerine drop-shadow-lg mt-0.5">{it.value}</span>
             </div>
           ))}
         </div>

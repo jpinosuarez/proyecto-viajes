@@ -265,7 +265,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
         </div>
         
         {/* Bottom Content */}
-        <div className="p-4 pt-0 w-full flex flex-col gap-2 mt-auto pointer-events-none">
+        <div className="px-4 pt-0 pb-5 w-full flex flex-col gap-2 mt-auto pointer-events-none">
         <h4 className="m-0 text-xl font-black text-white drop-shadow-lg truncate leading-[1.1] tracking-tighter font-heading">
           {title}
         </h4>
