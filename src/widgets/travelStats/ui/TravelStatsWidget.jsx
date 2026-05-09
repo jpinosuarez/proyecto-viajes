@@ -12,7 +12,7 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US').format(Math.round(value));
 };
 
-const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'compact' }) => {
+const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'compact', containerClassName = 'w-full' }) => {
   const { t } = useTranslation('dashboard');
   const isCompact = variant === 'compact';
 
@@ -34,56 +34,58 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'compact' }) 
   const items = [
     {
       key: 'uniqueCountries',
-      icon: <Globe size={16} />, 
+      icon: <Globe size={18} className="text-atomicTangerine" />, 
       value: `${formatNumber(safeValue(logStats.uniqueCountries))}`,
       label: t('stats.uniqueCountries'),
     },
     {
       key: 'completedTrips',
-      icon: <Compass size={16} />, 
+      icon: <Compass size={18} className="text-atomicTangerine" />, 
       value: `${formatNumber(safeValue(logStats.completedTrips))}`,
       label: t('stats.completedTrips'),
     },
     {
       key: 'totalDays',
-      icon: <Calendar size={16} />, 
+      icon: <Calendar size={18} className="text-atomicTangerine" />, 
       value: `${formatNumber(safeValue(logStats.totalDays))}`,
       label: t('stats.totalDays'),
     },
     {
       key: 'totalStops',
-      icon: <MapPin size={16} />, 
+      icon: <MapPin size={18} className="text-atomicTangerine" />, 
       value: `${formatNumber(safeValue(logStats.totalStops))}`,
       label: t('stats.totalStops'),
     },
   ];
 
   return (
-    <section role="region" aria-label={ariaLabel} className="w-full h-full">
-      <div className="w-full flex items-center justify-between px-3 py-2 gap-3 rounded-2xl bg-white/6 backdrop-blur-sm shadow-sm divide-x divide-white/10 flex-wrap overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-3 pr-3 min-w-0">
-          <div className="min-w-[120px] mr-2">
-            <div className="text-xs text-text-secondary">{t('stats.worldExploredPercentage')}</div>
-            <div className="mt-1 h-2 rounded-full bg-slate-200/20 overflow-hidden">
-              <div className="h-full rounded-full bg-atomicTangerine" style={{ width: `${worldPct}%` }} />
-            </div>
-            <div className="mt-1 text-sm font-extrabold text-charcoalBlue">{Math.round(worldPct)}%</div>
+    <section role="region" aria-label={ariaLabel} className={containerClassName}>
+      <div className="w-full bg-gradient-to-r from-white/8 to-white/4 backdrop-blur-md shadow-lg border border-white/10 rounded-2xl p-4 md:p-5">
+        {/* Progress Bar Section */}
+        <div className="mb-4 pb-4 border-b border-white/5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase text-text-secondary tracking-wider">{t('stats.worldExploredPercentage')}</span>
+            <span className="text-lg font-black text-atomicTangerine">{Math.round(worldPct)}%</span>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            {items.map((it) => (
-              <div key={it.key} className="flex items-center gap-2 px-3 text-left min-w-[84px]">
-                <div className="flex flex-col">
-                  <span className="text-sm font-extrabold text-charcoalBlue">{it.value}</span>
-                  <span className="text-xs text-text-secondary">{it.label}</span>
-                </div>
-              </div>
-            ))}
+          <div className="h-2.5 rounded-full bg-white/10 overflow-hidden">
+            <div 
+              className="h-full rounded-full bg-gradient-to-r from-atomicTangerine to-mutedTeal transition-all duration-500" 
+              style={{ width: `${worldPct}%` }} 
+            />
           </div>
         </div>
 
-        <div className="pl-3 flex items-center justify-end min-w-0">
-          {/* optional small CTA or placeholder for future items - left empty intentionally */}
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {items.map((it) => (
+            <div key={it.key} className="flex flex-col items-start justify-start">
+              <div className="flex items-center gap-2 mb-1">
+                {it.icon}
+                <span className="text-xs font-bold uppercase text-text-secondary tracking-wide">{it.label}</span>
+              </div>
+              <span className="text-xl md:text-2xl font-black text-atomicTangerine drop-shadow-lg">{it.value}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>

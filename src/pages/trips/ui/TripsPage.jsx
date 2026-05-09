@@ -72,6 +72,7 @@ const TripsPage = () => {
           logStats={tripsLogStats}
           ariaLabel={t('stats.tripSummary')}
           variant="compact"
+          containerClassName="w-fit mx-auto max-w-sm justify-center"
         />
       </div>
 
