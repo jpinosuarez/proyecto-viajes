@@ -57,7 +57,7 @@ const BentoTripGrid = ({ trips = [], tripData = {}, onEdit, onDelete, priorityIm
               exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.2 } }}
               transition={{ type: 'spring', stiffness: 100, damping: 20, delay: index * 0.08 }}
               className={cn(
-                "rounded-2xl overflow-hidden min-h-[250px]",
+                "rounded-2xl overflow-hidden min-h-0 h-full",
                 colSpan === 2 && "md:col-span-2",
                 rowSpan === 2 && "md:row-span-2"
               )}
