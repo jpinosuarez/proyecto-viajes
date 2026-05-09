@@ -1,49 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { openTripActionMenu } from './utils/trip-interactions';
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
 
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 
-async function createAuthUser(email: string, password = 'testpass') {
-  const signUpRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, returnSecureToken: true })
-  });
-  const signUpJson = await signUpRes.json();
-
-  // If the user already exists, sign them in to reuse the account.
-  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
-    const signInRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true })
-    });
-    return signInRes.json();
-  }
-
-  return signUpJson;
-}
-
-async function signInInBrowser(page, email: string, password = 'testpass') {
-  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
-  await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email, password });
-  await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 15000 });
-}
-
-async function ensureAuthenticatedShell(page, email: string, password: string) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await signInInBrowser(page, email, password);
-    const onLanding = await page.getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i }).isVisible().catch(() => false);
-    if (!onLanding) {
-      return;
-    }
-  }
-
-  throw new Error('Could not stabilize an authenticated app shell session.');
-}
 
 async function openSearchPalette(page, email: string, password: string) {
-  await ensureAuthenticatedShell(page, email, password);
+  await stabilizeAuthenticatedSession(page, email, password);
 
   const searchInputByRole = page.getByRole('textbox', { name: /Search|Buscar/i }).first();
   if (await searchInputByRole.isVisible().catch(() => false)) {
@@ -98,7 +60,7 @@ test.describe('Create trip from search modal (E2E)', () => {
     // Assert no overflow style conflict warning appears
     await expect(consoleWarnings).not.toContainEqual(expect.stringContaining('Updating a style property during rerender (overflow)'));
 
-    await ensureAuthenticatedShell(page, userEmail, password);
+    await stabilizeAuthenticatedSession(page, userEmail, password);
 
     // Intercept Mapbox API to avoid external dependency and return a stable result
     await page.route('https://api.mapbox.com/**', (route) => {

@@ -1,61 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openTripEditorById } from './utils/trip-interactions';
-
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
-
-async function createAuthUser(email: string, password = 'testpass') {
-  const signUpResponse = await fetch(
-    `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true }),
-    }
-  );
-  const signUpJson = await signUpResponse.json();
-
-  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
-    const signInResponse = await fetch(
-      `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      }
-    );
-    return signInResponse.json();
-  }
-
-  return signUpJson;
-}
-
-async function signInInBrowser(page, email: string, password = 'testpass') {
-  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
-  await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), {
-    email,
-    password,
-  });
-  await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 15000 });
-}
-
-async function ensureAuthenticatedShell(page, email: string, password: string) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await signInInBrowser(page, email, password);
-    const isOnLanding = await page
-      .getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i })
-      .isVisible()
-      .catch(() => false);
-
-    if (!isOnLanding) {
-      return;
-    }
-  }
-
-  throw new Error('Could not stabilize an authenticated app shell session.');
-}
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
 
 async function openSearchPalette(page, email: string, password: string) {
-  await ensureAuthenticatedShell(page, email, password);
+  await stabilizeAuthenticatedSession(page, email, password);
 
   const searchInputByRole = page.getByRole('textbox', { name: /Search|Buscar/i }).first();
   if (await searchInputByRole.isVisible().catch(() => false)) {

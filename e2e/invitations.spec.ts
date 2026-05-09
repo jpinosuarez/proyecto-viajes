@@ -1,28 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { openTripActionMenu } from './utils/trip-interactions';
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
 
 const FIREBASE_PROJECT = process.env.VITE_FIREBASE_PROJECT_ID || 'keeptrip-app-b06b3';
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 const FIRESTORE_EMULATOR_URL = 'http://127.0.0.1:8081';
-
-async function createAuthUser(email: string, password = 'testpass') {
-  const signUpRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, returnSecureToken: true })
-  });
-  const signUpJson = await signUpRes.json();
-  // If the user already exists, sign them in and return the existing localId
-  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
-    const signInRes = await fetch(`${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true })
-    });
-    return signInRes.json();
-  }
-  return signUpJson;
-}
 
 async function createFirestoreDocument(path: string, fields: any, documentId?: string) {
   // Use emulator admin REST endpoint to bypass security rules for seeding test data
@@ -41,20 +22,6 @@ async function getFirestoreDocument(path: string) {
   const url = `${FIRESTORE_EMULATOR_URL}/emulator/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/${path}`;
   const res = await fetch(url);
   return res.ok ? res.json() : null;
-}
-
-async function signInInBrowser(page, email: string, password = 'testpass') {
-  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
-  await page.evaluate(({ email, password }) => (window as any).__test_signInWithEmail({ email, password }), { email, password });
-  await page.waitForSelector('[data-testid="header-avatar"]', { timeout: 15000 });
-}
-
-async function stabilizeAuthenticatedSession(page, email: string, password = 'testpass') {
-  const loginVisible = await page.getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i }).count();
-  if (loginVisible > 0) {
-    await signInInBrowser(page, email, password);
-  }
-  await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 15000 });
 }
 
 async function navigateInApp(page, path: string) {

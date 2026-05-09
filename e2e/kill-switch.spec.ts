@@ -1,6 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-
-const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
 const FIRESTORE_PROJECT_ID = 'keeptrip-app-b06b3';
 const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8081';
 const OPERATIONAL_FLAGS_DOC_URL = `http://${FIRESTORE_EMULATOR_HOST}/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/system/operational_flags`;
@@ -41,54 +40,7 @@ async function setOperationalLevel(level: number) {
   }
 }
 
-async function createAuthUser(email: string, password = 'testpass') {
-  const signUpResponse = await fetch(
-    `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true }),
-    }
-  );
-  const signUpJson = await signUpResponse.json();
 
-  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
-    const signInResponse = await fetch(
-      `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, returnSecureToken: true }),
-      }
-    );
-    return signInResponse.json();
-  }
-
-  return signUpJson;
-}
-
-async function signInInBrowser(page: Page, email: string, password = 'testpass') {
-  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function');
-  await page.evaluate(
-    ({ email: currentEmail, password: currentPassword }) =>
-      (window as any).__test_signInWithEmail({ email: currentEmail, password: currentPassword }),
-    { email, password }
-  );
-}
-
-async function ensureAuthenticatedShell(page: Page, email: string, password: string) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    await signInInBrowser(page, email, password);
-    const isOnLanding = await page
-      .getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i })
-      .isVisible()
-      .catch(() => false);
-
-    if (!isOnLanding) return;
-  }
-
-  throw new Error('Could not stabilize an authenticated app shell session.');
-}
 
 async function openSearchPalette(page: Page) {
   await page.waitForFunction(() => typeof (window as any).__test_abrirSearchPalette === 'function');
@@ -137,7 +89,7 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
-    await ensureAuthenticatedShell(page, email, password);
+    await stabilizeAuthenticatedSession(page, email, password);
 
     const searchInput = await openSearchPalette(page);
     await expect(searchInput).toBeVisible({ timeout: 15000 });
@@ -165,7 +117,7 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
-    await ensureAuthenticatedShell(page, email, password);
+    await stabilizeAuthenticatedSession(page, email, password);
 
     await page.waitForFunction(() => typeof (window as any).__test_navigate === 'function');
     await page.evaluate(() => (window as any).__test_navigate('/map'));
