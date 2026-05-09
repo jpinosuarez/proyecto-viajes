@@ -71,7 +71,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-6 overflow-hidden">
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gradient-to-t from-black/40 via-black/10 to-transparent p-4 md:p-6 overflow-hidden">
       <Motion.div
         ref={modalRef}
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -135,7 +135,7 @@ const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSav
               >
                 {/* Aquí irían otros campos de info general si los hubiera */}
                 <div className="bg-surface p-6 rounded-2xl border border-border shadow-sm">
-                  <h3 id="modal-title" className="text-lg font-bold text-charcoalBlue mb-4">{t('info.generalTitle')}</h3>
+                  <h3 id="modal-title" className="text-lg font-bold text-charcoalBlue mb-4 drop-shadow-lg">{t('info.generalTitle')}</h3>
                   <p className="text-[0.9rem] text-textSecondary leading-relaxed">
                     {t('info.generalDescription')}
                   </p>

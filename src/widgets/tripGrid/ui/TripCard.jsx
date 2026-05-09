@@ -149,7 +149,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
           ) : (
             <div className="relative w-full h-full overflow-hidden" aria-hidden="true">
               <div className={cn(
-                "grid w-full h-full blur-sm scale-105 opacity-35",
+                "grid w-full h-full scale-105 opacity-35",
                 auraFlags.length <= 1 ? "grid-cols-1 grid-rows-1" : 
                 auraFlags.length === 2 ? "grid-cols-1 grid-rows-2" : "grid-cols-2 grid-rows-2"
               )}>
@@ -166,11 +166,11 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
                   />
                 ))}
               </div>
-              <div className="absolute inset-0 bg-slate-900/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
             </div>
           )}
         </Motion.div>
-        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
       </div>
       
       {/* Content Wrapper */}
@@ -266,17 +266,17 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
         
         {/* Bottom Content */}
         <div className="p-4 pt-0 w-full flex flex-col gap-2 mt-auto pointer-events-none">
-        <h4 className="m-0 text-xl font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] truncate leading-[1.1] tracking-tighter font-heading">
+        <h4 className="m-0 text-xl font-black text-white drop-shadow-lg truncate leading-[1.1] tracking-tighter font-heading">
           {title}
         </h4>
         <div className="flex flex-wrap items-center gap-1 min-w-0">
-          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading">
+          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading drop-shadow-lg">
             <Calendar size={14} /> {datePillText}
           </span>
-          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading">
+          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading drop-shadow-lg">
             <MapPin size={14} /> {citiesPillText}
           </span>
-          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading">
+          <span className="bg-white/20 backdrop-blur-lg border border-white/30 shadow-md rounded-full px-2.5 py-1 flex items-center gap-1.5 text-white text-[0.75rem] font-bold tracking-wide font-heading drop-shadow-lg">
             <Clock size={14} /> {durationPillText}
           </span>
         </div>
