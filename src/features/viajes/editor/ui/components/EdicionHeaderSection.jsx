@@ -200,7 +200,7 @@ const EdicionHeaderSection = ({
               {dedupedFlagVisuals.length > 0 ? (
                 dedupedFlagVisuals.map((flagVisual, idx) => {
                   const commonClasses = cn(
-                    "w-[30px] h-[30px] rounded-full border-2 border-surface shadow-sm bg-surface shrink-0 relative overflow-hidden",
+                    "w-[30px] h-[30px] rounded-full border-2 border-border-light shadow-sm bg-surface shrink-0 relative overflow-hidden",
                     idx > 0 && "-ml-2.5"
                   );
                   const commonStyles = { zIndex: 10 - idx };
@@ -211,7 +211,7 @@ const EdicionHeaderSection = ({
                         key={`${flagVisual.type}-${flagVisual.value}-${idx}`}
                         role="img"
                         aria-label={t('labels.flagAlt', 'Country flag')}
-                        className={cn(commonClasses, "inline-flex items-center justify-center text-[1rem] leading-none drop-shadow-md border-slate-100")}
+                        className={cn(commonClasses, "inline-flex items-center justify-center text-[1rem] leading-none drop-shadow-sm")}
                         style={commonStyles}
                       >
                         {flagVisual.value}
@@ -226,7 +226,7 @@ const EdicionHeaderSection = ({
                       alt={t('labels.flagAlt', 'Country flag')}
                       width="24"
                       height="24"
-                      className={cn(commonClasses, "object-cover inline-block border border-slate-100 drop-shadow-md")}
+                      className={cn(commonClasses, "object-cover inline-block drop-shadow-sm")}
                       style={commonStyles}
                       loading="lazy"
                       onError={(e) => {
@@ -245,7 +245,7 @@ const EdicionHeaderSection = ({
                 <span
                   role="img"
                   aria-label={t('labels.flagAlt', 'Country flag')}
-                  className="w-[30px] h-[30px] rounded-full border-2 border-surface shadow-sm bg-surface inline-flex items-center justify-center text-[1rem] leading-none shrink-0 relative z-10"
+                  className="w-[30px] h-[30px] rounded-full border-2 border-border-light shadow-sm bg-surface inline-flex items-center justify-center text-[1rem] leading-none shrink-0 relative z-10"
                 >
                   🌍
                 </span>

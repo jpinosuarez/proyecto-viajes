@@ -150,7 +150,7 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'hero' }) => 
     {
       key: 'worldExploredPercentage',
       hero: true,
-      className: "col-span-2 lg:col-span-2",
+      className: "col-span-1 sm:col-span-2 lg:col-span-3",
       stat: stats.worldExploredPercentage,
     },
     {
@@ -178,7 +178,7 @@ const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'hero' }) => 
   return (
     <section role="region" aria-label={ariaLabel} className="w-full h-full">
       <div className={cn(
-        "grid grid-cols-2 lg:grid-cols-3 gap-3 w-full mx-auto justify-center",
+        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full mx-auto justify-center",
         isCompact ? "items-center" : "items-stretch"
       )}>
         {cards.map((card, index) => (

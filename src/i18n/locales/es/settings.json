@@ -39,6 +39,9 @@
   "avatarHint": "Max 15MB, JPG/PNG",
   "avatarUploadSuccess": "Avatar actualizado correctamente.",
   "avatarUploadError": "No se pudo subir el avatar. Intenta de nuevo.",
+  "footer": {
+    "appVersion": "Versión de la app"
+  },
   "deleteAccount": "Eliminar cuenta",
   "deleteAccountTitle": "Eliminar cuenta",
   "deleteAccountMessage": "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",

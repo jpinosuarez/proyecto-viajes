@@ -39,6 +39,9 @@
   "avatarHint": "Max 15MB, JPG/PNG",
   "avatarUploadSuccess": "Avatar updated!",
   "avatarUploadError": "Upload failed. Please try again.",
+  "footer": {
+    "appVersion": "App Version"
+  },
   "deleteAccount": "Delete account",
   "deleteAccountTitle": "Delete account",
   "deleteAccountMessage": "This will permanently delete your account and all your data. This action cannot be undone.",

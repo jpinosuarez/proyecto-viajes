@@ -191,7 +191,7 @@ const CityManager = ({ t, paradas, setParadas, tripStartDate, isReadOnlyMode = f
                       <img
                         src={flag}
                         alt="flag"
-                        className="w-7 h-7 rounded-full object-cover shadow-sm"
+                        className="w-7 h-7 rounded-full object-cover shadow-sm border border-border-light drop-shadow-sm"
                       />
                     ) : (
                       <MapPin size={16} className="text-textSecondary" />
@@ -226,7 +226,7 @@ const CityManager = ({ t, paradas, setParadas, tripStartDate, isReadOnlyMode = f
           <div key={p.id ?? `parada-${index}-${p.nombre}`} className="bg-surface border border-border p-3.5 rounded-md shadow-sm" data-testid="editor-stop-item">
             <div className="flex justify-between items-center mb-3">
                <div className="flex items-center gap-2">
-                   {p.flag && <img src={p.flag} alt="flag" className="w-6 rounded-sm border border-slate-100" />}
+                   {p.flag && <img src={p.flag} alt="flag" className="w-6 rounded-sm border border-border-light drop-shadow-sm" />}
                    <span className="font-bold text-[0.95rem] text-charcoalBlue">{p.nombre}</span>
                </div>
                <div className="flex gap-1.5">
