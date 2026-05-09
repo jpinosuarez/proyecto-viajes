@@ -137,7 +137,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
             x: isMobile ? 0 : bgX,
             y: isMobile ? 0 : bgY
           }} 
-          className="absolute -inset-[10%] w-[120%] h-[120%] bg-mutedTeal will-change-transform overflow-hidden rounded-[inherit]"
+          className="absolute -inset-[10%] w-[120%] h-[120%] will-change-transform overflow-hidden rounded-[inherit]"
         >
           {!isDefaultPhoto ? (
             <img 
@@ -147,9 +147,9 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
               loading={priorityImage ? "eager" : "lazy"}
             />
           ) : (
-            <div className="relative w-full h-full overflow-hidden" aria-hidden="true">
+            <div className="relative w-full h-full overflow-hidden bg-slate-900/10" aria-hidden="true">
               <div className={cn(
-                "grid w-full h-full scale-105 opacity-35",
+                "grid w-full h-full",
                 auraFlags.length <= 1 ? "grid-cols-1 grid-rows-1" : 
                 auraFlags.length === 2 ? "grid-cols-1 grid-rows-2" : "grid-cols-2 grid-rows-2"
               )}>
@@ -166,11 +166,11 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
                   />
                 ))}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-black/20 pointer-events-none" />
             </div>
           )}
         </Motion.div>
-        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 z-[1] bg-black/20 pointer-events-none" />
       </div>
       
       {/* Content Wrapper */}
