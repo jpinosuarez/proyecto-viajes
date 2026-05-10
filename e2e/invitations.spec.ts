@@ -136,7 +136,7 @@ test.describe('Invitations flow (E2E)', () => {
         inviteeUid,
         viajeId,
         status: 'pending',
-        createdAt: new Date().toISOString()
+        createdAt: Date.now()
       });
     }, { ownerUid, viajeId, inviteeUid });
 
@@ -146,7 +146,7 @@ test.describe('Invitations flow (E2E)', () => {
         inviteeUid,
         viajeId,
         status: 'pending',
-        createdAt: new Date().toISOString()
+        createdAt: Date.now()
       });
     }, { invitationId, ownerUid, inviteeUid, viajeId });
 
@@ -219,9 +219,8 @@ test.describe('Invitations flow (E2E)', () => {
 
     await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje declinado', nombreEspanol: 'Ciudad Decline', code: 'DC', sharedWith: [] }), { ownerUid, viajeId });
 
-    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { ownerUid, viajeId, inviteeUid });
-
-    await page.evaluate(({ invitationId, ownerUid, inviteeUid, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeUid, viajeId });
+    await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}/invitations/${inviteeUid}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: Date.now() }), { ownerUid, viajeId, inviteeUid });
+    await page.evaluate(({ invitationId, ownerUid, inviteeUid, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeUid, viajeId, status: 'pending', createdAt: Date.now() }), { invitationId, ownerUid, inviteeUid, viajeId });
 
     // sign out owner and sign in as invitee
     await page.evaluate(() => (window as any).__test_signOut());
@@ -237,6 +236,10 @@ test.describe('Invitations flow (E2E)', () => {
     await declineButton.click();
 
     // the UI shows the status text for non-pending invitations — assert it changed to 'declined'
+    await page.waitForFunction((id) => {
+      const el = document.querySelector(`[data-testid="inv-card-${id}"]`);
+      return el && el.textContent.toLowerCase().includes('declined');
+    }, invitationId, { timeout: 15000 });
     await expect(page.getByText('declined').first()).toBeVisible();
 
     // ensure invitations doc status is 'declined' (poll via client read)
@@ -299,6 +302,8 @@ test.describe('Invitations flow (E2E)', () => {
     await navigateInApp(page, '/trips');
     await expect(page).toHaveURL(/\/trips(?:\?.*)?$/);
 
+    // wait for trips grid to load (showing empty state for the attacker)
+    await expect(page.getByTestId('ghost-empty-state')).toBeVisible({ timeout: 15000 });
     // the trip title should NOT be visible for the attacker
     await expect(page.locator('text=Viaje privado compartido')).toHaveCount(0);
   });
@@ -359,7 +364,7 @@ test.describe('Invitations flow (E2E)', () => {
         viajeId,
         status: 'accepted',
         acceptedBy: inviteeUid,
-        createdAt: new Date().toISOString()
+        createdAt: Date.now()
       });
     }, { ownerUid, viajeId, inviteeUid });
 
@@ -370,7 +375,7 @@ test.describe('Invitations flow (E2E)', () => {
         viajeId,
         status: 'accepted',
         acceptedBy: inviteeUid,
-        createdAt: new Date().toISOString()
+        createdAt: Date.now()
       });
     }, { invitationId, ownerUid, inviteeUid, viajeId });
 
@@ -435,7 +440,7 @@ test.describe('Invitations flow (E2E)', () => {
     await page.evaluate(({ ownerUid, viajeId }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje para invitar por email', nombreEspanol: 'Ciudad Email', code: 'EM', sharedWith: [] }), { ownerUid, viajeId });
 
     // create top-level invitation with inviteeEmail (simulates owner sending email invite)
-    await page.evaluate(({ invitationId, ownerUid, inviteeEmail, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeEmail, viajeId, status: 'pending', createdAt: new Date().toISOString() }), { invitationId, ownerUid, inviteeEmail, viajeId });
+    await page.evaluate(({ invitationId, ownerUid, inviteeEmail, viajeId }) => (window as any).__test_createDoc(`invitations/${invitationId}`, { inviterId: ownerUid, inviteeEmail, viajeId, status: 'pending', createdAt: Date.now() }), { invitationId, ownerUid, inviteeEmail, viajeId });
 
     const invDoc = await page.evaluate((path) => (window as any).__test_readDoc(path), `invitations/${invitationId}`);
     expect(invDoc).not.toBeNull();

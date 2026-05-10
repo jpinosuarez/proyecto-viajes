@@ -394,7 +394,7 @@ const SearchPalette = ({
                 onKeyDown={handleKeyDown}
                 autoFocus={!isMobile}
                 style={styles.input}
-                aria-label="Search"
+                aria-label={t('search:inputAria', 'Search')}
                 disabled={isSearchPaused}
               />
               {query && (

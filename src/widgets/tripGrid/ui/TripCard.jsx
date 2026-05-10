@@ -199,7 +199,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
           <button
             ref={buttonRef}
             type="button"
-            className="pointer-events-auto bg-white/25 backdrop-blur-lg border border-white/30 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-md hover:bg-white/40 transition-colors cursor-pointer"
+            className="trip-card-menu-btn pointer-events-auto bg-white/25 backdrop-blur-lg border border-white/30 rounded-full w-11 h-11 flex items-center justify-center text-white shadow-md hover:bg-white/40 transition-colors cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -237,7 +237,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
                     setIsMenuOpen(false);
                     if (onEdit) onEdit(trip.id);
                   }}
-                  className="flex items-center gap-2 w-full p-3 border-none bg-transparent rounded-lg cursor-pointer text-[0.85rem] font-bold text-slate-800 text-left hover:bg-black/5 transition-colors font-heading"
+                  className="portal-menu-item flex items-center gap-2 w-full p-3 border-none bg-transparent rounded-lg cursor-pointer text-[0.85rem] font-bold text-slate-800 text-left hover:bg-black/5 transition-colors font-heading"
                 >
                   <Edit2 size={16} /> <span>{t('card.edit', { ns: 'dashboard', defaultValue: 'Editar viaje' })}</span>
                 </button>
@@ -252,7 +252,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
                       setIsMenuOpen(false);
                       onDelete(trip.id);
                     }}
-                    className="flex items-center gap-2 w-full p-3 border-none bg-transparent rounded-lg cursor-pointer text-[0.85rem] font-bold text-danger text-left hover:bg-danger/10 transition-colors font-heading"
+                    className="portal-menu-item danger flex items-center gap-2 w-full p-3 border-none bg-transparent rounded-lg cursor-pointer text-[0.85rem] font-bold text-danger text-left hover:bg-danger/10 transition-colors font-heading"
                   >
                     <Trash2 size={16} /> <span>{t('card.delete', { ns: 'dashboard', defaultValue: 'Eliminar' })}</span>
                   </button>

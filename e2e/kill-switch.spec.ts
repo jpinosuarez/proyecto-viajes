@@ -46,17 +46,20 @@ async function openSearchPalette(page: Page) {
   await page.waitForFunction(() => typeof (window as any).__test_abrirSearchPalette === 'function');
   await page.evaluate(() => (window as any).__test_abrirSearchPalette());
 
-  const searchInputByRole = page.getByRole('textbox', { name: /Search|Buscar/i }).first();
-  if (await searchInputByRole.isVisible().catch(() => false)) {
+  // Try locating by role first (aria-label="Search" or localized)
+  const searchInputByRole = page.getByRole('textbox', { name: /Search|Buscar|destinos/i }).first();
+  try {
+    await searchInputByRole.waitFor({ state: 'visible', timeout: 5000 });
     return searchInputByRole;
+  } catch (e) {
+    // Fallback to placeholder if role fails
+    const searchInputByPlaceholder = page
+      .getByPlaceholder(/Type a country|Escribe un pa|Search places|trips|ciudad/i)
+      .first();
+
+    await expect(searchInputByPlaceholder).toBeVisible({ timeout: 15000 });
+    return searchInputByPlaceholder;
   }
-
-  const searchInputByPlaceholder = page
-    .getByPlaceholder(/Type a country or city|Escribe un pais o ciudad|Escribe un país o ciudad|Type a country|ciudad/i)
-    .first();
-
-  await expect(searchInputByPlaceholder).toBeVisible({ timeout: 15000 });
-  return searchInputByPlaceholder;
 }
 
 function decodePayload(payload: string | null) {
