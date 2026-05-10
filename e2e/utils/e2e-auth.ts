@@ -86,6 +86,18 @@ export async function e2ePerformLogin(page: Page) {
   const helperTimeout = 20000;
   await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function', { timeout: helperTimeout });
 
+  const waitForFirebaseAuthSession = async () => {
+    await page.waitForFunction(() => {
+      try {
+        return Object.keys(window.localStorage).some((key) => key.startsWith('firebase:authUser:'));
+      } catch (err) {
+        return false;
+      }
+    }, { timeout: 30000 });
+
+    await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 30000 });
+  };
+
   // Helper: consider sign-in successful when either the header avatar becomes visible
   // or Firebase Auth currentUser is available in the page context. This avoids flakiness
   // where UI avatar is hidden by styling/animations while auth state is already set.
@@ -120,18 +132,8 @@ export async function e2ePerformLogin(page: Page) {
         { loginEmail: email, loginPassword: password }
       );
 
-      // Wait until either auth currentUser is set or avatar is visible
-      const start = Date.now();
-      while (Date.now() - start < 30000) {
-        // eslint-disable-next-line no-await-in-loop
-        const status = await checkAuthReady();
-        if (status?.auth || status?.avatarVisible) {
-          signed = true;
-          break;
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await page.waitForTimeout(500);
-      }
+      await waitForFirebaseAuthSession();
+      signed = true;
 
       if (signed) break;
       // otherwise fallthrough to retry
@@ -154,16 +156,13 @@ export async function e2ePerformLogin(page: Page) {
     // Final attempt: assert to fail the test with diagnostics (try auth existence first)
     const finalStatus = await page.evaluate(() => {
       try {
-        // @ts-ignore
-        const fb = (window as any).firebase;
-        const auth = fb?.auth?.();
-        return !!auth?.currentUser;
+        return Object.keys(window.localStorage).some((key) => key.startsWith('firebase:authUser:'));
       } catch (e) {
         return false;
       }
     });
     if (!finalStatus) {
-      await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 20000 });
+      await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 20000 });
     }
   }
 
@@ -176,8 +175,21 @@ export async function e2ePerformLogin(page: Page) {
 // Robust sign-in helper exported for specs to use
 export async function signInInBrowser(page: Page, email: string, password = 'testpass') {
   await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function', { timeout: 20000 });
-  await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
-  await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 30000 });
+  const signInResult = await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
+
+  if (signInResult === false) {
+    throw new Error('Test sign-in helper returned false');
+  }
+
+  await page.waitForFunction(() => {
+    try {
+      return Object.keys(window.localStorage).some((key) => key.startsWith('firebase:authUser:'));
+    } catch (err) {
+      return false;
+    }
+  }, { timeout: 30000 });
+
+  await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 30000 });
 }
 
 export async function stabilizeAuthenticatedSession(page: Page, email: string, password = 'testpass') {
@@ -185,7 +197,7 @@ export async function stabilizeAuthenticatedSession(page: Page, email: string, p
   if (loginVisible > 0) {
     await signInInBrowser(page, email, password);
   }
-  await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 30000 });
 }
 
 export async function e2eCleanupTrip(_page: Page, _tripId: string) {
