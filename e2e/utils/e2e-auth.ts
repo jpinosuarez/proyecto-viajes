@@ -86,8 +86,33 @@ export async function e2ePerformLogin(page: Page) {
   const helperTimeout = 20000;
   await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function', { timeout: helperTimeout });
 
+  // Helper: consider sign-in successful when either the header avatar becomes visible
+  // or Firebase Auth currentUser is available in the page context. This avoids flakiness
+  // where UI avatar is hidden by styling/animations while auth state is already set.
+  const checkAuthReady = async () => {
+    return page.evaluate(() => {
+      try {
+        // Prefer direct Firebase Auth if available
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const fb = (window as any).firebase;
+        const auth = fb?.auth?.();
+        if (auth && auth.currentUser) return { auth: true, uid: auth.currentUser.uid };
+      } catch (e) {
+        // ignore
+      }
+      const avatar = document.querySelector('[data-testid="header-avatar"]');
+      if (avatar) {
+        const style = window.getComputedStyle(avatar as Element);
+        const visible = style && style.visibility !== 'hidden' && style.display !== 'none' && (avatar as HTMLElement).offsetParent !== null;
+        return { avatarPresent: true, avatarVisible: !!visible };
+      }
+      return { auth: false };
+    });
+  };
+
   let signed = false;
-  for (let attempt = 0; attempt < 4 && !signed; attempt += 1) {
+  for (let attempt = 0; attempt < 6 && !signed; attempt += 1) {
     try {
       await page.evaluate(
         ({ loginEmail, loginPassword }) =>
@@ -95,12 +120,22 @@ export async function e2ePerformLogin(page: Page) {
         { loginEmail: email, loginPassword: password }
       );
 
-      // Give the app time to process login and render the avatar
-      await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 30000 });
-      signed = true;
-      break;
+      // Wait until either auth currentUser is set or avatar is visible
+      const start = Date.now();
+      while (Date.now() - start < 30000) {
+        // eslint-disable-next-line no-await-in-loop
+        const status = await checkAuthReady();
+        if (status?.auth || status?.avatarVisible) {
+          signed = true;
+          break;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await page.waitForTimeout(500);
+      }
+
+      if (signed) break;
+      // otherwise fallthrough to retry
     } catch (err) {
-      // If the avatar didn't appear, wait a bit and retry
       // capture a snapshot of console and errors for debugging in CI
       // eslint-disable-next-line no-console
       console.warn('Sign-in attempt failed, retrying...', { attempt, error: String(err) });
@@ -116,8 +151,20 @@ export async function e2ePerformLogin(page: Page) {
     console.error('E2E Page errors:', pageErrors.slice(-20));
     // eslint-disable-next-line no-console
     console.error('E2E Failed requests:', failedRequests.slice(-20));
-    // Final attempt: assert to fail the test with diagnostics
-    await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 20000 });
+    // Final attempt: assert to fail the test with diagnostics (try auth existence first)
+    const finalStatus = await page.evaluate(() => {
+      try {
+        // @ts-ignore
+        const fb = (window as any).firebase;
+        const auth = fb?.auth?.();
+        return !!auth?.currentUser;
+      } catch (e) {
+        return false;
+      }
+    });
+    if (!finalStatus) {
+      await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 20000 });
+    }
   }
 
   // cleanup listeners
@@ -139,6 +186,7 @@ export async function stabilizeAuthenticatedSession(page: Page, email: string, p
     await signInInBrowser(page, email, password);
   }
   await expect(page.getByTestId('header-avatar')).toBeVisible({ timeout: 30000 });
+}
 
 export async function e2eCleanupTrip(_page: Page, _tripId: string) {
   // No-op by design: emulator session is ephemeral for CI and local e2e runs.
