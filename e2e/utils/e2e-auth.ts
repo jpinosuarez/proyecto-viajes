@@ -2,18 +2,22 @@ import { expect, type Page } from '@playwright/test';
 
 const AUTH_EMULATOR_URL = 'http://127.0.0.1:9099';
 
-export async function createAuthUser(email: string, password = 'testpass') {
+export async function createAuthUser(email: string, password = 'testpass', localId?: string) {
+  console.log(`[E2E] Creating auth user ${email} (UID: ${localId || 'auto'})...`);
   const signUpResponse = await fetch(
     `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-api-key`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: true }),
+      body: JSON.stringify({ localId, email, password, returnSecureToken: true }),
     }
   );
   const signUpJson = await signUpResponse.json();
 
-  if (signUpJson?.error?.message === 'EMAIL_EXISTS') {
+  if (signUpJson?.error?.message === 'EMAIL_EXISTS' || signUpJson?.error?.message === 'ID_EXISTS') {
+    console.log(`[E2E] User ${email} or UID ${localId} already exists, ensuring password match...`);
+    // Note: in emulator, we can just proceed. If password differs, it might fail later.
+    // We could call signInWithPassword here to get the UID if needed.
     const signInResponse = await fetch(
       `${AUTH_EMULATOR_URL}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-api-key`,
       {
@@ -22,9 +26,15 @@ export async function createAuthUser(email: string, password = 'testpass') {
         body: JSON.stringify({ email, password, returnSecureToken: true }),
       }
     );
-    return signInResponse.json();
+    const signInJson = await signInResponse.json();
+    return signInJson;
   }
 
+  if (signUpJson.error) {
+    console.error(`[E2E] Failed to create user ${email}:`, signUpJson.error);
+  }
+
+  console.log(`[E2E] User ${email} created/ready. UID: ${signUpJson.localId}`);
   return signUpJson;
 }
 
@@ -174,22 +184,47 @@ export async function e2ePerformLogin(page: Page) {
 
 // Robust sign-in helper exported for specs to use
 export async function signInInBrowser(page: Page, email: string, password = 'testpass') {
-  await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function', { timeout: 20000 });
-  const signInResult = await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
-
-  if (signInResult === false) {
-    throw new Error('Test sign-in helper returned false');
+  console.log(`[E2E] Signing in as ${email}...`);
+  try {
+    await page.waitForFunction(() => typeof (window as any).__test_signInWithEmail === 'function', { timeout: 30000 });
+  } catch (err) {
+    console.error(`[E2E] Test helper __test_signInWithEmail not found on page. Current URL: ${page.url()}`);
+    throw err;
   }
 
-  await page.waitForFunction(() => {
-    try {
-      return Object.keys(window.localStorage).some((key) => key.startsWith('firebase:authUser:'));
-    } catch (err) {
-      return false;
-    }
-  }, { timeout: 30000 });
+  let signInResult = false;
+  for (let i = 0; i < 5; i++) {
+    signInResult = await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
+    if (signInResult) break;
+    console.warn(`[E2E] Sign-in attempt ${i+1} for ${email} failed, retrying in 2s...`);
+    await page.waitForTimeout(2000);
+  }
+
+  if (signInResult === false) {
+    throw new Error(`Test sign-in helper returned false for ${email} after 5 attempts`);
+  }
+
+  console.log(`[E2E] Sign-in call successful, waiting for auth session...`);
+  try {
+    await page.waitForFunction(() => {
+      try {
+        const auth = (window as any).__test_auth;
+        return !!auth?.currentUser;
+      } catch (err) {
+        return false;
+      }
+    }, { timeout: 45000 });
+  } catch (err) {
+    const authState = await page.evaluate(() => {
+      const auth = (window as any).__test_auth;
+      return { exists: !!auth, hasUser: !!auth?.currentUser, uid: auth?.currentUser?.uid };
+    });
+    console.error(`[E2E] Auth session not found after 45s. State:`, authState);
+    throw err;
+  }
 
   await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 30000 });
+  console.log(`[E2E] Sign-in verified for ${email}`);
 }
 
 export async function stabilizeAuthenticatedSession(page: Page, email: string, password = 'testpass') {

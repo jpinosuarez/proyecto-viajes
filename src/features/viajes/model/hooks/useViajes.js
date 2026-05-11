@@ -176,6 +176,11 @@ export const useViajes = () => {
               !viajesConOwner.some((viaje) => viaje.id === item.id)
           );
           const next = [...viajesConOwner, ...pendingPersonal, ...compartidos];
+          
+          if (compartidos.length > 0) {
+            console.log(`[E2E DEBUG] onData merging ${viajesConOwner.length} personal and ${compartidos.length} shared trips. Total: ${next.length}`);
+          }
+          
           const sharedStops = allStopsRef.current.filter((item) => item.ownerId !== userUid);
           setBitacoraData(construirBitacoraData(next, [...paradasConOwner, ...sharedStops]));
           return next;
@@ -211,6 +216,7 @@ export const useViajes = () => {
         const personales = prev.filter((item) => item.ownerId === userUid);
         const compartidos = prev.filter((item) => item.ownerId !== userUid && `${item.ownerId}/${item.id}` !== key);
         const next = [...personales, ...compartidos, { ...viaje, ownerId }];
+        console.log(`[E2E DEBUG] upsertSharedViaje: ${key}. Bitacora size: ${next.length}`);
         setBitacoraData(construirBitacoraData(next, allStopsRef.current));
         return next;
       });

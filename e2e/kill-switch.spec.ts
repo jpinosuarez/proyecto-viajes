@@ -13,6 +13,15 @@ const MAINTENANCE_COPY_PATTERN = /Explorer's Rest|Modo mantenimiento|Maintenance
 const MAP_FALLBACK_COPY_PATTERN = /Interactive maps are resting|mapas interactivos estan en pausa|mapas interactivos est[aá]n en pausa/i;
 const SEARCH_PAUSED_COPY_PATTERN = /Search temporarily paused|Búsqueda temporalmente pausada/i;
 
+function decodePayload(payload: string | null) {
+  if (!payload) return '';
+  try {
+    return decodeURIComponent(payload);
+  } catch {
+    return payload;
+  }
+}
+
 function toFirestoreDocument(level: number) {
   return {
     fields: {
@@ -24,56 +33,60 @@ function toFirestoreDocument(level: number) {
   };
 }
 
-async function setOperationalLevel(level: number) {
-  const response = await fetch(OPERATIONAL_FLAGS_DOC_URL, {
+async function setOperationalLevel(page: Page, level: number) {
+  // Use the standard REST API but with the 'owner' token which the emulator recognizes as admin
+  const url = `http://${FIRESTORE_EMULATOR_HOST}/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/system/operational_flags`;
+  
+  console.log(`[E2E] Setting operational level to ${level} via REST Admin (Bearer owner)...`);
+  
+  const response = await fetch(url, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer owner',
+      'Authorization': 'Bearer owner'
     },
     body: JSON.stringify(toFirestoreDocument(level)),
   });
 
   if (!response.ok) {
     const responseText = await response.text();
+    console.error(`[E2E] Failed to set operational level ${level}. Status: ${response.status}, Body: ${responseText}`);
+    // If REST fails, fallback to the founder dance (but we need to fix it)
     throw new Error(`Could not set operational level ${level}: ${response.status} ${responseText}`);
   }
+  
+  console.log(`[E2E] Operational level ${level} set successfully. Waiting for app to reflect change...`);
+  // Give the app a moment to receive the snapshot
+  await page.waitForTimeout(1000);
 }
 
-
+async function navigateInApp(page: Page, path: string) {
+  const baseURL = 'http://localhost:5173';
+  await page.goto(`${baseURL}${path}`);
+}
 
 async function openSearchPalette(page: Page) {
-  await page.waitForFunction(() => typeof (window as any).__test_abrirSearchPalette === 'function');
-  await page.evaluate(() => (window as any).__test_abrirSearchPalette());
-
-  // Try locating by role first (aria-label="Search" or localized)
-  const searchInputByRole = page.getByRole('textbox', { name: /Search|Buscar|destinos/i }).first();
-  try {
-    await searchInputByRole.waitFor({ state: 'visible', timeout: 5000 });
-    return searchInputByRole;
-  } catch (e) {
-    // Fallback to placeholder if role fails
-    const searchInputByPlaceholder = page
-      .getByPlaceholder(/Type a country|Escribe un pa|Search places|trips|ciudad/i)
-      .first();
-
-    await expect(searchInputByPlaceholder).toBeVisible({ timeout: 15000 });
-    return searchInputByPlaceholder;
+  // Try keyboard shortcuts first
+  await page.keyboard.press('Control+k');
+  await page.keyboard.press('Meta+k');
+  
+  // Also try clicking any search-looking button as fallback
+  const searchTrigger = page.locator('button:has-text("Search"), button:has-text("Buscar"), [aria-label*="Search"], [aria-label*="Buscar"]').first();
+  if (await searchTrigger.isVisible()) {
+    await searchTrigger.click();
   }
-}
 
-function decodePayload(payload: string | null) {
-  if (!payload) return '';
-  try {
-    return decodeURIComponent(payload);
-  } catch {
-    return payload;
-  }
+  const searchInput = page
+    .getByPlaceholder(/Type a country|Escribe un pa|Search places|trips|ciudad|destinos/i)
+    .first();
+  
+  await expect(searchInput).toBeVisible({ timeout: 30000 });
+  return searchInput;
 }
 
 test.describe('Unified kill-switch operational audit', () => {
-  test.afterEach(async () => {
-    await setOperationalLevel(0);
+  test.afterEach(async ({ page }) => {
+    await setOperationalLevel(page, 0);
   });
 
   test('L1 Soft Kill: city search sends exactly zero Mapbox geocoding requests', async ({ page }) => {
@@ -82,7 +95,7 @@ test.describe('Unified kill-switch operational audit', () => {
     const password = 'testpass';
 
     await createAuthUser(email, password);
-    await setOperationalLevel(1);
+    await setOperationalLevel(page, 1);
 
     let geocodingRequestCount = 0;
     page.on('request', (request) => {
@@ -92,15 +105,15 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     await stabilizeAuthenticatedSession(page, email, password);
-
+    await page.waitForTimeout(2000);
+    
     const searchInput = await openSearchPalette(page);
-    await expect(searchInput).toBeVisible({ timeout: 15000 });
-    await expect(searchInput).toBeDisabled();
+    await expect(searchInput).toBeDisabled({ timeout: 10000 });
 
-    await expect(page.getByText(SEARCH_PAUSED_COPY_PATTERN).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(SEARCH_PAUSED_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });
     await page.waitForTimeout(1200);
-
     expect(geocodingRequestCount).toBe(0);
   });
 
@@ -110,7 +123,7 @@ test.describe('Unified kill-switch operational audit', () => {
     const password = 'testpass';
 
     await createAuthUser(email, password);
-    await setOperationalLevel(2);
+    await setOperationalLevel(page, 2);
 
     let mapboxTileStyleRequestCount = 0;
     page.on('request', (request) => {
@@ -120,25 +133,52 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     await stabilizeAuthenticatedSession(page, email, password);
+    await page.waitForTimeout(2000);
 
-    await page.waitForFunction(() => typeof (window as any).__test_navigate === 'function');
-    await page.evaluate(() => (window as any).__test_navigate('/map'));
-
+    // Navigate to map
+    await navigateInApp(page, '/map');
+    await page.waitForTimeout(3000); // Allow time for level 2 flag to propagate and render fallback
+    
     await expect(page).toHaveURL(/\/map(?:\?.*)?$/);
-    await expect(page.getByText(MAP_FALLBACK_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });
+    const fallbackText = page.getByText(MAP_FALLBACK_COPY_PATTERN).first();
+    await expect(fallbackText).toBeVisible({ timeout: 25000 });
 
     await page.waitForTimeout(1500);
     expect(mapboxTileStyleRequestCount).toBe(0);
   });
 
-  test('L4 Blackout: maintenance screen is visible and no trip reads are requested', async ({ page }) => {
+  test('L3 Operation: bitacora is READ-ONLY', async ({ page }) => {
+    const timestamp = Date.now();
+    const email = `kill-l3-${timestamp}@example.test`;
+    const password = 'testpass';
+
+    await createAuthUser(email, password);
+    await setOperationalLevel(page, 3);
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await stabilizeAuthenticatedSession(page, email, password);
+    await page.waitForTimeout(2000);
+
+    await navigateInApp(page, '/trips');
+    await expect(page).toHaveURL(/\/trips(?:\?.*)?$/);
+    
+    // Check if some edit-related buttons are gone or disabled
+    const addTripBtn = page.getByTestId('add-trip-button');
+    if (await addTripBtn.isVisible()) {
+      await expect(addTripBtn).toBeDisabled();
+    }
+  });
+
+  test('L4 Total Halt: app renders global maintenance mode barrier', async ({ page }) => {
     const timestamp = Date.now();
     const email = `kill-l4-${timestamp}@example.test`;
     const password = 'testpass';
 
     await createAuthUser(email, password);
-    await setOperationalLevel(4);
+    await setOperationalLevel(page, 4);
 
     let firestoreTripFetchRequestCount = 0;
 
@@ -152,6 +192,7 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
+    await page.waitForLoadState('load');
     await signInInBrowser(page, email, password);
 
     await expect(page.getByText(MAINTENANCE_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });

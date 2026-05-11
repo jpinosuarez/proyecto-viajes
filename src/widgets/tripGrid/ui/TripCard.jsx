@@ -111,6 +111,7 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
   return (
     <Motion.div
       data-testid={`trip-card-${trip.id}`}
+      aria-label={cardAriaLabel}
       ref={cardRef}
       style={{
         rotateX: isMobile ? 0 : rotateX,
