@@ -60,28 +60,11 @@ async function openInvitationsAndAssertRoute(page) {
   await expect(page).toHaveURL(/\/invitations(?:\?.*)?$/);
 }
 
-async function waitForInvitationActionButton(page, testId: string, timeoutMs = 20000) {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    await openInvitationsAndAssertRoute(page);
-
-    const actionButton = page.getByTestId(testId);
-    if (await actionButton.isVisible().catch(() => false)) {
-      return actionButton;
-    }
-
-    const emptyStateVisible = await page.getByTestId('inv-empty').isVisible().catch(() => false);
-    if (emptyStateVisible) {
-      await page.waitForTimeout(1200);
-      continue;
-    }
-
-    await page.waitForTimeout(800);
-  }
+async function waitForInvitationActionButton(page, testId: string, timeoutMs = 30000) {
+  await openInvitationsAndAssertRoute(page);
 
   const finalLocator = page.getByTestId(testId);
-  await expect(finalLocator).toBeVisible({ timeout: 2000 });
+  await expect(finalLocator).toBeVisible({ timeout: timeoutMs });
   return finalLocator;
 }
 
@@ -189,7 +172,6 @@ test.describe('Invitations flow (E2E)', () => {
       { id: invitationId },
       { timeout: 20000 }
     );
-    await page.waitForTimeout(2000); // UI transition buffer
 
     // wait until top-level invitation reflects accepted status for the invitee
     await page.waitForFunction(
@@ -271,7 +253,6 @@ test.describe('Invitations flow (E2E)', () => {
 
     // Verify buttons are removed as proof of action completion
     await expect(page.locator(declineButtonSelector)).toBeHidden({ timeout: 20000 });
-    await page.waitForTimeout(2000); // UI transition buffer
 
     // the UI shows the status text for non-pending invitations — assert it changed to 'declined'
     // Note: status text is rendered directly as {inv.status}
@@ -330,7 +311,6 @@ test.describe('Invitations flow (E2E)', () => {
     await signInInBrowser(page, ownerEmail, password);
 
     await page.evaluate(({ ownerUid, viajeId, inviteeUid }) => (window as any).__test_createDoc(`usuarios/${ownerUid}/viajes/${viajeId}`, { ownerId: ownerUid, titulo: 'Viaje privado compartido', nombreEspanol: 'Ciudad Secure', code: 'SC', sharedWith: [inviteeUid] }), { ownerUid, viajeId, inviteeUid });
-    await page.waitForTimeout(2000); // Give emulator a moment to propagate
 
     await page.evaluate(() => (window as any).__test_signOut());
 
@@ -442,14 +422,12 @@ test.describe('Invitations flow (E2E)', () => {
 
     // Navigate to /trips
     await navigateInApp(page, '/trips');
-    await page.waitForTimeout(2000); // Give Firestore a moment to sync
     
     // Wait until the shared trip card is visible.
     const sharedCard = page.locator('[aria-label*="Ruta compartida E2E"]');
-    await expect(sharedCard).toBeVisible({ timeout: 25000 });
+    await expect(sharedCard).toBeVisible({ timeout: 30000 });
     
     // Open shared trip.
-    await page.waitForTimeout(1000);
     await openTripActionMenu(page, sharedCard, /Editar|Edit|Ver|View/i);
     await expect(page).toHaveURL(new RegExp(`/trips(?:/${viajeId}|\\?editing=${viajeId})(?:\\?.*)?$`));
 

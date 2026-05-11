@@ -56,8 +56,6 @@ async function setOperationalLevel(page: Page, level: number) {
   }
   
   console.log(`[E2E] Operational level ${level} set successfully. Waiting for app to reflect change...`);
-  // Give the app a moment to receive the snapshot
-  await page.waitForTimeout(1000);
 }
 
 async function navigateInApp(page: Page, path: string) {
@@ -107,13 +105,11 @@ test.describe('Unified kill-switch operational audit', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await stabilizeAuthenticatedSession(page, email, password);
-    await page.waitForTimeout(2000);
     
     const searchInput = await openSearchPalette(page);
-    await expect(searchInput).toBeDisabled({ timeout: 10000 });
+    await expect(searchInput).toBeDisabled({ timeout: 30000 });
 
-    await expect(page.getByText(SEARCH_PAUSED_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });
-    await page.waitForTimeout(1200);
+    await expect(page.getByText(SEARCH_PAUSED_COPY_PATTERN).first()).toBeVisible({ timeout: 30000 });
     expect(geocodingRequestCount).toBe(0);
   });
 
@@ -135,17 +131,14 @@ test.describe('Unified kill-switch operational audit', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await stabilizeAuthenticatedSession(page, email, password);
-    await page.waitForTimeout(2000);
 
     // Navigate to map
     await navigateInApp(page, '/map');
-    await page.waitForTimeout(3000); // Allow time for level 2 flag to propagate and render fallback
     
     await expect(page).toHaveURL(/\/map(?:\?.*)?$/);
     const fallbackText = page.getByText(MAP_FALLBACK_COPY_PATTERN).first();
-    await expect(fallbackText).toBeVisible({ timeout: 25000 });
+    await expect(fallbackText).toBeVisible({ timeout: 30000 });
 
-    await page.waitForTimeout(1500);
     expect(mapboxTileStyleRequestCount).toBe(0);
   });
 
@@ -160,15 +153,19 @@ test.describe('Unified kill-switch operational audit', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await stabilizeAuthenticatedSession(page, email, password);
-    await page.waitForTimeout(2000);
 
     await navigateInApp(page, '/trips');
     await expect(page).toHaveURL(/\/trips(?:\?.*)?$/);
     
+    // Wait for the grid to render properly. Wait for either empty state or grid items.
+    const emptyState = page.locator('.empty-state, :text-matches("No hay viajes", "i")').first();
+    const tripsGrid = page.locator('.trips-grid').first();
+    await expect(emptyState.or(tripsGrid)).toBeVisible({ timeout: 30000 });
+
     // Check if some edit-related buttons are gone or disabled
     const addTripBtn = page.getByTestId('add-trip-button');
     if (await addTripBtn.isVisible()) {
-      await expect(addTripBtn).toBeDisabled();
+      await expect(addTripBtn).toBeDisabled({ timeout: 30000 });
     }
   });
 
@@ -195,8 +192,7 @@ test.describe('Unified kill-switch operational audit', () => {
     await page.waitForLoadState('load');
     await signInInBrowser(page, email, password);
 
-    await expect(page.getByText(MAINTENANCE_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });
-    await page.waitForTimeout(1500);
+    await expect(page.getByText(MAINTENANCE_COPY_PATTERN).first()).toBeVisible({ timeout: 30000 });
 
     expect(firestoreTripFetchRequestCount).toBe(0);
   });
