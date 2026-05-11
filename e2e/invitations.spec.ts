@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { openTripActionMenu } from './utils/trip-interactions';
-import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession, navigateInApp } from './utils/e2e-auth';
 
 const FIREBASE_PROJECT = process.env.VITE_FIREBASE_PROJECT_ID || 'keeptrip-app-b06b3';
 const FIRESTORE_EMULATOR_URL = 'http://127.0.0.1:8081';
@@ -43,10 +43,7 @@ async function getFirestoreDocument(path: string) {
   return res.ok ? res.json() : null;
 }
 
-async function navigateInApp(page: Page, path: string) {
-  const baseURL = 'http://localhost:5173';
-  await page.goto(`${baseURL}${path}`);
-}
+// navigateInApp is now imported from e2e-auth.ts
 
 async function openInvitationsAndAssertRoute(page) {
   await navigateInApp(page, '/invitations');
@@ -423,8 +420,19 @@ test.describe('Invitations flow (E2E)', () => {
     // Navigate to /trips
     await navigateInApp(page, '/trips');
     
-    // Wait until the shared trip card is visible.
-    const sharedCard = page.locator('[aria-label*="Ruta compartida E2E"]');
+    // Deterministic wait for bitacora state to reflect the shared trip
+    await page.waitForFunction(
+      ({ id }) => {
+        const bitacora = (window as any).__test_bitacora || [];
+        console.log('[E2E DEBUG] checking bitacora for id:', id, 'current bitacora:', bitacora);
+        return bitacora.some((v: any) => v.id === id);
+      },
+      { id: viajeId },
+      { timeout: 45000 }
+    );
+
+    // Wait until the shared trip card is visible using data-testid.
+    const sharedCard = page.getByTestId(`trip-card-${viajeId}`);
     await expect(sharedCard).toBeVisible({ timeout: 30000 });
     
     // Open shared trip.

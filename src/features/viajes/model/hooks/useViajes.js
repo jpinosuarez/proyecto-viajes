@@ -142,6 +142,8 @@ export const useViajes = () => {
     }
 
     // Configurar userId en el logger para contexto global
+
+    // Configurar userId en el logger para contexto global
     logger.setUserId(userUid);
     logger.info('Suscribiendo a viajes del usuario', { userId: userUid });
 
@@ -354,6 +356,14 @@ export const useViajes = () => {
       sharedTripListeners.clear();
     };
   }, [usuario?.uid, notifyErrorThrottled]);
+
+  // Exposed for E2E synchronization
+  useEffect(() => {
+    if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true') {
+      window.__test_bitacora = bitacora;
+      window.__test_viajesLoading = loading;
+    }
+  }, [bitacora, loading]);
 
   const paisesVisitados = useMemo(
     () => obtenerPaisesVisitados(bitacora, todasLasParadas),

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession } from './utils/e2e-auth';
+import { createAuthUser, signInInBrowser, stabilizeAuthenticatedSession, navigateInApp } from './utils/e2e-auth';
 const FIRESTORE_PROJECT_ID = 'keeptrip-app-b06b3';
 const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8081';
 const OPERATIONAL_FLAGS_DOC_URL = `http://${FIRESTORE_EMULATOR_HOST}/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents/system/operational_flags`;
@@ -51,34 +51,37 @@ async function setOperationalLevel(page: Page, level: number) {
   if (!response.ok) {
     const responseText = await response.text();
     console.error(`[E2E] Failed to set operational level ${level}. Status: ${response.status}, Body: ${responseText}`);
-    // If REST fails, fallback to the founder dance (but we need to fix it)
     throw new Error(`Could not set operational level ${level}: ${response.status} ${responseText}`);
   }
-  
-  console.log(`[E2E] Operational level ${level} set successfully. Waiting for app to reflect change...`);
 }
 
-async function navigateInApp(page: Page, path: string) {
-  const baseURL = 'http://localhost:5173';
-  await page.goto(`${baseURL}${path}`);
+async function waitForOperationalLevel(page: Page, level: number) {
+  console.log(`[E2E] Waiting for app to reflect operational level ${level}...`);
+  await page.waitForFunction((l) => {
+    const fn = (window as any).__test_getOperationalLevel;
+    return typeof fn === 'function' && fn() === l;
+  }, level, { timeout: 30000 });
 }
+
+// Standard helper removed as it is now imported from e2e-auth.ts
 
 async function openSearchPalette(page: Page) {
-  // Try keyboard shortcuts first
-  await page.keyboard.press('Control+k');
-  await page.keyboard.press('Meta+k');
+  // 1. Wait for core UI stability
+  await expect(page.getByTestId('page-loader')).toBeHidden({ timeout: 15000 });
   
-  // Also try clicking any search-looking button as fallback
-  const searchTrigger = page.locator('button:has-text("Search"), button:has-text("Buscar"), [aria-label*="Search"], [aria-label*="Buscar"]').first();
-  if (await searchTrigger.isVisible()) {
-    await searchTrigger.click();
-  }
+  // Also wait for voyages to be loaded to ensure the UI is ready for interactions
+  await page.waitForFunction(() => {
+    return (window as any).__test_viajesLoading === false;
+  }, { timeout: 10000 }).catch(() => {
+    console.log('[E2E] Warn: __test_viajesLoading wait timed out or flag missing');
+  });
 
-  const searchInput = page
-    .getByPlaceholder(/Type a country|Escribe un pa|Search places|trips|ciudad|destinos/i)
-    .first();
+  // 2. Trigger Search Palette via shortcut
+  await page.keyboard.press('Control+k');
   
-  await expect(searchInput).toBeVisible({ timeout: 30000 });
+  // 3. Robustly wait for search input
+  const searchInput = page.getByTestId('search-input');
+  await expect(searchInput).toBeVisible({ timeout: 15000 });
   return searchInput;
 }
 
@@ -103,7 +106,8 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
+    await waitForOperationalLevel(page, 1);
     await stabilizeAuthenticatedSession(page, email, password);
     
     const searchInput = await openSearchPalette(page);
@@ -129,15 +133,19 @@ test.describe('Unified kill-switch operational audit', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
+    await waitForOperationalLevel(page, 2);
     await stabilizeAuthenticatedSession(page, email, password);
 
     // Navigate to map
     await navigateInApp(page, '/map');
     
     await expect(page).toHaveURL(/\/map(?:\?.*)?$/);
-    const fallbackText = page.getByText(MAP_FALLBACK_COPY_PATTERN).first();
-    await expect(fallbackText).toBeVisible({ timeout: 30000 });
+    const fallback = page.getByTestId('operational-map-fallback');
+    await expect(fallback).toBeVisible({ timeout: 30000 });
+    
+    // Also verify the specific copy exists inside the fallback
+    await expect(fallback.getByText(MAP_FALLBACK_COPY_PATTERN).first()).toBeVisible({ timeout: 15000 });
 
     expect(mapboxTileStyleRequestCount).toBe(0);
   });
@@ -151,16 +159,17 @@ test.describe('Unified kill-switch operational audit', () => {
     await setOperationalLevel(page, 3);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
+    await waitForOperationalLevel(page, 3);
     await stabilizeAuthenticatedSession(page, email, password);
 
     await navigateInApp(page, '/trips');
     await expect(page).toHaveURL(/\/trips(?:\?.*)?$/);
     
-    // Wait for the grid to render properly. Wait for either empty state or grid items.
-    const emptyState = page.locator('.empty-state, :text-matches("No hay viajes", "i")').first();
-    const tripsGrid = page.locator('.trips-grid').first();
-    await expect(emptyState.or(tripsGrid)).toBeVisible({ timeout: 30000 });
+    // Wait for either the trips grid or the ghost empty state to appear
+    const emptyState = page.getByTestId('ghost-empty-state');
+    const tripsGrid = page.getByTestId('trips-grid');
+    await expect(emptyState.or(tripsGrid).first()).toBeVisible({ timeout: 30000 });
 
     // Check if some edit-related buttons are gone or disabled
     const addTripBtn = page.getByTestId('add-trip-button');
@@ -190,6 +199,7 @@ test.describe('Unified kill-switch operational audit', () => {
 
     await page.goto('/');
     await page.waitForLoadState('load');
+    await waitForOperationalLevel(page, 4);
     await signInInBrowser(page, email, password);
 
     await expect(page.getByText(MAINTENANCE_COPY_PATTERN).first()).toBeVisible({ timeout: 30000 });

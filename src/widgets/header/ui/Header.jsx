@@ -168,6 +168,7 @@ const Header = ({ invitationsCount = 0 }) => {
             disabled={isReadOnlyMode}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            data-testid="add-trip-button"
             className={cn(
               "bg-gradient-to-br from-atomicTangerine to-orange-400 text-white border-none",
               "px-5 py-2.5 rounded-full font-extrabold flex items-center gap-2",

@@ -228,11 +228,53 @@ export async function signInInBrowser(page: Page, email: string, password = 'tes
 }
 
 export async function stabilizeAuthenticatedSession(page: Page, email: string, password = 'testpass') {
-  const loginVisible = await page.getByRole('button', { name: /Log In|Iniciar sesion|Iniciar sesión/i }).count();
-  if (loginVisible > 0) {
+  const loginButton = page.getByTestId('header-login-button');
+  const userAvatar = page.getByTestId('header-avatar');
+  const addTripBtn = page.getByTestId('add-trip-button');
+  
+  // Use a combined locator to wait for the page to be ready, regardless of viewport or login state
+  const indicator = loginButton.or(userAvatar).or(addTripBtn).filter({ visible: true }).first();
+  await expect(indicator).toBeVisible({ timeout: 30000 });
+  
+  if (await loginButton.isVisible()) {
     await signInInBrowser(page, email, password);
   }
-  await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 30000 });
+  
+  // If we are still on the landing page, navigate to dashboard to ensure AppShell is active
+  if (page.url().endsWith('/') || page.url().endsWith('/landing')) {
+    await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
+  }
+
+  // Wait for a visible indicator of being logged in after potential navigation.
+  await expect(userAvatar.or(addTripBtn).filter({ visible: true }).first()).toBeVisible({ timeout: 30000 });
+}
+
+/**
+ * Navigates to a path within the app, using soft navigation via window hook if available.
+ * This prevents full page reloads which can destabilize the auth session in the emulator.
+ */
+export async function navigateInApp(page: Page, path: string) {
+  // 1. Check if we can use soft navigation
+  const hasNavigateHook = await page.evaluate(() => typeof (window as any).__test_navigate === 'function');
+  
+  if (hasNavigateHook) {
+    await page.evaluate((p) => (window as any).__test_navigate(p), path);
+  } else {
+    // Fallback to hard navigation
+    const baseURL = 'http://localhost:5173';
+    await page.goto(`${baseURL}${path}`);
+  }
+
+  // 2. Wait for the URL to reflect the target path
+  // We use a regex to handle optional query params and trailing slashes
+  const pathRegex = new RegExp(`${path.replace('/', '\\/')}(?:\\?.*)?$`);
+  await expect(page).toHaveURL(pathRegex, { timeout: 20000 });
+
+  // 3. Robustly wait for the page to be ready
+  // Hide any loader if present
+  const loader = page.getByTestId('page-loader');
+  await expect(loader).toBeHidden({ timeout: 20000 });
 }
 
 export async function e2eCleanupTrip(_page: Page, _tripId: string) {

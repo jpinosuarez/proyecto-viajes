@@ -395,6 +395,7 @@ const SearchPalette = ({
                 autoFocus={!isMobile}
                 style={styles.input}
                 aria-label={t('search:inputAria', 'Search')}
+                data-testid="search-input"
                 disabled={isSearchPaused}
               />
               {query && (
@@ -440,7 +441,7 @@ const SearchPalette = ({
             )}
 
             {isSearchPaused && (
-              <div style={styles.pausedState}>
+              <div style={styles.pausedState} data-testid="search-paused-message">
                 <p>
                   {t(
                     'search:pausedMessage',

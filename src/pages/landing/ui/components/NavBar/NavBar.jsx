@@ -20,7 +20,7 @@ const hoverScaleVariants = {
 };
 
 const NavBar = () => {
-  const { login } = useAuth();
+  const { usuario, login } = useAuth();
   const { t } = useTranslation(['common']);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -31,15 +31,34 @@ const NavBar = () => {
         variants={itemVariants}
       >
         <div className="text-[1.6rem] font-black text-charcoalBlue tracking-[-1.2px] font-heading">Keeptrip</div>
-        <Motion.button
-          onClick={() => setIsAuthModalOpen(true)}
-          className="tap-btn px-7 py-3 border-2 border-atomicTangerine bg-transparent text-atomicTangerine rounded-full font-extrabold cursor-pointer min-h-[48px] text-[0.95rem] font-heading"
-          variants={hoverScaleVariants}
-          whileHover="hover"
-          whileTap="tap"
-        >
-          {t('common:login')}
-        </Motion.button>
+        {usuario ? (
+          <div className="flex items-center gap-4">
+            <Motion.button
+              onClick={() => window.location.href = '/dashboard'}
+              data-testid="header-avatar"
+              className="w-10 h-10 rounded-full bg-atomicTangerine text-white flex items-center justify-center font-bold overflow-hidden shadow-sm border-2 border-white/50"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {usuario.photoURL ? (
+                <img src={usuario.photoURL} alt={usuario.displayName} className="w-full h-full object-cover" />
+              ) : (
+                usuario.displayName?.[0] || 'U'
+              )}
+            </Motion.button>
+          </div>
+        ) : (
+          <Motion.button
+            onClick={() => setIsAuthModalOpen(true)}
+            data-testid="header-login-button"
+            className="tap-btn px-7 py-3 border-2 border-atomicTangerine bg-transparent text-atomicTangerine rounded-full font-extrabold cursor-pointer min-h-[48px] text-[0.95rem] font-heading"
+            variants={hoverScaleVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            {t('common:login')}
+          </Motion.button>
+        )}
       </Motion.nav>
 
       <React.Suspense fallback={null}>
