@@ -33,14 +33,18 @@ service cloud.firestore {
         function hasAccess() {
           let invId = viajeId + "_" + request.auth.uid;
           return isOwner(userId)
-            || (isAuthenticated() && resource != null && 'sharedWith' in resource.data && request.auth.uid in resource.data.sharedWith)
+            || (isAuthenticated() && resource != null && 'sharedWith' in resource.data && resource.data.sharedWith != null && request.auth.uid in resource.data.sharedWith)
             || (isAuthenticated() && exists(/databases/$(database)/documents/invitations/$(invId)));
         }
 
         allow read: if hasAccess();
         allow create: if isOwner(userId) && request.resource.data.ownerId == request.auth.uid;
         allow delete: if isOwner(userId);
-        allow update: if hasAccess() && (isOwner(userId) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['titulo', 'ownerId']));
+        allow update: if isOwner(userId)
+          || (
+            hasAccess() 
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedWith'])
+          );
 
         match /{coleccion}/{docId=**} {
           function hasParentAccess() {
@@ -48,7 +52,7 @@ service cloud.firestore {
             let parentData = getAfter(parentPath).data;
             let invId = viajeId + "_" + request.auth.uid;
             return isOwner(userId)
-              || (parentData != null && 'sharedWith' in parentData && parentData.sharedWith is list && request.auth.uid in parentData.sharedWith)
+              || (parentData != null && 'sharedWith' in parentData && parentData.sharedWith != null && request.auth.uid in parentData.sharedWith)
               || (isAuthenticated() && existsAfter(/databases/$(database)/documents/invitations/$(invId)));
           }
 
@@ -61,9 +65,9 @@ service cloud.firestore {
     match /invitations/{invId} {
       allow create: if isAuthenticated();
       allow read, update, delete: if isAuthenticated() && (
-        invId.endsWith("_" + request.auth.uid)
+        invId.matches('.*_' + request.auth.uid)
         || (resource != null && 'inviterId' in resource.data && request.auth.uid == resource.data.inviterId)
-        || (request.resource != null && 'inviterId' in request.resource.data && request.auth.uid == request.resource.data.inviterId)
+        || (resource != null && 'inviteeUid' in resource.data && request.auth.uid == resource.data.inviteeUid)
       );
     }
 

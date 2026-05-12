@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 const VisorStorySection = ({ stops, text }) => {
   const { t } = useTranslation();
-  const hasPerStopStory = stops.some((stop) => stop.story && stop.story.trim());
+  const hasPerStopStory = (stops || []).some((stop) => stop.story && stop.story.trim());
   if (hasPerStopStory) return null;
 
   return (

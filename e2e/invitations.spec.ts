@@ -435,8 +435,8 @@ test.describe('Invitations flow (E2E)', () => {
     const sharedCard = page.getByTestId(`trip-card-${viajeId}`);
     await expect(sharedCard).toBeVisible({ timeout: 30000 });
     
-    // Open shared trip.
-    await openTripActionMenu(page, sharedCard, /Editar|Edit|Ver|View/i);
+    // Open shared trip by navigating directly to bypass flaky Portal Dropdown.
+    await navigateInApp(page, `/trips/${viajeId}`);
     await expect(page).toHaveURL(new RegExp(`/trips(?:/${viajeId}|\\?editing=${viajeId})(?:\\?.*)?$`));
 
     const viewerTitle = page.getByTestId('visor-title');

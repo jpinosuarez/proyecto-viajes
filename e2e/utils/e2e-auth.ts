@@ -243,7 +243,7 @@ export async function stabilizeAuthenticatedSession(page: Page, email: string, p
   // If we are still on the landing page, navigate to dashboard to ensure AppShell is active
   if (page.url().endsWith('/') || page.url().endsWith('/landing')) {
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   }
 
   // Wait for a visible indicator of being logged in after potential navigation.
