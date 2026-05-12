@@ -1,4 +1,3 @@
-import { cn } from '@shared/lib/utils/cn';
 import React from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useAuth, useUpload, useToast } from '@app/providers';
@@ -46,7 +45,6 @@ const VisorViaje = ({
     showEditModal,
     setShowEditModal,
     hoveredIndex,
-    setHoveredIndex,
     activeParadaIndex,
     setParadaRef,
     showMapModal,

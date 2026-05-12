@@ -1,12 +1,8 @@
 import { cn } from '@shared/lib/utils/cn';
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Save, LoaderCircle } from 'lucide-react';
-import { useAuth, useUpload, useToast } from '@app/providers';
-import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useTranslation } from 'react-i18next';
-import { formatDateRange } from '@shared/lib/utils/viajeUtils';
-import { useGaleriaViaje } from '@shared/lib/hooks/useGaleriaViaje';
 import { useEdicionModalSave } from '../model/hooks/useEdicionModalSave';
 import { useEdicionGalleryManager } from '../model/hooks/useEdicionGalleryManager';
 import { useEdicionModalLifecycle } from '../model/hooks/useEdicionModalLifecycle';
@@ -16,16 +12,8 @@ import EdicionHeaderSection from './components/EdicionHeaderSection';
 import { createPortal } from 'react-dom';
 
 const EdicionModal = ({ viaje, onClose, onSave, esBorrador, ciudadInicial, isSaving = false, onAfterSave }) => {
-  const { usuario } = useAuth();
-  const { pushToast } = useToast();
-  
-  // useUpload puede no estar disponible en tests aislados; usar fallback seguro
-  let uploadCtx = null;
-  try {
-    uploadCtx = useUpload();
-  } catch (e) {
-    // skip
-  }
+  // removed unused uploadCtx logic
+
 
   const {
     activeTab,

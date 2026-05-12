@@ -1,4 +1,3 @@
-import { cn } from '@shared/lib/utils/cn';
 import React from 'react';
 import { MapPin, X } from 'lucide-react';
 import RouteMap from '../RouteMap';

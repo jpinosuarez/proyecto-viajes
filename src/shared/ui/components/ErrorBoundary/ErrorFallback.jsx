@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Compass, RefreshCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@shared/lib/utils/cn';
+
 
 /**
  * ErrorFallback (Dumb Component)

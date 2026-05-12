@@ -8,7 +8,7 @@ import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { getLocalizedCountryName } from '@shared/lib/utils/countryI18n';
 import { useLogStats } from '@features/gamification/model';
 import TravelStatsWidget from '@widgets/travelStats/ui/TravelStatsWidget';
-import { cn } from '@shared/lib/utils/cn';
+
 
 const TripsPage = () => {
   const { t, i18n } = useTranslation(['dashboard', 'countries']);

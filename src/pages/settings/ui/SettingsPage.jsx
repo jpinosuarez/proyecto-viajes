@@ -1,3 +1,4 @@
+/* global __APP_VERSION__ */
 /**
  * SettingsPage — 2026 iOS-Style Grouped List (v12)
  *
@@ -164,7 +165,6 @@ const SettingsPage = () => {
 
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [photoUrl, setPhotoUrl] = useState(user?.photoURL || '');
-  const [savedMsg, setSavedMsg] = useState('');
   const [editingProfile, setEditingProfile] = useState(false);
   const [photoError, setPhotoError] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -180,11 +180,9 @@ const SettingsPage = () => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       if (displayName === (user?.displayName || '') && photoUrl === (user?.photoURL || '')) return;
-      const ok = await updateUserProfile(displayName, photoUrl);
-      setSavedMsg(ok ? t('settings:toast.success') : t('settings:toast.error'));
-      setTimeout(() => setSavedMsg(''), 2500);
+      await updateUserProfile(displayName, photoUrl);
     }, DEBOUNCE_MS);
-  }, [displayName, photoUrl, user, updateUserProfile, t]);
+  }, [displayName, photoUrl, user, updateUserProfile]);
 
   const handleAvatarUploadClick = () => fileInputRef.current?.click();
 
@@ -404,7 +402,7 @@ const SettingsPage = () => {
       {/* ── App Version Footer ── */}
       <div className="pt-8 mt-6 border-t border-black/5 flex justify-center items-center">
         <span className="text-[0.75rem] text-slate-500 font-medium tracking-wider">
-          {t('settings:footer.appVersion', 'App Version')} • {"v" + __APP_VERSION__}
+          {t('settings:footer.appVersion', 'App Version')} • {"v" + (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0')}
         </span>
       </div>
     </div>

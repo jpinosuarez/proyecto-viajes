@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useLayoutEffect } from 'react';
 import { Camera, Image as ImageIcon, Trash2, Calendar, MapPin, Clock, LoaderCircle, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -20,6 +20,86 @@ const getAuraGridStyle = (count) => {
 const getAuraFlagClass = (count, index) => {
   if (count === 3 && index === 2) return "col-span-2";
   return "";
+};
+
+const MenuItemButton = ({ onClick, isDanger, icon: Icon, children }) => {
+  return (
+    <button 
+      type="button" 
+      className={cn(
+        "w-full flex items-center gap-3 p-3.5 text-left font-semibold text-[0.95rem] transition-colors rounded-lg",
+        isDanger ? "text-danger hover:bg-danger/10" : "text-textPrimary hover:bg-black/5"
+      )}
+      onClick={onClick}
+    >
+      {Icon && <Icon size={20} strokeWidth={2} />}
+      {children}
+    </button>
+  );
+};
+
+const ActionMenu = ({ isMobile, showMenu, setShowMenu, fileInputRef, currentPreview, handleRemovePhoto, t }) => {
+  const content = (
+    <>
+      <MenuItemButton onClick={() => { fileInputRef.current?.click(); }} icon={ImageIcon} isDanger={false}>
+        {t('gallery.changeCover', { ns: 'editor', defaultValue: 'Cambiar portada' })}
+      </MenuItemButton>
+      {currentPreview && (
+        <MenuItemButton onClick={handleRemovePhoto} icon={Trash2} isDanger={true}>
+          {t('gallery.removeCover', { ns: 'editor', defaultValue: 'Quitar foto' })}
+        </MenuItemButton>
+      )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <AnimatePresence>
+        {showMenu && (
+          <>
+            <Motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[99]"
+              onClick={() => setShowMenu(false)} 
+            />
+            <Motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+              className="fixed bottom-0 left-0 right-0 p-5 bg-surface rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] z-[100] flex flex-col gap-2"
+            >
+              {content}
+              <button 
+                type="button" 
+                className="w-full flex items-center justify-center gap-3 p-3.5 text-left font-bold text-[0.95rem] transition-colors rounded-lg mt-2 bg-black/5"
+                onClick={() => setShowMenu(false)}
+              >
+                {t('button.cancel', { ns: 'common', defaultValue: 'Cancelar' })}
+              </button>
+            </Motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      {showMenu && (
+        <Motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+          className="absolute top-full right-0 mt-2 w-56 bg-surface/95 backdrop-blur-lg border border-border/50 rounded-xl shadow-xl overflow-hidden z-50 p-1"
+        >
+          {content}
+        </Motion.div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 const EditableTripHeader = ({
@@ -111,8 +191,12 @@ const EditableTripHeader = ({
     el.style.fontSize = `${recalculated}px`;
   }, [formData?.titulo, isMobile, titleFontSize]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // We use useLayoutEffect here because we are measuring DOM elements
+    // and setting state based on those measurements before the browser repaints.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     adjustTitleFont();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     adjustTitleHeight();
   }, [adjustTitleFont, adjustTitleHeight]);
 
@@ -173,86 +257,6 @@ const EditableTripHeader = ({
   const durationPillText = daysCount > 0 
     ? t('days', { count: daysCount, ns: 'common', defaultValue: `${daysCount} días` })
     : '--';
-
-  const MenuItemButton = ({ onClick, isDanger, icon: IconComponent, children }) => {
-    return (
-      <button 
-        type="button" 
-        className={cn(
-          "w-full flex items-center gap-3 p-3.5 text-left font-semibold text-[0.95rem] transition-colors rounded-lg",
-          isDanger ? "text-danger hover:bg-danger/10" : "text-textPrimary hover:bg-black/5"
-        )}
-        onClick={onClick}
-      >
-        <IconComponent size={20} strokeWidth={2} />
-        {children}
-      </button>
-    );
-  };
-
-  const ActionMenu = () => {
-    const content = (
-      <>
-        <MenuItemButton onClick={() => { fileInputRef.current?.click(); }} icon={ImageIcon} isDanger={false}>
-          {t('gallery.changeCover', { ns: 'editor', defaultValue: 'Cambiar portada' })}
-        </MenuItemButton>
-        {currentPreview && (
-          <MenuItemButton onClick={handleRemovePhoto} icon={Trash2} isDanger={true}>
-            {t('gallery.removeCover', { ns: 'editor', defaultValue: 'Quitar foto' })}
-          </MenuItemButton>
-        )}
-      </>
-    );
-
-    if (isMobile) {
-      return (
-        <AnimatePresence>
-          {showMenu && (
-            <>
-              <Motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[99]"
-                onClick={() => setShowMenu(false)} 
-              />
-              <Motion.div 
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-                className="fixed bottom-0 left-0 right-0 p-5 bg-surface rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] z-[100] flex flex-col gap-2"
-              >
-                {content}
-                <button 
-                  type="button" 
-                  className="w-full flex items-center justify-center gap-3 p-3.5 text-left font-bold text-[0.95rem] transition-colors rounded-lg mt-2 bg-black/5"
-                  onClick={() => setShowMenu(false)}
-                >
-                  {t('button.cancel', { ns: 'common', defaultValue: 'Cancelar' })}
-                </button>
-              </Motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      );
-    }
-
-    return (
-      <AnimatePresence>
-        {showMenu && (
-          <Motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            className="absolute top-full right-0 mt-2 w-56 bg-surface/95 backdrop-blur-lg border border-border/50 rounded-xl shadow-xl overflow-hidden z-50 p-1"
-          >
-            {content}
-          </Motion.div>
-        )}
-      </AnimatePresence>
-    );
-  };
 
   return (
     <div 
@@ -322,9 +326,21 @@ const EditableTripHeader = ({
             onClick={() => setShowMenu(!showMenu)}
             aria-label={t('gallery.changeCover', { ns: 'editor', defaultValue: 'Cambiar portada' })}
           >
-            <Camera size={20} strokeWidth={1.5} className="text-white" />
+            <Camera 
+              size={20} 
+              strokeWidth={1.5} 
+              className={cn("text-white transition-opacity", isCameraHovered ? "opacity-100" : "opacity-80")} 
+            />
           </button>
-          <ActionMenu />
+          <ActionMenu 
+            isMobile={isMobile}
+            showMenu={showMenu}
+            setShowMenu={setShowMenu}
+            fileInputRef={fileInputRef}
+            currentPreview={currentPreview}
+            handleRemovePhoto={handleRemovePhoto}
+            t={t}
+          />
         </div>
       </div>
 

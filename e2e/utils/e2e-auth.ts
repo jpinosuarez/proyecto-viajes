@@ -133,48 +133,15 @@ export async function e2ePerformLogin(page: Page) {
     });
   };
 
-  let signed = false;
-  for (let attempt = 0; attempt < 6 && !signed; attempt += 1) {
-    try {
-      await page.evaluate(
-        ({ loginEmail, loginPassword }) =>
-          (window as any).__test_signInWithEmail({ email: loginEmail, password: loginPassword }),
-        { loginEmail: email, loginPassword: password }
-      );
-
-      await waitForFirebaseAuthSession();
-      signed = true;
-
-      if (signed) break;
-      // otherwise fallthrough to retry
-    } catch (err) {
-      // capture a snapshot of console and errors for debugging in CI
-      // eslint-disable-next-line no-console
-      console.warn('Sign-in attempt failed, retrying...', { attempt, error: String(err) });
-      await page.waitForTimeout(1500 + attempt * 1000);
-    }
-  }
-
-  if (!signed) {
-    // Dump diagnostics to help CI triage
-    // eslint-disable-next-line no-console
-    console.error('E2E Sign-in failed. Console messages:', consoleMessages.slice(-50));
-    // eslint-disable-next-line no-console
-    console.error('E2E Page errors:', pageErrors.slice(-20));
-    // eslint-disable-next-line no-console
-    console.error('E2E Failed requests:', failedRequests.slice(-20));
-    // Final attempt: assert to fail the test with diagnostics (try auth existence first)
-    const finalStatus = await page.evaluate(() => {
-      try {
-        return Object.keys(window.localStorage).some((key) => key.startsWith('firebase:authUser:'));
-      } catch (e) {
-        return false;
-      }
-    });
-    if (!finalStatus) {
-      await expect(page.getByTestId('header-login-button')).toHaveCount(0, { timeout: 20000 });
-    }
-  }
+  // Trigger sign-in via the test helper
+  await page.evaluate(
+    ({ loginEmail, loginPassword }) =>
+      (window as any).__test_signInWithEmail({ email: loginEmail, password: loginPassword }),
+    { loginEmail: email, loginPassword: password }
+  );
+  
+  // Robustly wait for the session to be established using native Playwright polling
+  await waitForFirebaseAuthSession();
 
   // cleanup listeners
   page.removeListener('console', onConsole);
@@ -192,16 +159,10 @@ export async function signInInBrowser(page: Page, email: string, password = 'tes
     throw err;
   }
 
-  let signInResult = false;
-  for (let i = 0; i < 5; i++) {
-    signInResult = await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
-    if (signInResult) break;
-    console.warn(`[E2E] Sign-in attempt ${i+1} for ${email} failed, retrying in 2s...`);
-    await page.waitForTimeout(2000);
-  }
-
+  // Trigger sign-in and assert success
+  const signInResult = await page.evaluate(({ email: e, password: p }) => (window as any).__test_signInWithEmail({ email: e, password: p }), { email, password });
   if (signInResult === false) {
-    throw new Error(`Test sign-in helper returned false for ${email} after 5 attempts`);
+    throw new Error(`Test sign-in helper returned false for ${email}`);
   }
 
   console.log(`[E2E] Sign-in call successful, waiting for auth session...`);

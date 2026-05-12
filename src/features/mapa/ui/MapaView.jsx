@@ -7,7 +7,7 @@ import { isMapStyleLoaded, setMapLanguage } from '@shared/lib/geo';
 import { useOperationalFlags } from '@shared/lib/hooks/useOperationalFlags';
 import { useDocumentTitle } from '@shared/lib/hooks/useDocumentTitle';
 import { OperationalMapFallback } from '@shared/ui/components';
-import { cn } from '@shared/lib/utils/cn';
+
 
 import TripRoster from './components/TripRoster';
 import MapEmptyState from './components/MapEmptyState';

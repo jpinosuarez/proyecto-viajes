@@ -14,7 +14,9 @@ const formatNumber = (value) => {
 
 const TravelStatsWidget = ({ logStats = null, ariaLabel, variant = 'compact', containerClassName = 'w-full' }) => {
   const { t } = useTranslation('dashboard');
-  const isCompact = variant === 'compact';
+  // variant is for future extensibility (e.g. 'full', 'compact')
+  console.log('Stats variant:', variant);
+
 
   const safeValue = (v) => (typeof v === 'number' && !Number.isNaN(v) ? v : 0);
 

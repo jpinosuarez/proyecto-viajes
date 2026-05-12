@@ -1,4 +1,4 @@
-import { cn } from '@shared/lib/utils/cn';
+
 import React from 'react';
 import { Calendar, MapPin } from 'lucide-react';
 import CityManager from './CityManager';

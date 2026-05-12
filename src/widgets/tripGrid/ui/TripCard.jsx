@@ -19,7 +19,9 @@ import { cn } from '@shared/lib/utils/cn';
 const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', priorityImage = false }) => {
   const { t, i18n } = useTranslation(['countries', 'dashboard', 'common']);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
+  const cardRef = useRef(null);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -31,6 +33,17 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  // Calculate menu position when it opens
+  useEffect(() => {
+    if (isMenuOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        left: rect.left - 180 + rect.width
+      });
+    }
   }, [isMenuOpen]);
 
   const flags = useMemo(() => 
@@ -75,7 +88,6 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
   const cardAriaLabel = title || t('viewTrip', { ns: 'dashboard', defaultValue: 'Ver viaje' });
 
   // 3D Parallax logic (Desktop Only)
-  const cardRef = useRef(null);
   const x = useMotionValue(0.5); 
   const y = useMotionValue(0.5);
 
@@ -225,8 +237,8 @@ const TripCard = ({ trip, onEdit, onDelete, isMobile = false, variant = 'list', 
                 transition={{ duration: 0.15 }}
                 className="fixed w-[180px] bg-white/85 backdrop-blur-xl rounded-xl shadow-lg p-2 flex flex-col gap-1 z-modal"
                 style={{
-                  top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 0,
-                  left: buttonRef.current ? buttonRef.current.getBoundingClientRect().left - 180 + buttonRef.current.getBoundingClientRect().width : 0,
+                  top: menuPosition.top,
+                  left: menuPosition.left,
                 }}
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}

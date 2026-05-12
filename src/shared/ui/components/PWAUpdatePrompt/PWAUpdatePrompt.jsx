@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion as Motion } from 'framer-motion';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { cn } from '@shared/lib/utils/cn';
 
@@ -31,7 +31,7 @@ const PWAUpdatePrompt = () => {
   return (
     <AnimatePresence>
       {needRefresh && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 50, x: '-50%', scale: 0.95 }}
           animate={{ opacity: 1, y: 0, x: '-50%', scale: 1 }}
           exit={{ opacity: 0, y: 20, x: '-50%', scale: 0.95 }}
@@ -57,7 +57,7 @@ const PWAUpdatePrompt = () => {
             >
               {t('common:pwa.later')}
             </button>
-            <motion.button
+            <Motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex-1 md:flex-none px-6 py-2.5 bg-atomicTangerine text-white rounded-xl text-[0.85rem] font-black shadow-lg shadow-atomicTangerine/20 flex items-center justify-center gap-2 cursor-pointer border-none font-heading"
@@ -65,9 +65,9 @@ const PWAUpdatePrompt = () => {
             >
               <Sparkles size={14} fill="currentColor" />
               {t('common:pwa.update')}
-            </motion.button>
+            </Motion.button>
           </div>
-        </motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

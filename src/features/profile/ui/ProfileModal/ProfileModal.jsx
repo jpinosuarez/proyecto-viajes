@@ -4,7 +4,7 @@ import { X, Save } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@app/providers/AuthContext';
 import { useWindowSize } from '@shared/lib/hooks/useWindowSize';
-import { cn } from '@shared/lib/utils/cn';
+
 import BottomSheet from '@shared/ui/components/BottomSheet';
 
 function getInitials(name) {
