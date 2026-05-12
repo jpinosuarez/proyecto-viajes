@@ -172,11 +172,32 @@ function AppModalsManager({
     </div>
   );
 
+  const searchPaletteLoading = (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 10001,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(15, 23, 42, 0.1)',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <LoaderCircle 
+        className="animate-spin" 
+        size={32} 
+        color={COLORS.atomicTangerine} 
+      />
+    </div>
+  );
+
   return (
     <>
       {searchPaletteOpen && (
         <ErrorBoundary fallback={searchPaletteFallback}>
-          <Suspense fallback={searchPaletteFallback}>
+          <Suspense fallback={searchPaletteLoading}>
             <SearchPalette
               isOpen={searchPaletteOpen}
               onClose={closeSearchPalette}
