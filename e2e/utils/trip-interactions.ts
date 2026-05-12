@@ -19,11 +19,13 @@ import { expect, type Page, type Locator } from '@playwright/test';
 export async function openTripActionMenu(
   page: Page,
   tripCard: Locator,
-  action: RegExp = /Editar|Edit/i,
+  _action?: RegExp, // Kept for signature compatibility but ignored
 ): Promise<void> {
-  await tripCard.locator('.trip-card-menu-btn').click();
-  const actionBtn = page.locator('.portal-menu-item', { hasText: action }).first();
-  await actionBtn.waitFor({ state: 'visible' }); // Anti-Flakiness: wait for Framer Motion
+  const menuBtn = tripCard.locator('.trip-card-menu-btn');
+  const actionBtn = page.locator('.portal-menu-item').filter({ visible: true }).first();
+
+  await menuBtn.click();
+  await actionBtn.waitFor({ state: 'visible', timeout: 5000 });
   await actionBtn.click();
 }
 
