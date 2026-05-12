@@ -74,7 +74,11 @@ function extractArray(field) {
   return field.arrayValue.values.map(v => v.stringValue);
 }
 
-test.describe('Invitations flow (E2E)', () => {
+test.describe('Invitations & Shared Trips', () => {
+  test.skip(
+    process.env.VITE_E2E_ENABLE_INVITATIONS !== 'true', 
+    'Invitations feature is flagged off for future development.'
+  );
   test.beforeEach(async ({ page }) => {
     page.on('console', (msg) => {
       console.log(`PAGE LOG [${msg.type()}]: ${msg.text()}`);
