@@ -57,7 +57,11 @@ service cloud.firestore {
             let invId = viajeId + "_" + request.auth.uid;
             return isOwner(userId)
               || (parentData != null && 'sharedWith' in parentData && parentData.sharedWith != null && request.auth.uid in parentData.sharedWith)
-              || (isAuthenticated() && existsAfter(/databases/$(database)/documents/invitations/$(invId)));
+              || (
+                isAuthenticated() && 
+                existsAfter(/databases/$(database)/documents/invitations/$(invId)) &&
+                getAfter(/databases/$(database)/documents/invitations/$(invId)).data.status == 'accepted'
+              );
           }
 
           allow read: if hasParentAccess();
